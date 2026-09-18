@@ -236,7 +236,7 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
   let zoomFactor = 1;
   const MIN_ZOOM = 0.6, MAX_ZOOM = 8;
 
-  const projection = d3.geoOrthographic().rotate([0, -15, 0]).clipAngle(90).precision(0.2);
+  const projection = d3.geoOrthographic().rotate([0, -15, 0]).clipAngle(90).precision(0.5);
   const path = d3.geoPath(projection, ctx);
 
   const styleCache = {};
@@ -260,21 +260,33 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
     render();
   }
 
-  function render(){
-    ctx.clearRect(0,0,width,height);
-    const cx = width/2, cy = height/2, r = projection.scale();
-
+  // Les degrades ne dependent que de la taille/du zoom, pas de la rotation:
+  // on les met en cache pour eviter de les reconstruire a chaque frame pendant
+  // qu'on fait glisser le globe (rotation seule).
+  let gradCacheKey = null, cachedShadow = null, cachedOcean = null;
+  function getGradients(cx, cy, r){
+    const key = cx+'|'+cy+'|'+r;
+    if(gradCacheKey === key) return { shadow: cachedShadow, ocean: cachedOcean };
     const shadow = ctx.createRadialGradient(cx,cy,r*0.4,cx,cy,r*1.7);
     shadow.addColorStop(0, 'rgba(59,50,38,0.07)');
     shadow.addColorStop(1, 'rgba(59,50,38,0)');
+    const ocean = ctx.createRadialGradient(cx - r*0.35, cy - r*0.35, r*0.1, cx, cy, r*1.05);
+    ocean.addColorStop(0, getVar('--ocean-light'));
+    ocean.addColorStop(0.55, getVar('--ocean-mid'));
+    ocean.addColorStop(1, getVar('--ocean-deep'));
+    gradCacheKey = key; cachedShadow = shadow; cachedOcean = ocean;
+    return { shadow, ocean };
+  }
+
+  function render(){
+    ctx.clearRect(0,0,width,height);
+    const cx = width/2, cy = height/2, r = projection.scale();
+    const { shadow, ocean: oceanGrad } = getGradients(cx, cy, r);
+
     ctx.fillStyle = shadow;
     ctx.fillRect(0,0,width,height);
 
     ctx.beginPath(); path(sphere);
-    const oceanGrad = ctx.createRadialGradient(cx - r*0.35, cy - r*0.35, r*0.1, cx, cy, r*1.05);
-    oceanGrad.addColorStop(0, getVar('--ocean-light'));
-    oceanGrad.addColorStop(0.55, getVar('--ocean-mid'));
-    oceanGrad.addColorStop(1, getVar('--ocean-deep'));
     ctx.fillStyle = oceanGrad;
     ctx.fill();
 
