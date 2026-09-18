@@ -76,6 +76,34 @@
     flex-wrap:wrap;
   }
 
+  .legend{
+    position:absolute;
+    top: max(20px, env(safe-area-inset-top,0px));
+    right:20px;
+    background:var(--panel);
+    border:1px solid var(--panel-border);
+    backdrop-filter: blur(6px);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:0.72rem;
+    line-height:1.9;
+    max-width:170px;
+  }
+  .legend .legend-title{
+    color:var(--text-muted);
+    font-size:0.66rem;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    margin-bottom:2px;
+  }
+  .legend .row{ display:flex; align-items:center; gap:8px; }
+  .legend .swatch{ width:10px; height:10px; border-radius:3px; flex:none; }
+  .legend .name{ color:var(--text); }
+
+  @media (max-width:560px){
+    .legend{ position:static; align-self:flex-end; margin-bottom:10px; max-width:none; }
+  }
+
   .readout{
     pointer-events:auto;
     background:var(--panel);
@@ -155,6 +183,10 @@
     <p class="hint">Cliquer pour s&eacute;lectionner un pays &middot; Glisser pour pivoter <kbd>&#8596;</kbd> &nbsp;Molette / pincer pour zoomer <kbd>&#8597;</kbd></p>
   </header>
 
+  <div class="legend" id="legend">
+    <div class="legend-title">R&eacute;gions</div>
+  </div>
+
   <div class="bottom-row">
     <div class="readout">
       <div class="row"><span class="label">PAYS</span><span class="value" id="hud-country">&mdash;</span></div>
@@ -180,6 +212,25 @@ const COUNTRIES_TOPO ={"type":"Topology","objects":{"countries":{"type":"Geometr
 
 const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"Algérie","16":"Samoa américaines","20":"Andorre","24":"Angola","28":"Antigua-et-Barbuda","31":"Azerbaïdjan","32":"Argentine","36":"Australie","40":"Autriche","44":"Bahamas","48":"Bahreïn","50":"Bangladesh","51":"Arménie","52":"Barbade","56":"Belgique","60":"Bermudes","64":"Bhoutan","68":"Bolivie","70":"Bosnie-Herzégovine","72":"Botswana","74":"Île Bouvet","76":"Brésil","84":"Belize","86":"Océan Indien Britannique","90":"Îles Salomon","92":"Îles vierges britanniques","96":"Brunei Darussalam","100":"Bulgarie","104":"Myanmar","108":"Burundi","112":"Biélorussie","116":"Cambodge","120":"Cameroun","124":"Canada","132":"Cap-Vert","136":"Îles Caïmans","140":"République Centrafricaine","144":"Sri Lanka","148":"Tchad","152":"Chili","156":"Chine","158":"Taïwan","162":"Île Christmas","166":"Îles Cocos","170":"Colombie","174":"Comores","175":"Mayotte","178":"République du Congo","180":"République démocratique du Congo","184":"Îles Cook","188":"Costa Rica","191":"Croatie","192":"Cuba","196":"Chypre","203":"République Tchèque","204":"Bénin","208":"Danemark","212":"Dominique","214":"République Dominicaine","218":"Équateur","222":"El Salvador","226":"Guinée équatoriale","231":"Éthiopie","232":"Érythrée","233":"Estonie","234":"Îles Féroé","238":"Îles Malouines","239":"Géorgie du Sud-et-les Îles Sandwich du Sud","242":"Fidji","246":"Finlande","248":"Åland","250":"France","254":"Guyane française","258":"Polynésie française","260":"Terres australes françaises","262":"Djibouti","266":"Gabon","268":"Géorgie","270":"Gambie","275":"Palestine","276":"Allemagne","288":"Ghana","292":"Gibraltar","296":"Kiribati","300":"Grèce","304":"Groenland","308":"Grenade","312":"Guadeloupe","316":"Guam","320":"Guatemala","324":"Guinée","328":"Guyana","332":"Haïti","334":"Îles Heard-et-MacDonald","336":"Saint-Siège (Vatican)","340":"Honduras","344":"Hong Kong","348":"Hongrie","352":"Islande","356":"Inde","360":"Indonésie","364":"Iran","368":"Irak","372":"Irlande","376":"Israël","380":"Italie","384":"Côte-d'Ivoire","388":"Jamaïque","392":"Japon","398":"Kazakhstan","400":"Jordanie","404":"Kenya","408":"Corée du Nord","410":"Corée du Sud","414":"Koweït","417":"Kirghizistan","418":"Laos","422":"Liban","426":"Lesotho","428":"Lettonie","430":"Libéria","434":"Libye","438":"Liechtenstein","440":"Lituanie","442":"Luxembourg","446":"Macao","450":"Madagascar","454":"Malawi","458":"Malaisie","462":"Maldives","466":"Mali","470":"Malte","474":"Martinique","478":"Mauritanie","480":"Maurice","484":"Mexique","492":"Monaco","496":"Mongolie","498":"Moldavie","499":"Monténégro","500":"Montserrat","504":"Maroc","508":"Mozambique","512":"Oman","516":"Namibie","520":"Nauru","524":"Népal","528":"Pays-Bas","531":"Curaçao","533":"Aruba","534":"Saint-Martin (partie néerlandaise)","535":"Bonaire, Saint-Eustache et Saba","540":"Nouvelle-Calédonie","548":"Vanuatu","554":"Nouvelle-Zélande","558":"Nicaragua","562":"Niger","566":"Nigéria","570":"Niué","574":"Île Norfolk","578":"Norvège","580":"Îles Mariannes du Nord","581":"Îles mineures éloignées des États-Unis","583":"Micronésie","584":"Îles Marshall","585":"Palaos","586":"Pakistan","591":"Panama","598":"Papouasie-Nouvelle-Guinée","600":"Paraguay","604":"Pérou","608":"Philippines","612":"Îles Pitcairn","616":"Pologne","620":"Portugal","624":"Guinée-Bissau","626":"Timor-Leste","630":"Porto Rico","634":"Qatar","638":"Réunion","642":"Roumanie","643":"Russie","646":"Rwanda","652":"Saint-Barthélemy","654":"Sainte-Hélène","659":"Saint-Christophe-et-Niévès","660":"Anguilla","662":"Sainte-Lucie","663":"Saint-Martin (partie française)","666":"Saint-Pierre-et-Miquelon","670":"Saint-Vincent-et-les-Grenadines","674":"Saint-Marin","678":"São Tomé-et-Principe","682":"Arabie Saoudite","686":"Sénégal","688":"Serbie","690":"Seychelles","694":"Sierra Leone","702":"Singapour","703":"Slovaquie","704":"Vietnam","705":"Slovénie","706":"Somalie","710":"Afrique du Sud","716":"Zimbabwe","724":"Espagne","728":"Soudan du Sud","729":"Soudan","732":"Sahara occidental","740":"Suriname","744":"Svalbard et Île Jan Mayen","748":"Royaume d'Eswatini","752":"Suède","756":"Suisse","760":"Syrie","762":"Tadjikistan","764":"Thaïlande","768":"Togo","772":"Tokelau","776":"Tonga","780":"Trinité-et-Tobago","784":"Émirats Arabes Unis","788":"Tunisie","792":"Turquie","795":"Turkménistan","796":"Îles Turques-et-Caïques","798":"Tuvalu","800":"Ouganda","804":"Ukraine","807":"Macédoine du Nord","818":"Égypte","826":"Royaume-Uni","831":"Guernesey","832":"Jersey","833":"Île de Man","834":"République unie de Tanzanie","840":"États-Unis d'Amérique","850":"Îles vierges américaines","854":"Burkina Faso","858":"Uruguay","860":"Ouzbékistan","862":"Venezuela","876":"Wallis-et-Futuna","882":"Samoa","887":"Yémen","894":"Zambie"};
 
+// Regroupement par grande region du monde (source: donnees ISO 3166-1 numerique
+// croisees avec le champ "region" de mledoze/countries). Cle = id ISO numerique
+// tel qu'utilise par la topologie (avec ses zeros de tete), valeur = region.
+const REGION_BY_ID = {"100":"Europe","104":"Asia","108":"Africa","112":"Europe","116":"Asia","120":"Africa","124":"Americas","132":"Africa","136":"Americas","140":"Africa","144":"Asia","148":"Africa","152":"Americas","156":"Asia","158":"Asia","170":"Americas","174":"Africa","178":"Africa","180":"Africa","184":"Oceania","188":"Americas","191":"Europe","192":"Americas","196":"Europe","203":"Europe","204":"Africa","208":"Europe","212":"Americas","214":"Americas","218":"Americas","222":"Americas","226":"Africa","231":"Africa","232":"Africa","233":"Europe","234":"Europe","238":"Americas","239":"Antarctic","242":"Oceania","246":"Europe","248":"Europe","250":"Europe","258":"Oceania","260":"Antarctic","262":"Africa","266":"Africa","268":"Asia","270":"Africa","275":"Asia","276":"Europe","288":"Africa","296":"Oceania","300":"Europe","304":"Americas","308":"Americas","316":"Oceania","320":"Americas","324":"Africa","328":"Americas","332":"Americas","334":"Antarctic","336":"Europe","340":"Americas","344":"Asia","348":"Europe","352":"Europe","356":"Asia","360":"Asia","364":"Asia","368":"Asia","372":"Europe","376":"Asia","380":"Europe","384":"Africa","388":"Americas","392":"Asia","398":"Asia","400":"Asia","404":"Africa","408":"Asia","410":"Asia","414":"Asia","417":"Asia","418":"Asia","422":"Asia","426":"Africa","428":"Europe","430":"Africa","434":"Africa","438":"Europe","440":"Europe","442":"Europe","446":"Asia","450":"Africa","454":"Africa","458":"Asia","462":"Asia","466":"Africa","470":"Europe","478":"Africa","480":"Africa","484":"Americas","492":"Europe","496":"Asia","498":"Europe","499":"Europe","500":"Americas","504":"Africa","508":"Africa","512":"Asia","516":"Africa","520":"Oceania","524":"Asia","528":"Europe","531":"Americas","533":"Americas","534":"Americas","540":"Oceania","548":"Oceania","554":"Oceania","558":"Americas","562":"Africa","566":"Africa","570":"Oceania","574":"Oceania","578":"Europe","580":"Oceania","583":"Oceania","584":"Oceania","585":"Oceania","586":"Asia","591":"Americas","598":"Oceania","600":"Americas","604":"Americas","608":"Asia","612":"Oceania","616":"Europe","620":"Europe","624":"Africa","626":"Asia","630":"Americas","634":"Asia","642":"Europe","643":"Europe","646":"Africa","652":"Americas","654":"Africa","659":"Americas","660":"Americas","662":"Americas","663":"Americas","666":"Americas","670":"Americas","674":"Europe","678":"Africa","682":"Asia","686":"Africa","688":"Europe","690":"Africa","694":"Africa","702":"Asia","703":"Europe","704":"Asia","705":"Europe","706":"Africa","710":"Africa","716":"Africa","724":"Europe","728":"Africa","729":"Africa","732":"Africa","740":"Americas","748":"Africa","752":"Europe","756":"Europe","760":"Asia","762":"Asia","764":"Asia","768":"Africa","776":"Oceania","780":"Americas","784":"Asia","788":"Africa","792":"Asia","795":"Asia","796":"Americas","800":"Africa","804":"Europe","807":"Europe","818":"Africa","826":"Europe","831":"Europe","832":"Europe","833":"Europe","834":"Africa","840":"Americas","850":"Americas","854":"Africa","858":"Americas","860":"Asia","862":"Americas","876":"Oceania","882":"Oceania","887":"Asia","894":"Africa","016":"Oceania","086":"Africa","060":"Americas","092":"Americas","090":"Oceania","096":"Asia","076":"Americas","072":"Africa","070":"Europe","068":"Americas","064":"Asia","084":"Americas","056":"Europe","052":"Americas","050":"Asia","048":"Asia","044":"Americas","031":"Asia","040":"Europe","036":"Oceania","051":"Asia","032":"Americas","028":"Americas","024":"Africa","020":"Europe","012":"Africa","008":"Europe","004":"Asia","010":"Antarctic"};
+// Quelques territoires disputes n'ont pas d'id ISO dans la topologie: on les
+// rattache par leur nom.
+const REGION_BY_NAME = {"Somaliland":"Africa","Kosovo":"Europe","N. Cyprus":"Europe","Indian Ocean Ter.":"Oceania","Siachen Glacier":"Asia"};
+const REGION_LABELS = {Africa:"Afrique", Americas:"Amériques", Antarctic:"Antarctique", Asia:"Asie", Europe:"Europe", Oceania:"Océanie"};
+// Palette categorielle validee (6 teintes, ecarts CVD/vision normale verifies
+// par paires completes -- cf. skill dataviz) dans un ordre fixe, jamais cycle.
+const REGION_ORDER = ["Africa","Americas","Antarctic","Asia","Europe","Oceania"];
+const REGION_COLORS = {
+  Africa:    "#49620e",
+  Americas:  "#9a3b71",
+  Antarctic: "#a17adf",
+  Asia:      "#b6770b",
+  Europe:    "#3c52b6",
+  Oceania:   "#34a88d",
+};
 
 (function(){
   const canvas = document.getElementById('globe');
@@ -226,6 +277,10 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
     return false;
   }
 
+  function regionOf(rawGeom){
+    return REGION_BY_ID[rawGeom.id] || (rawGeom.properties && REGION_BY_NAME[rawGeom.properties.name]) || null;
+  }
+
   function filterSmallIslands(topology, minArea){
     const owners = buildArcOwners(topology);
     const rawGeoms = topology.objects.countries.geometries;
@@ -236,10 +291,11 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
       const rawGeom = rawGeoms[i];
       const geom = f.geometry;
       if(!geom) continue;
+      const region = regionOf(rawGeom);
       if(geom.type === 'Polygon'){
         const isBordered = hasLandBorder(rawGeom.arcs[0], owners);
         const area = d3.geoArea({type:'Polygon', coordinates: geom.coordinates});
-        if(isBordered || area >= minArea) kept.push(f);
+        if(isBordered || area >= minArea){ f.region = region; kept.push(f); }
       } else if(geom.type === 'MultiPolygon'){
         const parts = [];
         geom.coordinates.forEach((coords, pi) => {
@@ -249,11 +305,13 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
         });
         if(parts.length === 0) continue;
         kept.push(Object.assign({}, f, {
+          region,
           geometry: parts.length === 1
             ? {type:'Polygon', coordinates: parts[0]}
             : {type:'MultiPolygon', coordinates: parts}
         }));
       } else {
+        f.region = region;
         kept.push(f);
       }
     }
@@ -261,6 +319,11 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
   }
 
   const countryFeatures = filterSmallIslands(COUNTRIES_TOPO, MIN_ISLAND_AREA);
+  const regionGroups = REGION_ORDER
+    .map(region => ({ region, color: REGION_COLORS[region], features: countryFeatures.filter(f => f.region === region) }))
+    .filter(g => g.features.length);
+  const otherFeatures = countryFeatures.filter(f => !f.region);
+  if(otherFeatures.length) regionGroups.push({ region:null, color: getVar('--land'), features: otherFeatures });
   const graticule = d3.geoGraticule().step([15, 15])();
   const sphere = { type: "Sphere" };
 
@@ -340,16 +403,21 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
     ctx.lineWidth = Math.max(0.5, 0.5*zoomFactor);
     ctx.stroke();
 
-    const features = countryFeatures;
-    const highlight = selectedId != null ? features.find(f => f.id === selectedId) : null;
+    const highlight = selectedId != null ? countryFeatures.find(f => f.id === selectedId) : null;
 
     const landLineWidth = Math.max(0.6, 0.7*zoomFactor);
-    ctx.beginPath();
-    for(const feature of features){
-      if(feature !== highlight) path(feature);
+    for(const group of regionGroups){
+      ctx.beginPath();
+      let any = false;
+      for(const feature of group.features){
+        if(feature === highlight) continue;
+        path(feature);
+        any = true;
+      }
+      if(!any) continue;
+      ctx.fillStyle = group.color;
+      ctx.fill();
     }
-    ctx.fillStyle = getVar('--land');
-    ctx.fill();
 
     if(highlight){
       ctx.beginPath(); path(highlight);
@@ -482,6 +550,25 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
     document.getElementById('hud-zoom').textContent = Math.round(zoomFactor*100)+'%';
     syncRange();
   }
+
+  function buildLegend(){
+    const legendEl = document.getElementById('legend');
+    for(const group of regionGroups){
+      if(!group.region) continue;
+      const row = document.createElement('div');
+      row.className = 'row';
+      const swatch = document.createElement('span');
+      swatch.className = 'swatch';
+      swatch.style.background = group.color;
+      const name = document.createElement('span');
+      name.className = 'name';
+      name.textContent = REGION_LABELS[group.region] || group.region;
+      row.appendChild(swatch);
+      row.appendChild(name);
+      legendEl.appendChild(row);
+    }
+  }
+  buildLegend();
 
   window.addEventListener('resize', resize);
   resize();
