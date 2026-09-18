@@ -187,21 +187,66 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
 
   // Filtre les petites îles: on retire, polygone par polygone (y compris à
   // l'intérieur des MultiPolygon), toute portion de terre dont la surface
-  // réelle passe sous MIN_ISLAND_KM2, pour ne garder que les masses
-  // continentales et les grandes îles.
+  // réelle passe sous MIN_ISLAND_KM2 -- mais seulement si ce polygone est
+  // entouré d'eau. Un polygone qui partage au moins un arc avec un autre
+  // pays (frontière terrestre) n'est jamais une île, même minuscule: ça
+  // garde les petits pays enclavés (Luxembourg, Andorre, Saint-Marin...).
   const EARTH_KM2_PER_STERADIAN = 40589641; // (4*pi*rayonTerre^2) / (4*pi steradians)
   const MIN_ISLAND_KM2 = 4000;
   const MIN_ISLAND_AREA = MIN_ISLAND_KM2 / EARTH_KM2_PER_STERADIAN;
 
-  function filterSmallIslands(features, minArea){
+  function buildArcOwners(topology){
+    const owners = new Map();
+    function addRingArcs(ring, id){
+      for(const a of ring){
+        const idx = a < 0 ? ~a : a;
+        let set = owners.get(idx);
+        if(!set){ set = new Set(); owners.set(idx, set); }
+        set.add(id);
+      }
+    }
+    for(const geom of topology.objects.countries.geometries){
+      if(geom.type === 'Polygon'){
+        for(const ring of geom.arcs) addRingArcs(ring, geom.id);
+      } else if(geom.type === 'MultiPolygon'){
+        for(const poly of geom.arcs){
+          for(const ring of poly) addRingArcs(ring, geom.id);
+        }
+      }
+    }
+    return owners;
+  }
+
+  function hasLandBorder(ring, owners){
+    for(const a of ring){
+      const idx = a < 0 ? ~a : a;
+      const set = owners.get(idx);
+      if(set && set.size > 1) return true;
+    }
+    return false;
+  }
+
+  function filterSmallIslands(topology, minArea){
+    const owners = buildArcOwners(topology);
+    const rawGeoms = topology.objects.countries.geometries;
+    const features = topojson.feature(topology, topology.objects.countries).features;
     const kept = [];
-    for(const f of features){
+    for(let i=0; i<features.length; i++){
+      const f = features[i];
+      const rawGeom = rawGeoms[i];
       const geom = f.geometry;
       if(!geom) continue;
       if(geom.type === 'Polygon'){
-        if(d3.geoArea({type:'Polygon', coordinates: geom.coordinates}) >= minArea) kept.push(f);
+        const isBordered = hasLandBorder(rawGeom.arcs[0], owners);
+        const area = d3.geoArea({type:'Polygon', coordinates: geom.coordinates});
+        if(isBordered || area >= minArea) kept.push(f);
       } else if(geom.type === 'MultiPolygon'){
-        const parts = geom.coordinates.filter(rings => d3.geoArea({type:'Polygon', coordinates: rings}) >= minArea);
+        const parts = [];
+        geom.coordinates.forEach((coords, pi) => {
+          const isBordered = hasLandBorder(rawGeom.arcs[pi][0], owners);
+          const area = d3.geoArea({type:'Polygon', coordinates: coords});
+          if(isBordered || area >= minArea) parts.push(coords);
+        });
         if(parts.length === 0) continue;
         kept.push(Object.assign({}, f, {
           geometry: parts.length === 1
@@ -215,7 +260,7 @@ const COUNTRY_NAMES = {"4":"Afghanistan","8":"Albanie","10":"Antarctique","12":"
     return kept;
   }
 
-  const countryFeatures = filterSmallIslands(topojson.feature(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries).features, MIN_ISLAND_AREA);
+  const countryFeatures = filterSmallIslands(COUNTRIES_TOPO, MIN_ISLAND_AREA);
   const graticule = d3.geoGraticule().step([15, 15])();
   const sphere = { type: "Sphere" };
 
