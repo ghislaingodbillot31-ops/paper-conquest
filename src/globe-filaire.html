@@ -217,9 +217,7 @@ const COUNTRIES_TOPO_LOW = {"type":"Topology","objects":{"countries":{"type":"Ge
   }
 
   const countryFeatures = filterSmallIslands(topojson.feature(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries).features, MIN_ISLAND_AREA);
-  const borderMesh = topojson.mesh(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries, (a, b) => a !== b);
   const countryFeaturesLow = filterSmallIslands(topojson.feature(COUNTRIES_TOPO_LOW, COUNTRIES_TOPO_LOW.objects.countries).features, MIN_ISLAND_AREA);
-  const borderMeshLow = topojson.mesh(COUNTRIES_TOPO_LOW, COUNTRIES_TOPO_LOW.objects.countries, (a, b) => a !== b);
   const graticule = d3.geoGraticule().step([15, 15])();
   const sphere = { type: "Sphere" };
 
@@ -296,7 +294,6 @@ const COUNTRIES_TOPO_LOW = {"type":"Topology","objects":{"countries":{"type":"Ge
     ctx.stroke();
 
     const features = interacting ? countryFeaturesLow : countryFeatures;
-    const activeBorderMesh = interacting ? borderMeshLow : borderMesh;
     const highlight = selectedId != null ? features.find(f => f.id === selectedId) : null;
 
     const landLineWidth = Math.max(0.6, 0.7*zoomFactor);
@@ -306,16 +303,6 @@ const COUNTRIES_TOPO_LOW = {"type":"Topology","objects":{"countries":{"type":"Ge
     }
     ctx.fillStyle = getVar('--land');
     ctx.fill();
-    ctx.lineWidth = landLineWidth;
-    ctx.strokeStyle = getVar('--land-line');
-    ctx.stroke();
-
-    ctx.beginPath(); path(activeBorderMesh);
-    ctx.lineWidth = Math.max(0.4, 0.4*zoomFactor);
-    ctx.strokeStyle = getVar('--border-line');
-    ctx.setLineDash([landLineWidth*1.6, landLineWidth*1.4]);
-    ctx.stroke();
-    ctx.setLineDash([]);
 
     if(highlight){
       ctx.beginPath(); path(highlight);
