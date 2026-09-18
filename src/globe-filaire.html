@@ -186,9 +186,39 @@ const COUNTRIES_TOPO_LOW = {"type":"Topology","objects":{"countries":{"type":"Ge
   const canvas = document.getElementById('globe');
   const ctx = canvas.getContext('2d');
 
-  const countryFeatures = topojson.feature(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries).features;
+  // Filtre les petites îles: on retire, polygone par polygone (y compris à
+  // l'intérieur des MultiPolygon), toute portion de terre dont la surface
+  // réelle passe sous MIN_ISLAND_KM2, pour ne garder que les masses
+  // continentales et les grandes îles.
+  const EARTH_KM2_PER_STERADIAN = 40589641; // (4*pi*rayonTerre^2) / (4*pi steradians)
+  const MIN_ISLAND_KM2 = 4000;
+  const MIN_ISLAND_AREA = MIN_ISLAND_KM2 / EARTH_KM2_PER_STERADIAN;
+
+  function filterSmallIslands(features, minArea){
+    const kept = [];
+    for(const f of features){
+      const geom = f.geometry;
+      if(!geom) continue;
+      if(geom.type === 'Polygon'){
+        if(d3.geoArea({type:'Polygon', coordinates: geom.coordinates}) >= minArea) kept.push(f);
+      } else if(geom.type === 'MultiPolygon'){
+        const parts = geom.coordinates.filter(rings => d3.geoArea({type:'Polygon', coordinates: rings}) >= minArea);
+        if(parts.length === 0) continue;
+        kept.push(Object.assign({}, f, {
+          geometry: parts.length === 1
+            ? {type:'Polygon', coordinates: parts[0]}
+            : {type:'MultiPolygon', coordinates: parts}
+        }));
+      } else {
+        kept.push(f);
+      }
+    }
+    return kept;
+  }
+
+  const countryFeatures = filterSmallIslands(topojson.feature(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries).features, MIN_ISLAND_AREA);
   const borderMesh = topojson.mesh(COUNTRIES_TOPO, COUNTRIES_TOPO.objects.countries, (a, b) => a !== b);
-  const countryFeaturesLow = topojson.feature(COUNTRIES_TOPO_LOW, COUNTRIES_TOPO_LOW.objects.countries).features;
+  const countryFeaturesLow = filterSmallIslands(topojson.feature(COUNTRIES_TOPO_LOW, COUNTRIES_TOPO_LOW.objects.countries).features, MIN_ISLAND_AREA);
   const borderMeshLow = topojson.mesh(COUNTRIES_TOPO_LOW, COUNTRIES_TOPO_LOW.objects.countries, (a, b) => a !== b);
   const graticule = d3.geoGraticule().step([15, 15])();
   const sphere = { type: "Sphere" };
