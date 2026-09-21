@@ -1,0 +1,126 @@
+<meta charset="utf-8">
+<title>Carte OSIRIS</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  html,body{ height:100%; margin:0; background:#0b0b0f; }
+  #map{ position:absolute; inset:0; }
+
+  .hud{
+    position:absolute; inset:0; pointer-events:none;
+    padding:20px; box-sizing:border-box;
+    display:flex; flex-direction:column; justify-content:flex-end;
+    font-family:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
+  }
+  .readout{
+    pointer-events:auto;
+    align-self:flex-start;
+    background:rgba(20,20,26,0.72);
+    border:1px solid rgba(255,255,255,0.12);
+    backdrop-filter:blur(6px);
+    border-radius:10px;
+    padding:10px 14px;
+    font-size:0.78rem;
+    line-height:1.6;
+    color:#e8e6df;
+    font-variant-numeric:tabular-nums;
+    min-width:170px;
+  }
+  .readout .row{ display:flex; justify-content:space-between; gap:14px; }
+  .readout .label{ color:#8a8878; }
+  .readout .value{ color:#e8e6df; }
+
+  .maplibregl-ctrl-attrib{ font-size:10px; }
+</style>
+
+<div id="map"></div>
+<div class="hud">
+  <div class="readout">
+    <div class="row"><span class="label">LAT</span><span class="value" id="hud-lat">0.0&deg;</span></div>
+    <div class="row"><span class="label">LON</span><span class="value" id="hud-lon">0.0&deg;</span></div>
+    <div class="row"><span class="label">ZOOM</span><span class="value" id="hud-zoom">2.0</span></div>
+  </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script>
+  // Carte de base "grand public": tuiles vectorielles CARTO (donnees OpenStreetMap),
+  // gratuites et sans cle, chargees directement par MapLibre GL (WebGL).
+  // Projection "globe": la meme carte, drapee sur une sphere plutot qu'a plat.
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: 'https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json',
+    projection: 'globe',
+    center: [2.5, 20],
+    zoom: 1.5,
+    attributionControl: true,
+  });
+
+  // Pas de bouton pour repasser en carte plate: le globe est le seul mode.
+  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'top-right');
+
+  map.on('style.load', () => {
+    // Le style CARTO charge par-dessus la config initiale ecrase la projection
+    // ("globe" passe en option du constructeur) et revient a "mercator" par
+    // defaut -- on la re-impose explicitement une fois le style applique.
+    if(map.setProjection) map.setProjection({ type: 'globe' });
+
+    if(map.setSky){
+      // Halo atmospherique + fond spatial, comme un vrai globe plutot qu'une carte plate.
+      try{
+        map.setSky({
+          'sky-color': '#000006',
+          'sky-horizon-blend': 0.5,
+          'horizon-color': '#0e1a2b',
+          'horizon-fog-blend': 0.5,
+          'fog-color': '#0b0b0f',
+          'fog-ground-blend': 0.5,
+          'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 10, 0],
+        });
+      }catch(e){ console.warn('setSky non supporte:', e); }
+    }
+
+    // Retire tout le texte de la carte de base (villes, routes, plans d'eau,
+    // POI...): tous les labels sont des layers "symbol" dans ce style.
+    const style = map.getStyle();
+    for(const layer of style.layers){
+      if(layer.type === 'symbol') map.removeLayer(layer.id);
+    }
+
+    // Ne garde que les capitales: meme champ/filtre ("capital" > 0) que le
+    // layer d'origine place_capital_dot_z7, mais visible a tous les zooms
+    // au lieu d'une bande etroite (7-8) prevue pour une carte plate detaillee.
+    map.addLayer({
+      id: 'capitals',
+      type: 'symbol',
+      source: 'carto',
+      'source-layer': 'place',
+      filter: ['>', ['get', 'capital'], 0],
+      layout: {
+        'text-field': ['get', 'name_en'],
+        'text-font': ['Montserrat Medium', 'Open Sans Bold', 'Noto Sans Regular'],
+        'text-size': 11,
+        'text-transform': 'uppercase',
+        'text-offset': [0, 0.6],
+        'text-anchor': 'top',
+        'icon-image': 'circle-11',
+        'icon-size': 0.35,
+      },
+      paint: {
+        'text-color': '#e8e6df',
+        'text-halo-color': '#0b0b0f',
+        'text-halo-width': 1,
+        'icon-color': '#e8e6df',
+      },
+    });
+  });
+
+  function updateHud(){
+    const c = map.getCenter();
+    document.getElementById('hud-lat').textContent = c.lat.toFixed(2) + '°';
+    document.getElementById('hud-lon').textContent = c.lng.toFixed(2) + '°';
+    document.getElementById('hud-zoom').textContent = map.getZoom().toFixed(1);
+  }
+  map.on('move', updateHud);
+  map.on('load', updateHud);
+</script>
