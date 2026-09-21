@@ -53,33 +53,6 @@
     display:flex; flex-direction:column; justify-content:space-between;
     box-sizing:border-box;
   }
-  header.title-block{ pointer-events:none; max-width:min(420px,80vw); }
-  h1{
-    font-family:'Fraunces',Georgia,serif;
-    font-style:italic;
-    font-weight:600;
-    font-size:clamp(1.6rem,4vw,2.4rem);
-    margin:0 0 6px;
-    letter-spacing:0.01em;
-    text-wrap:balance;
-  }
-  .subtitle{
-    margin:0;
-    font-size:0.78rem;
-    color:var(--text-muted);
-    letter-spacing:0.04em;
-    text-transform:uppercase;
-  }
-  .hint{ margin-top:10px; font-size:0.72rem; color:var(--text-muted); letter-spacing:0.02em; }
-  .hint kbd{
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    border-radius:4px;
-    padding:1px 6px;
-    font-family:inherit;
-    color:var(--text);
-  }
-
   .bottom-row{
     display:flex;
     align-items:flex-end;
@@ -88,139 +61,9 @@
     flex-wrap:wrap;
   }
 
-  .legend{
-    position:absolute;
-    top: max(20px, env(safe-area-inset-top,0px));
-    right:20px;
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    backdrop-filter: blur(6px);
-    border-radius:10px;
-    padding:10px 14px;
-    font-size:0.72rem;
-    line-height:1.9;
-    max-width:170px;
-  }
-  .legend .legend-title{
-    color:var(--text-muted);
-    font-size:0.66rem;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    margin-bottom:2px;
-  }
-  .legend .row{ display:flex; align-items:center; gap:8px; }
-  .legend .swatch{
-    width:18px; height:18px; border-radius:3px; flex:none;
-    border:1px solid var(--panel-border);
-    background-color:var(--land);
-    background-repeat:repeat;
-  }
-  .legend .name{ color:var(--text); }
-  .theme-tabs{
-    display:flex; flex-wrap:wrap; gap:2px;
-    margin:2px 0 8px;
-  }
-  .tab-btn{
-    appearance:none; -webkit-appearance:none;
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    border-radius:6px;
-    color:var(--text-muted);
-    font-family:inherit;
-    font-size:0.66rem;
-    letter-spacing:0.02em;
-    padding:4px 9px;
-    cursor:pointer;
-    transition:color .15s ease, border-color .15s ease, background .15s ease;
-  }
-  .tab-btn:hover{ color:var(--text); }
-  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
-  .tab-btn[aria-selected="true"]{
-    color:var(--text);
-    font-weight:600;
-    border-color:var(--text);
-  }
-
-  /* Registre Marin : onglets en rabat de classeur, encadrements a double filet */
-  [data-ux-theme="registre"] .theme-tabs{
-    gap:0; border-bottom:1px solid var(--land-line);
-  }
-  [data-ux-theme="registre"] .tab-btn{
-    border-radius:3px 3px 0 0;
-    border-bottom:none;
-    margin-right:-1px;
-    position:relative; top:1px;
-  }
-  [data-ux-theme="registre"] .tab-btn[aria-selected="true"]{
-    border-color:var(--land-line);
-    border-top-width:2px;
-    background:var(--bg);
-    z-index:1;
-  }
-  [data-ux-theme="registre"] .legend,
   [data-ux-theme="registre"] .readout{
     outline:1px solid var(--land-line);
     outline-offset:3px;
-  }
-  [data-ux-theme="registre"] .hint{
-    border-top:1px solid var(--border-line);
-    border-bottom:1px solid var(--border-line);
-    padding:8px 0;
-    margin-top:10px;
-  }
-
-  @media (max-width:560px){
-    .legend{ position:static; align-self:flex-end; margin-bottom:10px; max-width:none; }
-  }
-
-  .village-panel{
-    pointer-events:auto;
-    align-self:flex-start;
-    display:flex;
-    flex-direction:column;
-    align-items:flex-start;
-    gap:8px;
-  }
-  .village-btn{
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    backdrop-filter: blur(6px);
-    padding:10px 16px;
-    font-size:0.78rem;
-  }
-  .village-btn[aria-pressed="true"]{
-    background:var(--ink,var(--accent));
-    color:var(--bg);
-    border-color:var(--ink,var(--accent));
-  }
-  #globe.placing-village, #globe.drawing-river{ cursor:crosshair; }
-
-  .river-tools{ display:flex; gap:6px; }
-  .river-tools[hidden]{ display:none; }
-  .river-tools button{
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    backdrop-filter: blur(6px);
-    border-radius:6px;
-    padding:6px 10px;
-    font-family:inherit;
-    font-size:0.68rem;
-    color:var(--text);
-    cursor:pointer;
-  }
-  .river-tools button:hover{ color:var(--bg); background:var(--ink,var(--accent)); border-color:var(--ink,var(--accent)); }
-
-  .river-export-box{
-    width:280px;
-    height:140px;
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    border-radius:8px;
-    padding:8px 10px;
-    font-family:'IBM Plex Mono','SFMono-Regular',Consolas,monospace;
-    font-size:0.66rem;
-    color:var(--text);
-    resize:none;
   }
 
   .readout{
@@ -289,27 +132,16 @@
   }
 </style>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
 <div class="stage">
   <canvas id="globe" aria-label="Globe terrestre filaire interactif"></canvas>
 </div>
 
 <div class="hud">
-  <div class="village-panel">
-    <button type="button" id="btn-village-mode" class="tab-btn village-btn" aria-pressed="false">Cr&eacute;er ton village</button>
-    <button type="button" id="btn-river-mode" class="tab-btn village-btn" aria-pressed="false">Tracer une rivi&egrave;re</button>
-    <div class="river-tools" id="river-tools" hidden>
-      <button type="button" id="btn-river-new">Nouveau tron&ccedil;on</button>
-      <button type="button" id="btn-river-undo">Annuler point</button>
-      <button type="button" id="btn-river-export">Exporter</button>
-    </div>
-    <textarea id="river-export-box" class="river-export-box" readonly hidden spellcheck="false"></textarea>
-  </div>
-
   <div class="bottom-row">
     <div class="readout">
-      <div class="row"><span class="label">VILLAGES</span><span class="value" id="hud-villages">0</span></div>
+      <div class="row"><span class="label">PAYS</span><span class="value" id="hud-country">&mdash;</span></div>
       <div class="row"><span class="label">LAT</span><span class="value" id="hud-lat">15.0&deg;</span></div>
       <div class="row"><span class="label">LON</span><span class="value" id="hud-lon">0.0&deg;</span></div>
       <div class="row"><span class="label">ZOOM</span><span class="value" id="hud-zoom">100%</span></div>
@@ -560,6 +392,8 @@ function applyTheme(name){
   const root = document.documentElement.style;
   for(const [k,v] of Object.entries(theme.vars)) root.setProperty(k, v);
   document.documentElement.setAttribute('data-ux-theme', name);
+  const legendVeg = document.getElementById('legend-veg');
+  if(legendVeg) legendVeg.hidden = !!theme.countryPalette;
   styleCache = {};
   gradCacheKey = null;
   BIOME_ORDER.forEach(biome => {
@@ -660,6 +494,23 @@ applyTheme((() => {
   }
 
   const countryFeatures = filterSmallIslands(COUNTRIES_TOPO, MIN_ISLAND_AREA);
+
+  // Integre des territoires disputes au pays choisi: geometrie fusionnee
+  // (topojson.merge dissout l'arc de frontiere partage), une seule id/couleur,
+  // et le territoire absorbe disparait de la liste des pays.
+  function mergeTerritory(keepId, otherMatch){
+    const rawGeoms = COUNTRIES_TOPO.objects.countries.geometries;
+    const rawKeep = rawGeoms.find(g => g.id === keepId);
+    const rawOther = rawGeoms.find(otherMatch);
+    const keepFeature = countryFeatures.find(f => f.id === keepId);
+    const otherIdx = countryFeatures.findIndex(otherMatch);
+    if(!rawKeep || !rawOther || !keepFeature || otherIdx === -1) return;
+    keepFeature.geometry = topojson.merge(COUNTRIES_TOPO, [rawKeep, rawOther]);
+    countryFeatures.splice(otherIdx, 1);
+  }
+  mergeTerritory("504", g => g.id === "732");                                   // Sahara occidental -> Maroc
+  mergeTerritory("196", g => g.properties && g.properties.name === "N. Cyprus"); // Chypre du Nord -> Chypre
+
   const biomeGroups = BIOME_ORDER
     .map(biome => ({ biome, features: countryFeatures.filter(f => f.biome === biome) }))
     .filter(g => g.features.length);
@@ -692,18 +543,7 @@ applyTheme((() => {
     countryFillColorsKey = designTheme;
   }
 
-  // Villages poses par le joueur, en coordonnees geographiques (lon/lat) --
-  // ainsi ils restent a leur place sur le globe quand on fait pivoter la vue.
-  const villages = [];
-  let placingVillage = false;
-
-  // Rivieres tracees a la main : chaque riviere est une suite de points
-  // lon/lat. currentRiverPoints est le trace en cours (null = aucun trace
-  // demarre depuis l'activation du mode).
-  const rivers = [];
-  let currentRiverPoints = null;
-  let drawingRiver = false;
-
+  let selectedId = null;
   let renderScheduled = false;
   function requestRender(){
     if(renderScheduled) return;
@@ -776,39 +616,57 @@ applyTheme((() => {
     ctx.fillStyle = oceanGrad;
     ctx.fill();
 
-    // Terre en aplat unique : plus de decoupage par pays, donc plus de
-    // frontiere -- un seul chemin, un seul remplissage, aucun trait.
-    ctx.beginPath();
-    for(const feature of countryFeatures) path(feature);
-    ctx.fillStyle = getVar('--land');
-    ctx.fill();
+    const highlight = selectedId != null ? countryFeatures.find(f => f.id === selectedId) : null;
+    const theme = DESIGN_THEMES[designTheme];
+    ensureCountryFillColors(theme);
 
-    // Rivieres tracees a la main par le joueur (outil "Tracer une riviere")
-    // -- meme teinte que la mer, comme les fleuves generes precedemment.
-    if(rivers.length || (currentRiverPoints && currentRiverPoints.length >= 2)){
-      ctx.beginPath();
-      for(const river of rivers){
-        if(river.points.length < 2) continue;
-        path({ type:'LineString', coordinates: river.points.map(p => [p.lon, p.lat]) });
-      }
-      if(currentRiverPoints && currentRiverPoints.length >= 2){
-        path({ type:'LineString', coordinates: currentRiverPoints.map(p => [p.lon, p.lat]) });
-      }
-      ctx.strokeStyle = getVar('--ocean-deep');
-      ctx.lineWidth = Math.max(0.7, 0.8*zoomFactor);
-      ctx.lineJoin = 'round';
-      ctx.lineCap = 'round';
-      ctx.stroke();
-    }
-    // Points du trace en cours, pour voir precisement ou chaque clic est tombe.
-    if(currentRiverPoints && currentRiverPoints.length){
-      ctx.fillStyle = getVar('--ocean-deep');
-      for(const p of currentRiverPoints){
-        const xy = projection([p.lon, p.lat]);
-        if(!xy) continue;
+    const landLineWidth = Math.max(0.6, 0.7*zoomFactor);
+    if(countryColorGroups){
+      for(const group of countryColorGroups){
         ctx.beginPath();
-        ctx.arc(xy[0], xy[1], 2.5, 0, Math.PI*2);
+        let any = false;
+        for(const feature of group.features){
+          if(feature === highlight) continue;
+          path(feature);
+          any = true;
+        }
+        if(!any) continue;
+        ctx.fillStyle = group.color;
         ctx.fill();
+        // Trait fin entre pays, comme versions/v1 -- sans lui, deux pays de
+        // meme teinte assignee (hasard du hachage) se confondent completement.
+        ctx.lineWidth = landLineWidth;
+        ctx.strokeStyle = getVar('--land-line');
+        ctx.stroke();
+      }
+    } else {
+      for(const group of biomeGroups){
+        ctx.beginPath();
+        let any = false;
+        for(const feature of group.features){
+          if(feature === highlight) continue;
+          path(feature);
+          any = true;
+        }
+        if(!any) continue;
+        ctx.fillStyle = group.biome ? activeFills[group.biome] : getVar('--land');
+        ctx.fill();
+      }
+    }
+
+    if(highlight){
+      ctx.beginPath(); path(highlight);
+      ctx.fillStyle = getVar('--selection-fill') || getVar('--highlight-fill');
+      ctx.fill();
+      const outlineWRaw = getVar('--selection-outline-width');
+      const outlineW = outlineWRaw === '' ? 0.8 : parseFloat(outlineWRaw);
+      if(outlineW > 0){
+        ctx.lineWidth = landLineWidth + 2.5;
+        ctx.strokeStyle = getVar('--highlight-glow');
+        ctx.stroke();
+        ctx.lineWidth = landLineWidth + outlineW;
+        ctx.strokeStyle = getVar('--selection-line');
+        ctx.stroke();
       }
     }
 
@@ -816,27 +674,6 @@ applyTheme((() => {
     ctx.lineWidth = 1.6;
     ctx.strokeStyle = getVar('--text');
     ctx.stroke();
-
-    // Villages places par le joueur -- uniquement ceux visibles sur
-    // l'hemisphere face a la camera (sinon un point au dos du globe
-    // apparaitrait projete par-dessus, d3 ne le decoupe pas tout seul).
-    if(villages.length){
-      const rot = projection.rotate();
-      const center = [-rot[0], -rot[1]];
-      const radius = Math.max(4, 5*Math.sqrt(zoomFactor));
-      for(const v of villages){
-        if(d3.geoDistance([v.lon, v.lat], center) > Math.PI/2) continue;
-        const p = projection([v.lon, v.lat]);
-        if(!p) continue;
-        ctx.beginPath();
-        ctx.arc(p[0], p[1], radius, 0, Math.PI*2);
-        ctx.fillStyle = getVar('--land-line');
-        ctx.fill();
-        ctx.lineWidth = 1.4;
-        ctx.strokeStyle = getVar('--bg');
-        ctx.stroke();
-      }
-    }
   }
 
   let dragging = false, lastPos = null, lastRotate = null;
@@ -890,7 +727,7 @@ applyTheme((() => {
       if(dragging && downPos && !multiTouch){
         const dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
         const duration = performance.now() - downTime;
-        if(dist < 6 && duration < 500) handleTap(e.clientX, e.clientY);
+        if(dist < 6 && duration < 500) selectCountryAt(e.clientX, e.clientY);
       }
       dragging = false;
       downPos = null;
@@ -899,80 +736,19 @@ applyTheme((() => {
   window.addEventListener('pointerup', endPointer);
   window.addEventListener('pointercancel', endPointer);
 
-  function pointerToCoord(clientX, clientY){
+  function selectCountryAt(clientX, clientY){
     const rect = canvas.getBoundingClientRect();
     const coord = projection.invert([clientX - rect.left, clientY - rect.top]);
-    if(!coord || !isFinite(coord[0]) || !isFinite(coord[1])) return null;
-    const rot = projection.rotate();
-    const center = [-rot[0], -rot[1]];
-    if(d3.geoDistance(coord, center) > Math.PI/2) return null; // clic hors du globe visible
-    return coord;
-  }
-
-  function handleTap(clientX, clientY){
-    if(placingVillage){
-      const coord = pointerToCoord(clientX, clientY);
-      if(!coord) return;
-      villages.push({ lon: coord[0], lat: coord[1] });
-      document.getElementById('hud-villages').textContent = villages.length;
-      requestRender();
-    } else if(drawingRiver){
-      const coord = pointerToCoord(clientX, clientY);
-      if(!coord) return;
-      if(!currentRiverPoints) currentRiverPoints = [];
-      currentRiverPoints.push({ lon: coord[0], lat: coord[1] });
-      requestRender();
+    let found = null;
+    if(coord && isFinite(coord[0]) && isFinite(coord[1])){
+      for(const feature of countryFeatures){
+        if(d3.geoContains(feature, coord)){ found = feature; break; }
+      }
     }
-  }
-
-  function setPlacingVillage(on){
-    placingVillage = on;
-    villageBtn.setAttribute('aria-pressed', String(on));
-    canvas.classList.toggle('placing-village', on);
-    if(on) setDrawingRiver(false);
-  }
-  function setDrawingRiver(on){
-    drawingRiver = on;
-    riverBtn.setAttribute('aria-pressed', String(on));
-    canvas.classList.toggle('drawing-river', on);
-    riverTools.hidden = !on;
-    if(on) setPlacingVillage(false);
-  }
-
-  const villageBtn = document.getElementById('btn-village-mode');
-  villageBtn.addEventListener('click', () => setPlacingVillage(!placingVillage));
-
-  const riverBtn = document.getElementById('btn-river-mode');
-  const riverTools = document.getElementById('river-tools');
-  const riverExportBox = document.getElementById('river-export-box');
-  riverBtn.addEventListener('click', () => setDrawingRiver(!drawingRiver));
-
-  document.getElementById('btn-river-new').addEventListener('click', () => {
-    if(currentRiverPoints && currentRiverPoints.length >= 2) rivers.push({ points: currentRiverPoints });
-    currentRiverPoints = null;
+    selectedId = found ? found.id : null;
+    document.getElementById('hud-country').textContent = found ? (COUNTRY_NAMES[String(Number(found.id))] || 'Territoire non reconnu') : '—';
     requestRender();
-  });
-  document.getElementById('btn-river-undo').addEventListener('click', () => {
-    if(currentRiverPoints && currentRiverPoints.length){
-      currentRiverPoints.pop();
-      if(!currentRiverPoints.length) currentRiverPoints = null;
-    } else if(rivers.length){
-      currentRiverPoints = rivers.pop().points;
-      currentRiverPoints.pop();
-      if(!currentRiverPoints.length) currentRiverPoints = null;
-    }
-    requestRender();
-  });
-  document.getElementById('btn-river-export').addEventListener('click', () => {
-    if(currentRiverPoints && currentRiverPoints.length >= 2){ rivers.push({ points: currentRiverPoints }); currentRiverPoints = null; }
-    const hidden = riverExportBox.hidden;
-    riverExportBox.hidden = !hidden;
-    if(hidden){
-      riverExportBox.value = JSON.stringify(rivers, null, 2);
-      riverExportBox.focus();
-      riverExportBox.select();
-    }
-  });
+  }
 
   canvas.addEventListener('wheel', (e)=>{
     e.preventDefault();
@@ -989,6 +765,9 @@ applyTheme((() => {
   document.getElementById('zoom-out').addEventListener('click', ()=>{ setZoom(zoomFactor/1.25); });
   document.getElementById('reset-view').addEventListener('click', ()=>{
     projection.rotate([0,-15,0]);
+    selectedFeature = null;
+    selectedId = null;
+    document.getElementById('hud-country').textContent = '—';
     setZoom(1);
   });
 

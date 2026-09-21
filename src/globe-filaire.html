@@ -53,33 +53,6 @@
     display:flex; flex-direction:column; justify-content:space-between;
     box-sizing:border-box;
   }
-  header.title-block{ pointer-events:none; max-width:min(420px,80vw); }
-  h1{
-    font-family:'Fraunces',Georgia,serif;
-    font-style:italic;
-    font-weight:600;
-    font-size:clamp(1.6rem,4vw,2.4rem);
-    margin:0 0 6px;
-    letter-spacing:0.01em;
-    text-wrap:balance;
-  }
-  .subtitle{
-    margin:0;
-    font-size:0.78rem;
-    color:var(--text-muted);
-    letter-spacing:0.04em;
-    text-transform:uppercase;
-  }
-  .hint{ margin-top:10px; font-size:0.72rem; color:var(--text-muted); letter-spacing:0.02em; }
-  .hint kbd{
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    border-radius:4px;
-    padding:1px 6px;
-    font-family:inherit;
-    color:var(--text);
-  }
-
   .bottom-row{
     display:flex;
     align-items:flex-end;
@@ -88,89 +61,9 @@
     flex-wrap:wrap;
   }
 
-  .legend{
-    position:absolute;
-    top: max(20px, env(safe-area-inset-top,0px));
-    right:20px;
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    backdrop-filter: blur(6px);
-    border-radius:10px;
-    padding:10px 14px;
-    font-size:0.72rem;
-    line-height:1.9;
-    max-width:170px;
-  }
-  .legend .legend-title{
-    color:var(--text-muted);
-    font-size:0.66rem;
-    letter-spacing:0.05em;
-    text-transform:uppercase;
-    margin-bottom:2px;
-  }
-  .legend .row{ display:flex; align-items:center; gap:8px; }
-  .legend .swatch{
-    width:18px; height:18px; border-radius:3px; flex:none;
-    border:1px solid var(--panel-border);
-    background-color:var(--land);
-    background-repeat:repeat;
-  }
-  .legend .name{ color:var(--text); }
-  .theme-tabs{
-    display:flex; flex-wrap:wrap; gap:2px;
-    margin:2px 0 8px;
-  }
-  .tab-btn{
-    appearance:none; -webkit-appearance:none;
-    background:var(--panel);
-    border:1px solid var(--panel-border);
-    border-radius:6px;
-    color:var(--text-muted);
-    font-family:inherit;
-    font-size:0.66rem;
-    letter-spacing:0.02em;
-    padding:4px 9px;
-    cursor:pointer;
-    transition:color .15s ease, border-color .15s ease, background .15s ease;
-  }
-  .tab-btn:hover{ color:var(--text); }
-  .tab-btn:focus-visible{ outline:2px solid var(--accent); outline-offset:1px; }
-  .tab-btn[aria-selected="true"]{
-    color:var(--text);
-    font-weight:600;
-    border-color:var(--text);
-  }
-
-  /* Registre Marin : onglets en rabat de classeur, encadrements a double filet */
-  [data-ux-theme="registre"] .theme-tabs{
-    gap:0; border-bottom:1px solid var(--land-line);
-  }
-  [data-ux-theme="registre"] .tab-btn{
-    border-radius:3px 3px 0 0;
-    border-bottom:none;
-    margin-right:-1px;
-    position:relative; top:1px;
-  }
-  [data-ux-theme="registre"] .tab-btn[aria-selected="true"]{
-    border-color:var(--land-line);
-    border-top-width:2px;
-    background:var(--bg);
-    z-index:1;
-  }
-  [data-ux-theme="registre"] .legend,
   [data-ux-theme="registre"] .readout{
     outline:1px solid var(--land-line);
     outline-offset:3px;
-  }
-  [data-ux-theme="registre"] .hint{
-    border-top:1px solid var(--border-line);
-    border-bottom:1px solid var(--border-line);
-    padding:8px 0;
-    margin-top:10px;
-  }
-
-  @media (max-width:560px){
-    .legend{ position:static; align-self:flex-end; margin-bottom:10px; max-width:none; }
   }
 
   .readout{
@@ -239,26 +132,13 @@
   }
 </style>
 
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@1,500;1,600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&display=swap">
 
 <div class="stage">
   <canvas id="globe" aria-label="Globe terrestre filaire interactif"></canvas>
 </div>
 
 <div class="hud">
-  <header class="title-block">
-    <h1>Globe Filaire</h1>
-    <p class="subtitle">Carte du monde &middot; maillage &middot; oc&eacute;ans</p>
-    <p class="hint">Cliquer pour s&eacute;lectionner un pays &middot; Glisser pour pivoter <kbd>&#8596;</kbd> &nbsp;Molette / pincer pour zoomer <kbd>&#8597;</kbd></p>
-  </header>
-
-  <div class="legend" id="legend">
-    <div class="theme-tabs" id="design-theme-tabs" role="tablist" aria-label="Style de dessin"></div>
-    <div id="legend-veg">
-      <div class="legend-title">V&eacute;g&eacute;tation</div>
-    </div>
-  </div>
-
   <div class="bottom-row">
     <div class="readout">
       <div class="row"><span class="label">PAYS</span><span class="value" id="hud-country">&mdash;</span></div>
@@ -614,6 +494,23 @@ applyTheme((() => {
   }
 
   const countryFeatures = filterSmallIslands(COUNTRIES_TOPO, MIN_ISLAND_AREA);
+
+  // Integre des territoires disputes au pays choisi: geometrie fusionnee
+  // (topojson.merge dissout l'arc de frontiere partage), une seule id/couleur,
+  // et le territoire absorbe disparait de la liste des pays.
+  function mergeTerritory(keepId, otherMatch){
+    const rawGeoms = COUNTRIES_TOPO.objects.countries.geometries;
+    const rawKeep = rawGeoms.find(g => g.id === keepId);
+    const rawOther = rawGeoms.find(otherMatch);
+    const keepFeature = countryFeatures.find(f => f.id === keepId);
+    const otherIdx = countryFeatures.findIndex(otherMatch);
+    if(!rawKeep || !rawOther || !keepFeature || otherIdx === -1) return;
+    keepFeature.geometry = topojson.merge(COUNTRIES_TOPO, [rawKeep, rawOther]);
+    countryFeatures.splice(otherIdx, 1);
+  }
+  mergeTerritory("504", g => g.id === "732");                                   // Sahara occidental -> Maroc
+  mergeTerritory("196", g => g.properties && g.properties.name === "N. Cyprus"); // Chypre du Nord -> Chypre
+
   const biomeGroups = BIOME_ORDER
     .map(biome => ({ biome, features: countryFeatures.filter(f => f.biome === biome) }))
     .filter(g => g.features.length);
@@ -892,46 +789,6 @@ applyTheme((() => {
     document.getElementById('hud-zoom').textContent = Math.round(zoomFactor*100)+'%';
     syncRange();
   }
-
-  const legendRows = [];
-  function buildLegend(){
-    const legendEl = document.getElementById('legend-veg');
-    for(const group of biomeGroups){
-      if(!group.biome) continue;
-      const row = document.createElement('div');
-      row.className = 'row';
-      const swatch = document.createElement('span');
-      swatch.className = 'swatch';
-      const name = document.createElement('span');
-      name.className = 'name';
-      name.textContent = BIOME_LABELS[group.biome] || group.biome;
-      row.appendChild(swatch);
-      row.appendChild(name);
-      legendEl.appendChild(row);
-      legendRows.push({ biome: group.biome, swatch });
-    }
-    syncLegendSwatches();
-  }
-  function syncLegendSwatches(){
-    for(const row of legendRows){
-      const tile = legendTiles[row.biome];
-      row.swatch.style.backgroundImage = 'url(' + tile.url + ')';
-      row.swatch.style.backgroundSize = tile.size + 'px ' + tile.size + 'px';
-    }
-  }
-  buildLegend();
-
-  const themeTabs = document.getElementById('design-theme-tabs');
-  themeTabs.innerHTML = Object.entries(DESIGN_THEMES)
-    .map(([key, t]) => `<button type="button" class="tab-btn" role="tab" data-theme="${key}" aria-selected="${key === designTheme}">${t.label}</button>`).join('');
-  themeTabs.addEventListener('click', (e) => {
-    const btn = e.target.closest('.tab-btn');
-    if(!btn) return;
-    applyTheme(btn.dataset.theme);
-    for(const b of themeTabs.querySelectorAll('.tab-btn')) b.setAttribute('aria-selected', String(b === btn));
-    syncLegendSwatches();
-    requestRender();
-  });
 
   window.addEventListener('resize', resize);
   resize();
