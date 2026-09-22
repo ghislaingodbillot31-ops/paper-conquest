@@ -1,0 +1,732 @@
+<meta charset="utf-8">
+<title>Paper Conquest</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper: #f3eddd;
+    --paper-alt: #ece2c9;
+    --card: #faf6ea;
+    --ink: #3c3527;
+    --ink-soft: #8c8368;
+    --ink-faint: #b3a988;
+    --line: #d6c9a3;
+    --line-strong: #b3a179;
+    --accent: #c1975a;
+    --accent-ink: #4a3418;
+    --good: #4a8a3f;
+    --warn: #b5623a;
+    --chart-1: #1f6ba0;
+    --chart-2: #4a8a3f;
+    --chart-3: #a0632e;
+    --ocean: #dbe4e3;
+    --ocean-line: #aebfc0;
+    --shadow: rgba(60,50,30,0.18);
+    --reg-namerica: #7f9db3;
+    --reg-samerica: #c98868;
+    --reg-europe: #93a878;
+    --reg-africa: #a08bb0;
+    --reg-asia: #d0a758;
+    --reg-oceania: #5f9a92;
+  }
+  *{ box-sizing:border-box; }
+  html,body{ height:100%; margin:0; background:var(--paper); color:var(--ink); }
+  body{
+    font-family:'Nunito', -apple-system, sans-serif;
+    font-size:15px;
+    background-image:
+      radial-gradient(circle at 15% 20%, rgba(255,255,255,0.35), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(120,105,70,0.06), transparent 55%);
+  }
+  h1,h2,h3{ margin:0; font-weight:600; }
+  .hand{ font-family:'Caveat','Segoe Script',cursive; }
+  button{ font-family:inherit; }
+
+  .app{
+    height:100%;
+    display:grid;
+    grid-template-columns:200px 1fr;
+    grid-template-rows:auto 1fr;
+    grid-template-areas: "topbar topbar" "sidebar main";
+    min-height:0;
+  }
+
+  /* ---------- Top bar ---------- */
+  .topbar{
+    grid-area:topbar;
+    display:flex; align-items:center; gap:22px;
+    padding:12px 22px;
+    background:var(--card);
+    border-bottom:2px solid var(--line);
+    flex-wrap:wrap;
+  }
+  .brand{ display:flex; align-items:center; gap:10px; }
+  .brand-crest{ width:38px; height:38px; flex:none; }
+  .brand-text .hand{ font-size:1.7rem; line-height:1; letter-spacing:0.02em; color:var(--ink); }
+  .brand-sub{ font-size:0.72rem; color:var(--ink-soft); font-style:italic; margin-top:1px; }
+
+  .stat-pills{ display:flex; gap:18px; flex-wrap:wrap; margin-left:auto; }
+  .stat-pill{ display:flex; align-items:center; gap:8px; }
+  .stat-pill .icon{ width:22px; height:22px; flex:none; color:var(--accent-ink); }
+  .stat-pill .num{ font-weight:800; font-variant-numeric:tabular-nums; font-size:0.92rem; }
+  .stat-pill .delta{ font-size:0.68rem; color:var(--good); display:block; }
+
+  .topbar-actions{ display:flex; gap:6px; }
+  .icon-btn{
+    width:34px; height:34px; border-radius:50%;
+    border:1.5px solid var(--line-strong); background:var(--paper-alt);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; color:var(--ink);
+  }
+  .icon-btn:hover{ background:var(--accent); border-color:var(--accent-ink); color:#fff; }
+  .icon-btn svg{ width:16px; height:16px; }
+
+  /* ---------- Sidebar ---------- */
+  .sidebar{
+    grid-area:sidebar;
+    background:var(--paper-alt);
+    border-right:2px solid var(--line);
+    padding:14px 8px;
+    overflow-y:auto;
+    min-height:0;
+  }
+  .nav-item{
+    display:flex; align-items:center; gap:10px;
+    width:100%; padding:9px 12px; margin-bottom:2px;
+    border:none; background:transparent; border-radius:9px;
+    color:var(--ink); font-size:0.88rem; font-weight:600;
+    cursor:pointer; text-align:left;
+  }
+  .nav-item svg{ width:18px; height:18px; flex:none; color:var(--ink-soft); }
+  .nav-item:hover{ background:rgba(193,151,90,0.16); }
+  .nav-item.active{ background:var(--card); box-shadow:1px 1px 0 var(--line-strong) inset; }
+  .nav-item.active svg{ color:var(--accent-ink); }
+
+  /* ---------- Main workspace ---------- */
+  main.workspace{ grid-area:main; overflow-y:auto; padding:18px 22px 30px; min-height:0; }
+  .view[hidden]{ display:none; }
+
+  .card{
+    background:var(--card);
+    border:1.5px solid var(--line);
+    border-radius:12px;
+    box-shadow:0 2px 0 var(--shadow);
+    padding:14px 16px 16px;
+  }
+  .card-title{ display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+  .card-title .flag{ width:15px; height:11px; flex:none; }
+  .card-title h2{ font-size:0.95rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink); }
+  .card-title .spacer{ flex:1; }
+  .card-title a{ font-size:0.76rem; color:var(--accent-ink); text-decoration:none; border-bottom:1px dashed var(--accent-ink); }
+
+  .carte-row{ display:flex; gap:16px; align-items:flex-start; }
+  .carte-main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:16px; }
+
+  .map-card{ position:relative; overflow:hidden; }
+  .map-ribbon{
+    position:absolute; top:14px; left:14px; z-index:2;
+    background:var(--card); border:1.5px solid var(--line-strong);
+    border-radius:0 8px 8px 0; padding:6px 14px 6px 10px;
+    font-size:0.8rem; font-weight:700; color:var(--ink);
+    box-shadow:2px 2px 0 var(--shadow);
+  }
+  .map-wrap{ position:relative; width:100%; aspect-ratio:16/9.6; background:var(--ocean); border-radius:8px; overflow:hidden; }
+  #world-svg{ width:100%; height:100%; display:block; }
+  .continent{ stroke:var(--ink); stroke-width:2; stroke-linejoin:round; cursor:pointer; transition:filter .15s; }
+  .continent:hover{ filter:brightness(1.06); }
+  .continent.selected{ stroke:var(--accent-ink); stroke-width:4; }
+  .continent-label{ font-family:'Caveat',cursive; font-weight:700; font-size:22px; fill:var(--ink); pointer-events:none; text-anchor:middle; }
+  .ocean-label{ font-family:'Nunito',sans-serif; font-style:italic; font-size:12px; fill:var(--ink-soft); pointer-events:none; }
+  .compass{ position:absolute; left:16px; bottom:14px; width:46px; height:46px; opacity:.8; }
+
+  .bottom-row{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
+
+  .tabs{ display:flex; gap:4px; margin-bottom:8px; }
+  .tab{
+    border:1.5px solid var(--line-strong); background:var(--paper-alt); color:var(--ink-soft);
+    padding:4px 12px; border-radius:7px 7px 0 0; font-size:0.74rem; font-weight:700;
+    cursor:pointer; border-bottom:none;
+  }
+  .tab.active{ background:var(--card); color:var(--ink); }
+  .chart-legend{ display:flex; gap:14px; font-size:0.72rem; margin-top:4px; }
+  .chart-legend span{ display:flex; align-items:center; gap:5px; }
+  .chart-legend i{ width:10px; height:10px; border-radius:50%; display:inline-block; }
+  .chart-tip{
+    position:absolute; pointer-events:none; background:var(--ink); color:var(--paper);
+    font-size:0.68rem; padding:4px 7px; border-radius:5px; transform:translate(-50%,-115%);
+    white-space:nowrap; opacity:0; transition:opacity .1s;
+  }
+  .chart-box{ position:relative; }
+
+  table.rank{ width:100%; border-collapse:collapse; font-size:0.78rem; }
+  table.rank th{ text-align:left; color:var(--ink-soft); font-weight:700; font-size:0.68rem; text-transform:uppercase; padding-bottom:6px; }
+  table.rank td{ padding:5px 4px; vertical-align:middle; border-top:1px solid var(--line); }
+  table.rank td.num{ font-variant-numeric:tabular-nums; font-weight:700; text-align:right; }
+  .rank-bar-track{ background:var(--paper-alt); border-radius:4px; height:8px; overflow:hidden; }
+  .rank-bar-fill{ height:100%; border-radius:4px; }
+  .rank-name{ display:flex; align-items:center; gap:6px; font-weight:700; }
+
+  .events-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:9px; }
+  .events-list li{ display:flex; gap:9px; align-items:flex-start; font-size:0.78rem; }
+  .events-list .ev-icon{ width:20px; height:20px; flex:none; }
+  .events-list .ev-date{ color:var(--ink-soft); font-variant-numeric:tabular-nums; font-size:0.7rem; display:block; }
+
+  /* ---------- Region panel ---------- */
+  .region-panel{
+    flex:0 0 300px; width:300px; max-width:100%;
+    display:flex; flex-direction:column; gap:12px;
+  }
+  .region-art{ width:100%; aspect-ratio:16/9; border-radius:9px; overflow:hidden; border:1.5px solid var(--line); }
+  .region-art svg{ width:100%; height:100%; display:block; }
+  .region-name{ font-size:1.6rem; line-height:1.1; }
+  .region-tagline{ font-size:0.78rem; color:var(--ink-soft); font-style:italic; margin-top:2px; }
+  .region-section-title{ font-size:0.7rem; text-transform:uppercase; letter-spacing:0.06em; color:var(--ink-soft); margin:12px 0 6px; }
+  .region-row{ display:flex; justify-content:space-between; gap:10px; font-size:0.8rem; padding:4px 0; border-bottom:1px dotted var(--line); }
+  .region-row .v{ font-weight:700; text-align:right; }
+  .tag-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:5px; }
+  .tag-list li{ display:flex; gap:7px; font-size:0.78rem; align-items:flex-start; }
+  .tag-list.good li svg{ color:var(--good); }
+  .tag-list.warn li svg{ color:var(--warn); }
+  .tag-list svg{ width:14px; height:14px; flex:none; margin-top:2px; }
+
+  .select-btn{
+    width:100%; padding:11px 0; margin-top:4px;
+    background:linear-gradient(180deg,#d3ac71,var(--accent));
+    border:1.5px solid var(--accent-ink); border-radius:9px;
+    color:var(--accent-ink); font-weight:800; letter-spacing:0.06em; font-size:0.85rem;
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    cursor:pointer; box-shadow:0 2px 0 var(--shadow);
+  }
+  .select-btn:disabled{ opacity:.45; cursor:not-allowed; filter:grayscale(.4); }
+  .select-btn svg{ width:16px; height:16px; }
+  .locked-note{ display:none; align-items:center; gap:7px; font-size:0.76rem; color:var(--good); font-weight:700; margin-top:6px; }
+  .locked-note svg{ width:15px; height:15px; }
+  .region-empty{ font-size:0.82rem; color:var(--ink-soft); padding:20px 4px; text-align:center; }
+
+  /* ---------- Placeholder view ---------- */
+  .placeholder-card{ padding:40px 20px; text-align:center; color:var(--ink-soft); }
+  .placeholder-card .hand{ font-size:2rem; color:var(--ink); display:block; margin-bottom:6px; }
+
+  /* ---------- Économie / Diplomatie views ---------- */
+  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+  .stack{ display:flex; flex-direction:column; gap:14px; }
+  .resource-row{ display:flex; align-items:center; gap:10px; font-size:0.8rem; margin-bottom:8px; }
+  .resource-row .rlabel{ width:88px; flex:none; color:var(--ink-soft); }
+  .resource-row .rtrack{ flex:1; background:var(--paper-alt); border-radius:5px; height:10px; overflow:hidden; }
+  .resource-row .rfill{ height:100%; border-radius:5px; background:var(--chart-1); }
+  .resource-row .rval{ width:46px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
+
+  table.simple{ width:100%; border-collapse:collapse; font-size:0.8rem; }
+  table.simple th{ text-align:left; font-size:0.68rem; text-transform:uppercase; color:var(--ink-soft); padding-bottom:6px; }
+  table.simple td{ padding:6px 4px; border-top:1px solid var(--line); }
+  .status-chip{ display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:20px; font-size:0.7rem; font-weight:700; }
+  .status-chip.good{ background:rgba(74,138,63,0.15); color:var(--good); }
+  .status-chip.warn{ background:rgba(181,98,58,0.15); color:var(--warn); }
+  .status-chip.neutral{ background:var(--paper-alt); color:var(--ink-soft); }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width:900px){
+    .app{ grid-template-columns:64px 1fr; }
+    .nav-item span{ display:none; }
+    .nav-item{ justify-content:center; padding:10px; }
+    .bottom-row{ grid-template-columns:1fr; }
+    .carte-row{ flex-direction:column; }
+    .region-panel{ flex:1 1 auto; width:100%; }
+    .grid-2{ grid-template-columns:1fr; }
+    .stat-pills{ gap:12px; }
+  }
+  @media (max-width:520px){
+    .topbar{ padding:10px 14px; gap:12px; }
+    .stat-pills{ margin-left:0; order:3; width:100%; justify-content:space-between; }
+    main.workspace{ padding:14px 12px 24px; }
+  }
+</style>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-crest" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#3c3527" stroke-width="2"/><path d="M20 2 C 26 10 26 30 20 38 M20 2 C 14 10 14 30 20 38 M2 20 H38 M5 12 H35 M5 28 H35" fill="none" stroke="#3c3527" stroke-width="1.2"/></svg>
+      <div class="brand-text">
+        <h1 class="hand">Paper Conquest</h1>
+        <div class="brand-sub hand">Un monde entre vos mains</div>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 9c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5-1.3 2-3 2.5-3 1.1-3 2.5 1.3 2.5 3 2.5 3-1.1 3-2.5"/></svg>
+        <div><span class="num">125 430 000</span><span class="delta">+12 450 000 / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="18" cy="9" r="2.6"/><path d="M15.5 14.2c2.9.4 5 2.6 5 5.8"/></svg>
+        <div><span class="num">8 742 311</span><span class="delta">+24 560 / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 1.1 2.4 1.7 4 1.7s3-.6 4-1.7"/></svg>
+        <div><span class="num">72%</span><span class="delta">+2% / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+        <div><span class="num" id="topbar-date">15 mars 2027</span><span class="delta" id="topbar-time">14:32</span></div></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" title="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 6l9 7 9-7"/></svg></button>
+      <button class="icon-btn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg></button>
+      <button class="icon-btn" title="Paramètres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.15-1.4l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.4-1.4L14 3h-4l-.15 2.2a7 7 0 0 0-2.4 1.4l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .5.05.95.15 1.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2.4 1.4L10 21h4l.15-2.2a7 7 0 0 0 2.4-1.4l2.3.9 2-3.4-2-1.5c.1-.45.15-.9.15-1.4Z"/></svg></button>
+      <button class="icon-btn" title="Quitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg></button>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <main class="workspace">
+
+    <section class="view" data-view="carte">
+      <div class="carte-row">
+        <div class="carte-main">
+          <div class="card map-card">
+            <div class="map-ribbon hand" id="map-ribbon">📍 Choisissez votre région de départ</div>
+            <div class="map-wrap">
+              <svg id="world-svg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
+                <text class="ocean-label" x="140" y="330">Océan Pacifique</text>
+                <text class="ocean-label" x="380" y="230">Océan Atlantique</text>
+                <text class="ocean-label" x="660" y="330">Océan Indien</text>
+                <text class="ocean-label" x="900" y="150">Océan Pacifique</text>
+                <g id="continents"></g>
+              </svg>
+              <svg class="compass" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="none" stroke="#3c3527" stroke-width="1.4"/><path d="M30 6 L34 30 L30 54 L26 30 Z" fill="#3c3527"/><text x="30" y="14" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">N</text><text x="30" y="52" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">S</text><text x="8" y="33" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">O</text><text x="52" y="33" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">E</text></svg>
+            </div>
+          </div>
+
+          <div class="bottom-row">
+            <div class="card">
+              <div class="card-title"><h2>Situation mondiale</h2></div>
+              <div class="tabs" id="situation-tabs"></div>
+              <div class="chart-box">
+                <svg id="situation-chart" viewBox="0 0 400 170"></svg>
+                <div class="chart-tip" id="chart-tip"></div>
+              </div>
+              <div class="chart-legend" id="situation-legend"></div>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><h2>Top 5 des puissances</h2></div>
+              <table class="rank">
+                <thead><tr><th>#</th><th>Pays</th><th colspan="2">Puissance</th></tr></thead>
+                <tbody id="rank-body"></tbody>
+              </table>
+            </div>
+
+            <div class="card">
+              <div class="card-title"><h2>Événements récents</h2><span class="spacer"></span><a href="#" id="events-more">Voir tout</a></div>
+              <ul class="events-list" id="events-list"></ul>
+            </div>
+          </div>
+        </div>
+
+        <aside class="region-panel card" id="region-panel"></aside>
+      </div>
+    </section>
+
+    <section class="view" data-view="economie" hidden>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title"><h2>Croissance économique</h2></div>
+          <div class="chart-box"><svg id="econ-chart" viewBox="0 0 400 180"></svg><div class="chart-tip" id="econ-tip"></div></div>
+          <div class="chart-legend" id="econ-legend"></div>
+        </div>
+        <div class="card">
+          <div class="card-title"><h2>Ressources & commerce</h2></div>
+          <div id="resources-body"></div>
+        </div>
+      </div>
+      <div class="card" style="margin-top:14px;">
+        <div class="card-title"><h2>Indicateurs par puissance</h2></div>
+        <table class="simple">
+          <thead><tr><th>Pays</th><th>PIB (Md $)</th><th>Croissance</th><th>Inflation</th><th>Statut</th></tr></thead>
+          <tbody id="econ-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" data-view="diplomatie" hidden>
+      <div class="card">
+        <div class="card-title"><h2>Relations diplomatiques</h2></div>
+        <table class="simple">
+          <thead><tr><th>Nation</th><th>Relation</th><th>Traités actifs</th><th>Statut</th></tr></thead>
+          <tbody id="diplo-table-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="view" data-view="placeholder" hidden>
+      <div class="card placeholder-card">
+        <span class="hand" id="placeholder-title">Module</span>
+        <p>Cette section rejoindra bientôt les autres — même habillage papier &amp; crayon, prête à accueillir ses propres données.</p>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<script>
+  // ---------------------------------------------------------------
+  // Donnees fictives -- toute l'interface est reelle (navigation,
+  // onglets, selection, verrouillage), seules les valeurs affichees
+  // sont des exemples en attendant les vraies mecaniques de jeu.
+  // ---------------------------------------------------------------
+  const NAV_ITEMS = [
+    { view:'carte', label:'Carte', icon:'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2Z M9 4v14M15 6v14' },
+    { view:'economie', label:'Économie', icon:'M4 19h16M7 19V9M12 19V5M17 19v7' },
+    { view:'placeholder', label:'Population', dataLabel:'Population', icon:'M9 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c0-3.3 2.7-6 6-6s6 2.7 6 6M17 8a2.6 2.6 0 1 0 0-5.2M15 13.2c2.7.4 4.7 2.4 4.7 5.4' },
+    { view:'diplomatie', label:'Diplomatie', icon:'M8 12l3 3 6-6M4 5h16v14H4Z' },
+    { view:'placeholder', label:'Recherche', dataLabel:'Recherche', icon:'M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3M7 3h10' },
+    { view:'placeholder', label:'Construction', dataLabel:'Construction', icon:'M3 21h18M6 21V10l6-5 6 5v11M10 21v-6h4v6' },
+    { view:'placeholder', label:'Réformes', dataLabel:'Réformes', icon:'M4 19V9l8-6 8 6v10M9 21V13h6v8' },
+    { view:'placeholder', label:'Militaire', dataLabel:'Militaire', icon:'M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6Z' },
+    { view:'placeholder', label:'Journal', dataLabel:'Journal', icon:'M5 3h11l3 3v15H5ZM8 9h8M8 13h8M8 17h5' },
+    { view:'placeholder', label:'Classement', dataLabel:'Classement', icon:'M6 21V11M12 21V4M18 21v-7' },
+  ];
+
+  const CONTINENTS = [
+    {
+      id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)',
+      points:[[130,42],[218,50],[288,90],[308,128],[286,168],[248,150],[228,190],[188,210],[168,250],[138,228],[108,238],[88,198],[98,158],[68,138],[78,98],[58,78],[90,54]],
+      label:[190,150], tagline:'Une puissance industrielle et technologique établie.',
+      pays:23, population:'593 000 000', pib:'26 800 Md $', ressources:'Technologie, Pétrole, Agriculture', regime:'Démocratie fédérale',
+      avantages:['Économie diversifiée','Innovation technologique de pointe','Ressources énergétiques abondantes'],
+      difficultes:['Inégalités régionales marquées','Tensions commerciales récurrentes'],
+    },
+    {
+      id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)',
+      points:[[230,280],[268,300],[278,348],[258,398],[268,438],[238,468],[208,458],[194,420],[174,398],[178,348],[158,318],[190,290]],
+      label:[215,375], tagline:'Un géant agricole aux richesses naturelles immenses.',
+      pays:12, population:'437 000 000', pib:'5 200 Md $', ressources:'Agriculture, Minerais, Biodiversité', regime:'Républiques présidentielles',
+      avantages:['Terres agricoles fertiles','Réserves minières importantes'],
+      difficultes:['Instabilité politique locale','Infrastructures inégales','Dette extérieure élevée'],
+    },
+    {
+      id:'europe', name:'Europe', color:'var(--reg-europe)',
+      points:[[450,82],[508,70],[544,94],[554,128],[530,148],[540,174],[500,184],[470,164],[444,174],[430,140],[444,110]],
+      label:[490,128], tagline:'Une région stable et stratégique.',
+      pays:45, population:'742 000 000', pib:'28 450 Md $', ressources:'Énergie, Industrie, Technologie', regime:'Démocratie',
+      avantages:['Économie solide','Bonne infrastructure','Accès aux marchés européens','Proximité diplomatique avec plusieurs pays'],
+      difficultes:['Forte concurrence économique','Tensions politiques internes','Ressources naturelles limitées'],
+    },
+    {
+      id:'africa', name:'Afrique', color:'var(--reg-africa)',
+      points:[[470,196],[538,190],[573,220],[583,268],[563,318],[573,368],[543,418],[503,424],[478,388],[458,348],[448,298],[428,258],[444,218]],
+      label:[512,300], tagline:'Un continent jeune au potentiel de croissance rapide.',
+      pays:54, population:'1 460 000 000', pib:'3 100 Md $', ressources:'Minerais, Énergie solaire, Agriculture', regime:'Diversité de régimes',
+      avantages:['Population jeune et croissante','Réserves minières stratégiques'],
+      difficultes:['Infrastructures à développer','Tensions frontalières'],
+    },
+    {
+      id:'asia', name:'Asie', color:'var(--reg-asia)',
+      points:[[565,122],[588,72],[648,46],[728,42],[798,56],[868,50],[904,90],[898,140],[868,160],[878,200],[838,230],[798,220],[778,260],[738,270],[698,240],[658,250],[628,210],[598,220],[573,190],[588,150]],
+      label:[730,150], tagline:'Le cœur battant de l\'économie mondiale.',
+      pays:48, population:'4 720 000 000', pib:'41 300 Md $', ressources:'Industrie, Technologie, Main-d\'œuvre', regime:'Diversité de régimes',
+      avantages:['Plus grand marché intérieur du monde','Puissance industrielle et technologique','Croissance démographique forte'],
+      difficultes:['Tensions géopolitiques régionales','Pression sur les ressources naturelles'],
+    },
+    {
+      id:'oceania', name:'Océanie', color:'var(--reg-oceania)',
+      points:[[800,362],[850,346],[900,360],[930,392],[914,422],[868,440],[828,430],[798,410],[778,390]],
+      label:[850,395], tagline:'Isolée, stable, et riche en ressources naturelles.',
+      pays:14, population:'44 000 000', pib:'1 900 Md $', ressources:'Minerais, Agriculture, Pêche', regime:'Démocratie',
+      avantages:['Grande stabilité politique','Ressources naturelles abondantes','Position maritime stratégique'],
+      difficultes:['Isolement géographique','Petit marché intérieur'],
+    },
+  ];
+
+  const SITUATION_TABS = [
+    { id:'economie', label:'Économie', series:[
+      { name:'PIB mondial', color:'var(--chart-1)', values:[520,610,690,790,900] },
+      { name:'Commerce mondial', color:'var(--chart-2)', values:[300,340,380,430,470] } ] },
+    { id:'diplomatie', label:'Diplomatie', series:[
+      { name:'Alliances actives', color:'var(--chart-1)', values:[38,41,44,47,52] },
+      { name:'Tensions ouvertes', color:'var(--chart-3)', values:[14,16,13,15,11] } ] },
+    { id:'militaire', label:'Militaire', series:[
+      { name:'Dépenses militaires', color:'var(--chart-1)', values:[210,225,238,250,268] },
+      { name:'Conflits actifs', color:'var(--chart-3)', values:[9,8,10,7,6] } ] },
+  ];
+  const YEARS = [2025,2026,2027,2028,2029];
+
+  const RANKING = [
+    { flag:'🇺🇸', name:'États-Unis', power:98 },
+    { flag:'🇨🇳', name:'Chine', power:92 },
+    { flag:'🇪🇺', name:'Union Européenne', power:87 },
+    { flag:'🇮🇳', name:'Inde', power:76 },
+    { flag:'🇷🇺', name:'Russie', power:71 },
+  ];
+
+  const EVENTS = [
+    { date:'14/03', icon:'🤝', text:'La Chine renforce ses alliances en Asie.' },
+    { date:'13/03', icon:'📈', text:'L\'UE annonce un nouveau plan économique.' },
+    { date:'12/03', icon:'⚠️', text:'Des tensions apparaissent en Afrique.' },
+    { date:'11/03', icon:'💹', text:'Les marchés financiers mondiaux progressent.' },
+    { date:'10/03', icon:'🏛️', text:'Une nouvelle alliance se forme en Amérique du Sud.' },
+  ];
+
+  const ECON_TABLE = [
+    { name:'États-Unis', pib:26800, croissance:'+2.1%', inflation:'3.2%', statut:'good' },
+    { name:'Chine', pib:19200, croissance:'+4.8%', inflation:'1.9%', statut:'good' },
+    { name:'Union Européenne', pib:18400, croissance:'+1.2%', inflation:'2.6%', statut:'neutral' },
+    { name:'Russie', pib:2100, croissance:'-0.6%', inflation:'7.4%', statut:'warn' },
+  ];
+  const DIPLO_TABLE = [
+    { name:'Union Européenne', relation:'Alliée', traites:12, statut:'good' },
+    { name:'Chine', relation:'Partenaire commercial', traites:6, statut:'neutral' },
+    { name:'Russie', relation:'Tendue', traites:1, statut:'warn' },
+    { name:'Inde', relation:'Alliée', traites:8, statut:'good' },
+  ];
+
+  // ---------- Helpers ----------
+  function mid(a,b){ return [(a[0]+b[0])/2,(a[1]+b[1])/2]; }
+  function smoothPath(pts){
+    let d = 'M ' + mid(pts[pts.length-1],pts[0]).join(',');
+    for(let i=0;i<pts.length;i++){
+      const p = pts[i], n = pts[(i+1)%pts.length], m = mid(p,n);
+      d += ' Q ' + p.join(',') + ' ' + m.join(',');
+    }
+    return d + ' Z';
+  }
+  function svgEl(tag, attrs){
+    const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+    for(const k in attrs) el.setAttribute(k, attrs[k]);
+    return el;
+  }
+  function iconCheck(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12l5 5 11-11"/></svg>'; }
+  function iconWarn(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4l9 16H3Z"/><path d="M12 10v4M12 17h.01"/></svg>'; }
+
+  // ---------- Sidebar ----------
+  const sidebar = document.getElementById('sidebar');
+  NAV_ITEMS.forEach((item, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'nav-item' + (i === 0 ? ' active' : '');
+    btn.dataset.view = item.view;
+    btn.dataset.label = item.dataLabel || item.label;
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round">' +
+      item.icon.split('M').filter(Boolean).map(seg => '<path d="M' + seg.trim() + '"/>').join('') + '</svg><span>' + item.label + '</span>';
+    btn.addEventListener('click', () => switchView(btn));
+    sidebar.appendChild(btn);
+  });
+  function switchView(activeBtn){
+    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === activeBtn));
+    const view = activeBtn.dataset.view;
+    document.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== view);
+    if(view === 'placeholder') document.getElementById('placeholder-title').textContent = activeBtn.dataset.label;
+  }
+
+  // ---------- World map ----------
+  const continentsG = document.getElementById('continents');
+  CONTINENTS.forEach(c => {
+    const path = svgEl('path', { class:'continent', d:smoothPath(c.points), fill:c.color, id:'cont-'+c.id });
+    path.addEventListener('click', () => selectContinent(c.id));
+    continentsG.appendChild(path);
+    const label = svgEl('text', { class:'continent-label', x:c.label[0], y:c.label[1] });
+    label.textContent = c.name;
+    label.style.pointerEvents = 'none';
+    continentsG.appendChild(label);
+  });
+
+  // ---------- Region panel / start selection (persisted in localStorage) ----------
+  const STORAGE_KEY = 'paperConquestStart';
+  let selectedId = null;
+  let locked = false;
+
+  function loadStart(){
+    try{
+      const raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function saveStart(id){
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, lockedAt:new Date().toISOString() })); }
+    catch(e){ console.warn('localStorage indisponible, choix non persisté:', e); }
+  }
+
+  function selectContinent(id){
+    if(locked) return;
+    if(selectedId) document.getElementById('cont-'+selectedId).classList.remove('selected');
+    selectedId = id;
+    document.getElementById('cont-'+id).classList.add('selected');
+    renderRegionPanel();
+  }
+
+  function validateSelection(){
+    if(locked || !selectedId) return;
+    locked = true;
+    saveStart(selectedId);
+    renderRegionPanel();
+  }
+
+  function renderRegionPanel(){
+    const panel = document.getElementById('region-panel');
+    if(!selectedId){
+      panel.innerHTML = '<div class="region-empty">Cliquez sur une région de la carte pour voir ses informations.</div>';
+      return;
+    }
+    const c = CONTINENTS.find(x => x.id === selectedId);
+    const advList = c.avantages.map(a => '<li>' + iconCheck() + '<span>' + a + '</span></li>').join('');
+    const diffList = c.difficultes.map(d => '<li>' + iconWarn() + '<span>' + d + '</span></li>').join('');
+    panel.innerHTML =
+      '<div class="region-art"><svg viewBox="0 0 300 170"><rect width="300" height="170" fill="' + c.color + '" opacity="0.25"/>' +
+        '<path d="M0 130 L40 90 L70 110 L110 60 L150 100 L190 75 L230 115 L260 95 L300 130 V170 H0 Z" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0.55"/>' +
+        '<circle cx="250" cy="35" r="16" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0.5"/></svg></div>' +
+      '<div><h3 class="region-name hand">' + c.name + '</h3><div class="region-tagline">' + c.tagline + '</div></div>' +
+      '<div class="region-section-title">Informations de la région</div>' +
+      '<div class="region-row"><span>Nombre de pays</span><span class="v">' + c.pays + '</span></div>' +
+      '<div class="region-row"><span>Population totale</span><span class="v">' + c.population + '</span></div>' +
+      '<div class="region-row"><span>PIB total</span><span class="v">' + c.pib + '</span></div>' +
+      '<div class="region-row"><span>Ressources principales</span><span class="v">' + c.ressources + '</span></div>' +
+      '<div class="region-row"><span>Régime politique dominant</span><span class="v">' + c.regime + '</span></div>' +
+      '<div class="region-section-title">Avantages de départ</div><ul class="tag-list good">' + advList + '</ul>' +
+      '<div class="region-section-title">Difficultés</div><ul class="tag-list warn">' + diffList + '</ul>' +
+      '<button class="select-btn" id="select-btn" ' + (locked ? 'disabled' : '') + '>' + iconCheck() + (locked ? 'CHOIX VALIDÉ' : 'SÉLECTIONNER') + '</button>' +
+      '<div class="locked-note" id="locked-note" style="display:' + (locked ? 'flex' : 'none') + ';">' + iconCheck() + 'Choix de départ validé, définitif.</div>';
+    const btn = document.getElementById('select-btn');
+    if(!locked) btn.addEventListener('click', validateSelection);
+  }
+
+  (function initSelection(){
+    const saved = loadStart();
+    if(saved && saved.id && CONTINENTS.some(c => c.id === saved.id)){
+      selectedId = saved.id;
+      locked = true;
+      document.getElementById('cont-'+selectedId).classList.add('selected');
+      document.getElementById('map-ribbon').textContent = '🔒 Région de départ verrouillée';
+    }
+    renderRegionPanel();
+  })();
+
+  // ---------- Line chart (shared renderer, used by "Situation mondiale" and "Économie") ----------
+  function renderLineChart(svg, legendEl, tipEl, tab){
+    svg.innerHTML = '';
+    const W = 400, H = tab.h || 170, padL = 34, padR = 12, padT = 12, padB = 22;
+    const all = tab.series.flatMap(s => s.values);
+    const min = Math.min(...all), max = Math.max(...all);
+    const yMin = min - (max-min)*0.15, yMax = max + (max-min)*0.15;
+    const x = i => padL + (i/(YEARS.length-1)) * (W-padL-padR);
+    const y = v => H-padB - ((v-yMin)/(yMax-yMin)) * (H-padT-padB);
+
+    // grille
+    for(let i=0;i<4;i++){
+      const gy = padT + (i/3)*(H-padT-padB);
+      svg.appendChild(svgEl('line', { x1:padL, x2:W-padR, y1:gy, y2:gy, stroke:'var(--line)', 'stroke-width':1 }));
+    }
+    YEARS.forEach((yr,i) => {
+      const t = svgEl('text', { x:x(i), y:H-6, 'text-anchor':'middle', 'font-size':9, fill:'var(--ink-soft)', 'font-family':'Nunito' });
+      t.textContent = yr; svg.appendChild(t);
+    });
+
+    tab.series.forEach(s => {
+      const d = s.values.map((v,i) => (i===0?'M':'L') + x(i) + ',' + y(v)).join(' ');
+      svg.appendChild(svgEl('path', { d, fill:'none', stroke:s.color, 'stroke-width':2.4, 'stroke-linecap':'round', 'stroke-linejoin':'round' }));
+      s.values.forEach((v,i) => {
+        if(i === s.values.length-1) svg.appendChild(svgEl('circle', { cx:x(i), cy:y(v), r:4, fill:s.color }));
+      });
+    });
+
+    legendEl.innerHTML = tab.series.map(s => '<span><i style="background:' + s.color + '"></i>' + s.name + '</span>').join('');
+
+    // hover crosshair + tooltip
+    const hitG = svgEl('g', {});
+    svg.appendChild(hitG);
+    const guide = svgEl('line', { y1:padT, y2:H-padB, stroke:'var(--ink-soft)', 'stroke-width':1, 'stroke-dasharray':'2,3', opacity:0 });
+    hitG.appendChild(guide);
+    const dots = tab.series.map(s => { const d = svgEl('circle', { r:4, fill:s.color, opacity:0 }); hitG.appendChild(d); return d; });
+    const rect = svgEl('rect', { x:padL, y:padT, width:W-padL-padR, height:H-padT-padB, fill:'transparent' });
+    rect.addEventListener('mousemove', (e) => {
+      const box = svg.getBoundingClientRect();
+      const px = ((e.clientX - box.left) / box.width) * W;
+      let idx = Math.round(((px-padL)/(W-padL-padR)) * (YEARS.length-1));
+      idx = Math.max(0, Math.min(YEARS.length-1, idx));
+      guide.setAttribute('x1', x(idx)); guide.setAttribute('x2', x(idx)); guide.setAttribute('opacity', 1);
+      dots.forEach((d,si) => { d.setAttribute('cx', x(idx)); d.setAttribute('cy', y(tab.series[si].values[idx])); d.setAttribute('opacity', 1); });
+      tipEl.style.opacity = 1;
+      tipEl.style.left = (x(idx)/W*100) + '%';
+      tipEl.style.top = (y(Math.max(...tab.series.map(s=>s.values[idx])))/H*100) + '%';
+      tipEl.innerHTML = YEARS[idx] + ' — ' + tab.series.map(s => s.name+': '+s.values[idx]).join(' · ');
+    });
+    rect.addEventListener('mouseleave', () => {
+      guide.setAttribute('opacity', 0);
+      dots.forEach(d => d.setAttribute('opacity', 0));
+      tipEl.style.opacity = 0;
+    });
+    svg.appendChild(rect);
+  }
+
+  // Situation mondiale (tabs)
+  const situationTabsEl = document.getElementById('situation-tabs');
+  SITUATION_TABS.forEach((t,i) => {
+    const b = document.createElement('button');
+    b.className = 'tab' + (i===0 ? ' active' : '');
+    b.textContent = t.label;
+    b.addEventListener('click', () => {
+      situationTabsEl.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      renderLineChart(document.getElementById('situation-chart'), document.getElementById('situation-legend'), document.getElementById('chart-tip'), t);
+    });
+    situationTabsEl.appendChild(b);
+  });
+  renderLineChart(document.getElementById('situation-chart'), document.getElementById('situation-legend'), document.getElementById('chart-tip'), SITUATION_TABS[0]);
+
+  // Économie view chart
+  renderLineChart(document.getElementById('econ-chart'), document.getElementById('econ-legend'), document.getElementById('econ-tip'),
+    { h:180, series:[
+      { name:'PIB mondial (Md $)', color:'var(--chart-1)', values:[520,610,690,790,900] },
+      { name:'Commerce mondial (Md $)', color:'var(--chart-2)', values:[300,340,380,430,470] } ] });
+
+  // ---------- Ranking ----------
+  const rankBody = document.getElementById('rank-body');
+  const maxPower = Math.max(...RANKING.map(r => r.power));
+  RANKING.forEach((r,i) => {
+    const lightness = 68 - (r.power/maxPower)*30;
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td class="num">' + (i+1) + '</td>' +
+      '<td class="rank-name">' + r.flag + ' ' + r.name + '</td>' +
+      '<td style="width:50%"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + r.power + '%; background:hsl(206,45%,' + lightness + '%)"></div></div></td>' +
+      '<td class="num">' + r.power + '%</td>';
+    rankBody.appendChild(tr);
+  });
+
+  // ---------- Events ----------
+  const eventsList = document.getElementById('events-list');
+  EVENTS.forEach(ev => {
+    const li = document.createElement('li');
+    li.innerHTML = '<span class="ev-icon">' + ev.icon + '</span><span><span class="ev-date">' + ev.date + '</span>' + ev.text + '</span>';
+    eventsList.appendChild(li);
+  });
+
+  // ---------- Économie table ----------
+  const econBody = document.getElementById('econ-table-body');
+  ECON_TABLE.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + r.name + '</td><td class="num">' + r.pib.toLocaleString('fr-FR') + '</td><td>' + r.croissance + '</td><td>' + r.inflation + '</td>' +
+      '<td><span class="status-chip ' + r.statut + '">' + (r.statut==='good'?'Croissance saine':r.statut==='warn'?'Sous tension':'Stable') + '</span></td>';
+    econBody.appendChild(tr);
+  });
+
+  // ---------- Ressources & commerce ----------
+  const RESOURCES = [
+    { label:'Énergie', pct:78 }, { label:'Industrie', pct:64 }, { label:'Agriculture', pct:52 }, { label:'Technologie', pct:71 },
+  ];
+  const resBody = document.getElementById('resources-body');
+  RESOURCES.forEach(r => {
+    const row = document.createElement('div');
+    row.className = 'resource-row';
+    row.innerHTML = '<span class="rlabel">' + r.label + '</span><div class="rtrack"><div class="rfill" style="width:' + r.pct + '%"></div></div><span class="rval">' + r.pct + '%</span>';
+    resBody.appendChild(row);
+  });
+
+  // ---------- Diplomatie table ----------
+  const diploBody = document.getElementById('diplo-table-body');
+  DIPLO_TABLE.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = '<td>' + r.name + '</td><td>' + r.relation + '</td><td class="num">' + r.traites + '</td>' +
+      '<td><span class="status-chip ' + r.statut + '">' + (r.statut==='good'?'Cordiale':r.statut==='warn'?'Tendue':'Neutre') + '</span></td>';
+    diploBody.appendChild(tr);
+  });
+
+  // ---------- Clock ----------
+  function tickClock(){
+    const now = new Date();
+    document.getElementById('topbar-time').textContent = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+  }
+  tickClock();
+  setInterval(tickClock, 30000);
+</script>

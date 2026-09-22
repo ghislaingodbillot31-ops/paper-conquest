@@ -1,27 +1,32 @@
-# Globe Filaire
+# Paper Conquest
 
-Globe terrestre interactif "filaire" (wireframe), rendu en une seule page HTML autonome avec [D3.js](https://d3js.org/) (projection orthographique) et [TopoJSON](https://github.com/topojson/topojson) pour les tracés continentaux. Rotation à la souris/tactile, thème papier ancien.
+Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome (pas de build, pas de framework). Identité visuelle "papier & crayon" : palette claire, typographie manuscrite, carte du monde stylisée en continents dessinés à la main.
 
 ## Structure du projet
 
 ```
 .
+├── index.html                  # Redirection vers src/paper-conquest.html
 ├── src/
-│   └── globe-filaire.html      # Version actuelle (à jour)
-├── versions/
-│   └── v1/
-│       └── globe-filaire.html  # Première version (archive)
-├── docs/                       # Notes / documentation future
+│   ├── paper-conquest.html     # Page principale (autonome, HTML/CSS/JS + Google Fonts)
+│   └── data/
+│       └── admin1.topojson     # Données des régions admin-1 (héritées de la version globe MapLibre, non utilisées par l'interface actuelle)
 └── README.md
 ```
 
-- **`src/`** contient toujours la dernière version fonctionnelle du projet.
-- **`versions/`** archive les versions précédentes pour référence, avec un sous-dossier par version.
-- L'historique détaillé des changements est dans l'historique Git (`git log`), qui fait office de trace complète du projet.
-
 ## Utiliser le projet
 
-Ouvrir `src/globe-filaire.html` directement dans un navigateur (double-clic ou glisser-déposer). Connexion internet requise pour charger D3.js et TopoJSON depuis les CDN (cdnjs / jsdelivr).
+Ouvrir `src/paper-conquest.html` directement dans un navigateur (aucun serveur local requis, aucune dépendance externe au chargement à part les polices Google Fonts).
+
+## Interface actuelle
+
+- **Carte** : sélection de la région de départ (6 continents cliquables). Le choix se verrouille définitivement après validation et est conservé dans le `localStorage` du navigateur (persiste après reconnexion sur le même appareil, mais pas d'un appareil à l'autre).
+- **Économie** / **Diplomatie** : tableaux de bord avec graphiques, classements et indicateurs — données fictives en attendant les vraies mécaniques de jeu.
+- Autres entrées du menu (Population, Recherche, Construction, Réformes, Militaire, Journal, Classement) : emplacements réservés, prêts à recevoir leurs propres écrans.
+
+## Hébergement
+
+Le dépôt local n'a pas encore de remote GitHub configuré. Le lien de travail actuel est un aperçu privé publié via Claude Artifacts ; un lien public définitif nécessite de déployer ce dossier (par ex. GitHub Pages, en pointant sur `index.html`).
 
 ## Suivi des versions
 
@@ -30,5 +35,3 @@ Ce dossier est un dépôt Git. Pour voir l'historique complet :
 ```
 git log --oneline --stat
 ```
-
-Pour toute nouvelle modification, créer un commit avec un message clair afin de garder une trace exploitable du projet.
