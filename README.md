@@ -1,6 +1,6 @@
 # Paper Conquest
 
-Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome (pas de build, pas de framework). Identité visuelle "papier & crayon" : palette claire, typographie manuscrite, carte du monde stylisée en continents dessinés à la main.
+Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome (pas de build, pas de framework). Identité visuelle "papier & crayon" (palette claire, typographie manuscrite) posée sur un vrai globe interactif [MapLibre GL](https://maplibre.org/) (projection globe, [TopoJSON](https://github.com/topojson/topojson)) : chaque pays y est subdivisé en régions administratives synthétiques (admin-1), individuellement sélectionnables.
 
 ## Structure du projet
 
@@ -8,19 +8,19 @@ Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome 
 .
 ├── index.html                  # Redirection vers src/paper-conquest.html
 ├── src/
-│   ├── paper-conquest.html     # Page principale (autonome, HTML/CSS/JS + Google Fonts)
+│   ├── paper-conquest.html     # Page principale (autonome, CDN pour MapLibre/TopoJSON/Turf + Google Fonts)
 │   └── data/
-│       └── admin1.topojson     # Données des régions admin-1 (héritées de la version globe MapLibre, non utilisées par l'interface actuelle)
+│       └── admin1.topojson     # Données des régions admin-1
 └── README.md
 ```
 
 ## Utiliser le projet
 
-Ouvrir `src/paper-conquest.html` directement dans un navigateur (aucun serveur local requis, aucune dépendance externe au chargement à part les polices Google Fonts).
+Ouvrir `src/paper-conquest.html` via un serveur local (le chargement de `data/admin1.topojson` nécessite `fetch`, donc pas de double-clic direct). Connexion internet requise pour charger MapLibre GL, TopoJSON et Turf depuis les CDN (jsdelivr) et les polices Google Fonts.
 
 ## Interface actuelle
 
-- **Carte** : sélection de la région de départ (6 continents cliquables). Le choix se verrouille définitivement après validation et est conservé dans le `localStorage` du navigateur (persiste après reconnexion sur le même appareil, mais pas d'un appareil à l'autre).
+- **Carte** : globe interactif (glisser pour tourner) où chaque région admin-1 est cliquable et colorée selon son continent. Le choix de départ se verrouille définitivement après validation et est conservé dans le `localStorage` du navigateur (persiste après reconnexion sur le même appareil, mais pas d'un appareil à l'autre).
 - **Économie** / **Diplomatie** : tableaux de bord avec graphiques, classements et indicateurs — données fictives en attendant les vraies mécaniques de jeu.
 - Autres entrées du menu (Population, Recherche, Construction, Réformes, Militaire, Journal, Classement) : emplacements réservés, prêts à recevoir leurs propres écrans.
 

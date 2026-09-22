@@ -3,7 +3,10 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
 <style>
   :root{
     --paper: #f3eddd;
@@ -133,13 +136,15 @@
     box-shadow:2px 2px 0 var(--shadow);
   }
   .map-wrap{ position:relative; width:100%; aspect-ratio:16/9.6; background:var(--ocean); border-radius:8px; overflow:hidden; }
-  #world-svg{ width:100%; height:100%; display:block; }
-  .continent{ stroke:var(--ink); stroke-width:2; stroke-linejoin:round; cursor:pointer; transition:filter .15s; }
-  .continent:hover{ filter:brightness(1.06); }
-  .continent.selected{ stroke:var(--accent-ink); stroke-width:4; }
-  .continent-label{ font-family:'Caveat',cursive; font-weight:700; font-size:22px; fill:var(--ink); pointer-events:none; text-anchor:middle; }
-  .ocean-label{ font-family:'Nunito',sans-serif; font-style:italic; font-size:12px; fill:var(--ink-soft); pointer-events:none; }
-  .compass{ position:absolute; left:16px; bottom:14px; width:46px; height:46px; opacity:.8; }
+  #map{ position:absolute; inset:0; }
+  .map-hint{
+    position:absolute; left:14px; bottom:14px; z-index:2;
+    background:var(--card); border:1.5px solid var(--line-strong); border-radius:8px;
+    padding:5px 10px; font-size:0.72rem; color:var(--ink-soft);
+    box-shadow:2px 2px 0 var(--shadow);
+  }
+  .maplibregl-ctrl-attrib{ font-size:10px; }
+  .maplibregl-ctrl-attrib a{ color:var(--ink-soft); }
 
   .bottom-row{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
 
@@ -281,14 +286,8 @@
           <div class="card map-card">
             <div class="map-ribbon hand" id="map-ribbon">📍 Choisissez votre région de départ</div>
             <div class="map-wrap">
-              <svg id="world-svg" viewBox="0 0 1000 520" preserveAspectRatio="xMidYMid meet">
-                <text class="ocean-label" x="140" y="330">Océan Pacifique</text>
-                <text class="ocean-label" x="380" y="230">Océan Atlantique</text>
-                <text class="ocean-label" x="660" y="330">Océan Indien</text>
-                <text class="ocean-label" x="900" y="150">Océan Pacifique</text>
-                <g id="continents"></g>
-              </svg>
-              <svg class="compass" viewBox="0 0 60 60"><circle cx="30" cy="30" r="26" fill="none" stroke="#3c3527" stroke-width="1.4"/><path d="M30 6 L34 30 L30 54 L26 30 Z" fill="#3c3527"/><text x="30" y="14" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">N</text><text x="30" y="52" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">S</text><text x="8" y="33" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">O</text><text x="52" y="33" text-anchor="middle" font-size="9" fill="#3c3527" font-family="Nunito">E</text></svg>
+              <div id="map"></div>
+              <div class="map-hint hand">🖱️ Glisser pour tourner le globe</div>
             </div>
           </div>
 
@@ -382,50 +381,20 @@
     { view:'placeholder', label:'Classement', dataLabel:'Classement', icon:'M6 21V11M12 21V4M18 21v-7' },
   ];
 
+  // Les 6 continents ne servent plus qu'a classer/colorer les vraies regions
+  // (voir plus bas): couleur (CSS, pour le petit croquis du panneau), couleur
+  // hexadecimale equivalente (WebGL MapLibre ne resout pas les var() CSS) et
+  // une accroche courte affichee dans le panneau de region.
   const CONTINENTS = [
-    {
-      id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)',
-      tagline:'Une puissance industrielle et technologique établie.',
-      pays:23, population:'593 000 000', pib:'26 800 Md $', ressources:'Technologie, Pétrole, Agriculture', regime:'Démocratie fédérale',
-      avantages:['Économie diversifiée','Innovation technologique de pointe','Ressources énergétiques abondantes'],
-      difficultes:['Inégalités régionales marquées','Tensions commerciales récurrentes'],
-    },
-    {
-      id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)',
-      tagline:'Un géant agricole aux richesses naturelles immenses.',
-      pays:12, population:'437 000 000', pib:'5 200 Md $', ressources:'Agriculture, Minerais, Biodiversité', regime:'Républiques présidentielles',
-      avantages:['Terres agricoles fertiles','Réserves minières importantes'],
-      difficultes:['Instabilité politique locale','Infrastructures inégales','Dette extérieure élevée'],
-    },
-    {
-      id:'europe', name:'Europe', color:'var(--reg-europe)',
-      tagline:'Une région stable et stratégique.',
-      pays:45, population:'742 000 000', pib:'28 450 Md $', ressources:'Énergie, Industrie, Technologie', regime:'Démocratie',
-      avantages:['Économie solide','Bonne infrastructure','Accès aux marchés européens','Proximité diplomatique avec plusieurs pays'],
-      difficultes:['Forte concurrence économique','Tensions politiques internes','Ressources naturelles limitées'],
-    },
-    {
-      id:'africa', name:'Afrique', color:'var(--reg-africa)',
-      tagline:'Un continent jeune au potentiel de croissance rapide.',
-      pays:54, population:'1 460 000 000', pib:'3 100 Md $', ressources:'Minerais, Énergie solaire, Agriculture', regime:'Diversité de régimes',
-      avantages:['Population jeune et croissante','Réserves minières stratégiques'],
-      difficultes:['Infrastructures à développer','Tensions frontalières'],
-    },
-    {
-      id:'asia', name:'Asie', color:'var(--reg-asia)',
-      tagline:'Le cœur battant de l\'économie mondiale.',
-      pays:48, population:'4 720 000 000', pib:'41 300 Md $', ressources:'Industrie, Technologie, Main-d\'œuvre', regime:'Diversité de régimes',
-      avantages:['Plus grand marché intérieur du monde','Puissance industrielle et technologique','Croissance démographique forte'],
-      difficultes:['Tensions géopolitiques régionales','Pression sur les ressources naturelles'],
-    },
-    {
-      id:'oceania', name:'Océanie', color:'var(--reg-oceania)',
-      tagline:'Isolée, stable, et riche en ressources naturelles.',
-      pays:14, population:'44 000 000', pib:'1 900 Md $', ressources:'Minerais, Agriculture, Pêche', regime:'Démocratie',
-      avantages:['Grande stabilité politique','Ressources naturelles abondantes','Position maritime stratégique'],
-      difficultes:['Isolement géographique','Petit marché intérieur'],
-    },
+    { id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)', hex:'#7f9db3', tagline:'Une puissance industrielle et technologique établie.' },
+    { id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)', hex:'#c98868', tagline:'Un géant agricole aux richesses naturelles immenses.' },
+    { id:'europe', name:'Europe', color:'var(--reg-europe)', hex:'#93a878', tagline:'Une région stable et stratégique.' },
+    { id:'africa', name:'Afrique', color:'var(--reg-africa)', hex:'#a08bb0', tagline:'Un continent jeune au potentiel de croissance rapide.' },
+    { id:'asia', name:'Asie', color:'var(--reg-asia)', hex:'#d0a758', tagline:'Le cœur battant de l\'économie mondiale.' },
+    { id:'oceania', name:'Océanie', color:'var(--reg-oceania)', hex:'#5f9a92', tagline:'Isolée, stable, et riche en ressources naturelles.' },
   ];
+  const CONTINENT_BY_ID = {};
+  CONTINENTS.forEach(c => { CONTINENT_BY_ID[c.id] = c; });
 
   const SITUATION_TABS = [
     { id:'economie', label:'Économie', series:[
@@ -497,10 +466,11 @@
     if(view === 'placeholder') document.getElementById('placeholder-title').textContent = activeBtn.dataset.label;
   }
 
-  // ---------- World map (vraie geographie, admin1.topojson regroupe par continent) ----------
-  // Chaque pays (adm0_a3) est classe dans l'un des 6 continents de selection.
-  // La Russie et la Turquie sont classees en Asie (rattachement par continuite
-  // geographique du plus gros de leur territoire), l'Indonesie egalement.
+  // ---------- Globe (MapLibre GL, vraie geographie) ----------
+  // Chaque pays (adm0_a3) est classe dans l'un des 6 continents, seulement
+  // pour la couleur et le petit texte de contexte dans le panneau -- les
+  // regions cliquables restent les vraies unites admin-1 (1457 morceaux),
+  // pas les continents eux-memes.
   const ISO3_CONTINENT = {
     namerica:['BLZ','CAN','CRI','CUB','DOM','GRL','GTM','HND','HTI','MEX','NIC','PAN','USA'],
     samerica:['ARG','BOL','BRA','CHL','COL','ECU','GUY','PER','PRY','SUR','URY','VEN'],
@@ -512,67 +482,113 @@
   const CODE_TO_CONTINENT = {};
   for(const id in ISO3_CONTINENT) ISO3_CONTINENT[id].forEach(code => { CODE_TO_CONTINENT[code] = id; });
 
-  const continentsG = document.getElementById('continents');
-
-  // Plus grand anneau (par bbox) d'une geometrie deja projetee, pour y centrer l'etiquette.
-  function largestRing(coordsList){
-    let best = coordsList[0], bestArea = 0;
-    coordsList.forEach(ring => {
-      let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
-      ring.forEach(([x,y]) => { if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; });
-      const area = (maxX-minX)*(maxY-minY);
-      if(area > bestArea){ bestArea = area; best = ring; }
-    });
-    return best;
+  const map = new maplibregl.Map({
+    container: 'map',
+    style: {
+      version: 8,
+      glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
+      sources: {},
+      layers: [
+        { id: 'background', type: 'background', paint: { 'background-color': '#dbe4e3' } },
+      ],
+    },
+    projection: 'globe',
+    center: [12, 22],
+    zoom: 1,
+    attributionControl: true,
+  });
+  map.on('error', (e) => console.error('MAPLIBRE ERROR:', e && e.error && e.error.message, e));
+  // Le conteneur (carte dans une mise en page flex/grid) peut ne pas avoir
+  // sa taille finale au moment ou MapLibre mesure le canvas -- on force un
+  // resize des que la taille reelle est connue, et a chaque changement
+  // (redimensionnement de fenetre, bascule responsive).
+  if(window.ResizeObserver){
+    new ResizeObserver(() => map.resize()).observe(document.querySelector('.map-wrap'));
   }
-  function ringCentroid(ring){
-    let sx=0, sy=0;
-    ring.forEach(([x,y]) => { sx+=x; sy+=y; });
-    return [sx/ring.length, sy/ring.length];
+
+  map.on('style.load', () => {
+    if(map.setProjection) map.setProjection({ type: 'globe' });
+    if(map.setSky){
+      // Ciel clair et papier plutot que l'espace noir -- coherent avec la
+      // consigne "couleurs claires et douces, pas d'interface sombre".
+      try{
+        map.setSky({
+          'sky-color': '#eef3ee',
+          'sky-horizon-blend': 0.5,
+          'horizon-color': '#f3eedd',
+          'horizon-fog-blend': 0.6,
+          'fog-color': '#f3eedd',
+          'fog-ground-blend': 0.6,
+          'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 10, 0],
+        });
+      }catch(e){ console.warn('setSky non supporte:', e); }
+    }
+    addRegions();
+  });
+
+  // Certains anneaux (Russie/Alaska...) traversent l'antimeridien (+-180)
+  // sans etre coupes -- on "deroule" la longitude pour eviter un
+  // remplissage qui fait le tour du globe.
+  function unwrapRingLongitudes(ring){
+    const out = [[ring[0][0], ring[0][1]]];
+    let offset = 0;
+    for(let i = 1; i < ring.length; i++){
+      const rawDelta = ring[i][0] - ring[i-1][0];
+      if(rawDelta > 180) offset -= 360;
+      else if(rawDelta < -180) offset += 360;
+      out.push([ring[i][0] + offset, ring[i][1]]);
+    }
+    return out;
+  }
+  function unwrapGeometry(geom){
+    if(geom.type === 'Polygon') geom.coordinates = geom.coordinates.map(unwrapRingLongitudes);
+    else if(geom.type === 'MultiPolygon') geom.coordinates = geom.coordinates.map(poly => poly.map(unwrapRingLongitudes));
   }
 
-  async function loadWorldMap(){
+  let regionsFc = null;
+
+  async function addRegions(){
     const topo = await fetch('data/admin1.topojson').then(r => r.json());
     const objName = Object.keys(topo.objects)[0];
-    const allGeoms = topo.objects[objName].geometries;
-    const [lonMin, latMin, lonMax, latMax] = topojson.bbox(topo);
+    const fc = topojson.feature(topo, topo.objects[objName]);
+    fc.features.forEach((f, i) => {
+      f.id = i + 1;
+      f.properties.regionNum = i + 1;
+      const contId = CODE_TO_CONTINENT[f.properties.adm0_a3] || null;
+      f.properties.continent = contId;
+      f.properties.fillColor = contId ? CONTINENT_BY_ID[contId].hex : '#c7bfae';
+      unwrapGeometry(f.geometry);
+      try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
+      catch(e){ /* garde la valeur stockee si le calcul echoue */ }
+    });
+    regionsFc = fc;
 
-    const W = 1000, H = 520, pad = 24;
-    const scale = Math.min((W-pad*2)/(lonMax-lonMin), (H-pad*2)/(latMax-latMin));
-    const offX = (W - (lonMax-lonMin)*scale)/2;
-    const offY = (H - (latMax-latMin)*scale)/2;
-    function project([lon,lat]){ return [ (lon-lonMin)*scale+offX, (latMax-lat)*scale+offY ]; }
-
-    function ringsOf(geom){
-      const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
-      return polys.flatMap(poly => poly.map(ring => ring.map(project)));
-    }
-    function pathFromRings(rings){
-      return rings.map(ring => 'M' + ring.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join('L') + 'Z').join(' ');
-    }
-
-    CONTINENTS.forEach(c => {
-      const codes = new Set(ISO3_CONTINENT[c.id] || []);
-      const geoms = allGeoms.filter(g => codes.has(g.properties.adm0_a3));
-      if(!geoms.length) return;
-      const merged = topojson.merge(topo, geoms);
-      const rings = ringsOf(merged);
-      const path = svgEl('path', { class:'continent', d:pathFromRings(rings), fill:c.color, id:'cont-'+c.id, 'fill-rule':'evenodd' });
-      path.addEventListener('click', () => selectContinent(c.id));
-      continentsG.appendChild(path);
-      const [lx, ly] = ringCentroid(largestRing(rings));
-      const label = svgEl('text', { class:'continent-label', x:lx, y:ly });
-      label.textContent = c.name;
-      label.style.pointerEvents = 'none';
-      continentsG.appendChild(label);
+    map.addSource('regions', { type: 'geojson', data: fc });
+    map.addLayer({
+      id: 'regions', type: 'fill', source: 'regions',
+      paint: { 'fill-color': ['get', 'fillColor'] },
+    });
+    map.addLayer({
+      id: 'regions-outline', type: 'line', source: 'regions',
+      paint: { 'line-color': 'rgba(60,53,39,0.35)', 'line-width': 0.5 },
+    });
+    map.addLayer({
+      id: 'regions-selected', type: 'line', source: 'regions',
+      paint: {
+        'line-color': '#4a3418',
+        'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 0],
+      },
     });
 
-    const unmapped = allGeoms.filter(g => !CODE_TO_CONTINENT[g.properties.adm0_a3]);
-    if(unmapped.length) console.warn('Pays non classes dans un continent:', [...new Set(unmapped.map(g => g.properties.adm0_a3))]);
+    map.on('click', 'regions', (e) => {
+      if(locked || !e.features.length) return;
+      selectRegion(e.features[0].id);
+    });
+    map.on('mouseenter', 'regions', () => { if(!locked) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
     initSelection();
   }
-  loadWorldMap();
 
   // ---------- Region panel / start selection (persisted in localStorage) ----------
   const STORAGE_KEY = 'paperConquestStart';
@@ -590,16 +606,16 @@
     catch(e){ console.warn('localStorage indisponible, choix non persisté:', e); }
   }
 
-  function selectContinent(id){
+  function selectRegion(id){
     if(locked) return;
-    if(selectedId) document.getElementById('cont-'+selectedId).classList.remove('selected');
+    if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
     selectedId = id;
-    document.getElementById('cont-'+id).classList.add('selected');
+    map.setFeatureState({ source:'regions', id }, { selected:true });
     renderRegionPanel();
   }
 
   function validateSelection(){
-    if(locked || !selectedId) return;
+    if(locked || selectedId === null) return;
     locked = true;
     saveStart(selectedId);
     renderRegionPanel();
@@ -607,26 +623,24 @@
 
   function renderRegionPanel(){
     const panel = document.getElementById('region-panel');
-    if(!selectedId){
-      panel.innerHTML = '<div class="region-empty">Cliquez sur une région de la carte pour voir ses informations.</div>';
+    if(selectedId === null){
+      panel.innerHTML = '<div class="region-empty">Cliquez sur une région du globe pour voir ses informations.</div>';
       return;
     }
-    const c = CONTINENTS.find(x => x.id === selectedId);
-    const advList = c.avantages.map(a => '<li>' + iconCheck() + '<span>' + a + '</span></li>').join('');
-    const diffList = c.difficultes.map(d => '<li>' + iconWarn() + '<span>' + d + '</span></li>').join('');
+    const f = regionsFc.features.find(x => x.id === selectedId);
+    const c = f && f.properties.continent ? CONTINENT_BY_ID[f.properties.continent] : null;
+    const contName = c ? c.name : 'Territoire neutre';
+    const contColor = c ? c.color : 'var(--paper-alt)';
+    const area = f ? Math.round(f.properties.clusterArea || 0).toLocaleString('fr-FR') + ' km²' : '-';
     panel.innerHTML =
-      '<div class="region-art"><svg viewBox="0 0 300 170"><rect width="300" height="170" fill="' + c.color + '" opacity="0.25"/>' +
+      '<div class="region-art"><svg viewBox="0 0 300 170"><rect width="300" height="170" fill="' + contColor + '" opacity="0.25"/>' +
         '<path d="M0 130 L40 90 L70 110 L110 60 L150 100 L190 75 L230 115 L260 95 L300 130 V170 H0 Z" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0.55"/>' +
         '<circle cx="250" cy="35" r="16" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0.5"/></svg></div>' +
-      '<div><h3 class="region-name hand">' + c.name + '</h3><div class="region-tagline">' + c.tagline + '</div></div>' +
+      '<div><h3 class="region-name hand">Région ' + selectedId + '</h3><div class="region-tagline">' + contName + (c ? ' — ' + c.tagline : '') + '</div></div>' +
       '<div class="region-section-title">Informations de la région</div>' +
-      '<div class="region-row"><span>Nombre de pays</span><span class="v">' + c.pays + '</span></div>' +
-      '<div class="region-row"><span>Population totale</span><span class="v">' + c.population + '</span></div>' +
-      '<div class="region-row"><span>PIB total</span><span class="v">' + c.pib + '</span></div>' +
-      '<div class="region-row"><span>Ressources principales</span><span class="v">' + c.ressources + '</span></div>' +
-      '<div class="region-row"><span>Régime politique dominant</span><span class="v">' + c.regime + '</span></div>' +
-      '<div class="region-section-title">Avantages de départ</div><ul class="tag-list good">' + advList + '</ul>' +
-      '<div class="region-section-title">Difficultés</div><ul class="tag-list warn">' + diffList + '</ul>' +
+      '<div class="region-row"><span>Numéro</span><span class="v">' + selectedId + '</span></div>' +
+      '<div class="region-row"><span>Aire</span><span class="v">' + area + '</span></div>' +
+      '<div class="region-row"><span>Continent</span><span class="v">' + contName + '</span></div>' +
       '<button class="select-btn" id="select-btn" ' + (locked ? 'disabled' : '') + '>' + iconCheck() + (locked ? 'CHOIX VALIDÉ' : 'SÉLECTIONNER') + '</button>' +
       '<div class="locked-note" id="locked-note" style="display:' + (locked ? 'flex' : 'none') + ';">' + iconCheck() + 'Choix de départ validé, définitif.</div>';
     const btn = document.getElementById('select-btn');
@@ -635,10 +649,10 @@
 
   function initSelection(){
     const saved = loadStart();
-    if(saved && saved.id && CONTINENTS.some(c => c.id === saved.id)){
+    if(saved && typeof saved.id === 'number' && regionsFc.features.some(f => f.id === saved.id)){
       selectedId = saved.id;
       locked = true;
-      document.getElementById('cont-'+selectedId).classList.add('selected');
+      map.setFeatureState({ source:'regions', id:selectedId }, { selected:true });
       document.getElementById('map-ribbon').textContent = '🔒 Région de départ verrouillée';
     }
     renderRegionPanel();
