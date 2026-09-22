@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <style>
   :root{
     --paper: #f3eddd;
@@ -384,48 +385,42 @@
   const CONTINENTS = [
     {
       id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)',
-      points:[[130,42],[218,50],[288,90],[308,128],[286,168],[248,150],[228,190],[188,210],[168,250],[138,228],[108,238],[88,198],[98,158],[68,138],[78,98],[58,78],[90,54]],
-      label:[190,150], tagline:'Une puissance industrielle et technologique établie.',
+      tagline:'Une puissance industrielle et technologique établie.',
       pays:23, population:'593 000 000', pib:'26 800 Md $', ressources:'Technologie, Pétrole, Agriculture', regime:'Démocratie fédérale',
       avantages:['Économie diversifiée','Innovation technologique de pointe','Ressources énergétiques abondantes'],
       difficultes:['Inégalités régionales marquées','Tensions commerciales récurrentes'],
     },
     {
       id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)',
-      points:[[230,280],[268,300],[278,348],[258,398],[268,438],[238,468],[208,458],[194,420],[174,398],[178,348],[158,318],[190,290]],
-      label:[215,375], tagline:'Un géant agricole aux richesses naturelles immenses.',
+      tagline:'Un géant agricole aux richesses naturelles immenses.',
       pays:12, population:'437 000 000', pib:'5 200 Md $', ressources:'Agriculture, Minerais, Biodiversité', regime:'Républiques présidentielles',
       avantages:['Terres agricoles fertiles','Réserves minières importantes'],
       difficultes:['Instabilité politique locale','Infrastructures inégales','Dette extérieure élevée'],
     },
     {
       id:'europe', name:'Europe', color:'var(--reg-europe)',
-      points:[[450,82],[508,70],[544,94],[554,128],[530,148],[540,174],[500,184],[470,164],[444,174],[430,140],[444,110]],
-      label:[490,128], tagline:'Une région stable et stratégique.',
+      tagline:'Une région stable et stratégique.',
       pays:45, population:'742 000 000', pib:'28 450 Md $', ressources:'Énergie, Industrie, Technologie', regime:'Démocratie',
       avantages:['Économie solide','Bonne infrastructure','Accès aux marchés européens','Proximité diplomatique avec plusieurs pays'],
       difficultes:['Forte concurrence économique','Tensions politiques internes','Ressources naturelles limitées'],
     },
     {
       id:'africa', name:'Afrique', color:'var(--reg-africa)',
-      points:[[470,196],[538,190],[573,220],[583,268],[563,318],[573,368],[543,418],[503,424],[478,388],[458,348],[448,298],[428,258],[444,218]],
-      label:[512,300], tagline:'Un continent jeune au potentiel de croissance rapide.',
+      tagline:'Un continent jeune au potentiel de croissance rapide.',
       pays:54, population:'1 460 000 000', pib:'3 100 Md $', ressources:'Minerais, Énergie solaire, Agriculture', regime:'Diversité de régimes',
       avantages:['Population jeune et croissante','Réserves minières stratégiques'],
       difficultes:['Infrastructures à développer','Tensions frontalières'],
     },
     {
       id:'asia', name:'Asie', color:'var(--reg-asia)',
-      points:[[565,122],[588,72],[648,46],[728,42],[798,56],[868,50],[904,90],[898,140],[868,160],[878,200],[838,230],[798,220],[778,260],[738,270],[698,240],[658,250],[628,210],[598,220],[573,190],[588,150]],
-      label:[730,150], tagline:'Le cœur battant de l\'économie mondiale.',
+      tagline:'Le cœur battant de l\'économie mondiale.',
       pays:48, population:'4 720 000 000', pib:'41 300 Md $', ressources:'Industrie, Technologie, Main-d\'œuvre', regime:'Diversité de régimes',
       avantages:['Plus grand marché intérieur du monde','Puissance industrielle et technologique','Croissance démographique forte'],
       difficultes:['Tensions géopolitiques régionales','Pression sur les ressources naturelles'],
     },
     {
       id:'oceania', name:'Océanie', color:'var(--reg-oceania)',
-      points:[[800,362],[850,346],[900,360],[930,392],[914,422],[868,440],[828,430],[798,410],[778,390]],
-      label:[850,395], tagline:'Isolée, stable, et riche en ressources naturelles.',
+      tagline:'Isolée, stable, et riche en ressources naturelles.',
       pays:14, population:'44 000 000', pib:'1 900 Md $', ressources:'Minerais, Agriculture, Pêche', regime:'Démocratie',
       avantages:['Grande stabilité politique','Ressources naturelles abondantes','Position maritime stratégique'],
       difficultes:['Isolement géographique','Petit marché intérieur'],
@@ -475,15 +470,6 @@
   ];
 
   // ---------- Helpers ----------
-  function mid(a,b){ return [(a[0]+b[0])/2,(a[1]+b[1])/2]; }
-  function smoothPath(pts){
-    let d = 'M ' + mid(pts[pts.length-1],pts[0]).join(',');
-    for(let i=0;i<pts.length;i++){
-      const p = pts[i], n = pts[(i+1)%pts.length], m = mid(p,n);
-      d += ' Q ' + p.join(',') + ' ' + m.join(',');
-    }
-    return d + ' Z';
-  }
   function svgEl(tag, attrs){
     const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
     for(const k in attrs) el.setAttribute(k, attrs[k]);
@@ -511,17 +497,82 @@
     if(view === 'placeholder') document.getElementById('placeholder-title').textContent = activeBtn.dataset.label;
   }
 
-  // ---------- World map ----------
+  // ---------- World map (vraie geographie, admin1.topojson regroupe par continent) ----------
+  // Chaque pays (adm0_a3) est classe dans l'un des 6 continents de selection.
+  // La Russie et la Turquie sont classees en Asie (rattachement par continuite
+  // geographique du plus gros de leur territoire), l'Indonesie egalement.
+  const ISO3_CONTINENT = {
+    namerica:['BLZ','CAN','CRI','CUB','DOM','GRL','GTM','HND','HTI','MEX','NIC','PAN','USA'],
+    samerica:['ARG','BOL','BRA','CHL','COL','ECU','GUY','PER','PRY','SUR','URY','VEN'],
+    europe:['ALB','AUT','BEL','BGR','BIH','BLR','CHE','CZE','DEU','DNK','ESP','EST','FIN','FRA','GBR','GRC','HRV','HUN','IRL','ISL','ITA','LTU','LVA','MDA','MKD','NLD','NOR','POL','PRT','ROU','SRB','SVK','SVN','SWE','UKR'],
+    africa:['AGO','BEN','BFA','BWA','CAF','CIV','CMR','COD','COG','DZA','EGY','ERI','ETH','GAB','GHA','GIN','KEN','LBR','LBY','MAR','MDG','MLI','MOZ','MRT','NAM','NER','NGA','SAH','SDN','SDS','SEN','SLE','SOL','SOM','TCD','TUN','TZA','UGA','ZAF','ZMB','ZWE'],
+    asia:['AFG','ARE','ARM','AZE','BGD','BTN','CHN','GEO','IDN','IND','IRN','IRQ','ISR','JOR','JPN','KAZ','KGZ','KHM','KOR','LAO','LKA','MMR','MNG','MYS','NPL','OMN','PAK','PHL','PRK','RUS','SAU','SYR','TJK','THA','TKM','TUR','TWN','UZB','VNM','YEM'],
+    oceania:['AUS','NZL','PNG'],
+  };
+  const CODE_TO_CONTINENT = {};
+  for(const id in ISO3_CONTINENT) ISO3_CONTINENT[id].forEach(code => { CODE_TO_CONTINENT[code] = id; });
+
   const continentsG = document.getElementById('continents');
-  CONTINENTS.forEach(c => {
-    const path = svgEl('path', { class:'continent', d:smoothPath(c.points), fill:c.color, id:'cont-'+c.id });
-    path.addEventListener('click', () => selectContinent(c.id));
-    continentsG.appendChild(path);
-    const label = svgEl('text', { class:'continent-label', x:c.label[0], y:c.label[1] });
-    label.textContent = c.name;
-    label.style.pointerEvents = 'none';
-    continentsG.appendChild(label);
-  });
+
+  // Plus grand anneau (par bbox) d'une geometrie deja projetee, pour y centrer l'etiquette.
+  function largestRing(coordsList){
+    let best = coordsList[0], bestArea = 0;
+    coordsList.forEach(ring => {
+      let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity;
+      ring.forEach(([x,y]) => { if(x<minX)minX=x; if(x>maxX)maxX=x; if(y<minY)minY=y; if(y>maxY)maxY=y; });
+      const area = (maxX-minX)*(maxY-minY);
+      if(area > bestArea){ bestArea = area; best = ring; }
+    });
+    return best;
+  }
+  function ringCentroid(ring){
+    let sx=0, sy=0;
+    ring.forEach(([x,y]) => { sx+=x; sy+=y; });
+    return [sx/ring.length, sy/ring.length];
+  }
+
+  async function loadWorldMap(){
+    const topo = await fetch('data/admin1.topojson').then(r => r.json());
+    const objName = Object.keys(topo.objects)[0];
+    const allGeoms = topo.objects[objName].geometries;
+    const [lonMin, latMin, lonMax, latMax] = topojson.bbox(topo);
+
+    const W = 1000, H = 520, pad = 24;
+    const scale = Math.min((W-pad*2)/(lonMax-lonMin), (H-pad*2)/(latMax-latMin));
+    const offX = (W - (lonMax-lonMin)*scale)/2;
+    const offY = (H - (latMax-latMin)*scale)/2;
+    function project([lon,lat]){ return [ (lon-lonMin)*scale+offX, (latMax-lat)*scale+offY ]; }
+
+    function ringsOf(geom){
+      const polys = geom.type === 'Polygon' ? [geom.coordinates] : geom.coordinates;
+      return polys.flatMap(poly => poly.map(ring => ring.map(project)));
+    }
+    function pathFromRings(rings){
+      return rings.map(ring => 'M' + ring.map(p => p[0].toFixed(1)+','+p[1].toFixed(1)).join('L') + 'Z').join(' ');
+    }
+
+    CONTINENTS.forEach(c => {
+      const codes = new Set(ISO3_CONTINENT[c.id] || []);
+      const geoms = allGeoms.filter(g => codes.has(g.properties.adm0_a3));
+      if(!geoms.length) return;
+      const merged = topojson.merge(topo, geoms);
+      const rings = ringsOf(merged);
+      const path = svgEl('path', { class:'continent', d:pathFromRings(rings), fill:c.color, id:'cont-'+c.id, 'fill-rule':'evenodd' });
+      path.addEventListener('click', () => selectContinent(c.id));
+      continentsG.appendChild(path);
+      const [lx, ly] = ringCentroid(largestRing(rings));
+      const label = svgEl('text', { class:'continent-label', x:lx, y:ly });
+      label.textContent = c.name;
+      label.style.pointerEvents = 'none';
+      continentsG.appendChild(label);
+    });
+
+    const unmapped = allGeoms.filter(g => !CODE_TO_CONTINENT[g.properties.adm0_a3]);
+    if(unmapped.length) console.warn('Pays non classes dans un continent:', [...new Set(unmapped.map(g => g.properties.adm0_a3))]);
+
+    initSelection();
+  }
+  loadWorldMap();
 
   // ---------- Region panel / start selection (persisted in localStorage) ----------
   const STORAGE_KEY = 'paperConquestStart';
@@ -582,7 +633,7 @@
     if(!locked) btn.addEventListener('click', validateSelection);
   }
 
-  (function initSelection(){
+  function initSelection(){
     const saved = loadStart();
     if(saved && saved.id && CONTINENTS.some(c => c.id === saved.id)){
       selectedId = saved.id;
@@ -591,7 +642,7 @@
       document.getElementById('map-ribbon').textContent = '🔒 Région de départ verrouillée';
     }
     renderRegionPanel();
-  })();
+  }
 
   // ---------- Line chart (shared renderer, used by "Situation mondiale" and "Économie") ----------
   function renderLineChart(svg, legendEl, tipEl, tab){
