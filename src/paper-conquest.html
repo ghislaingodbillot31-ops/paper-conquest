@@ -3,7 +3,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
-<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.css" rel="stylesheet">
+<style>.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}@media (hover:hover){.maplibregl-ctrl button:not(:disabled):hover{background-color:rgba(0,0,0,.05)}}.maplibregl-ctrl button:not(:disabled):active{background-color:rgba(0,0,0,.05)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E")}}.maplibregl-ctrl button.maplibregl-ctrl-globe .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%23333' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5'/%3E%3Cpath d='M17.5 11c0 4.819-3.02 8.5-6.5 8.5S4.5 15.819 4.5 11 7.52 2.5 11 2.5s6.5 3.681 6.5 8.5Z'/%3E%3Cpath d='M13.5 11c0 2.447-.331 4.64-.853 6.206-.262.785-.562 1.384-.872 1.777-.314.399-.58.517-.775.517s-.461-.118-.775-.517c-.31-.393-.61-.992-.872-1.777C8.831 15.64 8.5 13.446 8.5 11s.331-4.64.853-6.206c.262-.785.562-1.384.872-1.777.314-.399.58-.517.775-.517s.461.118.775.517c.31.393.61.992.872 1.777.522 1.565.853 3.76.853 6.206Z'/%3E%3Cpath d='M11 7.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138q.07-.058.224-.138c.299-.151.763-.302 1.379-.434C7.378 5.666 9.091 5.5 11 5.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138q-.07.058-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428ZM4.486 6.436ZM11 16.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138 1.3 1.3 0 0 1 .224-.138c.299-.151.763-.302 1.379-.434C7.378 14.666 9.091 14.5 11 14.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138a1.3 1.3 0 0 1-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428Zm-6.514-1.064ZM11 12.5c-2.46 0-4.672-.222-6.255-.574-.796-.177-1.406-.38-1.805-.59a1.5 1.5 0 0 1-.39-.272.3.3 0 0 1-.047-.064.3.3 0 0 1 .048-.064c.066-.073.189-.167.389-.272.399-.21 1.009-.413 1.805-.59C6.328 9.722 8.54 9.5 11 9.5s4.672.222 6.256.574c.795.177 1.405.38 1.804.59.2.105.323.2.39.272a.3.3 0 0 1 .047.064.3.3 0 0 1-.048.064 1.4 1.4 0 0 1-.389.272c-.399.21-1.009.413-1.804.59-1.584.352-3.796.574-6.256.574Zm-8.501-1.51v.002zm0 .018v.002zm17.002.002v-.002zm0-.018v-.002z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-globe-enabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='none' stroke='%2333b5e5' viewBox='0 0 22 22'%3E%3Ccircle cx='11' cy='11' r='8.5'/%3E%3Cpath d='M17.5 11c0 4.819-3.02 8.5-6.5 8.5S4.5 15.819 4.5 11 7.52 2.5 11 2.5s6.5 3.681 6.5 8.5Z'/%3E%3Cpath d='M13.5 11c0 2.447-.331 4.64-.853 6.206-.262.785-.562 1.384-.872 1.777-.314.399-.58.517-.775.517s-.461-.118-.775-.517c-.31-.393-.61-.992-.872-1.777C8.831 15.64 8.5 13.446 8.5 11s.331-4.64.853-6.206c.262-.785.562-1.384.872-1.777.314-.399.58-.517.775-.517s.461.118.775.517c.31.393.61.992.872 1.777.522 1.565.853 3.76.853 6.206Z'/%3E%3Cpath d='M11 7.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138q.07-.058.224-.138c.299-.151.763-.302 1.379-.434C7.378 5.666 9.091 5.5 11 5.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138q-.07.058-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428ZM4.486 6.436ZM11 16.5c-1.909 0-3.622-.166-4.845-.428-.616-.132-1.08-.283-1.379-.434a1.3 1.3 0 0 1-.224-.138 1.3 1.3 0 0 1 .224-.138c.299-.151.763-.302 1.379-.434C7.378 14.666 9.091 14.5 11 14.5s3.622.166 4.845.428c.616.132 1.08.283 1.379.434.105.053.177.1.224.138a1.3 1.3 0 0 1-.224.138c-.299.151-.763.302-1.379.434-1.223.262-2.936.428-4.845.428Zm-6.514-1.064ZM11 12.5c-2.46 0-4.672-.222-6.255-.574-.796-.177-1.406-.38-1.805-.59a1.5 1.5 0 0 1-.39-.272.3.3 0 0 1-.047-.064.3.3 0 0 1 .048-.064c.066-.073.189-.167.389-.272.399-.21 1.009-.413 1.805-.59C6.328 9.722 8.54 9.5 11 9.5s4.672.222 6.256.574c.795.177 1.405.38 1.804.59.2.105.323.2.39.272a.3.3 0 0 1 .047.064.3.3 0 0 1-.048.064 1.4 1.4 0 0 1-.389.272c-.399.21-1.009.413-1.804.59-1.584.352-3.796.574-6.256.574Zm-8.501-1.51v.002zm0 .018v.002zm17.002.002v-.002zm0-.018v-.002z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgba(0,0,0,.05)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px;white-space:nowrap}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}[dir=rtl] .maplibregl-popup-anchor-left{flex-direction:row-reverse}[dir=rtl] .maplibregl-popup-anchor-right{flex-direction:row}[dir=rtl] .maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-end}[dir=rtl] .maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-start}[dir=rtl] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-end}[dir=rtl] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-start}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgba(0,0,0,.05)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:"";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:"";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@media (prefers-reduced-motion:reduce){.maplibregl-user-location-dot:before{animation:none}}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(pointer:coarse){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}</style>
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
@@ -24,7 +24,7 @@
     --chart-1: #1f6ba0;
     --chart-2: #4a8a3f;
     --chart-3: #a0632e;
-    --ocean: #dbe4e3;
+    --ocean: #eef1ea;
     --ocean-line: #aebfc0;
     --shadow: rgba(60,50,30,0.18);
     --reg-namerica: #7f9db3;
@@ -108,7 +108,8 @@
   .nav-item.active svg{ color:var(--accent-ink); }
 
   /* ---------- Main workspace ---------- */
-  main.workspace{ grid-area:main; overflow-y:auto; padding:18px 22px 30px; min-height:0; }
+  main.workspace{ grid-area:main; padding:16px 22px; min-height:0; display:flex; flex-direction:column; }
+  .view{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow-y:auto; }
   .view[hidden]{ display:none; }
 
   .card{
@@ -124,10 +125,10 @@
   .card-title .spacer{ flex:1; }
   .card-title a{ font-size:0.76rem; color:var(--accent-ink); text-decoration:none; border-bottom:1px dashed var(--accent-ink); }
 
-  .carte-row{ display:flex; gap:16px; align-items:flex-start; }
-  .carte-main{ flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:16px; }
+  .carte-row{ flex:1 1 auto; min-height:0; display:flex; gap:16px; align-items:stretch; }
+  .carte-main{ flex:1 1 auto; min-width:0; min-height:0; display:flex; flex-direction:column; gap:14px; }
 
-  .map-card{ position:relative; overflow:hidden; }
+  .map-card{ position:relative; overflow:hidden; flex:1 1 auto; min-height:0; display:flex; flex-direction:column; }
   .map-ribbon{
     position:absolute; top:14px; left:14px; z-index:2;
     background:var(--card); border:1.5px solid var(--line-strong);
@@ -135,7 +136,26 @@
     font-size:0.8rem; font-weight:700; color:var(--ink);
     box-shadow:2px 2px 0 var(--shadow);
   }
-  .map-wrap{ position:relative; width:100%; aspect-ratio:16/9.6; background:var(--ocean); border-radius:8px; overflow:hidden; }
+  .map-wrap{
+    position:relative; width:100%; flex:1 1 auto; min-height:0; border-radius:8px; overflow:hidden;
+    background-color:#0e1c38;
+    background-image:
+      radial-gradient(1.4px 1.4px at 8% 18%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 22% 62%, #f6efe0 100%, transparent),
+      radial-gradient(1.6px 1.6px at 35% 12%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 48% 78%, #f6efe0 100%, transparent),
+      radial-gradient(1.3px 1.3px at 62% 34%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 74% 58%, #f6efe0 100%, transparent),
+      radial-gradient(1.7px 1.7px at 85% 22%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 92% 70%, #f6efe0 100%, transparent),
+      radial-gradient(1.2px 1.2px at 15% 90%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 55% 6%, #f6efe0 100%, transparent),
+      radial-gradient(1.4px 1.4px at 78% 88%, #f6efe0 100%, transparent),
+      radial-gradient(1px 1px at 4% 45%, #f6efe0 100%, transparent),
+      linear-gradient(180deg, #0a1730, #16294f);
+    background-repeat: repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, repeat, no-repeat;
+    background-size: 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 240px 240px, 100% 100%;
+  }
   #map{ position:absolute; inset:0; }
   .map-hint{
     position:absolute; left:14px; bottom:14px; z-index:2;
@@ -146,7 +166,8 @@
   .maplibregl-ctrl-attrib{ font-size:10px; }
   .maplibregl-ctrl-attrib a{ color:var(--ink-soft); }
 
-  .bottom-row{ display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
+  .bottom-row{ flex:0 0 auto; display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
+  .bottom-row .card{ min-height:0; max-height:230px; overflow-y:auto; }
 
   .tabs{ display:flex; gap:4px; margin-bottom:8px; }
   .tab{
@@ -182,6 +203,7 @@
   .region-panel{
     flex:0 0 300px; width:300px; max-width:100%;
     display:flex; flex-direction:column; gap:12px;
+    min-height:0; overflow-y:auto;
   }
   .region-art{ width:100%; aspect-ratio:16/9; border-radius:9px; overflow:hidden; border:1.5px solid var(--line); }
   .region-art svg{ width:100%; height:100%; display:block; }
@@ -210,26 +232,8 @@
   .locked-note svg{ width:15px; height:15px; }
   .region-empty{ font-size:0.82rem; color:var(--ink-soft); padding:20px 4px; text-align:center; }
 
-  /* ---------- Placeholder view ---------- */
-  .placeholder-card{ padding:40px 20px; text-align:center; color:var(--ink-soft); }
-  .placeholder-card .hand{ font-size:2rem; color:var(--ink); display:block; margin-bottom:6px; }
-
-  /* ---------- Économie / Diplomatie views ---------- */
-  .grid-2{ display:grid; grid-template-columns:1fr 1fr; gap:14px; }
-  .stack{ display:flex; flex-direction:column; gap:14px; }
-  .resource-row{ display:flex; align-items:center; gap:10px; font-size:0.8rem; margin-bottom:8px; }
-  .resource-row .rlabel{ width:88px; flex:none; color:var(--ink-soft); }
-  .resource-row .rtrack{ flex:1; background:var(--paper-alt); border-radius:5px; height:10px; overflow:hidden; }
-  .resource-row .rfill{ height:100%; border-radius:5px; background:var(--chart-1); }
-  .resource-row .rval{ width:46px; text-align:right; font-weight:700; font-variant-numeric:tabular-nums; }
-
-  table.simple{ width:100%; border-collapse:collapse; font-size:0.8rem; }
-  table.simple th{ text-align:left; font-size:0.68rem; text-transform:uppercase; color:var(--ink-soft); padding-bottom:6px; }
-  table.simple td{ padding:6px 4px; border-top:1px solid var(--line); }
-  .status-chip{ display:inline-flex; align-items:center; gap:5px; padding:2px 9px; border-radius:20px; font-size:0.7rem; font-weight:700; }
-  .status-chip.good{ background:rgba(74,138,63,0.15); color:var(--good); }
-  .status-chip.warn{ background:rgba(181,98,58,0.15); color:var(--warn); }
-  .status-chip.neutral{ background:var(--paper-alt); color:var(--ink-soft); }
+  .empty-row{ color:var(--ink-soft); font-style:italic; font-size:0.78rem; text-align:center; padding:14px 4px; }
+  table.rank .empty-row{ display:table-cell; }
 
   /* ---------- Responsive ---------- */
   @media (max-width:900px){
@@ -239,7 +243,6 @@
     .bottom-row{ grid-template-columns:1fr; }
     .carte-row{ flex-direction:column; }
     .region-panel{ flex:1 1 auto; width:100%; }
-    .grid-2{ grid-template-columns:1fr; }
     .stat-pills{ gap:12px; }
   }
   @media (max-width:520px){
@@ -260,11 +263,11 @@
     </div>
     <div class="stat-pills">
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 9c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5-1.3 2-3 2.5-3 1.1-3 2.5 1.3 2.5 3 2.5 3-1.1 3-2.5"/></svg>
-        <div><span class="num">125 430 000</span><span class="delta">+12 450 000 / jour</span></div></div>
+        <div><span class="num">0</span><span class="delta">+0 / jour</span></div></div>
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="18" cy="9" r="2.6"/><path d="M15.5 14.2c2.9.4 5 2.6 5 5.8"/></svg>
-        <div><span class="num">8 742 311</span><span class="delta">+24 560 / jour</span></div></div>
+        <div><span class="num">0</span><span class="delta">+0 / jour</span></div></div>
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 1.1 2.4 1.7 4 1.7s3-.6 4-1.7"/></svg>
-        <div><span class="num">72%</span><span class="delta">+2% / jour</span></div></div>
+        <div><span class="num">0%</span><span class="delta">+0% / jour</span></div></div>
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
         <div><span class="num" id="topbar-date">15 mars 2027</span><span class="delta" id="topbar-time">14:32</span></div></div>
     </div>
@@ -321,44 +324,6 @@
       </div>
     </section>
 
-    <section class="view" data-view="economie" hidden>
-      <div class="grid-2">
-        <div class="card">
-          <div class="card-title"><h2>Croissance économique</h2></div>
-          <div class="chart-box"><svg id="econ-chart" viewBox="0 0 400 180"></svg><div class="chart-tip" id="econ-tip"></div></div>
-          <div class="chart-legend" id="econ-legend"></div>
-        </div>
-        <div class="card">
-          <div class="card-title"><h2>Ressources & commerce</h2></div>
-          <div id="resources-body"></div>
-        </div>
-      </div>
-      <div class="card" style="margin-top:14px;">
-        <div class="card-title"><h2>Indicateurs par puissance</h2></div>
-        <table class="simple">
-          <thead><tr><th>Pays</th><th>PIB (Md $)</th><th>Croissance</th><th>Inflation</th><th>Statut</th></tr></thead>
-          <tbody id="econ-table-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="view" data-view="diplomatie" hidden>
-      <div class="card">
-        <div class="card-title"><h2>Relations diplomatiques</h2></div>
-        <table class="simple">
-          <thead><tr><th>Nation</th><th>Relation</th><th>Traités actifs</th><th>Statut</th></tr></thead>
-          <tbody id="diplo-table-body"></tbody>
-        </table>
-      </div>
-    </section>
-
-    <section class="view" data-view="placeholder" hidden>
-      <div class="card placeholder-card">
-        <span class="hand" id="placeholder-title">Module</span>
-        <p>Cette section rejoindra bientôt les autres — même habillage papier &amp; crayon, prête à accueillir ses propres données.</p>
-      </div>
-    </section>
-
   </main>
 </div>
 
@@ -370,15 +335,6 @@
   // ---------------------------------------------------------------
   const NAV_ITEMS = [
     { view:'carte', label:'Carte', icon:'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2Z M9 4v14M15 6v14' },
-    { view:'economie', label:'Économie', icon:'M4 19h16M7 19V9M12 19V5M17 19v7' },
-    { view:'placeholder', label:'Population', dataLabel:'Population', icon:'M9 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM3 19c0-3.3 2.7-6 6-6s6 2.7 6 6M17 8a2.6 2.6 0 1 0 0-5.2M15 13.2c2.7.4 4.7 2.4 4.7 5.4' },
-    { view:'diplomatie', label:'Diplomatie', icon:'M8 12l3 3 6-6M4 5h16v14H4Z' },
-    { view:'placeholder', label:'Recherche', dataLabel:'Recherche', icon:'M9 3v6l-5 9a2 2 0 0 0 1.8 3h12.4a2 2 0 0 0 1.8-3l-5-9V3M7 3h10' },
-    { view:'placeholder', label:'Construction', dataLabel:'Construction', icon:'M3 21h18M6 21V10l6-5 6 5v11M10 21v-6h4v6' },
-    { view:'placeholder', label:'Réformes', dataLabel:'Réformes', icon:'M4 19V9l8-6 8 6v10M9 21V13h6v8' },
-    { view:'placeholder', label:'Militaire', dataLabel:'Militaire', icon:'M12 3l7 3v6c0 4.5-3 8-7 9-4-1-7-4.5-7-9V6Z' },
-    { view:'placeholder', label:'Journal', dataLabel:'Journal', icon:'M5 3h11l3 3v15H5ZM8 9h8M8 13h8M8 17h5' },
-    { view:'placeholder', label:'Classement', dataLabel:'Classement', icon:'M6 21V11M12 21V4M18 21v-7' },
   ];
 
   // Les 6 continents ne servent plus qu'a classer/colorer les vraies regions
@@ -386,12 +342,12 @@
   // hexadecimale equivalente (WebGL MapLibre ne resout pas les var() CSS) et
   // une accroche courte affichee dans le panneau de region.
   const CONTINENTS = [
-    { id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)', hex:'#7f9db3', tagline:'Une puissance industrielle et technologique établie.' },
-    { id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)', hex:'#c98868', tagline:'Un géant agricole aux richesses naturelles immenses.' },
-    { id:'europe', name:'Europe', color:'var(--reg-europe)', hex:'#93a878', tagline:'Une région stable et stratégique.' },
-    { id:'africa', name:'Afrique', color:'var(--reg-africa)', hex:'#a08bb0', tagline:'Un continent jeune au potentiel de croissance rapide.' },
-    { id:'asia', name:'Asie', color:'var(--reg-asia)', hex:'#d0a758', tagline:'Le cœur battant de l\'économie mondiale.' },
-    { id:'oceania', name:'Océanie', color:'var(--reg-oceania)', hex:'#5f9a92', tagline:'Isolée, stable, et riche en ressources naturelles.' },
+    { id:'namerica', name:'Amérique du Nord', color:'var(--reg-namerica)', tagline:'Une puissance industrielle et technologique établie.' },
+    { id:'samerica', name:'Amérique du Sud', color:'var(--reg-samerica)', tagline:'Un géant agricole aux richesses naturelles immenses.' },
+    { id:'europe', name:'Europe', color:'var(--reg-europe)', tagline:'Une région stable et stratégique.' },
+    { id:'africa', name:'Afrique', color:'var(--reg-africa)', tagline:'Un continent jeune au potentiel de croissance rapide.' },
+    { id:'asia', name:'Asie', color:'var(--reg-asia)', tagline:'Le cœur battant de l\'économie mondiale.' },
+    { id:'oceania', name:'Océanie', color:'var(--reg-oceania)', tagline:'Isolée, stable, et riche en ressources naturelles.' },
   ];
   const CONTINENT_BY_ID = {};
   CONTINENTS.forEach(c => { CONTINENT_BY_ID[c.id] = c; });
@@ -409,34 +365,10 @@
   ];
   const YEARS = [2025,2026,2027,2028,2029];
 
-  const RANKING = [
-    { flag:'🇺🇸', name:'États-Unis', power:98 },
-    { flag:'🇨🇳', name:'Chine', power:92 },
-    { flag:'🇪🇺', name:'Union Européenne', power:87 },
-    { flag:'🇮🇳', name:'Inde', power:76 },
-    { flag:'🇷🇺', name:'Russie', power:71 },
-  ];
-
-  const EVENTS = [
-    { date:'14/03', icon:'🤝', text:'La Chine renforce ses alliances en Asie.' },
-    { date:'13/03', icon:'📈', text:'L\'UE annonce un nouveau plan économique.' },
-    { date:'12/03', icon:'⚠️', text:'Des tensions apparaissent en Afrique.' },
-    { date:'11/03', icon:'💹', text:'Les marchés financiers mondiaux progressent.' },
-    { date:'10/03', icon:'🏛️', text:'Une nouvelle alliance se forme en Amérique du Sud.' },
-  ];
-
-  const ECON_TABLE = [
-    { name:'États-Unis', pib:26800, croissance:'+2.1%', inflation:'3.2%', statut:'good' },
-    { name:'Chine', pib:19200, croissance:'+4.8%', inflation:'1.9%', statut:'good' },
-    { name:'Union Européenne', pib:18400, croissance:'+1.2%', inflation:'2.6%', statut:'neutral' },
-    { name:'Russie', pib:2100, croissance:'-0.6%', inflation:'7.4%', statut:'warn' },
-  ];
-  const DIPLO_TABLE = [
-    { name:'Union Européenne', relation:'Alliée', traites:12, statut:'good' },
-    { name:'Chine', relation:'Partenaire commercial', traites:6, statut:'neutral' },
-    { name:'Russie', relation:'Tendue', traites:1, statut:'warn' },
-    { name:'Inde', relation:'Alliée', traites:8, statut:'good' },
-  ];
+  // Pas encore de puissances classees ni d'evenements: la partie commence
+  // sans economie.
+  const RANKING = [];
+  const EVENTS = [];
 
   // ---------- Helpers ----------
   function svgEl(tag, attrs){
@@ -463,7 +395,6 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === activeBtn));
     const view = activeBtn.dataset.view;
     document.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== view);
-    if(view === 'placeholder') document.getElementById('placeholder-title').textContent = activeBtn.dataset.label;
   }
 
   // ---------- Globe (MapLibre GL, vraie geographie) ----------
@@ -489,7 +420,7 @@
       glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
       sources: {},
       layers: [
-        { id: 'background', type: 'background', paint: { 'background-color': '#dbe4e3' } },
+        { id: 'background', type: 'background', paint: { 'background-color': '#a7c8d3' } },
       ],
     },
     projection: 'globe',
@@ -509,15 +440,15 @@
   map.on('style.load', () => {
     if(map.setProjection) map.setProjection({ type: 'globe' });
     if(map.setSky){
-      // Ciel clair et papier plutot que l'espace noir -- coherent avec la
-      // consigne "couleurs claires et douces, pas d'interface sombre".
+      // Fond spatial: bleu sombre etoile derriere le globe (voir le
+      // degrade + etoiles CSS sur .map-wrap, visible autour de la sphere).
       try{
         map.setSky({
-          'sky-color': '#eef3ee',
-          'sky-horizon-blend': 0.5,
-          'horizon-color': '#f3eedd',
-          'horizon-fog-blend': 0.6,
-          'fog-color': '#f3eedd',
+          'sky-color': '#0a1730',
+          'sky-horizon-blend': 0.35,
+          'horizon-color': '#1c3560',
+          'horizon-fog-blend': 0.5,
+          'fog-color': '#16294f',
           'fog-ground-blend': 0.6,
           'atmosphere-blend': ['interpolate', ['linear'], ['zoom'], 0, 1, 5, 1, 10, 0],
         });
@@ -545,18 +476,138 @@
     else if(geom.type === 'MultiPolygon') geom.coordinates = geom.coordinates.map(poly => poly.map(unwrapRingLongitudes));
   }
 
+  // Couleur "carte physique" par climat plutot que par pays: le jeu ne doit
+  // pas reveler les vraies frontieres politiques (les joueurs creent leurs
+  // propres pays sur ce globe), seulement le relief/climat qu'on verrait sur
+  // un vrai globe. Degrade continu sur deux axes (temperature + aridite),
+  // jamais de zones a bordure dure.
+  function lerp(a, b, t){ return a + (b - a) * t; }
+  function smooth01(t){ t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
+  function lerpColor(c1, c2, t){
+    t = smooth01(t);
+    const p1 = parseInt(c1.slice(1), 16), p2 = parseInt(c2.slice(1), 16);
+    const r = Math.round(lerp((p1 >> 16) & 255, (p2 >> 16) & 255, t));
+    const g = Math.round(lerp((p1 >> 8) & 255, (p2 >> 8) & 255, t));
+    const b = Math.round(lerp(p1 & 255, p2 & 255, t));
+    const h = v => v.toString(16).padStart(2, '0');
+    return '#' + h(r) + h(g) + h(b);
+  }
+
+  const COL_DEEP_FOREST = '#1f6b3c'; // grosse foret (equatoriale, humide)
+  const COL_FOREST      = '#a9db8e'; // pays forestier (foret temperee)
+  const COL_COLD        = '#f5f7f5'; // pays froid
+  const COL_HOT_DRY     = '#f0932b'; // climat tres chaud (desert le plus chaud)
+  const COL_DESERT      = '#f4e28c'; // desert / steppe seche
+
+  // Chaine humide (foret dense->claire->neige) selon la latitude absolue.
+  function humidColor(absLat){
+    if(absLat < 12) return lerpColor(COL_DEEP_FOREST, COL_FOREST, absLat / 12);
+    if(absLat < 55) return COL_FOREST;
+    if(absLat < 68) return lerpColor(COL_FOREST, COL_COLD, (absLat - 55) / 13);
+    return COL_COLD;
+  }
+  // Chaine seche (orange brulant->jaune desert->neige), memes paliers.
+  function aridColor(absLat){
+    if(absLat < 25) return lerpColor(COL_HOT_DRY, COL_DESERT, absLat / 25);
+    if(absLat < 55) return COL_DESERT;
+    if(absLat < 68) return lerpColor(COL_DESERT, COL_COLD, (absLat - 55) / 13);
+    return COL_COLD;
+  }
+
+  // Centres de desert [lat, lon, rayon en degres], pour une aridite continue
+  // (score qui s'attenue en douceur avec la distance).
+  const ARID_CENTERS = [
+    [23, 10, 20],    // Sahara
+    [20, 45, 15],    // Peninsule arabique
+    [40, 75, 18],    // deserts d'Asie centrale (Gobi, Taklamakan, Kyzylkoum)
+    [28, -108, 12],  // sud-ouest des Etats-Unis / Mexique
+    [-25, 133, 18],  // interieur australien
+    [-24, -69, 8],   // Atacama
+    [-23, 18, 12],   // Kalahari / Namib
+  ];
+  function aridityAt(lat, lon){
+    let best = 0;
+    for(const [clat, clon, radius] of ARID_CENTERS){
+      const d = Math.hypot(lat - clat, lon - clon);
+      const score = smooth01(1 - d / (radius * 2));
+      if(score > best) best = score;
+    }
+    return best;
+  }
+
+  // Couleur finale: interpole entre la chaine humide et la chaine seche
+  // selon l'aridite locale, elle-meme continue -- aucune des deux
+  // dimensions ne cree de bordure nette.
+  function climateColorAt(lat, lon){
+    const absLat = Math.abs(lat);
+    const aridity = aridityAt(lat, lon);
+    return lerpColor(humidColor(absLat), aridColor(absLat), aridity);
+  }
+
+  // Eclaircit/assombrit une couleur hex vers le blanc (amt>0) ou le noir
+  // (amt<0). Sert a decliner plusieurs teintes distinctes a l'interieur
+  // d'une meme sous-region.
+  function tintHex(hex, amt){
+    const n = parseInt(hex.slice(1), 16);
+    const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
+    const mix = amt >= 0 ? 255 : 0;
+    const p = Math.abs(amt);
+    const c = v => Math.round(v + (mix - v) * p).toString(16).padStart(2, '0');
+    return '#' + c(r) + c(g) + c(b);
+  }
+
+  // Plus grand anneau (exterieur) d'une geometrie, pour son centroide.
+  function largestRing(geom){
+    const rings = geom.type === 'Polygon' ? [geom.coordinates[0]]
+      : geom.coordinates.map(poly => poly[0]);
+    let best = rings[0], bestArea = 0;
+    for(const ring of rings){
+      let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
+      for(const [x, y] of ring){
+        if(x < minX) minX = x; if(x > maxX) maxX = x;
+        if(y < minY) minY = y; if(y > maxY) maxY = y;
+      }
+      const area = (maxX - minX) * (maxY - minY);
+      if(area > bestArea){ bestArea = area; best = ring; }
+    }
+    return best;
+  }
+
+  // Empreinte numerique stable d'une geometrie (centroide approche de son
+  // plus grand anneau), graine deterministe pour la variation de teinte.
+  function geometrySeed(geom){
+    const ring = largestRing(geom);
+    let sx = 0, sy = 0;
+    for(const [x, y] of ring){ sx += x; sy += y; }
+    const cx = Math.round((sx / ring.length) * 1000);
+    const cy = Math.round((sy / ring.length) * 1000);
+    let h = 0;
+    const s = cx + ',' + cy;
+    for(let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
+    return Math.abs(h);
+  }
+
   let regionsFc = null;
 
   async function addRegions(){
     const topo = await fetch('data/admin1.topojson').then(r => r.json());
     const objName = Object.keys(topo.objects)[0];
+    const geometries = topo.objects[objName].geometries;
     const fc = topojson.feature(topo, topo.objects[objName]);
     fc.features.forEach((f, i) => {
       f.id = i + 1;
       f.properties.regionNum = i + 1;
-      const contId = CODE_TO_CONTINENT[f.properties.adm0_a3] || null;
-      f.properties.continent = contId;
-      f.properties.fillColor = contId ? CONTINENT_BY_ID[contId].hex : '#c7bfae';
+      f.properties.continent = CODE_TO_CONTINENT[f.properties.adm0_a3] || null;
+      // Couleur du climat reel a la position du morceau (pas du pays: aucune
+      // frontiere politique reelle n'est reveleee), plus une legere
+      // variation de teinte pour eviter des zones plates.
+      const ring = largestRing(f.geometry);
+      let sx = 0, sy = 0;
+      for(const [x, y] of ring){ sx += x; sy += y; }
+      const lat = sy / ring.length, lon = sx / ring.length;
+      const base = climateColorAt(lat, lon);
+      const seed = geometrySeed(f.geometry);
+      f.properties.fillColor = tintHex(base, ((seed % 9) - 4) * 0.03);
       unwrapGeometry(f.geometry);
       try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
       catch(e){ /* garde la valeur stockee si le calcul echoue */ }
@@ -579,6 +630,22 @@
         'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 0],
       },
     });
+    // Numero de chaque region affiche dessus -- sert a reperer/signaler une
+    // region precise (ex. pour un bug de trace ou de couleur).
+    map.addLayer({
+      id: 'regions-label', type: 'symbol', source: 'regions',
+      layout: {
+        'text-field': ['to-string', ['get', 'regionNum']],
+        'text-font': ['Open Sans Regular'],
+        'text-size': 10,
+        'text-allow-overlap': false,
+      },
+      paint: {
+        'text-color': '#3c3527',
+        'text-halo-color': '#f6efe0',
+        'text-halo-width': 1.2,
+      },
+    });
 
     map.on('click', 'regions', (e) => {
       if(locked || !e.features.length) return;
@@ -587,7 +654,723 @@
     map.on('mouseenter', 'regions', () => { if(!locked) map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
+    addVillageNetwork(topo, fc, geometries, f => f.properties.adm0_a3 === 'AUS');
+
     initSelection();
+  }
+
+  // ---------- Reseau de chemins (mondial, adjacence topologique reelle) ----------
+  // Village = un point garanti sur la terre de la region (turf.pointOnFeature,
+  // contrairement a un centroide qui peut tomber dans l'eau pour une region
+  // en croissant ou un archipel).
+  // Chemins terrestres = adjacence topologique reelle: deux regions ne sont
+  // reliees que si elles partagent un arc du topojson, donc chaque chemin
+  // reste sur la terre par construction, relie deux voisins directs (zero
+  // region intermediaire) et suit le trajet le plus court possible entre
+  // elles. Les iles/archipels sans aucun voisin terrestre (composantes du
+  // graphe separees du reste) sont ensuite relies par des liaisons
+  // maritimes distinctes (couleur et tirets differents) jusqu'a ce que tout
+  // le globe forme un seul reseau connecte.
+
+  // Normalise une longitude dans [-180,180]: nos polygones "deroules"
+  // (Russie/Alaska/Fidji, cf. unwrapGeometry) sortent de cette plage, ce qui
+  // fausserait un calcul de distance directe entre un point deroule et un
+  // point normal proche de l'antimeridien.
+  function normLon(lon){
+    let l = lon % 360;
+    if(l > 180) l -= 360;
+    if(l < -180) l += 360;
+    return l;
+  }
+  function geoDistance(a, b){
+    return turf.distance([normLon(a[0]), a[1]], [normLon(b[0]), b[1]]);
+  }
+
+  // Position de capitale garantie loin de toute frontiere (jamais "a
+  // cheval" entre deux regions): on essaie plusieurs points candidats
+  // (centre de masse, centroide, point-sur-feature, plus une grille dans
+  // l'emprise de la region) et on garde celui dont la distance a la
+  // frontiere la plus proche est maximale -- une approximation rapide du
+  // "pole d'inaccessibilite" sans dependance externe.
+  // Densite de grille et simplification du contour adaptees a la SURFACE
+  // reelle de la region (turf.area): une grande region (ex. un Etat
+  // australien) a plus a gagner d'une grille fine, une petite n'en a pas
+  // besoin: son interieur est deja proche de la frontiere partout. Le
+  // contour est simplifie avant les mesures de distance (calcul par
+  // sommets, donc couteux sur un tres long trait de cote) avec une
+  // tolerance elle aussi liee a la taille de la region -- suffisant pour
+  // choisir un bon point interieur sans re-suivre chaque micro-detail des
+  // LIMITES DE FRONTIERE.
+  function safeInteriorPoint(feature){
+    const bounds = turf.bbox(feature);
+    const areaKm2 = turf.area(feature) / 1e6;
+    const GRID = areaKm2 > 200000 ? 7 : areaKm2 > 20000 ? 6 : areaKm2 > 2000 ? 5 : 4;
+    let boundaryLine;
+    try{ boundaryLine = turf.polygonToLine(feature); }catch(e){ boundaryLine = null; }
+    let lines = boundaryLine ? (boundaryLine.type === 'FeatureCollection' ? boundaryLine.features : [boundaryLine]) : [];
+    const tolerance = Math.max(0.01, Math.sqrt(areaKm2) / 4000);
+    lines = lines.map(l => { try{ return turf.simplify(l, { tolerance, highQuality:false }); }catch(e){ return l; } });
+    function distToBoundary(pt){
+      let min = Infinity;
+      lines.forEach(l => {
+        try{ const d = turf.pointToLineDistance(pt, l, { units:'kilometers' }); if(d < min) min = d; }catch(e){}
+      });
+      return min === Infinity ? 0 : min;
+    }
+    const candidates = [];
+    const tryAdd = (pt) => { if(pt && turf.booleanPointInPolygon(pt, feature)) candidates.push(pt); };
+    try{ tryAdd(turf.centerOfMass(feature).geometry.coordinates); }catch(e){}
+    try{ tryAdd(turf.centroid(feature).geometry.coordinates); }catch(e){}
+    try{ tryAdd(turf.pointOnFeature(feature).geometry.coordinates); }catch(e){}
+    for(let gx = 0; gx < GRID; gx++){
+      for(let gy = 0; gy < GRID; gy++){
+        const x = bounds[0] + (bounds[2]-bounds[0]) * (gx+0.5)/GRID;
+        const y = bounds[1] + (bounds[3]-bounds[1]) * (gy+0.5)/GRID;
+        tryAdd([x, y]);
+      }
+    }
+    if(!candidates.length) return turf.pointOnFeature(feature).geometry.coordinates;
+    let best = candidates[0], bestD = -1;
+    candidates.forEach(c => { const d = distToBoundary(c); if(d > bestD){ bestD = d; best = c; } });
+    return best;
+  }
+
+  // ---------- Detection de croisement entre deux tracés (segments) ----------
+  // Prefiltre par boite englobante (tres bon marche) avant le test complet
+  // segment-par-segment: la grande majorite des paires de tracés sur une
+  // carte n'ont meme pas leurs emprises qui se touchent.
+  function bboxOfCoords(coords){
+    let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+    coords.forEach(([x, y]) => {
+      if(x < minX) minX = x; if(x > maxX) maxX = x;
+      if(y < minY) minY = y; if(y > maxY) maxY = y;
+    });
+    return [minX, minY, maxX, maxY];
+  }
+  function bboxOverlap(a, b){
+    return a[0] <= b[2] && b[0] <= a[2] && a[1] <= b[3] && b[1] <= a[3];
+  }
+  function segmentsIntersect(p1, p2, p3, p4){
+    function ccw(a, b, c){ return (c[1]-a[1]) * (b[0]-a[0]) > (b[1]-a[1]) * (c[0]-a[0]); }
+    return (ccw(p1, p3, p4) !== ccw(p2, p3, p4)) && (ccw(p1, p2, p3) !== ccw(p1, p2, p4));
+  }
+  function pathsCross(coordsA, bboxA, coordsB, bboxB){
+    if(!bboxOverlap(bboxA, bboxB)) return false;
+    for(let i = 0; i < coordsA.length - 1; i++){
+      for(let j = 0; j < coordsB.length - 1; j++){
+        if(segmentsIntersect(coordsA[i], coordsA[i+1], coordsB[j], coordsB[j+1])) return true;
+      }
+    }
+    return false;
+  }
+  function crossesExisting(coords, existingEdges){
+    const bb = bboxOfCoords(coords);
+    return existingEdges.some(e => pathsCross(coords, bb, e.coords, e.bbox));
+  }
+
+  function windingPath(a, b, amplitudeScale){
+    const distKm = geoDistance(a, b);
+    const segments = 22;
+    const amplitudeDeg = (Math.min(distKm * 0.08, 80) / 111) * amplitudeScale;
+    const dx = b[0] - a[0], dy = b[1] - a[1];
+    const len = Math.hypot(dx, dy) || 1e-9;
+    const nx = -dy / len, ny = dx / len; // perpendiculaire unitaire
+    // graine deterministe (memes points -> meme ondulation a chaque chargement)
+    const seed = Math.abs(Math.sin(a[0] * 12.9898 + a[1] * 78.233 + b[0] * 37.719 + b[1] * 11.135) * 43758.5453) % 1;
+    const wiggles = 2 + (seed > 0.5 ? 1 : 0);
+    const phase = seed * Math.PI * 2;
+    const pts = [];
+    for(let i = 0; i <= segments; i++){
+      const t = i / segments;
+      const bx = a[0] + dx * t, by = a[1] + dy * t;
+      // Sinus au carre plutot que simple: vaut 0 ET a une derivee nulle aux
+      // deux bouts (pas seulement une position nulle), donc l'ondulation
+      // demarre/finit en douceur -- essentiel pour les tracés en deux
+      // demi-trajets (capitale -> frontiere -> capitale): sans ca, les deux
+      // moities pouvaient se rejoindre avec un coude brusque au point de
+      // jonction meme si leurs positions coincidaient exactement.
+      const taper = Math.pow(Math.sin(t * Math.PI), 2);
+      const wob = Math.sin(t * Math.PI * wiggles + phase) * amplitudeDeg * taper;
+      pts.push([bx + nx * wob, by + ny * wob]);
+    }
+    return pts;
+  }
+
+  function pathStaysOnLandSingle(coords, land){
+    for(let i = 1; i < coords.length - 1; i++){
+      if(!turf.booleanPointInPolygon(coords[i], land)) return false;
+    }
+    return true;
+  }
+  function pathStaysOnLand(coords, landA, landB){
+    for(let i = 1; i < coords.length - 1; i++){
+      const pt = coords[i];
+      if(!turf.booleanPointInPolygon(pt, landA) && !turf.booleanPointInPolygon(pt, landB)) return false;
+    }
+    return true;
+  }
+
+  // Plusieurs points candidats (15/30/50/70/85%) le long de la plus longue
+  // frontiere reellement partagee entre les deux regions (calculee via les
+  // arcs topojson, donc la vraie limite terrestre, pas une approximation):
+  // le trace passera obligatoirement par un point de CETTE frontiere avant
+  // de rejoindre chaque capitale, jamais par un raccourci qui coupe a
+  // travers l'eau ou une troisieme region. Plusieurs points sont testes
+  // (pas seulement le milieu) car pres d'une baie ou d'un golfe, un point
+  // median peut faire sortir un des deux segments dans l'eau alors qu'un
+  // autre point de la meme frontiere reelle passe.
+  function borderWaypoints(topo, geomI, geomJ){
+    let mesh;
+    try{
+      mesh = topojson.mesh(topo, { type:'GeometryCollection', geometries:[geomI, geomJ] },
+        (a, b) => (a === geomI && b === geomJ) || (a === geomJ && b === geomI));
+    }catch(e){ return []; }
+    const lines = mesh && mesh.coordinates;
+    if(!lines || !lines.length) return [];
+    let longest = lines[0], longestLen = -1;
+    lines.forEach(line => {
+      let len = 0;
+      for(let i = 1; i < line.length; i++) len += geoDistance(line[i-1], line[i]);
+      if(len > longestLen){ longestLen = len; longest = line; }
+    });
+    function pointAtFraction(frac){
+      let acc = 0;
+      const target = longestLen * frac;
+      for(let i = 1; i < longest.length; i++){
+        const seg = geoDistance(longest[i-1], longest[i]);
+        if(acc + seg >= target){
+          const t = seg === 0 ? 0 : (target - acc) / seg;
+          return [
+            longest[i-1][0] + (longest[i][0] - longest[i-1][0]) * t,
+            longest[i-1][1] + (longest[i][1] - longest[i-1][1]) * t,
+          ];
+        }
+        acc += seg;
+      }
+      return longest[longest.length - 1];
+    }
+    return [0.5, 0.3, 0.7, 0.15, 0.85].map(pointAtFraction);
+  }
+
+  // Essaie chaque point de frontiere candidat, et pour chacun toutes les
+  // amplitudes d'ondulation valides (de la plus sinueuse a la ligne droite)
+  // sur les deux demi-trajets capitale -> frontiere -> capitale, chaque
+  // demi-trajet devant rester entierement dans SA propre region.
+  function allWindingLegs(p1, p2, land){
+    const out = [];
+    for(const scale of [1, 0.4, 0]){
+      const coords = windingPath(p1, p2, scale);
+      if(pathStaysOnLandSingle(coords, land)) out.push(coords);
+    }
+    return out;
+  }
+  // Angle de virage (en degres) qu'imposerait un point de frontiere donne:
+  // cap direct capitale->frontiere compare au cap frontiere->autre capitale.
+  // Sert a classer les points de frontiere candidats du plus doux au plus
+  // brusque, pour ne pas choisir arbitrairement le premier valide et se
+  // retrouver avec un coude prononce alors qu'un point voisin de la meme
+  // frontiere donnait un virage bien plus naturel.
+  function bearingDeg(p, q){ return Math.atan2(q[1]-p[1], q[0]-p[0]) * 180 / Math.PI; }
+  function bearingTurn(a, waypoint, b){
+    let diff = bearingDeg(waypoint, b) - bearingDeg(a, waypoint);
+    while(diff > 180) diff -= 360;
+    while(diff < -180) diff += 360;
+    return Math.abs(diff);
+  }
+
+  // Parmi toutes les combinaisons valides (sur terre), prefere celle qui ne
+  // croise AUCUN trace deja pose (les routes ne doivent pas se croiser);
+  // si vraiment aucune combinaison ne l'evite (zone tres dense), garde la
+  // meilleure trouvee plutot que de sacrifier la connexion elle-meme -- ne
+  // jamais traverser l'eau reste la seule regle strictement non negociable.
+  // Les points de frontiere sont essayes du virage le plus doux au plus
+  // brusque (bearingTurn croissant) pour eviter un trace en "coude" alors
+  // qu'une option plus naturelle existait sur la meme frontiere.
+  // Repli sur l'ancien trajet direct si aucune frontiere n'a pu etre
+  // extraite. Si rien ne passe du tout (cas rarissime, ex. les deux regions
+  // se touchent uniquement au bord d'une baie), renvoie null: on abandonne
+  // alors cette connexion precise plutot que de tricher.
+  function landPath(topo, a, b, geomI, geomJ, landA, landB, existingEdges){
+    let fallback = null;
+    const waypoints = borderWaypoints(topo, geomI, geomJ)
+      .slice()
+      .sort((w1, w2) => bearingTurn(a, w1, b) - bearingTurn(a, w2, b));
+    for(const waypoint of waypoints){
+      const legs1 = allWindingLegs(a, waypoint, landA);
+      const legs2 = allWindingLegs(waypoint, b, landB);
+      for(const leg1 of legs1){
+        for(const leg2 of legs2){
+          const coords = leg1.concat(leg2.slice(1));
+          if(!fallback) fallback = coords;
+          if(!crossesExisting(coords, existingEdges)) return coords;
+        }
+      }
+    }
+    for(const scale of [1, 0.4, 0]){
+      const coords = windingPath(a, b, scale);
+      if(pathStaysOnLand(coords, landA, landB)){
+        if(!fallback) fallback = coords;
+        if(!crossesExisting(coords, existingEdges)) return coords;
+      }
+    }
+    return fallback;
+  }
+
+  function makeUnionFind(n){
+    const parent = Array.from({ length:n }, (_, i) => i);
+    const size = new Array(n).fill(1);
+    function find(x){ while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+    function union(a, b){
+      let ra = find(a), rb = find(b);
+      if(ra === rb) return false;
+      if(size[ra] < size[rb]){ const t = ra; ra = rb; rb = t; }
+      parent[rb] = ra; size[ra] += size[rb];
+      return true;
+    }
+    function sizeOf(x){ return size[find(x)]; }
+    return { find, union, sizeOf };
+  }
+
+  // Grille lon/lat grossiere pour retrouver rapidement les villages proches
+  // d'un point donne sans comparer chaque village a tous les autres.
+  function buildSpatialGrid(villages, cellDeg){
+    const grid = new Map();
+    villages.forEach((v, i) => {
+      const gx = Math.floor(v.gcoord[0] / cellDeg), gy = Math.floor(v.gcoord[1] / cellDeg);
+      const k = gx + ',' + gy;
+      if(!grid.has(k)) grid.set(k, []);
+      grid.get(k).push(i);
+    });
+    return { grid, cellDeg };
+  }
+
+  // Plus proche village appartenant a une AUTRE composante que celle de
+  // `idx`, par recherche en anneaux de cellules grandissants (un anneau de
+  // marge une fois un candidat trouve, car la distance en cellules
+  // sous-estime legerement la distance reelle pres des coins).
+  function nearestOtherComponent(idx, villages, spatial, find, degree, maxDegree){
+    if(degree[idx] >= maxDegree) return null;
+    const rootI = find(idx);
+    const { grid, cellDeg } = spatial;
+    const gx0 = Math.floor(villages[idx].gcoord[0] / cellDeg), gy0 = Math.floor(villages[idx].gcoord[1] / cellDeg);
+    let best = null, marginLeft = 1;
+    for(let ring = 0; ring <= 90; ring++){
+      for(let dx = -ring; dx <= ring; dx++){
+        for(let dy = -ring; dy <= ring; dy++){
+          if(Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
+          const cell = grid.get((gx0 + dx) + ',' + (gy0 + dy));
+          if(!cell) continue;
+          for(const j of cell){
+            if(find(j) === rootI) continue;
+            if(degree[j] >= maxDegree) continue;
+            const d = geoDistance(villages[idx].gcoord, villages[j].gcoord);
+            if(!best || d < best.d) best = { j, d };
+          }
+        }
+      }
+      if(best){
+        if(marginLeft <= 0) break;
+        marginLeft--;
+      }
+    }
+    return best;
+  }
+
+  // Relie les composantes isolees (iles, archipels, continents separes par
+  // la mer) via l'algorithme de Boruvka: a chaque tour, chaque composante
+  // trouve sa liaison sortante la moins couteuse et toutes fusionnent en
+  // parallele -- le nombre de composantes est au moins divise par deux a
+  // chaque tour.
+  // Chercher depuis TOUS les villages est inutile: une fois qu'une
+  // composante est enorme (le gros de l'Eurasie-Afrique ou des Ameriques),
+  // la liaison qu'elle merite est de toute facon trouvee depuis le cote
+  // minoritaire (memes paires, distance symetrique) -- on ne fait donc
+  // chercher que les villages des petites composantes ("originCap"), ce
+  // qui reduit le travail de ~1450 a quelques centaines de recherches.
+  // Si plus aucune petite composante n'a de candidat alors qu'il en reste
+  // plusieurs (typiquement les deux ou trois plus grosses masses
+  // continentales entre elles), on retire temporairement cette limite pour
+  // les derniers tours, peu nombreux a ce stade.
+  function connectComponentsBoruvka(villages, uf, degree, maxDegree){
+    const n = villages.length;
+    const spatial = buildSpatialGrid(villages, 4);
+    const originCap = Math.max(50, Math.round(Math.sqrt(n) * 3));
+    const countRoots = () => { const r = new Set(); for(let i = 0; i < n; i++) r.add(uf.find(i)); return r.size; };
+    const seaEdges = [];
+    let uncapped = false;
+    for(let round = 0; round < 60; round++){
+      if(countRoots() <= 1) break;
+      const cap = uncapped ? Infinity : originCap;
+      const bestByRoot = new Map();
+      for(let i = 0; i < n; i++){
+        if(degree[i] >= maxDegree) continue;
+        if(uf.sizeOf(i) > cap) continue;
+        const cand = nearestOtherComponent(i, villages, spatial, uf.find, degree, maxDegree);
+        if(!cand) continue;
+        const root = uf.find(i);
+        const prev = bestByRoot.get(root);
+        if(!prev || cand.d < prev.d) bestByRoot.set(root, { i, j:cand.j, d:cand.d });
+      }
+      if(bestByRoot.size === 0){
+        if(uncapped) break; // plus rien a relier meme sans limite
+        uncapped = true;
+        continue;
+      }
+      let merged = false;
+      bestByRoot.forEach(({ i, j }) => {
+        if(degree[i] >= maxDegree || degree[j] >= maxDegree) return; // sature entretemps ce tour
+        if(uf.union(i, j)){
+          seaEdges.push([i, j]);
+          degree[i]++; degree[j]++;
+          merged = true;
+        }
+      });
+      if(!merged && uncapped) break;
+    }
+    return seaEdges;
+  }
+
+  // Chaque capitale a droit a 4 tracés maximum: on ne considère que les
+  // paires de voisins directs réels (adjacence topojson, jamais une
+  // connexion qui saute par-dessus une region), triées de la plus proche a
+  // la plus lointaine, et on les ajoute une a une tant que les deux
+  // capitales concernées n'ont pas atteint la limite -- les connexions les
+  // plus pertinentes (les plus proches) sont donc toujours prioritaires.
+  const MAX_DEGREE = 4;
+
+  // Connexions explicitement retirees (paire de regions par id) meme si ce
+  // sont de vrais voisins -- le reste du reseau (plafonds adaptatifs, regle
+  // des 2 frontieres) se reajuste automatiquement autour de cette absence.
+  // Construit toujours via forbiddenKey (ordre des deux id sans importance)
+  // pour eviter une erreur de saisie sur l'ordre exact de la cle.
+  function forbiddenKey(idA, idB){ return idA < idB ? idA + '-' + idB : idB + '-' + idA; }
+  const FORBIDDEN_EDGES = new Set([
+    forbiddenKey(1406, 1419),
+    forbiddenKey(1417, 1384),
+    forbiddenKey(1415, 1421),
+  ]);
+
+  // Distance fixe (km) entre la cote et le trace maritime principal --
+  // ajustable ici, tout le reste (buffer, simplification, ponts entre
+  // anneaux) s'adapte automatiquement a cette valeur.
+  const COASTAL_ROUTE_OFFSET_KM = 50;
+
+  // Trace maritime principal: on fusionne toutes les regions en un seul
+  // territoire, on "gonfle" son contour de COASTAL_ROUTE_OFFSET_KM (turf.buffer
+  // suit deja nativement chaque baie/golfe a distance constante -- c'est
+  // exactement une ligne sinueuse parallele a la cote), puis on recupere ce
+  // contour comme trace. Le buffer separe naturellement le continent des
+  // iles trop eloignees (chacune garde son propre anneau): on relie ensuite
+  // tous les anneaux entre eux par leurs deux points les plus proches
+  // (arbre couvrant minimal) pour obtenir un seul reseau maritime continu,
+  // qui passe donc par les iles/ecueils intermediaires les plus proches
+  // plutot que de sauter directement d'une cote a une autre tres eloignee.
+  function buildCoastalRoute(features, offsetKm){
+    let union, buffered, routeFc;
+    try{
+      union = turf.union(turf.featureCollection(features));
+      buffered = turf.buffer(union, offsetKm, { units:'kilometers' });
+      routeFc = turf.polygonToLine(buffered);
+    }catch(e){ console.warn('Trace maritime cotier impossible a calculer:', e); return null; }
+
+    let rings = (routeFc.type === 'FeatureCollection' ? routeFc.features : [routeFc])
+      .map(f => f.geometry.type === 'MultiLineString' ? f.geometry.coordinates : [f.geometry.coordinates])
+      .flat();
+    // simplifie chaque anneau (moins de micro-dents issues du buffer) tout en gardant l'allure sinueuse
+    rings = rings.map(r => {
+      try{ return turf.simplify(turf.lineString(r), { tolerance:0.01, highQuality:true }).geometry.coordinates; }
+      catch(e){ return r; }
+    });
+
+    // Ponts entre anneaux separes, avec les index d'anneaux memorises (i, j)
+    // pour pouvoir ensuite retrouver le chemin exact dans get l'arbre.
+    const bridges = [];
+    if(rings.length > 1){
+      function nearestBetween(r1, r2){
+        let best = null;
+        for(const p1 of r1) for(const p2 of r2){
+          const d = geoDistance(p1, p2);
+          if(!best || d < best.d) best = { p1, p2, d };
+        }
+        return best;
+      }
+      const parent = Array.from({ length:rings.length }, (_, i) => i);
+      function find(x){ while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
+      const pairs = [];
+      for(let i = 0; i < rings.length; i++) for(let j = i + 1; j < rings.length; j++) pairs.push([i, j, nearestBetween(rings[i], rings[j])]);
+      pairs.sort((p1, p2) => p1[2].d - p2[2].d);
+      for(const [i, j, best] of pairs){
+        if(find(i) !== find(j)){ parent[find(i)] = find(j); bridges.push({ i, j, ...best }); }
+      }
+    }
+
+    const mainRingIdx = rings.reduce((best, r, idx) => r.length > rings[best].length ? idx : best, 0);
+
+    function nearestOnRoute(pt){
+      let best = null;
+      rings.forEach((ring, idx) => {
+        const np = turf.nearestPointOnLine(turf.lineString(ring), turf.point(pt));
+        if(!best || np.properties.dist < best.dist) best = { coord:np.geometry.coordinates, dist:np.properties.dist, ring:idx };
+      });
+      return best;
+    }
+
+    // Chemin (liste d'index de ponts) du continent (mainRingIdx) jusqu'a
+    // l'anneau vise, par parcours en largeur de l'arbre des ponts -- sert a
+    // ne garder, au rendu, que les anneaux/ponts reellement empruntes par
+    // une connexion utile plutot que de dessiner un contour autour de
+    // chaque ilot decoratif sans lien avec le reseau.
+    function bridgePathTo(targetRing){
+      if(targetRing === mainRingIdx) return [];
+      const adj = new Map();
+      bridges.forEach((b, bi) => {
+        if(!adj.has(b.i)) adj.set(b.i, []);
+        if(!adj.has(b.j)) adj.set(b.j, []);
+        adj.get(b.i).push({ to:b.j, bridge:bi });
+        adj.get(b.j).push({ to:b.i, bridge:bi });
+      });
+      const visited = new Set([mainRingIdx]);
+      const queue = [[mainRingIdx, []]];
+      while(queue.length){
+        const [cur, path] = queue.shift();
+        if(cur === targetRing) return path;
+        (adj.get(cur) || []).forEach(({ to, bridge }) => {
+          if(!visited.has(to)){ visited.add(to); queue.push([to, path.concat(bridge)]); }
+        });
+      }
+      return [];
+    }
+
+    return { rings, bridges, mainRingIdx, nearestOnRoute, bridgePathTo };
+  }
+
+  function buildRegionNetwork(topo, fc, geometries){
+    const n = fc.features.length;
+    const villages = fc.features.map(f => {
+      const coord = safeInteriorPoint(f);
+      return { regionId:f.id, coord, gcoord:[normLon(coord[0]), coord[1]] };
+    });
+
+    let neighborIdx;
+    try{ neighborIdx = topojson.neighbors(geometries); }
+    catch(e){ console.warn('Calcul des voisinages topologiques impossible:', e); neighborIdx = fc.features.map(() => []); }
+
+    const candidates = [];
+    for(let i = 0; i < n; i++){
+      for(const j of neighborIdx[i]){
+        if(j <= i) continue; // chaque paire de voisins une seule fois
+        if(FORBIDDEN_EDGES.has(forbiddenKey(fc.features[i].id, fc.features[j].id))) continue;
+        candidates.push([i, j, geoDistance(villages[i].coord, villages[j].coord)]);
+      }
+    }
+
+    // Plafond de connexions par capitale: 4 par defaut (MAX_DEGREE), releve
+    // au cas par cas UNIQUEMENT pour les capitales qui en ont reellement
+    // besoin pour atteindre chacun de leurs vrais voisins en 2 frontieres
+    // maximum (jamais au-dela de LAND_DEGREE_CEILING) -- la plupart des
+    // regions restent a 3, seuls les carrefours a nombreux voisins montent.
+    const LAND_DEGREE_CEILING = 6;
+    const cap = new Array(n).fill(MAX_DEGREE);
+    let uf, degree, edges, skippedUnroutable;
+
+    function runLandPass(){
+      uf = makeUnionFind(n);
+      degree = new Array(n).fill(0);
+      edges = [];
+      skippedUnroutable = 0;
+      // Priorise a chaque etape la paire dont la capitale la MOINS connectee
+      // (relativement a SON propre plafond) profiterait le plus, a distance
+      // egale la plus courte gagne -- evite qu'une region ayant pourtant
+      // plusieurs vrais voisins ne se retrouve avec un seul trace simplement
+      // parce que ses voisins ont deja ete pris par des paires plus courtes
+      // ailleurs.
+      const remaining = candidates.slice();
+      while(remaining.length){
+        let bestIdx = -1, bestScore = Infinity, bestDist = Infinity;
+        for(let k = 0; k < remaining.length; k++){
+          const [i, j, d] = remaining[k];
+          if(degree[i] >= cap[i] || degree[j] >= cap[j]){ remaining.splice(k, 1); k--; continue; }
+          const score = Math.max(degree[i] / cap[i], degree[j] / cap[j]);
+          if(score < bestScore || (score === bestScore && d < bestDist)){
+            bestScore = score; bestDist = d; bestIdx = k;
+          }
+        }
+        if(bestIdx === -1) break;
+        const [i, j] = remaining[bestIdx];
+        remaining.splice(bestIdx, 1);
+        const coords = landPath(topo, villages[i].coord, villages[j].coord, geometries[i], geometries[j], fc.features[i], fc.features[j], edges);
+        if(!coords){ skippedUnroutable++; continue; } // aucun trace valide sans traverser l'eau: on abandonne cette paire plutot que de tricher
+        edges.push({ a:i, b:j, coords, bbox:bboxOfCoords(coords), kind:'land' });
+        uf.union(i, j);
+        degree[i]++; degree[j]++;
+      }
+    }
+
+    // Chaque paire de vrais voisins doit rester a 2 tracés maximum l'une de
+    // l'autre dans le reseau construit; sinon, on augmente le plafond des
+    // deux capitales concernees (jamais au-dela du plafond maximal) et on
+    // reconstruit -- quelques tours suffisent, la plupart des regions ne
+    // sont jamais concernees.
+    function findTwoHopViolations(){
+      const adj = Array.from({ length:n }, () => []);
+      edges.forEach(e => { if(e.kind === 'land'){ adj[e.a].push(e.b); adj[e.b].push(e.a); } });
+      const violations = [];
+      for(let i = 0; i < n; i++){
+        const dist = new Array(n).fill(Infinity);
+        dist[i] = 0;
+        const queue = [i];
+        while(queue.length){
+          const cur = queue.shift();
+          for(const nx of adj[cur]) if(dist[nx] === Infinity){ dist[nx] = dist[cur] + 1; queue.push(nx); }
+        }
+        for(const j of neighborIdx[i]){
+          if(j <= i) continue;
+          if(dist[j] > 2) violations.push([i, j]);
+        }
+      }
+      return violations;
+    }
+
+    runLandPass();
+    for(let round = 0; round < 15; round++){
+      const violations = findTwoHopViolations();
+      if(!violations.length) break;
+      let raised = false;
+      violations.forEach(([i, j]) => {
+        [i, j].forEach(node => {
+          if(degree[node] >= cap[node] && cap[node] < LAND_DEGREE_CEILING){ cap[node]++; raised = true; }
+        });
+      });
+      if(!raised) break; // plafond maximal atteint partout ou necessaire: on garde le meilleur reseau obtenu
+      runLandPass();
+    }
+    if(skippedUnroutable) console.warn(skippedUnroutable, 'connexion(s) terrestre(s) abandonnee(s): aucun trace ne pouvait eviter l\'eau.');
+
+    // Regions non reliees par la terre au plus gros bloc continental (les
+    // iles): chacune rejoint le trace maritime principal par son point de
+    // connexion le plus proche -- jamais une capitale eloignee choisie au
+    // hasard, toujours la distance la plus courte vers la route cotiere.
+    let coastalRoute = null;
+    const linkedByCoast = new Set();
+    const coastalRouteFull = buildCoastalRoute(fc.features, COASTAL_ROUTE_OFFSET_KM);
+    if(coastalRouteFull){
+      const compSize = new Map();
+      for(let i = 0; i < n; i++){ const r = uf.find(i); compSize.set(r, (compSize.get(r) || 0) + 1); }
+      const mainRoot = [...compSize.entries()].sort((a, b) => b[1] - a[1])[0][0];
+      // N'affiche que le contour du continent (mainRingIdx) plus les
+      // anneaux/ponts reellement empruntes par une connexion insulaire --
+      // jamais un contournement complet d'un ilot qui n'a besoin d'aucune
+      // liaison maritime.
+      const usedRings = new Set([coastalRouteFull.mainRingIdx]);
+      const usedBridges = new Set();
+      for(let i = 0; i < n; i++){
+        if(uf.find(i) === mainRoot) continue;
+        if(degree[i] >= MAX_DEGREE) continue;
+        const np = coastalRouteFull.nearestOnRoute(villages[i].coord);
+        const coords = windingPath(villages[i].coord, np.coord, 0.15);
+        edges.push({ a:i, b:null, coords, kind:'sea' });
+        degree[i]++;
+        linkedByCoast.add(i);
+        usedRings.add(np.ring);
+        coastalRouteFull.bridgePathTo(np.ring).forEach(bi => {
+          usedBridges.add(bi);
+          usedRings.add(coastalRouteFull.bridges[bi].i);
+          usedRings.add(coastalRouteFull.bridges[bi].j);
+        });
+      }
+      coastalRoute = {
+        rings: coastalRouteFull.rings.filter((_, idx) => usedRings.has(idx)),
+        bridges: coastalRouteFull.bridges.filter((_, bi) => usedBridges.has(bi)),
+      };
+    } else {
+      // repli: ancien systeme de liaison directe capitale-a-capitale si le
+      // trace maritime cotier n'a pas pu etre calcule.
+      const seaEdges = connectComponentsBoruvka(villages, uf, degree, MAX_DEGREE);
+      seaEdges.forEach(([i, j]) => {
+        const coords = windingPath(villages[i].coord, villages[j].coord, 0.15);
+        edges.push({ a:i, b:j, coords, kind:'sea' });
+        linkedByCoast.add(i); linkedByCoast.add(j);
+      });
+    }
+
+    const roots = new Set();
+    for(let i = 0; i < n; i++){ if(!linkedByCoast.has(i)) roots.add(uf.find(i)); }
+    if(roots.size > 1) console.warn('Reseau non entierement connecte:', roots.size, 'composantes restantes (capitales saturees a', MAX_DEGREE, 'connexions).');
+
+    return { villages, edges, coastalRoute };
+  }
+
+  // filterFn restreint le reseau (villages + chemins) a un sous-ensemble de
+  // regions (ex. un seul pays) -- l'adjacence topojson ne comparant que les
+  // geometries passees en entree, les regions exclues n'influencent ni les
+  // voisinages terrestres ni les liaisons maritimes du sous-ensemble.
+  function addVillageNetwork(topo, fc, geometries, filterFn){
+    const idxList = [];
+    fc.features.forEach((f, i) => { if(!filterFn || filterFn(f)) idxList.push(i); });
+    const subFc = { features: idxList.map(i => fc.features[i]) };
+    const subGeometries = idxList.map(i => geometries[i]);
+
+    const { villages, edges, coastalRoute } = buildRegionNetwork(topo, subFc, subGeometries);
+
+    const pathsFc = {
+      type: 'FeatureCollection',
+      features: edges.map(e => ({
+        type: 'Feature', properties: { kind:e.kind },
+        geometry: { type: 'LineString', coordinates: e.coords },
+      })),
+    };
+    const villagesFc = {
+      type: 'FeatureCollection',
+      features: villages.map(v => ({
+        type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v.coord },
+      })),
+    };
+
+    // Trace maritime principal (cote + ponts entre anneaux separes) --
+    // sous les tracés terrestres/maritimes des capitales, couleur distincte
+    // (sarcelle) pour bien le differencier des routes brunes et des
+    // connecteurs bleus capitale-vers-route.
+    if(coastalRoute){
+      const routeFc = {
+        type: 'FeatureCollection',
+        features: [
+          ...coastalRoute.rings.map(r => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:r } })),
+          ...coastalRoute.bridges.map(b => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:[b.p1, b.p2] } })),
+        ],
+      };
+      map.addSource('coastal-route', { type: 'geojson', data: routeFc });
+      map.addLayer({
+        id: 'coastal-route', type: 'line', source: 'coastal-route',
+        paint: {
+          'line-color': '#2f8f7a', 'line-width': 1, 'line-opacity': 0.6,
+          'line-dasharray': [3, 2],
+        },
+      });
+    }
+
+    map.addSource('paths', { type: 'geojson', data: pathsFc });
+    map.addLayer({
+      id: 'paths', type: 'line', source: 'paths',
+      paint: {
+        'line-color': ['case', ['==', ['get', 'kind'], 'sea'], '#1f6ba0', '#6b4a2a'],
+        'line-width': ['case', ['==', ['get', 'kind'], 'sea'], 1.6, 1.4],
+        'line-opacity': 0.75,
+        'line-dasharray': ['case', ['==', ['get', 'kind'], 'sea'], ['literal', [1, 1.6]], ['literal', [2, 1.5]]],
+      },
+    });
+
+    map.addSource('villages', { type: 'geojson', data: villagesFc });
+    map.addLayer({
+      id: 'villages-halo', type: 'circle', source: 'villages',
+      paint: { 'circle-radius': 5.5, 'circle-color': '#f6efe0', 'circle-opacity': 0.9 },
+    });
+    map.addLayer({
+      id: 'villages', type: 'circle', source: 'villages',
+      paint: {
+        'circle-radius': 3, 'circle-color': '#4a3418',
+        'circle-stroke-color': '#f6efe0', 'circle-stroke-width': 1,
+      },
+    });
   }
 
   // ---------- Region panel / start selection (persisted in localStorage) ----------
@@ -730,62 +1513,34 @@
   });
   renderLineChart(document.getElementById('situation-chart'), document.getElementById('situation-legend'), document.getElementById('chart-tip'), SITUATION_TABS[0]);
 
-  // Économie view chart
-  renderLineChart(document.getElementById('econ-chart'), document.getElementById('econ-legend'), document.getElementById('econ-tip'),
-    { h:180, series:[
-      { name:'PIB mondial (Md $)', color:'var(--chart-1)', values:[520,610,690,790,900] },
-      { name:'Commerce mondial (Md $)', color:'var(--chart-2)', values:[300,340,380,430,470] } ] });
-
-  // ---------- Ranking ----------
+  // ---------- Ranking (vide: pas encore de puissances classees) ----------
   const rankBody = document.getElementById('rank-body');
-  const maxPower = Math.max(...RANKING.map(r => r.power));
-  RANKING.forEach((r,i) => {
-    const lightness = 68 - (r.power/maxPower)*30;
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td class="num">' + (i+1) + '</td>' +
-      '<td class="rank-name">' + r.flag + ' ' + r.name + '</td>' +
-      '<td style="width:50%"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + r.power + '%; background:hsl(206,45%,' + lightness + '%)"></div></div></td>' +
-      '<td class="num">' + r.power + '%</td>';
-    rankBody.appendChild(tr);
-  });
+  if(RANKING.length){
+    const maxPower = Math.max(...RANKING.map(r => r.power));
+    RANKING.forEach((r,i) => {
+      const lightness = 68 - (r.power/maxPower)*30;
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td class="num">' + (i+1) + '</td>' +
+        '<td class="rank-name">' + r.flag + ' ' + r.name + '</td>' +
+        '<td style="width:50%"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + r.power + '%; background:hsl(206,45%,' + lightness + '%)"></div></div></td>' +
+        '<td class="num">' + r.power + '%</td>';
+      rankBody.appendChild(tr);
+    });
+  } else {
+    rankBody.innerHTML = '<tr><td colspan="4" class="empty-row">Aucune puissance classée pour le moment.</td></tr>';
+  }
 
-  // ---------- Events ----------
+  // ---------- Events (vide: pas encore d'evenements) ----------
   const eventsList = document.getElementById('events-list');
-  EVENTS.forEach(ev => {
-    const li = document.createElement('li');
-    li.innerHTML = '<span class="ev-icon">' + ev.icon + '</span><span><span class="ev-date">' + ev.date + '</span>' + ev.text + '</span>';
-    eventsList.appendChild(li);
-  });
-
-  // ---------- Économie table ----------
-  const econBody = document.getElementById('econ-table-body');
-  ECON_TABLE.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + r.name + '</td><td class="num">' + r.pib.toLocaleString('fr-FR') + '</td><td>' + r.croissance + '</td><td>' + r.inflation + '</td>' +
-      '<td><span class="status-chip ' + r.statut + '">' + (r.statut==='good'?'Croissance saine':r.statut==='warn'?'Sous tension':'Stable') + '</span></td>';
-    econBody.appendChild(tr);
-  });
-
-  // ---------- Ressources & commerce ----------
-  const RESOURCES = [
-    { label:'Énergie', pct:78 }, { label:'Industrie', pct:64 }, { label:'Agriculture', pct:52 }, { label:'Technologie', pct:71 },
-  ];
-  const resBody = document.getElementById('resources-body');
-  RESOURCES.forEach(r => {
-    const row = document.createElement('div');
-    row.className = 'resource-row';
-    row.innerHTML = '<span class="rlabel">' + r.label + '</span><div class="rtrack"><div class="rfill" style="width:' + r.pct + '%"></div></div><span class="rval">' + r.pct + '%</span>';
-    resBody.appendChild(row);
-  });
-
-  // ---------- Diplomatie table ----------
-  const diploBody = document.getElementById('diplo-table-body');
-  DIPLO_TABLE.forEach(r => {
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td>' + r.name + '</td><td>' + r.relation + '</td><td class="num">' + r.traites + '</td>' +
-      '<td><span class="status-chip ' + r.statut + '">' + (r.statut==='good'?'Cordiale':r.statut==='warn'?'Tendue':'Neutre') + '</span></td>';
-    diploBody.appendChild(tr);
-  });
+  if(EVENTS.length){
+    EVENTS.forEach(ev => {
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="ev-icon">' + ev.icon + '</span><span><span class="ev-date">' + ev.date + '</span>' + ev.text + '</span>';
+      eventsList.appendChild(li);
+    });
+  } else {
+    eventsList.innerHTML = '<li class="empty-row">Aucun événement pour le moment.</li>';
+  }
 
   // ---------- Clock ----------
   function tickClock(){
