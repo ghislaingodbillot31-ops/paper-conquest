@@ -163,8 +163,46 @@
     padding:5px 10px; font-size:0.72rem; color:var(--ink-soft);
     box-shadow:2px 2px 0 var(--shadow);
   }
+  /* Onglet DEVELOPPEUR: filtres d'affichage des couches de la carte. */
+  .dev-panel{ position:absolute; top:12px; right:12px; z-index:3; display:flex; flex-direction:column; align-items:flex-end; gap:6px; }
+  .dev-tab{
+    background:var(--card); border:1.5px solid var(--line-strong); border-radius:8px;
+    padding:5px 10px; font-size:0.72rem; font-weight:700; letter-spacing:0.06em; color:var(--ink);
+    box-shadow:2px 2px 0 var(--shadow); cursor:pointer;
+  }
+  .dev-tab[aria-expanded="true"]{ background:var(--ink); color:var(--card); }
+  .dev-filters{
+    background:var(--card); border:1.5px solid var(--line-strong); border-radius:8px;
+    box-shadow:2px 2px 0 var(--shadow); padding:6px; display:flex; flex-direction:column; gap:4px; min-width:150px;
+  }
+  .dev-filters[hidden]{ display:none; }
+  .dev-filter{
+    display:flex; align-items:center; gap:8px; width:100%; text-align:left;
+    background:transparent; border:1px solid transparent; border-radius:6px;
+    padding:5px 8px; font:inherit; font-size:0.78rem; color:var(--ink); cursor:pointer;
+  }
+  .dev-filter:hover{ border-color:var(--line-strong); }
+  .dev-filter i{ width:12px; height:12px; border-radius:3px; border:1.5px solid var(--ink); flex:none; }
+  .dev-filter[aria-pressed="true"] i{ background:var(--ink); }
+  .dev-filter[aria-pressed="false"]{ color:var(--ink-soft); text-decoration:line-through; }
   .maplibregl-ctrl-attrib{ font-size:10px; }
   .maplibregl-ctrl-attrib a{ color:var(--ink-soft); }
+
+  /* Calcul du reseau routier mondial synchronement au chargement (~20s
+     pour tous les continents): un voile plein ecran evite que la carte
+     paraisse figee/cassee pendant ce temps. */
+  .map-loading{
+    position:absolute; inset:0; z-index:5;
+    background:rgba(14,28,56,0.82);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:14px;
+    color:#f6efe0; font-size:1rem;
+  }
+  .map-loading-spinner{
+    width:34px; height:34px; border-radius:50%;
+    border:3px solid rgba(246,239,224,0.25); border-top-color:#f6efe0;
+    animation:map-loading-spin 0.9s linear infinite;
+  }
+  @keyframes map-loading-spin{ to{ transform:rotate(360deg); } }
 
   .bottom-row{ flex:0 0 auto; display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
   .bottom-row .card{ min-height:0; max-height:230px; overflow-y:auto; }
@@ -291,6 +329,14 @@
             <div class="map-wrap">
               <div id="map"></div>
               <div class="map-hint hand">🖱️ Glisser pour tourner le globe</div>
+              <div class="dev-panel">
+                <button class="dev-tab" id="dev-tab" aria-expanded="false" aria-controls="dev-filters">DÉVELOPPEUR</button>
+                <div class="dev-filters" id="dev-filters" hidden></div>
+              </div>
+              <div class="map-loading" id="map-loading">
+                <div class="map-loading-spinner"></div>
+                <div class="hand">Chargement de la carte du monde&hellip;</div>
+              </div>
             </div>
           </div>
 
@@ -352,6 +398,14 @@
   const CONTINENT_BY_ID = {};
   CONTINENTS.forEach(c => { CONTINENT_BY_ID[c.id] = c; });
 
+  // Regions NPC (comptoirs de commerce, pour le futur systeme d'echanges):
+  // non selectionnables comme point de depart, couleur violette distincte,
+  // mais restent pleinement integrees au reseau routier. Choix manuel de
+  // l'utilisateur, remappe sur le redecoupage compact mondial (4 des 30 regions
+  // d'Australie).
+  const NPC_COLOR = '#8f5fa8';
+  const NPC_REGION_IDS = new Set([449, 421, 477, 489]);
+
   const SITUATION_TABS = [
     { id:'economie', label:'Économie', series:[
       { name:'PIB mondial', color:'var(--chart-1)', values:[520,610,690,790,900] },
@@ -400,7 +454,8 @@
   // ---------- Globe (MapLibre GL, vraie geographie) ----------
   // Chaque pays (adm0_a3) est classe dans l'un des 6 continents, seulement
   // pour la couleur et le petit texte de contexte dans le panneau -- les
-  // regions cliquables restent les vraies unites admin-1 (1457 morceaux),
+  // regions cliquables sont 500 regions compactes d'aire comparable (~260 000 km2,
+  // decoupage k-means + Voronoi par continent -- voir docs/build-repartition.js),
   // pas les continents eux-memes.
   const ISO3_CONTINENT = {
     namerica:['BLZ','CAN','CRI','CUB','DOM','GRL','GTM','HND','HTI','MEX','NIC','PAN','USA'],
@@ -590,7 +645,11 @@
   let regionsFc = null;
 
   async function addRegions(){
-    const topo = await fetch('data/admin1.topojson').then(r => r.json());
+    const [topo, sea] = await Promise.all([
+      fetch('data/admin1.topojson').then(r => r.json()),
+      fetch('data/sea-routes.json').then(r => r.json()).catch(e => { console.warn('Routes maritimes indisponibles:', e); return null; }),
+    ]);
+    seaRoutes = sea;
     const objName = Object.keys(topo.objects)[0];
     const geometries = topo.objects[objName].geometries;
     const fc = topojson.feature(topo, topo.objects[objName]);
@@ -607,12 +666,14 @@
       const lat = sy / ring.length, lon = sx / ring.length;
       const base = climateColorAt(lat, lon);
       const seed = geometrySeed(f.geometry);
-      f.properties.fillColor = tintHex(base, ((seed % 9) - 4) * 0.03);
+      f.properties.isNpc = NPC_REGION_IDS.has(f.id);
+      f.properties.fillColor = f.properties.isNpc ? NPC_COLOR : tintHex(base, ((seed % 9) - 4) * 0.03);
       unwrapGeometry(f.geometry);
       try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
       catch(e){ /* garde la valeur stockee si le calcul echoue */ }
     });
     regionsFc = fc;
+    buildLandIndex(fc.features);
 
     map.addSource('regions', { type: 'geojson', data: fc });
     map.addLayer({
@@ -647,6 +708,8 @@
       },
     });
 
+    applyDevFilters();
+
     map.on('click', 'regions', (e) => {
       if(locked || !e.features.length) return;
       selectRegion(e.features[0].id);
@@ -654,7 +717,24 @@
     map.on('mouseenter', 'regions', () => { if(!locked) map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
-    addVillageNetwork(topo, fc, geometries, f => f.properties.adm0_a3 === 'AUS');
+    // Un reseau independant par continent (jamais de faux voisinage entre
+    // deux masses continentales separees par un ocean): chaque appel a
+    // buildRegionNetwork ne compare que les geometries de son propre
+    // sous-ensemble, donc le cout de calcul de chacun reste borne a sa
+    // propre taille plutot que d'exploser avec le nombre total de regions
+    // du monde.
+    addVillageNetwork(topo, fc, geometries, [
+      f => f.properties.adm0_a3 === 'AUS',
+      f => ISO3_CONTINENT.africa.includes(f.properties.adm0_a3),
+      f => ISO3_CONTINENT.europe.includes(f.properties.adm0_a3),
+      f => ISO3_CONTINENT.asia.includes(f.properties.adm0_a3),
+      f => ISO3_CONTINENT.namerica.includes(f.properties.adm0_a3),
+      f => ISO3_CONTINENT.samerica.includes(f.properties.adm0_a3),
+      f => ISO3_CONTINENT.oceania.includes(f.properties.adm0_a3) && f.properties.adm0_a3 !== 'AUS',
+    ]);
+
+    const loadingEl = document.getElementById('map-loading');
+    if(loadingEl) loadingEl.style.display = 'none';
 
     initSelection();
   }
@@ -1044,104 +1124,86 @@
   // Construit toujours via forbiddenKey (ordre des deux id sans importance)
   // pour eviter une erreur de saisie sur l'ordre exact de la cle.
   function forbiddenKey(idA, idB){ return idA < idB ? idA + '-' + idB : idB + '-' + idA; }
+  // (Vide depuis le passage a 500 regions: les anciennes paires ne
+  // correspondaient plus aux nouvelles frontieres.)
   const FORBIDDEN_EDGES = new Set([
-    forbiddenKey(1406, 1419),
-    forbiddenKey(1417, 1384),
-    forbiddenKey(1415, 1421),
   ]);
 
-  // Distance fixe (km) entre la cote et le trace maritime principal --
-  // ajustable ici, tout le reste (buffer, simplification, ponts entre
-  // anneaux) s'adapte automatiquement a cette valeur.
-  const COASTAL_ROUTE_OFFSET_KM = 50;
+  // Routes maritimes: precalculees une seule fois pour le MONDE ENTIER
+  // (docs/build-sea-routes.js -> data/sea-routes.json), avec toutes les
+  // terres a la fois -- l'ancien calcul continent par continent ignorait
+  // les terres des autres continents (tracé europeen sur le Maroc, tracé
+  // nord-americain sur la Colombie...). Regles du generateur: ligne a
+  // 100 km de la cote la plus proche quand la place le permet, au milieu
+  // du passage quand il est plus etroit, rien dans les passages de moins
+  // de ~10 km de large, culs-de-sac supprimes, jamais sur la terre.
+  let seaRoutes = null;
 
-  // Trace maritime principal: on fusionne toutes les regions en un seul
-  // territoire, on "gonfle" son contour de COASTAL_ROUTE_OFFSET_KM (turf.buffer
-  // suit deja nativement chaque baie/golfe a distance constante -- c'est
-  // exactement une ligne sinueuse parallele a la cote), puis on recupere ce
-  // contour comme trace. Le buffer separe naturellement le continent des
-  // iles trop eloignees (chacune garde son propre anneau): on relie ensuite
-  // tous les anneaux entre eux par leurs deux points les plus proches
-  // (arbre couvrant minimal) pour obtenir un seul reseau maritime continu,
-  // qui passe donc par les iles/ecueils intermediaires les plus proches
-  // plutot que de sauter directement d'une cote a une autre tres eloignee.
-  function buildCoastalRoute(features, offsetKm){
-    let union, buffered, routeFc;
-    try{
-      union = turf.union(turf.featureCollection(features));
-      buffered = turf.buffer(union, offsetKm, { units:'kilometers' });
-      routeFc = turf.polygonToLine(buffered);
-    }catch(e){ console.warn('Trace maritime cotier impossible a calculer:', e); return null; }
-
-    let rings = (routeFc.type === 'FeatureCollection' ? routeFc.features : [routeFc])
-      .map(f => f.geometry.type === 'MultiLineString' ? f.geometry.coordinates : [f.geometry.coordinates])
-      .flat();
-    // simplifie chaque anneau (moins de micro-dents issues du buffer) tout en gardant l'allure sinueuse
-    rings = rings.map(r => {
-      try{ return turf.simplify(turf.lineString(r), { tolerance:0.01, highQuality:true }).geometry.coordinates; }
-      catch(e){ return r; }
-    });
-
-    // Ponts entre anneaux separes, avec les index d'anneaux memorises (i, j)
-    // pour pouvoir ensuite retrouver le chemin exact dans get l'arbre.
-    const bridges = [];
-    if(rings.length > 1){
-      function nearestBetween(r1, r2){
-        let best = null;
-        for(const p1 of r1) for(const p2 of r2){
-          const d = geoDistance(p1, p2);
-          if(!best || d < best.d) best = { p1, p2, d };
+  // Test "ce point est-il sur la terre ?" valable pour le monde entier:
+  // index par cases de 2 degres des emprises des regions, puis test exact
+  // sur les seules regions candidates.
+  const LAND_INDEX_DEG = 2;
+  let landIndex = null;
+  function buildLandIndex(features){
+    landIndex = new Map();
+    features.forEach(f => {
+      const [minX, minY, maxX, maxY] = turf.bbox(f);
+      for(let gx = Math.floor(minX / LAND_INDEX_DEG); gx <= Math.floor(maxX / LAND_INDEX_DEG); gx++)
+        for(let gy = Math.floor(minY / LAND_INDEX_DEG); gy <= Math.floor(maxY / LAND_INDEX_DEG); gy++){
+          const k = gx + ',' + gy;
+          if(!landIndex.has(k)) landIndex.set(k, []);
+          landIndex.get(k).push(f);
         }
-        return best;
-      }
-      const parent = Array.from({ length:rings.length }, (_, i) => i);
-      function find(x){ while(parent[x] !== x){ parent[x] = parent[parent[x]]; x = parent[x]; } return x; }
-      const pairs = [];
-      for(let i = 0; i < rings.length; i++) for(let j = i + 1; j < rings.length; j++) pairs.push([i, j, nearestBetween(rings[i], rings[j])]);
-      pairs.sort((p1, p2) => p1[2].d - p2[2].d);
-      for(const [i, j, best] of pairs){
-        if(find(i) !== find(j)){ parent[find(i)] = find(j); bridges.push({ i, j, ...best }); }
+    });
+  }
+  function isLandPoint(pt){
+    // les geometries "deroulees" peuvent depasser +-180: on teste aussi +-360
+    for(const off of [0, 360, -360]){
+      const p = [pt[0] + off, pt[1]];
+      const list = landIndex.get(Math.floor(p[0] / LAND_INDEX_DEG) + ',' + Math.floor(p[1] / LAND_INDEX_DEG));
+      if(list && list.some(f => turf.booleanPointInPolygon(p, f))) return true;
+    }
+    return false;
+  }
+  // Connecteur capitale -> route maritime: le debut traverse forcement sa
+  // propre region (capitale a l'interieur des terres), mais une fois en mer
+  // il ne doit plus JAMAIS toucher une terre. Echantillonne finement (~3 km)
+  // pour ne rater aucune presqu'ile etroite entre deux points du trace.
+  function connectorStaysAtSea(coords){
+    let leftLand = false;
+    for(let i = 1; i < coords.length; i++){
+      const a = coords[i-1], b = coords[i];
+      const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.03));
+      for(let s = 1; s <= steps; s++){
+        const onLand = isLandPoint([a[0] + (b[0] - a[0]) * s / steps, a[1] + (b[1] - a[1]) * s / steps]);
+        if(!leftLand){ if(!onLand) leftLand = true; }
+        else if(onLand) return false;
       }
     }
+    return leftLand;
+  }
 
-    const mainRingIdx = rings.reduce((best, r, idx) => r.length > rings[best].length ? idx : best, 0);
-
-    function nearestOnRoute(pt){
-      let best = null;
-      rings.forEach((ring, idx) => {
-        const np = turf.nearestPointOnLine(turf.lineString(ring), turf.point(pt));
-        if(!best || np.properties.dist < best.dist) best = { coord:np.geometry.coordinates, dist:np.properties.dist, ring:idx };
-      });
-      return best;
-    }
-
-    // Chemin (liste d'index de ponts) du continent (mainRingIdx) jusqu'a
-    // l'anneau vise, par parcours en largeur de l'arbre des ponts -- sert a
-    // ne garder, au rendu, que les anneaux/ponts reellement empruntes par
-    // une connexion utile plutot que de dessiner un contour autour de
-    // chaque ilot decoratif sans lien avec le reseau.
-    function bridgePathTo(targetRing){
-      if(targetRing === mainRingIdx) return [];
-      const adj = new Map();
-      bridges.forEach((b, bi) => {
-        if(!adj.has(b.i)) adj.set(b.i, []);
-        if(!adj.has(b.j)) adj.set(b.j, []);
-        adj.get(b.i).push({ to:b.j, bridge:bi });
-        adj.get(b.j).push({ to:b.i, bridge:bi });
-      });
-      const visited = new Set([mainRingIdx]);
-      const queue = [[mainRingIdx, []]];
-      while(queue.length){
-        const [cur, path] = queue.shift();
-        if(cur === targetRing) return path;
-        (adj.get(cur) || []).forEach(({ to, bridge }) => {
-          if(!visited.has(to)){ visited.add(to); queue.push([to, path.concat(bridge)]); }
-        });
+  // Candidats tries du plus proche au plus loin (sommets des routes), pour
+  // chacun plusieurs amplitudes d'ondulation; prefere un trace qui ne croise
+  // aucun chemin deja pose, sinon garde le premier valide.
+  function bestSeaConnector(pt, existingEdges){
+    const candidates = [];
+    seaRoutes.lines.forEach(line => line.forEach(v => {
+      const vv = [v[0] + Math.round((pt[0] - v[0]) / 360) * 360, v[1]]; // meme "copie" du monde que la capitale
+      candidates.push({ coord:vv, d:geoDistance(pt, vv) });
+    }));
+    candidates.sort((a, b) => a.d - b.d);
+    let fallback = null;
+    for(const c of candidates.slice(0, 120)){
+      for(const scale of [0.15, 0.05, 0]){
+        const coords = windingPath(pt, c.coord, scale);
+        if(connectorStaysAtSea(coords)){
+          if(!fallback) fallback = { coords, dist:c.d };
+          if(!crossesExisting(coords, existingEdges)) return { coords, dist:c.d };
+        }
       }
-      return [];
     }
-
-    return { rings, bridges, mainRingIdx, nearestOnRoute, bridgePathTo };
+    return fallback;
   }
 
   function buildRegionNetwork(topo, fc, geometries){
@@ -1247,44 +1309,26 @@
     if(skippedUnroutable) console.warn(skippedUnroutable, 'connexion(s) terrestre(s) abandonnee(s): aucun trace ne pouvait eviter l\'eau.');
 
     // Regions non reliees par la terre au plus gros bloc continental (les
-    // iles): chacune rejoint le trace maritime principal par son point de
-    // connexion le plus proche -- jamais une capitale eloignee choisie au
-    // hasard, toujours la distance la plus courte vers la route cotiere.
-    let coastalRoute = null;
+    // iles): chacune rejoint la route maritime mondiale (data/sea-routes.json)
+    // par son point le plus proche -- jamais une capitale eloignee choisie au
+    // hasard, et jamais un trace qui recoupe une terre une fois en mer.
     const linkedByCoast = new Set();
-    const coastalRouteFull = buildCoastalRoute(fc.features, COASTAL_ROUTE_OFFSET_KM);
-    if(coastalRouteFull){
+    if(seaRoutes && seaRoutes.lines.length){
       const compSize = new Map();
       for(let i = 0; i < n; i++){ const r = uf.find(i); compSize.set(r, (compSize.get(r) || 0) + 1); }
       const mainRoot = [...compSize.entries()].sort((a, b) => b[1] - a[1])[0][0];
-      // N'affiche que le contour du continent (mainRingIdx) plus les
-      // anneaux/ponts reellement empruntes par une connexion insulaire --
-      // jamais un contournement complet d'un ilot qui n'a besoin d'aucune
-      // liaison maritime.
-      const usedRings = new Set([coastalRouteFull.mainRingIdx]);
-      const usedBridges = new Set();
       for(let i = 0; i < n; i++){
         if(uf.find(i) === mainRoot) continue;
         if(degree[i] >= MAX_DEGREE) continue;
-        const np = coastalRouteFull.nearestOnRoute(villages[i].coord);
-        const coords = windingPath(villages[i].coord, np.coord, 0.15);
-        edges.push({ a:i, b:null, coords, kind:'sea' });
+        const conn = bestSeaConnector(villages[i].coord, edges);
+        if(!conn) continue; // aucun connecteur valide: on abandonne plutot que de traverser la terre
+        edges.push({ a:i, b:null, coords:conn.coords, bbox:bboxOfCoords(conn.coords), kind:'sea' });
         degree[i]++;
         linkedByCoast.add(i);
-        usedRings.add(np.ring);
-        coastalRouteFull.bridgePathTo(np.ring).forEach(bi => {
-          usedBridges.add(bi);
-          usedRings.add(coastalRouteFull.bridges[bi].i);
-          usedRings.add(coastalRouteFull.bridges[bi].j);
-        });
       }
-      coastalRoute = {
-        rings: coastalRouteFull.rings.filter((_, idx) => usedRings.has(idx)),
-        bridges: coastalRouteFull.bridges.filter((_, bi) => usedBridges.has(bi)),
-      };
     } else {
-      // repli: ancien systeme de liaison directe capitale-a-capitale si le
-      // trace maritime cotier n'a pas pu etre calcule.
+      // repli: ancien systeme de liaison directe capitale-a-capitale si les
+      // routes maritimes n'ont pas pu etre chargees.
       const seaEdges = connectComponentsBoruvka(villages, uf, degree, MAX_DEGREE);
       seaEdges.forEach(([i, j]) => {
         const coords = windingPath(villages[i].coord, villages[j].coord, 0.15);
@@ -1293,51 +1337,64 @@
       });
     }
 
+    // Une composante est reellement reliee des qu'UN SEUL de ses membres a
+    // un connecteur maritime (les autres y accedent via leurs propres
+    // tracés terrestres internes puis ce connecteur partage) -- verifier
+    // par region individuelle plutot que par composante donnait de fausses
+    // alertes des qu'une composante avait plusieurs membres et que certains,
+    // satures a leur plafond, n'avaient pas besoin d'en avoir un.
+    const rootsLinked = new Set();
+    for(let i = 0; i < n; i++){ if(linkedByCoast.has(i)) rootsLinked.add(uf.find(i)); }
     const roots = new Set();
-    for(let i = 0; i < n; i++){ if(!linkedByCoast.has(i)) roots.add(uf.find(i)); }
+    for(let i = 0; i < n; i++){ if(!rootsLinked.has(uf.find(i))) roots.add(uf.find(i)); }
     if(roots.size > 1) console.warn('Reseau non entierement connecte:', roots.size, 'composantes restantes (capitales saturees a', MAX_DEGREE, 'connexions).');
 
-    return { villages, edges, coastalRoute };
+    return { villages, edges };
   }
 
-  // filterFn restreint le reseau (villages + chemins) a un sous-ensemble de
-  // regions (ex. un seul pays) -- l'adjacence topojson ne comparant que les
-  // geometries passees en entree, les regions exclues n'influencent ni les
-  // voisinages terrestres ni les liaisons maritimes du sous-ensemble.
-  function addVillageNetwork(topo, fc, geometries, filterFn){
-    const idxList = [];
-    fc.features.forEach((f, i) => { if(!filterFn || filterFn(f)) idxList.push(i); });
-    const subFc = { features: idxList.map(i => fc.features[i]) };
-    const subGeometries = idxList.map(i => geometries[i]);
+  // filterFns restreint le reseau (villages + chemins) a un ou plusieurs
+  // sous-ensembles de regions (ex. un pays ou un continent chacun) -- un
+  // reseau independant est construit pour chaque filtre (l'adjacence
+  // topojson ne comparant que les geometries de ce sous-ensemble, aucune
+  // interference entre continents), puis tous les reseaux sont fusionnes
+  // dans les memes sources/couches de la carte.
+  function addVillageNetwork(topo, fc, geometries, filterFns){
+    const filters = Array.isArray(filterFns) ? filterFns : [filterFns];
+    const allEdges = [];
+    const allVillages = [];
 
-    const { villages, edges, coastalRoute } = buildRegionNetwork(topo, subFc, subGeometries);
+    filters.forEach(filterFn => {
+      const idxList = [];
+      fc.features.forEach((f, i) => { if(!filterFn || filterFn(f)) idxList.push(i); });
+      if(!idxList.length) return;
+      const subFc = { features: idxList.map(i => fc.features[i]) };
+      const subGeometries = idxList.map(i => geometries[i]);
+
+      const { villages, edges } = buildRegionNetwork(topo, subFc, subGeometries);
+      allEdges.push(...edges);
+      allVillages.push(...villages);
+    });
 
     const pathsFc = {
       type: 'FeatureCollection',
-      features: edges.map(e => ({
+      features: allEdges.map(e => ({
         type: 'Feature', properties: { kind:e.kind },
         geometry: { type: 'LineString', coordinates: e.coords },
       })),
     };
     const villagesFc = {
       type: 'FeatureCollection',
-      features: villages.map(v => ({
+      features: allVillages.map(v => ({
         type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v.coord },
       })),
     };
 
-    // Trace maritime principal (cote + ponts entre anneaux separes) --
-    // sous les tracés terrestres/maritimes des capitales, couleur distincte
-    // (sarcelle) pour bien le differencier des routes brunes et des
-    // connecteurs bleus capitale-vers-route.
-    if(coastalRoute){
-      const routeFc = {
-        type: 'FeatureCollection',
-        features: [
-          ...coastalRoute.rings.map(r => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:r } })),
-          ...coastalRoute.bridges.map(b => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:[b.p1, b.p2] } })),
-        ],
-      };
+    // Routes maritimes mondiales (data/sea-routes.json) -- sous les tracés
+    // terrestres/maritimes des capitales, couleur distincte (sarcelle) pour
+    // bien les differencier des routes brunes et des connecteurs bleus
+    // capitale-vers-route.
+    if(seaRoutes && seaRoutes.lines.length){
+      const routeFc = { type: 'FeatureCollection', features: seaRoutes.lines.map(l => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:l } })) };
       map.addSource('coastal-route', { type: 'geojson', data: routeFc });
       map.addLayer({
         id: 'coastal-route', type: 'line', source: 'coastal-route',
@@ -1371,7 +1428,64 @@
         'circle-stroke-color': '#f6efe0', 'circle-stroke-width': 1,
       },
     });
+    applyDevFilters();
   }
+
+  // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
+  // Les couches sont creees de facon asynchrone (apres le calcul du
+  // reseau): applyDevFilters() est rappele a leur creation et ignore
+  // simplement celles qui n'existent pas encore. Choix memorise par
+  // navigateur (localStorage), la carte marche aussi sans.
+  const DEV_FILTERS = [
+    { id:'land', label:'Voie terrestre' },
+    { id:'towns', label:'Ville' },
+    { id:'numbers', label:'Numéro' },
+    { id:'sea', label:'Voie maritime' },
+  ];
+  const DEV_STORAGE_KEY = 'paperConquestDevFilters';
+  const devState = { land:true, towns:true, numbers:true, sea:true };
+  try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
+
+  function setLayerVisible(layerId, visible){
+    if(map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
+  }
+  function applyDevFilters(){
+    // Une seule couche 'paths' porte les deux types de chemins (propriete
+    // kind): on filtre par type plutot que de masquer toute la couche.
+    if(map.getLayer('paths')){
+      const kinds = [];
+      if(devState.land) kinds.push('land');
+      if(devState.sea) kinds.push('sea');
+      map.setFilter('paths', ['in', ['get', 'kind'], ['literal', kinds]]);
+    }
+    setLayerVisible('coastal-route', devState.sea);
+    setLayerVisible('villages', devState.towns);
+    setLayerVisible('villages-halo', devState.towns);
+    setLayerVisible('regions-label', devState.numbers);
+  }
+
+  (function initDevPanel(){
+    const tab = document.getElementById('dev-tab');
+    const box = document.getElementById('dev-filters');
+    DEV_FILTERS.forEach(f => {
+      const btn = document.createElement('button');
+      btn.className = 'dev-filter';
+      btn.innerHTML = '<i></i><span>' + f.label + '</span>';
+      btn.setAttribute('aria-pressed', String(devState[f.id]));
+      btn.addEventListener('click', () => {
+        devState[f.id] = !devState[f.id];
+        btn.setAttribute('aria-pressed', String(devState[f.id]));
+        try{ localStorage.setItem(DEV_STORAGE_KEY, JSON.stringify(devState)); }catch(e){}
+        applyDevFilters();
+      });
+      box.appendChild(btn);
+    });
+    tab.addEventListener('click', () => {
+      const open = box.hidden;
+      box.hidden = !open;
+      tab.setAttribute('aria-expanded', String(open));
+    });
+  })();
 
   // ---------- Region panel / start selection (persisted in localStorage) ----------
   const STORAGE_KEY = 'paperConquestStart';
@@ -1391,6 +1505,21 @@
 
   function selectRegion(id){
     if(locked) return;
+    const f = regionsFc.features.find(x => x.id === id);
+    if(f && f.properties.isNpc){
+      // Region NPC (comptoir de commerce): jamais selectionnable comme
+      // point de depart -- petit message temporaire sur le ruban plutot
+      // qu'un refus silencieux.
+      const ribbon = document.getElementById('map-ribbon');
+      if(!selectRegion._npcTimer) selectRegion._npcOrigText = ribbon.textContent;
+      ribbon.textContent = '🟣 Comptoir de commerce -- non disponible comme point de départ';
+      clearTimeout(selectRegion._npcTimer);
+      selectRegion._npcTimer = setTimeout(() => {
+        ribbon.textContent = selectRegion._npcOrigText;
+        selectRegion._npcTimer = null;
+      }, 2200);
+      return;
+    }
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
     selectedId = id;
     map.setFeatureState({ source:'regions', id }, { selected:true });
