@@ -301,6 +301,17 @@
   .built-list{ margin:0; padding-left:18px; font-size:0.82rem; display:flex; flex-direction:column; gap:3px; }
   @media (max-width:520px){ .build-card{ grid-template-columns:44px 1fr; } .build-card .boat-btn{ grid-column:1 / -1; width:100%; } }
 
+  /* Onglet Voyage */
+  .voyage-card{ display:flex; flex-direction:column; gap:8px; padding:12px; border:1.5px solid var(--line); border-radius:10px; background:var(--paper); }
+  .voyage-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+  .voyage-dest{ font-weight:800; }
+  .voyage-state{ font-size:0.72rem; font-weight:800; text-transform:uppercase; letter-spacing:0.06em; padding:3px 9px; border-radius:99px; color:#fff; }
+  .voyage-state.go{ background:var(--warn); }
+  .voyage-state.done{ background:var(--good); }
+  .voyage-bar{ height:10px; border-radius:99px; background:var(--paper-alt); border:1px solid var(--line); overflow:hidden; }
+  .voyage-bar i{ display:block; height:100%; background:linear-gradient(90deg, #e8590c, #f2a900); }
+  .voyage-card .region-row{ font-variant-numeric:tabular-nums; }
+
   /* Barre de placement d'un batiment */
   .build-bar{ position:absolute; left:50%; top:52px; transform:translateX(-50%); z-index:4; display:flex; flex-wrap:wrap; align-items:center; gap:8px;
     background:var(--card); border:1.5px solid var(--line-strong); border-radius:10px; padding:8px 10px; box-shadow:2px 2px 0 var(--shadow);
@@ -1227,6 +1238,7 @@
       const { villages, edges } = buildRegionNetwork(topo, subFc, subGeometries);
       allEdges.push(...edges);
       allVillages.push(...villages);
+      villages.forEach(v => capitalById.set(v.regionId, v.coord));
     });
 
     const pathsFc = {
@@ -1372,17 +1384,58 @@
     return { findPath, isSea:(lon, lat) => { const c = cellOf(lon, lat); return c >= 0 && nav[c] > 0; }, snap:(lon, lat) => { const c = snap(lon, lat); return c < 0 ? null : [lonOf(c), latOf(c)]; } };
   }
 
-  // ---------- Test bateau: point & click ----------
-  // Prototype de deplacement maritime: un bateau (rond) place librement en
-  // mer, selectionne d'un clic, puis envoye d'un clic sur une destination.
-  // Le chemin maritime le plus court est calcule (createNavigator), affiche,
-  // puis suivi exactement. Position memorisee dans ce navigateur.
+  // ---------- Bateau: point & click, voyages minutes, comptoirs NPC ----------
+  // Un bateau (rond) place librement en mer, selectionne d'un clic, puis
+  // envoye d'un clic sur une destination: un point en mer ou le port d'un
+  // comptoir NPC. Le chemin maritime le plus court est calcule
+  // (createNavigator), affiche, puis suivi a vitesse constante. Le voyage est
+  // sauvegarde (depart + duree): recharger la page reprend le trajet la ou il
+  // en est. Arrive au port d'un comptoir, le bateau y est "a quai".
   const BOAT_STORAGE_KEY = 'paperConquestBoat';
-  const boat = { pos:null, selected:false, moving:false, placing:false };
+  const BOAT_SPEED_KM_S = 60;   // vitesse de test: 60 km par seconde reelle
+  const boat = { pos:null, selected:false, moving:false, placing:false, voyage:null };
   let seaNavigator = null, boatReady = false, boatPathTimer = null, sailRun = 0;
-  try{ const saved = JSON.parse(localStorage.getItem(BOAT_STORAGE_KEY)); if(saved && Array.isArray(saved.pos)) boat.pos = saved.pos; }catch(e){}
-  const saveBoat = () => { try{ localStorage.setItem(BOAT_STORAGE_KEY, JSON.stringify({ pos:boat.pos })); }catch(e){} };
+  const capitalById = new Map();  // numero de region -> position de sa capitale
+  let npcPorts = [];              // [{ regionId, pos, bearing, dock }]
+  try{
+    const saved = JSON.parse(localStorage.getItem(BOAT_STORAGE_KEY));
+    if(saved && Array.isArray(saved.pos)) boat.pos = saved.pos;
+    if(saved && saved.voyage && Array.isArray(saved.voyage.coords)) boat.voyage = saved.voyage;
+  }catch(e){}
+  const saveBoat = () => { try{ localStorage.setItem(BOAT_STORAGE_KEY, JSON.stringify({ pos:boat.pos, voyage:boat.voyage })); }catch(e){} };
   const normLonLat = ([lon, lat]) => [((lon + 540) % 360) - 180, lat];
+  const dockedPort = () => (boat.voyage && boat.voyage.arrived && boat.voyage.destPort) || null;
+  const voyageLabel = v => v.destPort ? 'Comptoir de la région ' + v.destPort : (v.destOwn ? 'Votre port (région ' + v.destOwn + ')' : 'Point en mer');
+
+  // Surbrillance des ports: un port survole, ou vise par le bateau (en route
+  // ou a quai), passe dans la couche "-hl": icone agrandie + halo dore.
+  // (La taille d'une icone ne peut pas dependre de l'etat de survol dans
+  // MapLibre: on bascule donc le point d'une couche a l'autre par son id.)
+  const PORT_HL_SIZE = 1.25;
+  const PORT_HALO_PAINT = { 'circle-radius':19, 'circle-color':'#ffd43b', 'circle-opacity':0.55, 'circle-blur':0.35,
+    'circle-stroke-color':'#f08c00', 'circle-stroke-width':1.5, 'circle-stroke-opacity':0.7 };
+  const portFilter = (ids, highlighted) => ['all', ['==', ['geometry-type'], 'Point'],
+    highlighted ? ['in', ['id'], ['literal', ids]] : ['!', ['in', ['id'], ['literal', ids]]]];
+  const hoveredPort = { npc:null, own:null };
+  function ownPortId(regionId){ const list = regionBuildings(regionId); const i = list.findIndex(b => b.type === 'port'); return i < 0 ? null : regionId * 100 + i; }
+  function updatePortHighlights(){
+    const v = boat.voyage, npc = new Set(), own = new Set();
+    if(hoveredPort.npc !== null) npc.add(hoveredPort.npc);
+    if(hoveredPort.own !== null) own.add(hoveredPort.own);
+    if(v && v.destPort) npc.add(v.destPort);
+    if(v && v.destOwn){ const id = ownPortId(v.destOwn); if(id !== null) own.add(id); }
+    const apply = (base, halo, hl, ids) => { if(!map.getLayer(base)) return; map.setFilter(base, portFilter(ids, false)); map.setFilter(halo, portFilter(ids, true)); map.setFilter(hl, portFilter(ids, true)); };
+    apply('npc-ports', 'npc-ports-halo', 'npc-ports-hl', [...npc]);
+    apply('buildings-icon', 'buildings-halo', 'buildings-icon-hl', [...own]);
+  }
+  // port sous le curseur (petite tolerance): { kind:'npc'|'own', id, regionId }
+  function portAt(point){
+    const box = [[point.x - 10, point.y - 10], [point.x + 10, point.y + 10]];
+    const layers = ['npc-ports', 'npc-ports-hl', 'buildings-icon', 'buildings-icon-hl'].filter(l => map.getLayer(l));
+    const hit = map.queryRenderedFeatures(box, { layers })[0];
+    if(!hit) return null;
+    return { kind:hit.layer.id.startsWith('npc') ? 'npc' : 'own', id:hit.id, regionId:hit.properties.regionId };
+  }
 
   function boatHint(text){
     const el = document.getElementById('boat-hint');
@@ -1393,8 +1446,9 @@
   function boatStatusText(){
     if(boat.placing) return 'Cliquez sur la mer pour poser le bateau.';
     if(!boat.pos) return 'Aucun bateau en mer.';
-    if(boat.moving) return 'En route…';
-    if(boat.selected) return 'Bateau sélectionné : cliquez sur une destination.';
+    if(boat.moving) return 'En route vers : ' + voyageLabel(boat.voyage) + '.';
+    if(boat.selected) return 'Bateau sélectionné : cliquez sur une destination (un comptoir violet, ou la mer).';
+    if(dockedPort()) return 'À quai au comptoir de la région ' + dockedPort() + '.';
     return 'Cliquez sur le bateau pour le sélectionner.';
   }
   function renderBoat(){
@@ -1416,12 +1470,13 @@
   }
 
   function initBoat(navGrid){
-    if(!navGrid){ console.warn('Test bateau indisponible: pas de grille de navigation.'); return; }
+    if(!navGrid){ console.warn('Bateau indisponible: pas de grille de navigation.'); return; }
     seaNavigator = createNavigator(navGrid);
     map.addSource('boat-path', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
     map.addLayer({ id:'boat-path', type:'line', source:'boat-path',
       layout:{ 'line-cap':'round', 'line-join':'round' },
       paint:{ 'line-color':'#e8590c', 'line-width':3, 'line-dasharray':[1.5, 1.2], 'line-opacity':0.95 } });
+    initNpcPorts();
     map.addSource('boat', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
     map.addLayer({ id:'boat-halo', type:'circle', source:'boat',
       paint:{ 'circle-radius':['case', ['get', 'selected'], 17, 12], 'circle-color':'#ffd43b',
@@ -1430,37 +1485,103 @@
       paint:{ 'circle-radius':8, 'circle-color':'#e8590c', 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5 } });
     boatReady = true;
     renderBoat();
+    if(boat.voyage && !boat.voyage.arrived) runVoyage(); // reprise d'un voyage en cours
 
     map.on('mouseenter', 'boat', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'boat', () => { map.getCanvas().style.cursor = ''; });
+    map.on('mousemove', (e) => {
+      if(placement.active) return;
+      const p = portAt(e.point);
+      const npc = p && p.kind === 'npc' ? p.id : null, own = p && p.kind === 'own' ? p.id : null;
+      if(npc !== hoveredPort.npc || own !== hoveredPort.own){
+        hoveredPort.npc = npc; hoveredPort.own = own;
+        updatePortHighlights();
+        map.getCanvas().style.cursor = p ? 'pointer' : '';
+      }
+    });
     map.on('click', (e) => {
-      if(!ownedRegions.size || placement.active) return; // le test commence une fois une region achetee
+      if(!ownedRegions.size || placement.active) return; // le jeu commence une fois une region achetee
       const [lon, lat] = normLonLat([e.lngLat.lng, e.lngLat.lat]);
       if(boat.placing){
         const p = seaNavigator.snap(lon, lat, 20);
         if(!p){ boatHint('Ce point est sur la terre : cliquez sur la mer.'); return; }
-        boat.pos = p; boat.placing = false; boat.selected = false;
+        boat.pos = p; boat.placing = false; boat.selected = false; boat.voyage = null;
         saveBoat(); boatHint(''); renderBoat();
         return;
       }
-      if(boat.moving || !boat.pos) return;
-      const onBoat = map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers:['boat'] }).length > 0;
-      if(onBoat){
+      const box = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
+      const hitPort = portAt(e.point);
+      const port = hitPort && hitPort.kind === 'npc' ? npcPorts.find(p => p.regionId === hitPort.regionId) : null;
+      const ownPort = hitPort && hitPort.kind === 'own' ? regionBuildings(hitPort.regionId).find(b => b.type === 'port') : null;
+      if(boat.moving || !boat.pos){
+        if(port && !boat.selected) boatHint('Comptoir de la région ' + port.regionId + ' : envoyez-y un bateau pour y accéder.');
+        return;
+      }
+      const onBoat = map.queryRenderedFeatures(box, { layers:['boat'] }).length > 0;
+      if(onBoat && !port && !ownPort){
         boat.selected = !boat.selected;
-        boatHint(boat.selected ? 'Choisissez une destination en mer.' : '');
+        boatHint(boat.selected ? 'Choisissez une destination : un comptoir violet, votre port, ou la mer.' : '');
         renderBoat();
         return;
       }
-      if(!boat.selected) return;
-      const path = seaNavigator.findPath(boat.pos, [lon, lat]);
+      if(!boat.selected){
+        if(port){
+          if(dockedPort() === port.regionId) openNpcPort(port.regionId);
+          else boatHint('Comptoir de la région ' + port.regionId + ' : envoyez-y un bateau pour y accéder.');
+        }
+        return;
+      }
+      // quai de votre port: juste devant lui, cote mer
+      const ownDock = ownPort ? seaNavigator.snap(...normLonLat(offsetKm(ownPort.pos, ownPort.bearing || 0, 6)), 20) : null;
+      const target = port ? port.dock : (ownDock || [lon, lat]);
+      const path = seaNavigator.findPath(boat.pos, target);
       if(!path){ boatHint('Aucun chemin maritime vers ce point.'); return; }
-      boatHint('Trajet : ' + Math.round(path.km).toLocaleString('fr-FR') + ' km');
-      sailAlong(path);
+      startVoyage(path, port ? port.regionId : null, ownDock ? hitPort.regionId : null);
     });
   }
 
-  // Suit exactement le trajet affiche, a vitesse constante.
-  function sailAlong(path){
+  // Ports des comptoirs NPC: sur le littoral de chaque region NPC, au point de
+  // cote le plus proche de sa capitale qui soit bien tourne vers la mer.
+  function initNpcPorts(){
+    npcPorts = [];
+    regionsFc.features.filter(f => f.properties.isNpc).forEach(f => {
+      const coast = coastOf(f.id); if(!coast) return;
+      const cap = capitalById.get(f.id) || turf.centroid(f).geometry.coordinates;
+      const pts = [];
+      coast.lines.geometry.coordinates.forEach(line => {
+        for(let i = 0; i < line.length - 1; i++){
+          const a = line[i], b = line[i + 1], n = Math.max(1, Math.ceil(geoDistance(a, b) / 8));
+          for(let s = 0; s < n; s++) pts.push([a[0] + (b[0] - a[0]) * s / n, a[1] + (b[1] - a[1]) * s / n]);
+        }
+      });
+      pts.sort((p, q) => geoDistance(p, cap) - geoDistance(q, cap));
+      for(const p of pts.slice(0, 400)){
+        const probe = probeCoast(p, f);
+        if(probe.sea >= 4 && probe.land >= 4){
+          const dock = seaNavigator.snap(...normLonLat(offsetKm(p, probe.bearing, 6)), 20);
+          if(dock){ npcPorts.push({ regionId:f.id, pos:p, bearing:Math.round(probe.bearing), dock }); break; }
+        }
+      }
+    });
+    map.addImage('npc-port-icon', drawPortIcon('#6b3fa0'), { pixelRatio:2 });
+    const feats = [];
+    npcPorts.forEach(p => {
+      feats.push({ type:'Feature', properties:{ regionId:p.regionId }, geometry:{ type:'LineString', coordinates:[p.pos, offsetKm(p.pos, p.bearing, 30)] } });
+      feats.push({ type:'Feature', id:p.regionId, properties:{ regionId:p.regionId, label:'Comptoir ' + p.regionId }, geometry:{ type:'Point', coordinates:p.pos } });
+    });
+    map.addSource('npc-ports', { type:'geojson', data:{ type:'FeatureCollection', features:feats } });
+    map.addLayer({ id:'npc-ports-dir', type:'line', source:'npc-ports', filter:['==', ['geometry-type'], 'LineString'],
+      paint:{ 'line-color':'#6b3fa0', 'line-width':2.5 } });
+    const npcLayout = size => ({ 'icon-image':'npc-port-icon', 'icon-size':size, 'icon-allow-overlap':true, 'icon-ignore-placement':true,
+      'text-field':['get', 'label'], 'text-font':['Open Sans Regular'], 'text-size':11, 'text-offset':[0, 1.6 * size], 'text-anchor':'top', 'text-optional':true });
+    const npcPaint = { 'text-color':'#4a2b73', 'text-halo-color':'#f6efe0', 'text-halo-width':1.4 };
+    map.addLayer({ id:'npc-ports', type:'symbol', source:'npc-ports', filter:portFilter([], false), layout:npcLayout(1), paint:npcPaint });
+    map.addLayer({ id:'npc-ports-halo', type:'circle', source:'npc-ports', filter:portFilter([], true), paint:PORT_HALO_PAINT });
+    map.addLayer({ id:'npc-ports-hl', type:'symbol', source:'npc-ports', filter:portFilter([], true), layout:npcLayout(PORT_HL_SIZE), paint:npcPaint });
+  }
+
+  // Voyage: trajet densifie + distances cumulees, depart et duree en temps reel.
+  function startVoyage(path, destPort, destOwn = null){
     const pts = [];
     path.coords.forEach((p, i) => {
       if(i === 0){ pts.push(p); return; }
@@ -1470,24 +1591,41 @@
     const cum = [0];
     for(let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + geoDistance(pts[i - 1], pts[i]));
     const total = cum[cum.length - 1];
-    const duration = Math.max(1500, Math.min(10000, total / 2.5)); // ~2 500 km par seconde
+    boat.voyage = { coords:pts.map(p => [+p[0].toFixed(4), +p[1].toFixed(4)]), cum:cum.map(v => +v.toFixed(2)), total,
+      startedAt:Date.now(), durationMs:Math.max(2000, total / BOAT_SPEED_KM_S * 1000), destPort, destOwn, arrived:false };
+    boat.selected = false;
+    saveBoat();
+    boatHint('Départ vers : ' + voyageLabel(boat.voyage) + ' (' + Math.round(total).toLocaleString('fr-FR') + ' km).');
+    runVoyage();
+  }
+  function voyageProgress(v, now = Date.now()){ return Math.min(1, (now - v.startedAt) / v.durationMs); }
+  function positionAlong(v, frac){
+    const d = frac * v.total, cum = v.cum, pts = v.coords;
+    let k = 1; while(k < cum.length - 1 && cum[k] < d) k++;
+    const f = cum[k] > cum[k - 1] ? (d - cum[k - 1]) / (cum[k] - cum[k - 1]) : 1;
+    const a = pts[k - 1], b = pts[k];
+    return [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+  }
+  // Suit exactement le trajet affiche, d'apres l'heure reelle (reprise possible).
+  function runVoyage(){
+    const v = boat.voyage;
     clearTimeout(boatPathTimer);
-    setBoatPath(pts);
-    boat.moving = true; boat.selected = false; renderBoat();
-    const t0 = performance.now(), run = ++sailRun;
-    function frame(now){
-      if(run !== sailRun) return; // trajet annule (reset global)
-      const d = Math.min(1, (now - t0) / duration) * total;
-      let k = 1; while(k < cum.length - 1 && cum[k] < d) k++;
-      const f = cum[k] > cum[k - 1] ? (d - cum[k - 1]) / (cum[k] - cum[k - 1]) : 1;
-      const a = pts[k - 1], b = pts[k];
-      boat.pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+    setBoatPath(v.coords);
+    boat.moving = true; renderBoat();
+    const run = ++sailRun;
+    updatePortHighlights();
+    function frame(){
+      if(run !== sailRun) return; // voyage annule (reset global, nouveau voyage)
+      const frac = voyageProgress(v);
+      boat.pos = positionAlong(v, frac);
       renderBoat();
-      if(d < total){ requestAnimationFrame(frame); return; }
-      boat.pos = normLonLat(pts[pts.length - 1]); boat.moving = false;
+      if(frac < 1){ requestAnimationFrame(frame); return; }
+      boat.pos = normLonLat(v.coords[v.coords.length - 1]);
+      v.arrived = true; boat.moving = false;
       saveBoat(); renderBoat();
-      boatHint('Arrivé à destination (' + Math.round(path.km).toLocaleString('fr-FR') + ' km).');
-      boatPathTimer = setTimeout(() => { setBoatPath(null); boatHint(''); }, 2500);
+      boatHint(v.destPort ? 'Arrivé au comptoir de la région ' + v.destPort + ' : ouvrez l\'onglet Voyage de votre capitale.' : (v.destOwn ? 'Arrivé à votre port (région ' + v.destOwn + ').' : 'Arrivé à destination.'));
+      boatPathTimer = setTimeout(() => { setBoatPath(null); boatHint(''); }, 3500);
+      if(selectedId !== null) renderRegionPanel();
     }
     requestAnimationFrame(frame);
   }
@@ -1496,6 +1634,53 @@
     boat.placing = !boat.placing; boat.selected = false;
     boatHint(boat.placing ? 'Cliquez sur la mer pour poser le bateau.' : '');
     renderBoat();
+  }
+
+  // Onglet VOYAGE de la capitale: destination, progression, temps restant,
+  // arrivee; a quai dans un comptoir, acces a la fenetre du port.
+  function formatDuration(ms){
+    const s = Math.max(0, Math.ceil(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+    return (h ? h + ' h ' : '') + (h || m ? m + ' min ' : '') + r + ' s';
+  }
+  function renderVoyageTab(el){
+    const v = boat.voyage;
+    if(!boat.pos){ el._voyageHtml = null; el.innerHTML = '<p class="cap-empty">Aucun bateau en mer. Placez-en un depuis le panneau de votre région (section Test bateau).</p>'; return; }
+    if(!v){ el._voyageHtml = null; el.innerHTML = '<p class="cap-empty">Votre bateau est au mouillage. Sélectionnez-le sur la carte, puis cliquez sur une destination : un comptoir violet en Australie, ou un point en mer.</p>'; return; }
+    const frac = voyageProgress(v), remaining = v.arrived ? 0 : v.startedAt + v.durationMs - Date.now();
+    const eta = new Date(v.startedAt + v.durationMs).toLocaleTimeString('fr-FR');
+    const html =
+      '<div class="voyage-card">' +
+        '<div class="voyage-head"><span class="voyage-dest">' + (v.destPort || v.destOwn ? '⚓ ' : '🌊 ') + voyageLabel(v) + '</span>' +
+          '<span class="voyage-state ' + (v.arrived ? 'done' : 'go') + '">' + (v.arrived ? 'Arrivé' : 'En route') + '</span></div>' +
+        '<div class="voyage-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + Math.round(frac * 100) + '"><i style="width:' + (frac * 100).toFixed(1) + '%"></i></div>' +
+        '<div class="region-row"><span>Temps restant</span><span class="v">' + (v.arrived ? '—' : formatDuration(remaining)) + '</span></div>' +
+        '<div class="region-row"><span>' + (v.arrived ? 'Arrivé à' : 'Arrivée prévue à') + '</span><span class="v">' + eta + '</span></div>' +
+        '<div class="region-row"><span>Distance</span><span class="v">' + Math.round((1 - frac) * v.total).toLocaleString('fr-FR') + ' / ' + Math.round(v.total).toLocaleString('fr-FR') + ' km</span></div>' +
+      '</div>' +
+      (v.arrived && v.destPort ? '<button class="select-btn" id="enter-port-btn" type="button">⚓ ACCÉDER AU PORT DU COMPTOIR</button>' : '') +
+      (v.arrived && !v.destPort && !v.destOwn ? '<p class="cap-empty">Le bateau est arrivé en mer, loin de tout port.</p>' : '') +
+      (v.arrived && v.destOwn ? '<p class="cap-empty">Le bateau est à quai dans votre port.</p>' : '');
+    // rafraichi chaque seconde: on ne remplace le contenu que s'il a change,
+    // pour ne jamais recreer un bouton sous le curseur du joueur
+    if(el._voyageHtml === html) return;
+    el._voyageHtml = html; el.innerHTML = html;
+    const enter = el.querySelector('#enter-port-btn');
+    if(enter) enter.addEventListener('click', () => openNpcPort(v.destPort));
+  }
+
+  // Fenetre du port d'un comptoir NPC (accessible uniquement a quai).
+  const NPC_PORT_TABS = [
+    { id:'comptoir', label:'Comptoir', render:(el, regionId) => {
+      el.innerHTML =
+        '<p class="cap-intro">Comptoir de commerce indépendant, installé sur le littoral de la région ' + regionId + '.</p>' +
+        '<div class="voyage-card"><div class="voyage-head"><span class="voyage-dest">⚓ Votre bateau est à quai</span><span class="voyage-state done">À quai</span></div></div>' +
+        '<div class="region-section-title">Services du comptoir</div>' +
+        '<ul class="built-list"><li>Commerce de marchandises — bientôt disponible</li><li>Ravitaillement — bientôt disponible</li></ul>';
+    } },
+  ];
+  function openNpcPort(regionId){
+    if(dockedPort() !== regionId){ boatHint('Votre bateau doit être à quai dans ce comptoir.'); return; }
+    openWindow({ kind:'npc-port', title:'Comptoir — Région ' + regionId, tabs:NPC_PORT_TABS, ctx:regionId, tab:'comptoir' });
   }
 
   // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
@@ -1674,8 +1859,10 @@
     map.addSource('buildings', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
     map.addLayer({ id:'buildings-dir', type:'line', source:'buildings', filter:['==', ['geometry-type'], 'LineString'],
       paint:{ 'line-color':'#1c3d5a', 'line-width':2.5 } });
-    map.addLayer({ id:'buildings-icon', type:'symbol', source:'buildings', filter:['==', ['geometry-type'], 'Point'],
-      layout:{ 'icon-image':'port-icon', 'icon-size':1, 'icon-allow-overlap':true, 'icon-ignore-placement':true } });
+    const ownLayout = size => ({ 'icon-image':'port-icon', 'icon-size':size, 'icon-allow-overlap':true, 'icon-ignore-placement':true });
+    map.addLayer({ id:'buildings-icon', type:'symbol', source:'buildings', filter:portFilter([], false), layout:ownLayout(1) });
+    map.addLayer({ id:'buildings-halo', type:'circle', source:'buildings', filter:portFilter([], true), paint:PORT_HALO_PAINT });
+    map.addLayer({ id:'buildings-icon-hl', type:'symbol', source:'buildings', filter:portFilter([], true), layout:ownLayout(PORT_HL_SIZE) });
     map.addSource('build-preview', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
     map.addLayer({ id:'build-preview-dir', type:'line', source:'build-preview', filter:['==', ['geometry-type'], 'LineString'],
       paint:{ 'line-color':['case', ['get', 'valid'], '#2f9e44', '#e03131'], 'line-width':3 } });
@@ -1684,10 +1871,10 @@
         'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5 } });
     refreshOwnershipLayers();
   }
-  function drawPortIcon(){
+  function drawPortIcon(color = '#1c3d5a'){
     const c = document.createElement('canvas'); c.width = c.height = 44;
     const g = c.getContext('2d');
-    g.fillStyle = '#1c3d5a'; g.strokeStyle = '#ffffff'; g.lineWidth = 3;
+    g.fillStyle = color; g.strokeStyle = '#ffffff'; g.lineWidth = 3;
     g.beginPath(); g.arc(22, 22, 18, 0, Math.PI * 2); g.fill(); g.stroke();
     g.strokeStyle = '#ffffff'; g.lineWidth = 2.6; g.lineCap = 'round';
     g.beginPath(); g.arc(22, 13, 3.2, 0, Math.PI * 2); g.stroke();          // anneau
@@ -1701,40 +1888,57 @@
     const feats = [];
     for(const [rid, list] of Object.entries(buildings)){
       if(!ownedRegions.has(+rid)) continue;
-      list.forEach(b => {
-        feats.push({ type:'Feature', properties:{ type:b.type, regionId:+rid }, geometry:{ type:'Point', coordinates:b.pos } });
+      list.forEach((b, i) => {
+        feats.push({ type:'Feature', id:+rid * 100 + i, properties:{ type:b.type, regionId:+rid }, geometry:{ type:'Point', coordinates:b.pos } });
         if(typeof b.bearing === 'number') feats.push({ type:'Feature', properties:{ type:b.type }, geometry:{ type:'LineString', coordinates:[b.pos, offsetKm(b.pos, b.bearing, 30)] } });
       });
     }
     map.getSource('buildings').setData({ type:'FeatureCollection', features:feats });
+    updatePortHighlights();
   }
 
-  // ---------- Fenetre de la capitale (onglets modulaires) ----------
-  // Pour ajouter un onglet: une entree { id, label, render(el, regionId) }.
+  // ---------- Fenetres de gestion (capitale, comptoir...) a onglets ----------
+  // Une fenetre = { title, tabs, ctx, tab }. Pour ajouter un onglet a la
+  // capitale: une entree { id, label, render(el, regionId), live? } dans
+  // CAPITAL_TABS (live: rafraichi chaque seconde tant qu'il est affiche).
   const CAPITAL_TABS = [
     { id:'construction', label:'Construction', render:renderConstructionTab },
+    { id:'voyage', label:'Voyage', render:renderVoyageTab, live:true },
   ];
-  let capitalRegion = null, capitalTab = CAPITAL_TABS[0].id;
-  function openCapital(regionId){
-    if(!ownedRegions.has(regionId)) return;
-    capitalRegion = regionId;
-    const modal = document.getElementById('capital-modal');
-    document.getElementById('capital-title').textContent = 'Capitale — Région ' + regionId;
+  let capitalTab = CAPITAL_TABS[0].id, winState = null, winTicker = null;
+  function openWindow(state){
+    winState = state;
+    renderWindow();
+    document.getElementById('capital-modal').hidden = false;
+    document.getElementById('capital-close').focus();
+    clearInterval(winTicker);
+    winTicker = setInterval(() => {
+      const t = winState && winState.tabs.find(x => x.id === winState.tab);
+      if(t && t.live) t.render(document.getElementById('capital-body'), winState.ctx);
+    }, 1000);
+  }
+  function renderWindow(){
+    const s = winState; if(!s) return;
+    document.getElementById('capital-title').textContent = s.title;
     const tabs = document.getElementById('capital-tabs');
     tabs.innerHTML = '';
-    CAPITAL_TABS.forEach(t => {
+    s.tabs.forEach(t => {
       const b = document.createElement('button');
       b.className = 'cap-tab'; b.type = 'button'; b.textContent = t.label; b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', String(t.id === capitalTab));
-      b.addEventListener('click', () => { capitalTab = t.id; openCapital(regionId); });
+      b.setAttribute('aria-selected', String(t.id === s.tab));
+      b.addEventListener('click', () => { s.tab = t.id; if(s.kind === 'capital') capitalTab = t.id; renderWindow(); });
       tabs.appendChild(b);
     });
-    const tab = CAPITAL_TABS.find(t => t.id === capitalTab) || CAPITAL_TABS[0];
-    tab.render(document.getElementById('capital-body'), regionId);
-    modal.hidden = false;
-    document.getElementById('capital-close').focus();
+    const tab = s.tabs.find(t => t.id === s.tab) || s.tabs[0];
+    const body = document.getElementById('capital-body');
+    body._voyageHtml = null;
+    tab.render(body, s.ctx);
   }
-  function closeCapital(){ document.getElementById('capital-modal').hidden = true; capitalRegion = null; }
+  function openCapital(regionId){
+    if(!ownedRegions.has(regionId)) return;
+    openWindow({ kind:'capital', title:'Capitale — Région ' + regionId, tabs:CAPITAL_TABS, ctx:regionId, tab:capitalTab });
+  }
+  function closeCapital(){ document.getElementById('capital-modal').hidden = true; winState = null; clearInterval(winTicker); }
 
   // ---------- Batiments (registre modulaire de l'onglet Construction) ----------
   // Pour ajouter un batiment: une entree avec son nom, sa description, sa
@@ -1808,6 +2012,18 @@
   const PORT_SNAP_PX = 14, PORT_SNAP_MAX_KM = 40;
   function snapToleranceKm(lat){ const kmPerPx = 40075 * Math.cos(lat * Math.PI / 180) / (512 * Math.pow(2, map.getZoom())); return Math.min(PORT_SNAP_MAX_KM, Math.max(2, PORT_SNAP_PX * kmPerPx)); }
   const SEA_PROBE_KM = 8;      // rayon de sondage autour du port (terre d'un cote, mer de l'autre)
+  // Sondage en etoile autour d'un point de cote: nombre de directions qui
+  // tombent dans la region (terre) ou en mer, et direction moyenne de la mer
+  // (vers ou le port est tourne).
+  function probeCoast(pos, f){
+    let sx = 0, sy = 0, sea = 0, land = 0;
+    for(let k = 0; k < 16; k++){
+      const b = k * 22.5, p = offsetKm(pos, b, SEA_PROBE_KM);
+      if(turf.booleanPointInPolygon(p, f)) land++;
+      else if(seaNavigator.isSea(...normLonLat(p))){ sea++; sx += Math.sin(b * Math.PI / 180); sy += Math.cos(b * Math.PI / 180); }
+    }
+    return { sea, land, bearing:(Math.atan2(sx, sy) * 180 / Math.PI + 360) % 360 };
+  }
   function validateCoastalPlacement([lon, lat], regionId){
     const coast = coastOf(regionId);
     if(!coast) return { valid:false, reason:'Cette région n\'a pas de littoral.' };
@@ -1820,17 +2036,9 @@
     if(!onOwnLand && !seaNavigator.isSea(...normLonLat(cur))) return { valid:false, reason:'Hors de votre région.', pos:cur };
     if(near.properties.dist > snapToleranceKm(lat)) return { valid:false, pos:cur,
       reason: onOwnLand ? 'Dans les terres : placez le port au bord de la côte.' : 'En pleine mer : placez le port au bord de la côte.' };
-    // orientation: sondage en etoile autour du point de cote -- il faut de la
-    // mer d'un cote (vers ou le port est tourne) et la region de l'autre
-    let sx = 0, sy = 0, sea = 0, land = 0;
-    for(let k = 0; k < 16; k++){
-      const b = k * 22.5, p = offsetKm(pos, b, SEA_PROBE_KM);
-      if(turf.booleanPointInPolygon(p, f)) land++;
-      else if(seaNavigator.isSea(...normLonLat(p))){ sea++; sx += Math.sin(b * Math.PI / 180); sy += Math.cos(b * Math.PI / 180); }
-    }
+    const { sea, land, bearing } = probeCoast(pos, f);
     if(!sea) return { valid:false, reason:'Aucun accès à la mer ici.', pos };
     if(!land) return { valid:false, reason:'Emplacement entièrement dans l\'eau.', pos };
-    const bearing = (Math.atan2(sx, sy) * 180 / Math.PI + 360) % 360;
     const def = BUILDINGS.find(b => b.id === 'port');
     const count = regionBuildings(regionId).filter(b => b.type === 'port').length;
     if(def.maxPerRegion !== null && count >= def.maxPerRegion) return { valid:false, reason:'Un port existe déjà dans cette région.', pos, bearing };
@@ -1943,9 +2151,10 @@
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
     selectedId = null;
     ownedRegions = new Set(); buildings = {};
-    boat.pos = null; boat.selected = false; boat.placing = false;
+    boat.pos = null; boat.selected = false; boat.placing = false; boat.voyage = null;
     // un bateau en route s'arrete a la prochaine image
     sailRun++; boat.moving = false; clearTimeout(boatPathTimer); setBoatPath(null); boatHint('');
+    hoveredPort.npc = hoveredPort.own = null; updatePortHighlights();
     renderBoat();
     refreshOwnershipLayers();
     renderRegionPanel();
