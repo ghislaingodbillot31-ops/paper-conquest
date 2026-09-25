@@ -185,6 +185,13 @@
   .dev-filter i{ width:12px; height:12px; border-radius:3px; border:1.5px solid var(--ink); flex:none; }
   .dev-filter[aria-pressed="true"] i{ background:var(--ink); }
   .dev-filter[aria-pressed="false"]{ color:var(--ink-soft); text-decoration:line-through; }
+  .dev-reset{
+    margin-top:4px; padding:6px 8px; width:100%; border-radius:6px; cursor:pointer;
+    font:inherit; font-size:0.76rem; font-weight:800; letter-spacing:0.03em;
+    background:transparent; color:var(--warn); border:1.5px solid currentColor;
+  }
+  .dev-reset.confirm{ background:var(--warn); color:#fff; border-color:var(--warn); }
+  .dev-reset:focus-visible{ outline:2px solid var(--ink); outline-offset:2px; }
   .maplibregl-ctrl-attrib{ font-size:10px; }
   .maplibregl-ctrl-attrib a{ color:var(--ink-soft); }
 
@@ -266,8 +273,54 @@
   }
   .select-btn:disabled{ opacity:.45; cursor:not-allowed; filter:grayscale(.4); }
   .select-btn svg{ width:16px; height:16px; }
-  .locked-note{ display:none; align-items:center; gap:7px; font-size:0.76rem; color:var(--good); font-weight:700; margin-top:6px; }
-  .locked-note svg{ width:15px; height:15px; }
+  .owned-note{ display:flex; align-items:center; gap:7px; font-size:0.76rem; color:var(--good); font-weight:700; margin-top:6px; }
+  .owned-note svg{ width:15px; height:15px; }
+
+  /* Fenetre de la capitale */
+  .capital-modal[hidden], .build-bar[hidden], .boat-hint[hidden], [hidden].boat-btn{ display:none; }
+  .capital-modal{ position:fixed; inset:0; z-index:40; background:rgba(40,32,20,0.45); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .capital-panel{ background:var(--card); border:1.5px solid var(--line-strong); border-radius:12px; box-shadow:4px 4px 0 var(--shadow);
+    width:min(640px, 100%); max-height:min(80vh, 720px); display:flex; flex-direction:column; overflow:hidden; }
+  .capital-head{ display:flex; align-items:center; gap:12px; padding:14px 16px 0; }
+  .capital-head h2{ margin:0; font-size:1.7rem; line-height:1.1; flex:1; }
+  .capital-close{ width:34px; height:34px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper-alt); color:var(--ink); font-size:1.1rem; cursor:pointer; }
+  .capital-tabs{ display:flex; gap:4px; padding:10px 16px 0; border-bottom:1.5px solid var(--line-strong); flex-wrap:wrap; }
+  .cap-tab{ border:1.5px solid var(--line-strong); border-bottom:none; background:var(--paper-alt); color:var(--ink-soft); padding:6px 14px;
+    border-radius:8px 8px 0 0; font:inherit; font-size:0.74rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; margin-bottom:-1.5px; }
+  .cap-tab[aria-selected="true"]{ background:var(--card); color:var(--ink); }
+  .capital-body{ padding:14px 16px 18px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+  .cap-intro, .cap-empty{ margin:0; font-size:0.82rem; color:var(--ink-soft); }
+  .build-list{ display:flex; flex-direction:column; gap:10px; }
+  .build-card{ display:grid; grid-template-columns:44px 1fr auto; gap:12px; align-items:center; padding:12px; border:1.5px solid var(--line); border-radius:10px; background:var(--paper); }
+  .build-icon{ width:44px; height:44px; border-radius:50%; background:#1c3d5a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
+  .build-name{ font-weight:800; font-size:0.95rem; }
+  .build-desc{ font-size:0.8rem; color:var(--ink-soft); }
+  .build-rule{ font-size:0.76rem; margin-top:3px; }
+  .build-blocked{ font-size:0.76rem; color:var(--warn); font-weight:700; margin-top:3px; }
+  .build-card .boat-btn{ width:auto; padding:8px 14px; }
+  .built-list{ margin:0; padding-left:18px; font-size:0.82rem; display:flex; flex-direction:column; gap:3px; }
+  @media (max-width:520px){ .build-card{ grid-template-columns:44px 1fr; } .build-card .boat-btn{ grid-column:1 / -1; width:100%; } }
+
+  /* Barre de placement d'un batiment */
+  .build-bar{ position:absolute; left:50%; top:52px; transform:translateX(-50%); z-index:4; display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+    background:var(--card); border:1.5px solid var(--line-strong); border-radius:10px; padding:8px 10px; box-shadow:2px 2px 0 var(--shadow);
+    max-width:calc(100% - 32px); font-size:0.8rem; font-weight:700; }
+  .build-bar .boat-btn{ width:auto; padding:6px 12px; }
+  .build-bar .build-ok{ background:var(--good); color:#fff; border-color:var(--good); }
+  .boat-hint{
+    position:absolute; left:50%; bottom:14px; transform:translateX(-50%); z-index:3;
+    background:var(--ink); color:var(--card); border-radius:8px; padding:6px 12px;
+    font-size:0.78rem; font-weight:700; box-shadow:2px 2px 0 var(--shadow);
+    max-width:calc(100% - 32px); text-align:center;
+  }
+  .boat-box{ display:flex; flex-direction:column; gap:8px; }
+  .boat-status{ font-size:0.78rem; color:var(--ink-soft); }
+  .boat-btn{
+    width:100%; padding:9px 0; background:var(--card); border:1.5px solid var(--line-strong); border-radius:9px;
+    color:var(--ink); font-weight:800; font-size:0.8rem; letter-spacing:0.04em; cursor:pointer; box-shadow:0 2px 0 var(--shadow);
+  }
+  .boat-btn:disabled{ opacity:.5; cursor:not-allowed; }
+  .boat-btn:focus-visible, .select-btn:focus-visible{ outline:2px solid var(--accent-ink); outline-offset:2px; }
   .region-empty{ font-size:0.82rem; color:var(--ink-soft); padding:20px 4px; text-align:center; }
 
   .empty-row{ color:var(--ink-soft); font-style:italic; font-size:0.78rem; text-align:center; padding:14px 4px; }
@@ -329,9 +382,18 @@
             <div class="map-wrap">
               <div id="map"></div>
               <div class="map-hint hand">🖱️ Glisser pour tourner le globe</div>
+              <div class="boat-hint" id="boat-hint" hidden></div>
+              <div class="build-bar" id="build-bar" hidden>
+                <span id="build-bar-text"></span>
+                <button class="boat-btn build-ok" id="build-confirm" type="button" hidden>Construire</button>
+                <button class="boat-btn" id="build-cancel" type="button">Annuler</button>
+              </div>
               <div class="dev-panel">
                 <button class="dev-tab" id="dev-tab" aria-expanded="false" aria-controls="dev-filters">DÉVELOPPEUR</button>
-                <div class="dev-filters" id="dev-filters" hidden></div>
+                <div class="dev-filters" id="dev-filters" hidden>
+                  <div id="dev-filter-list"></div>
+                  <button class="dev-reset" id="dev-reset" type="button">Réinitialiser la partie</button>
+                </div>
               </div>
               <div class="map-loading" id="map-loading">
                 <div class="map-loading-spinner"></div>
@@ -371,6 +433,14 @@
     </section>
 
   </main>
+</div>
+
+<div class="capital-modal" id="capital-modal" hidden>
+  <div class="capital-panel" role="dialog" aria-modal="true" aria-labelledby="capital-title">
+    <div class="capital-head"><h2 class="hand" id="capital-title">Capitale</h2><button class="capital-close" id="capital-close" type="button" aria-label="Fermer">✕</button></div>
+    <div class="capital-tabs" id="capital-tabs" role="tablist"></div>
+    <div class="capital-body" id="capital-body"></div>
+  </div>
 </div>
 
 <script>
@@ -645,11 +715,10 @@
   let regionsFc = null;
 
   async function addRegions(){
-    const [topo, sea] = await Promise.all([
+    const [topo, navGrid] = await Promise.all([
       fetch('data/admin1.topojson').then(r => r.json()),
-      fetch('data/sea-routes.json').then(r => r.json()).catch(e => { console.warn('Routes maritimes indisponibles:', e); return null; }),
+      fetch('data/nav-grid.json').then(r => r.json()).catch(e => { console.warn('Grille de navigation indisponible:', e); return null; }),
     ]);
-    seaRoutes = sea;
     const objName = Object.keys(topo.objects)[0];
     const geometries = topo.objects[objName].geometries;
     const fc = topojson.feature(topo, topo.objects[objName]);
@@ -673,7 +742,7 @@
       catch(e){ /* garde la valeur stockee si le calcul echoue */ }
     });
     regionsFc = fc;
-    buildLandIndex(fc.features);
+    regionTopo = topo; regionGeoms = geometries;
 
     map.addSource('regions', { type: 'geojson', data: fc });
     map.addLayer({
@@ -711,10 +780,10 @@
     applyDevFilters();
 
     map.on('click', 'regions', (e) => {
-      if(locked || !e.features.length) return;
+      if(interactionBusy() || !e.features.length) return;
       selectRegion(e.features[0].id);
     });
-    map.on('mouseenter', 'regions', () => { if(!locked) map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseenter', 'regions', () => { if(!interactionBusy()) map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
     // Un reseau independant par continent (jamais de faux voisinage entre
@@ -737,6 +806,7 @@
     if(loadingEl) loadingEl.style.display = 'none';
 
     initSelection();
+    initBoat(navGrid);
   }
 
   // ---------- Reseau de chemins (mondial, adjacence topologique reelle) ----------
@@ -747,10 +817,9 @@
   // reliees que si elles partagent un arc du topojson, donc chaque chemin
   // reste sur la terre par construction, relie deux voisins directs (zero
   // region intermediaire) et suit le trajet le plus court possible entre
-  // elles. Les iles/archipels sans aucun voisin terrestre (composantes du
-  // graphe separees du reste) sont ensuite relies par des liaisons
-  // maritimes distinctes (couleur et tirets differents) jusqu'a ce que tout
-  // le globe forme un seul reseau connecte.
+  // elles. Les deplacements par la mer (iles comprises) ne passent pas par
+  // ce reseau: ils sont calcules a la demande par la navigation des bateaux
+  // (createNavigator, grille data/nav-grid.json).
 
   // Normalise une longitude dans [-180,180]: nos polygones "deroules"
   // (Russie/Alaska/Fidji, cf. unwrapGeometry) sortent de cette plage, ce qui
@@ -1011,104 +1080,6 @@
     return { find, union, sizeOf };
   }
 
-  // Grille lon/lat grossiere pour retrouver rapidement les villages proches
-  // d'un point donne sans comparer chaque village a tous les autres.
-  function buildSpatialGrid(villages, cellDeg){
-    const grid = new Map();
-    villages.forEach((v, i) => {
-      const gx = Math.floor(v.gcoord[0] / cellDeg), gy = Math.floor(v.gcoord[1] / cellDeg);
-      const k = gx + ',' + gy;
-      if(!grid.has(k)) grid.set(k, []);
-      grid.get(k).push(i);
-    });
-    return { grid, cellDeg };
-  }
-
-  // Plus proche village appartenant a une AUTRE composante que celle de
-  // `idx`, par recherche en anneaux de cellules grandissants (un anneau de
-  // marge une fois un candidat trouve, car la distance en cellules
-  // sous-estime legerement la distance reelle pres des coins).
-  function nearestOtherComponent(idx, villages, spatial, find, degree, maxDegree){
-    if(degree[idx] >= maxDegree) return null;
-    const rootI = find(idx);
-    const { grid, cellDeg } = spatial;
-    const gx0 = Math.floor(villages[idx].gcoord[0] / cellDeg), gy0 = Math.floor(villages[idx].gcoord[1] / cellDeg);
-    let best = null, marginLeft = 1;
-    for(let ring = 0; ring <= 90; ring++){
-      for(let dx = -ring; dx <= ring; dx++){
-        for(let dy = -ring; dy <= ring; dy++){
-          if(Math.max(Math.abs(dx), Math.abs(dy)) !== ring) continue;
-          const cell = grid.get((gx0 + dx) + ',' + (gy0 + dy));
-          if(!cell) continue;
-          for(const j of cell){
-            if(find(j) === rootI) continue;
-            if(degree[j] >= maxDegree) continue;
-            const d = geoDistance(villages[idx].gcoord, villages[j].gcoord);
-            if(!best || d < best.d) best = { j, d };
-          }
-        }
-      }
-      if(best){
-        if(marginLeft <= 0) break;
-        marginLeft--;
-      }
-    }
-    return best;
-  }
-
-  // Relie les composantes isolees (iles, archipels, continents separes par
-  // la mer) via l'algorithme de Boruvka: a chaque tour, chaque composante
-  // trouve sa liaison sortante la moins couteuse et toutes fusionnent en
-  // parallele -- le nombre de composantes est au moins divise par deux a
-  // chaque tour.
-  // Chercher depuis TOUS les villages est inutile: une fois qu'une
-  // composante est enorme (le gros de l'Eurasie-Afrique ou des Ameriques),
-  // la liaison qu'elle merite est de toute facon trouvee depuis le cote
-  // minoritaire (memes paires, distance symetrique) -- on ne fait donc
-  // chercher que les villages des petites composantes ("originCap"), ce
-  // qui reduit le travail de ~1450 a quelques centaines de recherches.
-  // Si plus aucune petite composante n'a de candidat alors qu'il en reste
-  // plusieurs (typiquement les deux ou trois plus grosses masses
-  // continentales entre elles), on retire temporairement cette limite pour
-  // les derniers tours, peu nombreux a ce stade.
-  function connectComponentsBoruvka(villages, uf, degree, maxDegree){
-    const n = villages.length;
-    const spatial = buildSpatialGrid(villages, 4);
-    const originCap = Math.max(50, Math.round(Math.sqrt(n) * 3));
-    const countRoots = () => { const r = new Set(); for(let i = 0; i < n; i++) r.add(uf.find(i)); return r.size; };
-    const seaEdges = [];
-    let uncapped = false;
-    for(let round = 0; round < 60; round++){
-      if(countRoots() <= 1) break;
-      const cap = uncapped ? Infinity : originCap;
-      const bestByRoot = new Map();
-      for(let i = 0; i < n; i++){
-        if(degree[i] >= maxDegree) continue;
-        if(uf.sizeOf(i) > cap) continue;
-        const cand = nearestOtherComponent(i, villages, spatial, uf.find, degree, maxDegree);
-        if(!cand) continue;
-        const root = uf.find(i);
-        const prev = bestByRoot.get(root);
-        if(!prev || cand.d < prev.d) bestByRoot.set(root, { i, j:cand.j, d:cand.d });
-      }
-      if(bestByRoot.size === 0){
-        if(uncapped) break; // plus rien a relier meme sans limite
-        uncapped = true;
-        continue;
-      }
-      let merged = false;
-      bestByRoot.forEach(({ i, j }) => {
-        if(degree[i] >= maxDegree || degree[j] >= maxDegree) return; // sature entretemps ce tour
-        if(uf.union(i, j)){
-          seaEdges.push([i, j]);
-          degree[i]++; degree[j]++;
-          merged = true;
-        }
-      });
-      if(!merged && uncapped) break;
-    }
-    return seaEdges;
-  }
 
   // Chaque capitale a droit a 4 tracés maximum: on ne considère que les
   // paires de voisins directs réels (adjacence topojson, jamais une
@@ -1129,82 +1100,6 @@
   const FORBIDDEN_EDGES = new Set([
   ]);
 
-  // Routes maritimes: precalculees une seule fois pour le MONDE ENTIER
-  // (docs/build-sea-routes.js -> data/sea-routes.json), avec toutes les
-  // terres a la fois -- l'ancien calcul continent par continent ignorait
-  // les terres des autres continents (tracé europeen sur le Maroc, tracé
-  // nord-americain sur la Colombie...). Regles du generateur: ligne a
-  // 100 km de la cote la plus proche quand la place le permet, au milieu
-  // du passage quand il est plus etroit, rien dans les passages de moins
-  // de ~10 km de large, culs-de-sac supprimes, jamais sur la terre.
-  let seaRoutes = null;
-
-  // Test "ce point est-il sur la terre ?" valable pour le monde entier:
-  // index par cases de 2 degres des emprises des regions, puis test exact
-  // sur les seules regions candidates.
-  const LAND_INDEX_DEG = 2;
-  let landIndex = null;
-  function buildLandIndex(features){
-    landIndex = new Map();
-    features.forEach(f => {
-      const [minX, minY, maxX, maxY] = turf.bbox(f);
-      for(let gx = Math.floor(minX / LAND_INDEX_DEG); gx <= Math.floor(maxX / LAND_INDEX_DEG); gx++)
-        for(let gy = Math.floor(minY / LAND_INDEX_DEG); gy <= Math.floor(maxY / LAND_INDEX_DEG); gy++){
-          const k = gx + ',' + gy;
-          if(!landIndex.has(k)) landIndex.set(k, []);
-          landIndex.get(k).push(f);
-        }
-    });
-  }
-  function isLandPoint(pt){
-    // les geometries "deroulees" peuvent depasser +-180: on teste aussi +-360
-    for(const off of [0, 360, -360]){
-      const p = [pt[0] + off, pt[1]];
-      const list = landIndex.get(Math.floor(p[0] / LAND_INDEX_DEG) + ',' + Math.floor(p[1] / LAND_INDEX_DEG));
-      if(list && list.some(f => turf.booleanPointInPolygon(p, f))) return true;
-    }
-    return false;
-  }
-  // Connecteur capitale -> route maritime: le debut traverse forcement sa
-  // propre region (capitale a l'interieur des terres), mais une fois en mer
-  // il ne doit plus JAMAIS toucher une terre. Echantillonne finement (~3 km)
-  // pour ne rater aucune presqu'ile etroite entre deux points du trace.
-  function connectorStaysAtSea(coords){
-    let leftLand = false;
-    for(let i = 1; i < coords.length; i++){
-      const a = coords[i-1], b = coords[i];
-      const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 0.03));
-      for(let s = 1; s <= steps; s++){
-        const onLand = isLandPoint([a[0] + (b[0] - a[0]) * s / steps, a[1] + (b[1] - a[1]) * s / steps]);
-        if(!leftLand){ if(!onLand) leftLand = true; }
-        else if(onLand) return false;
-      }
-    }
-    return leftLand;
-  }
-
-  // Candidats tries du plus proche au plus loin (sommets des routes), pour
-  // chacun plusieurs amplitudes d'ondulation; prefere un trace qui ne croise
-  // aucun chemin deja pose, sinon garde le premier valide.
-  function bestSeaConnector(pt, existingEdges){
-    const candidates = [];
-    seaRoutes.lines.forEach(line => line.forEach(v => {
-      const vv = [v[0] + Math.round((pt[0] - v[0]) / 360) * 360, v[1]]; // meme "copie" du monde que la capitale
-      candidates.push({ coord:vv, d:geoDistance(pt, vv) });
-    }));
-    candidates.sort((a, b) => a.d - b.d);
-    let fallback = null;
-    for(const c of candidates.slice(0, 120)){
-      for(const scale of [0.15, 0.05, 0]){
-        const coords = windingPath(pt, c.coord, scale);
-        if(connectorStaysAtSea(coords)){
-          if(!fallback) fallback = { coords, dist:c.d };
-          if(!crossesExisting(coords, existingEdges)) return { coords, dist:c.d };
-        }
-      }
-    }
-    return fallback;
-  }
 
   function buildRegionNetwork(topo, fc, geometries){
     const n = fc.features.length;
@@ -1308,47 +1203,6 @@
     }
     if(skippedUnroutable) console.warn(skippedUnroutable, 'connexion(s) terrestre(s) abandonnee(s): aucun trace ne pouvait eviter l\'eau.');
 
-    // Regions non reliees par la terre au plus gros bloc continental (les
-    // iles): chacune rejoint la route maritime mondiale (data/sea-routes.json)
-    // par son point le plus proche -- jamais une capitale eloignee choisie au
-    // hasard, et jamais un trace qui recoupe une terre une fois en mer.
-    const linkedByCoast = new Set();
-    if(seaRoutes && seaRoutes.lines.length){
-      const compSize = new Map();
-      for(let i = 0; i < n; i++){ const r = uf.find(i); compSize.set(r, (compSize.get(r) || 0) + 1); }
-      const mainRoot = [...compSize.entries()].sort((a, b) => b[1] - a[1])[0][0];
-      for(let i = 0; i < n; i++){
-        if(uf.find(i) === mainRoot) continue;
-        if(degree[i] >= MAX_DEGREE) continue;
-        const conn = bestSeaConnector(villages[i].coord, edges);
-        if(!conn) continue; // aucun connecteur valide: on abandonne plutot que de traverser la terre
-        edges.push({ a:i, b:null, coords:conn.coords, bbox:bboxOfCoords(conn.coords), kind:'sea' });
-        degree[i]++;
-        linkedByCoast.add(i);
-      }
-    } else {
-      // repli: ancien systeme de liaison directe capitale-a-capitale si les
-      // routes maritimes n'ont pas pu etre chargees.
-      const seaEdges = connectComponentsBoruvka(villages, uf, degree, MAX_DEGREE);
-      seaEdges.forEach(([i, j]) => {
-        const coords = windingPath(villages[i].coord, villages[j].coord, 0.15);
-        edges.push({ a:i, b:j, coords, kind:'sea' });
-        linkedByCoast.add(i); linkedByCoast.add(j);
-      });
-    }
-
-    // Une composante est reellement reliee des qu'UN SEUL de ses membres a
-    // un connecteur maritime (les autres y accedent via leurs propres
-    // tracés terrestres internes puis ce connecteur partage) -- verifier
-    // par region individuelle plutot que par composante donnait de fausses
-    // alertes des qu'une composante avait plusieurs membres et que certains,
-    // satures a leur plafond, n'avaient pas besoin d'en avoir un.
-    const rootsLinked = new Set();
-    for(let i = 0; i < n; i++){ if(linkedByCoast.has(i)) rootsLinked.add(uf.find(i)); }
-    const roots = new Set();
-    for(let i = 0; i < n; i++){ if(!rootsLinked.has(uf.find(i))) roots.add(uf.find(i)); }
-    if(roots.size > 1) console.warn('Reseau non entierement connecte:', roots.size, 'composantes restantes (capitales saturees a', MAX_DEGREE, 'connexions).');
-
     return { villages, edges };
   }
 
@@ -1385,34 +1239,16 @@
     const villagesFc = {
       type: 'FeatureCollection',
       features: allVillages.map(v => ({
-        type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: v.coord },
+        type: 'Feature', properties: { regionId: v.regionId }, geometry: { type: 'Point', coordinates: v.coord },
       })),
     };
-
-    // Routes maritimes mondiales (data/sea-routes.json) -- sous les tracés
-    // terrestres/maritimes des capitales, couleur distincte (sarcelle) pour
-    // bien les differencier des routes brunes et des connecteurs bleus
-    // capitale-vers-route.
-    if(seaRoutes && seaRoutes.lines.length){
-      const routeFc = { type: 'FeatureCollection', features: seaRoutes.lines.map(l => ({ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:l } })) };
-      map.addSource('coastal-route', { type: 'geojson', data: routeFc });
-      map.addLayer({
-        id: 'coastal-route', type: 'line', source: 'coastal-route',
-        paint: {
-          'line-color': '#2f8f7a', 'line-width': 1, 'line-opacity': 0.6,
-          'line-dasharray': [3, 2],
-        },
-      });
-    }
 
     map.addSource('paths', { type: 'geojson', data: pathsFc });
     map.addLayer({
       id: 'paths', type: 'line', source: 'paths',
       paint: {
-        'line-color': ['case', ['==', ['get', 'kind'], 'sea'], '#1f6ba0', '#6b4a2a'],
-        'line-width': ['case', ['==', ['get', 'kind'], 'sea'], 1.6, 1.4],
-        'line-opacity': 0.75,
-        'line-dasharray': ['case', ['==', ['get', 'kind'], 'sea'], ['literal', [1, 1.6]], ['literal', [2, 1.5]]],
+        'line-color': '#6b4a2a', 'line-width': 1.4, 'line-opacity': 0.75,
+        'line-dasharray': [2, 1.5],
       },
     });
 
@@ -1431,6 +1267,237 @@
     applyDevFilters();
   }
 
+  // ---------- Navigation maritime (bateaux) ----------
+  // Grille fine (data/nav-grid.json, ~5 km): 0 = terre, 1 = mer.
+  // Recherche A* sur une grille grossiere (blocs 3x3, ~15 km) pour la vitesse,
+  // mais chaque pas est verifie sur la grille fine: jamais de terre, d'ile ni de
+  // presqu'ile traversee. Le trajet obtenu est ensuite
+  // "tendu" (lignes droites tant qu'elles restent en mer): pas de detour inutile.
+  function createNavigator(grid){
+    const RES = grid.res, LAT_TOP = grid.latTop, W = grid.w, H = grid.h;
+    const nav = new Uint8Array(W * H);
+    grid.rows.forEach((r, y) => { let x = 0; for(let k = 0; k < r.length; k += 2){ if(r[k]) nav.fill(r[k], y * W + x, y * W + x + r[k+1]); x += r[k+1]; } });
+    const B = 3, W2 = Math.ceil(W / B), H2 = Math.ceil(H / B), N2 = W2 * H2;
+    const coarse = new Uint8Array(N2);
+    for(let y = 0; y < H; y++){ const cy = (y / B) | 0; for(let x = 0; x < W; x++){ const v = nav[y * W + x]; if(v){ const c = cy * W2 + ((x / B) | 0); if(v > coarse[c]) coarse[c] = v; } } }
+    const cosRow = new Float64Array(H); for(let y = 0; y < H; y++) cosRow[y] = Math.cos((LAT_TOP - (y + 0.5) * RES) * Math.PI / 180);
+    const wrapX = x => ((x % W) + W) % W, wrapX2 = x => ((x % W2) + W2) % W2;
+    const KM = 111.2;
+    function kmCells(a, b){ // distance approchee (km) entre deux cellules fines
+      const ya = (a / W) | 0, yb = (b / W) | 0;
+      let dx = (a - ya * W) - (b - yb * W); if(dx > W / 2) dx -= W; else if(dx < -W / 2) dx += W;
+      return Math.hypot(dx * RES * KM * (cosRow[ya] + cosRow[yb]) / 2, (ya - yb) * RES * KM);
+    }
+    function cellOf(lon, lat){ const y = Math.floor((LAT_TOP - lat) / RES); if(y < 0 || y >= H) return -1; return y * W + wrapX(Math.floor((lon + 180) / RES)); }
+    const lonOf = i => -180 + ((i % W) + 0.5) * RES, latOf = i => LAT_TOP - (((i / W) | 0) + 0.5) * RES;
+    // ligne de vue en mer entre deux cellules fines (echantillonnee a 1/2 case)
+    function los(a, b){
+      const ya = (a / W) | 0, yb = (b / W) | 0, xa = a - ya * W; let dx = (b - yb * W) - xa;
+      if(dx > W / 2) dx -= W; else if(dx < -W / 2) dx += W;
+      const dy = yb - ya, n = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) * 2) + 1;
+      for(let s = 0; s <= n; s++){ const x = wrapX(Math.round(xa + dx * s / n)), y = Math.round(ya + dy * s / n); if(!nav[y * W + x]) return false; }
+      return true;
+    }
+    // point representatif d'un bloc: la cellule de mer la plus "au large" du bloc
+    const rep = new Int32Array(N2).fill(-2);
+    function repOf(c){
+      if(rep[c] !== -2) return rep[c];
+      const cy = (c / W2) | 0, cx = c - cy * W2; let best = -1, bs = -1;
+      for(let y = cy * B; y < Math.min(H, cy * B + B); y++) for(let x = cx * B; x < cx * B + B; x++){
+        if(x >= W) continue; const i = y * W + x; if(!nav[i]) continue;
+        let s = 0; for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const yy = y + dy; if(yy >= 0 && yy < H && nav[yy * W + wrapX(x + dx)]) s++; }
+        if(s > bs){ bs = s; best = i; }
+      }
+      return rep[c] = best;
+    }
+    const coarseOf = i => (((i / W) | 0) / B | 0) * W2 + ((((i % W)) / B) | 0);
+    // point de mer le plus proche (si le clic tombe sur la terre)
+    function snap(lon, lat, maxCells = 60){
+      const c0 = cellOf(lon, lat); if(c0 < 0) return -1; if(nav[c0]) return c0;
+      const y0 = (c0 / W) | 0, x0 = c0 - y0 * W;
+      for(let r = 1; r <= maxCells; r++){ let best = -1, bd = Infinity;
+        for(let dy = -r; dy <= r; dy++) for(let dx = -r; dx <= r; dx++){ if(Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue; const y = y0 + dy; if(y < 0 || y >= H) continue; const i = y * W + wrapX(x0 + dx); if(nav[i]){ const d = kmCells(i, c0); if(d < bd){ bd = d; best = i; } } }
+        if(best >= 0) return best; }
+      return -1;
+    }
+    // A* sur les blocs
+    const g = new Float64Array(N2), parent = new Int32Array(N2), stamp = new Int32Array(N2), closed = new Int32Array(N2); let run = 0;
+    let hI = new Int32Array(1 << 16), hK = new Float64Array(1 << 16), hn = 0;
+    const push = (i, k) => { if(hn >= hI.length){ const a = new Int32Array(hI.length * 2); a.set(hI); hI = a; const b = new Float64Array(hK.length * 2); b.set(hK); hK = b; }
+      let p = hn++; while(p > 0){ const q = (p - 1) >> 1; if(hK[q] <= k) break; hI[p] = hI[q]; hK[p] = hK[q]; p = q; } hI[p] = i; hK[p] = k; };
+    const pop = () => { const ti = hI[0], tk = hK[0], li = hI[--hn], lk = hK[hn]; let p = 0;
+      while(true){ let c = 2 * p + 1; if(c >= hn) break; if(c + 1 < hn && hK[c + 1] < hK[c]) c++; if(hK[c] >= lk) break; hI[p] = hI[c]; hK[p] = hK[c]; p = c; }
+      hI[p] = li; hK[p] = lk; return [ti, tk]; };
+    const H_WEIGHT = 1.25, MAX_EXPAND = 3e6;
+    function findPath(from, to){
+      const s = snap(from[0], from[1]), t = snap(to[0], to[1]);
+      if(s < 0 || t < 0) return null;
+      if(los(s, t)) return finish([s, t]);
+      run++; hn = 0;
+      // departs: blocs voisins dont le point representatif est visible depuis le bateau
+      const seeds = [], goals = new Map();
+      const around = (i, fn) => { const c = coarseOf(i), cy = (c / W2) | 0, cx = c - cy * W2;
+        for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const yy = cy + dy; if(yy < 0 || yy >= H2) continue; const n = yy * W2 + wrapX2(cx + dx); if(coarse[n] && repOf(n) >= 0 && los(i, repOf(n))) fn(n); } };
+      around(s, n => seeds.push(n));
+      around(t, n => goals.set(n, kmCells(repOf(n), t)));
+      if(!seeds.length || !goals.size) return null;
+      for(const n of seeds){ stamp[n] = run; g[n] = kmCells(s, repOf(n)); parent[n] = -1; push(n, g[n] + H_WEIGHT * kmCells(repOf(n), t)); }
+      let end = -1, exp = 0;
+      while(hn){
+        const [c, f] = pop(); const rc = repOf(c);
+        if(closed[c] === run) continue; closed[c] = run; // chaque bloc n'est traite qu'une fois
+        if(goals.has(c)){ end = c; break; }
+        if(++exp > MAX_EXPAND) break;
+        const cy = (c / W2) | 0, cx = c - cy * W2;
+        for(let dy = -1; dy <= 1; dy++){ const yy = cy + dy; if(yy < 0 || yy >= H2) continue;
+          for(let dx = -1; dx <= 1; dx++){ if(!dx && !dy) continue; const n = yy * W2 + wrapX2(cx + dx); if(!coarse[n]) continue;
+            if(closed[n] === run) continue;
+            const rn = repOf(n); if(rn < 0 || !los(rc, rn)) continue;
+            const ng = g[c] + kmCells(rc, rn);
+            if(stamp[n] !== run || ng < g[n]){ stamp[n] = run; g[n] = ng; parent[n] = c; push(n, ng + H_WEIGHT * kmCells(rn, t)); } } }
+      }
+      if(end < 0) return null;
+      const cells = [t]; for(let c = end; c !== -1; c = parent[c]) cells.push(repOf(c)); cells.push(s);
+      return finish(cells.reverse());
+    }
+    // tend le trajet (plus longues lignes droites en mer), puis coordonnees
+    function finish(cells){
+      const out = [cells[0]]; let i = 0;
+      while(i < cells.length - 1){ let j = i + 1; while(j + 1 < cells.length && los(cells[i], cells[j + 1])) j++; out.push(cells[j]); i = j; }
+      const coords = []; let off = 0, prev = null;
+      for(const c of out){ let lon = lonOf(c); if(prev !== null){ lon += off; if(lon - prev > 180){ off -= 360; lon -= 360; } else if(lon - prev < -180){ off += 360; lon += 360; } } coords.push([lon, latOf(c)]); prev = lon; }
+      let km = 0; for(let k = 1; k < out.length; k++) km += kmCells(out[k-1], out[k]);
+      return { coords, km };
+    }
+    return { findPath, isSea:(lon, lat) => { const c = cellOf(lon, lat); return c >= 0 && nav[c] > 0; }, snap:(lon, lat) => { const c = snap(lon, lat); return c < 0 ? null : [lonOf(c), latOf(c)]; } };
+  }
+
+  // ---------- Test bateau: point & click ----------
+  // Prototype de deplacement maritime: un bateau (rond) place librement en
+  // mer, selectionne d'un clic, puis envoye d'un clic sur une destination.
+  // Le chemin maritime le plus court est calcule (createNavigator), affiche,
+  // puis suivi exactement. Position memorisee dans ce navigateur.
+  const BOAT_STORAGE_KEY = 'paperConquestBoat';
+  const boat = { pos:null, selected:false, moving:false, placing:false };
+  let seaNavigator = null, boatReady = false, boatPathTimer = null, sailRun = 0;
+  try{ const saved = JSON.parse(localStorage.getItem(BOAT_STORAGE_KEY)); if(saved && Array.isArray(saved.pos)) boat.pos = saved.pos; }catch(e){}
+  const saveBoat = () => { try{ localStorage.setItem(BOAT_STORAGE_KEY, JSON.stringify({ pos:boat.pos })); }catch(e){} };
+  const normLonLat = ([lon, lat]) => [((lon + 540) % 360) - 180, lat];
+
+  function boatHint(text){
+    const el = document.getElementById('boat-hint');
+    if(!el) return;
+    el.textContent = text || '';
+    el.hidden = !text;
+  }
+  function boatStatusText(){
+    if(boat.placing) return 'Cliquez sur la mer pour poser le bateau.';
+    if(!boat.pos) return 'Aucun bateau en mer.';
+    if(boat.moving) return 'En route…';
+    if(boat.selected) return 'Bateau sélectionné : cliquez sur une destination.';
+    return 'Cliquez sur le bateau pour le sélectionner.';
+  }
+  function renderBoat(){
+    const status = document.getElementById('boat-status');
+    if(status) status.textContent = boatReady ? boatStatusText() : 'Chargement de la navigation…';
+    const btn = document.getElementById('boat-place-btn');
+    if(btn){
+      btn.disabled = !boatReady || boat.moving;
+      btn.textContent = boat.placing ? 'Annuler le placement' : (boat.pos ? 'Replacer le bateau' : 'Placer le bateau');
+    }
+    if(!boatReady) return;
+    map.getSource('boat').setData({ type:'FeatureCollection', features: boat.pos
+      ? [{ type:'Feature', properties:{ selected:boat.selected }, geometry:{ type:'Point', coordinates:boat.pos } }] : [] });
+  }
+  function setBoatPath(coords){
+    if(!boatReady) return;
+    map.getSource('boat-path').setData({ type:'FeatureCollection', features: coords
+      ? [{ type:'Feature', properties:{}, geometry:{ type:'LineString', coordinates:coords } }] : [] });
+  }
+
+  function initBoat(navGrid){
+    if(!navGrid){ console.warn('Test bateau indisponible: pas de grille de navigation.'); return; }
+    seaNavigator = createNavigator(navGrid);
+    map.addSource('boat-path', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addLayer({ id:'boat-path', type:'line', source:'boat-path',
+      layout:{ 'line-cap':'round', 'line-join':'round' },
+      paint:{ 'line-color':'#e8590c', 'line-width':3, 'line-dasharray':[1.5, 1.2], 'line-opacity':0.95 } });
+    map.addSource('boat', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addLayer({ id:'boat-halo', type:'circle', source:'boat',
+      paint:{ 'circle-radius':['case', ['get', 'selected'], 17, 12], 'circle-color':'#ffd43b',
+        'circle-opacity':['case', ['get', 'selected'], 0.6, 0] } });
+    map.addLayer({ id:'boat', type:'circle', source:'boat',
+      paint:{ 'circle-radius':8, 'circle-color':'#e8590c', 'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5 } });
+    boatReady = true;
+    renderBoat();
+
+    map.on('mouseenter', 'boat', () => { map.getCanvas().style.cursor = 'pointer'; });
+    map.on('mouseleave', 'boat', () => { map.getCanvas().style.cursor = ''; });
+    map.on('click', (e) => {
+      if(!ownedRegions.size || placement.active) return; // le test commence une fois une region achetee
+      const [lon, lat] = normLonLat([e.lngLat.lng, e.lngLat.lat]);
+      if(boat.placing){
+        const p = seaNavigator.snap(lon, lat, 20);
+        if(!p){ boatHint('Ce point est sur la terre : cliquez sur la mer.'); return; }
+        boat.pos = p; boat.placing = false; boat.selected = false;
+        saveBoat(); boatHint(''); renderBoat();
+        return;
+      }
+      if(boat.moving || !boat.pos) return;
+      const onBoat = map.queryRenderedFeatures([[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]], { layers:['boat'] }).length > 0;
+      if(onBoat){
+        boat.selected = !boat.selected;
+        boatHint(boat.selected ? 'Choisissez une destination en mer.' : '');
+        renderBoat();
+        return;
+      }
+      if(!boat.selected) return;
+      const path = seaNavigator.findPath(boat.pos, [lon, lat]);
+      if(!path){ boatHint('Aucun chemin maritime vers ce point.'); return; }
+      boatHint('Trajet : ' + Math.round(path.km).toLocaleString('fr-FR') + ' km');
+      sailAlong(path);
+    });
+  }
+
+  // Suit exactement le trajet affiche, a vitesse constante.
+  function sailAlong(path){
+    const pts = [];
+    path.coords.forEach((p, i) => {
+      if(i === 0){ pts.push(p); return; }
+      const a = path.coords[i - 1], n = Math.max(1, Math.ceil(Math.hypot(p[0] - a[0], p[1] - a[1]) / 0.25));
+      for(let s = 1; s <= n; s++) pts.push([a[0] + (p[0] - a[0]) * s / n, a[1] + (p[1] - a[1]) * s / n]);
+    });
+    const cum = [0];
+    for(let i = 1; i < pts.length; i++) cum.push(cum[i - 1] + geoDistance(pts[i - 1], pts[i]));
+    const total = cum[cum.length - 1];
+    const duration = Math.max(1500, Math.min(10000, total / 2.5)); // ~2 500 km par seconde
+    clearTimeout(boatPathTimer);
+    setBoatPath(pts);
+    boat.moving = true; boat.selected = false; renderBoat();
+    const t0 = performance.now(), run = ++sailRun;
+    function frame(now){
+      if(run !== sailRun) return; // trajet annule (reset global)
+      const d = Math.min(1, (now - t0) / duration) * total;
+      let k = 1; while(k < cum.length - 1 && cum[k] < d) k++;
+      const f = cum[k] > cum[k - 1] ? (d - cum[k - 1]) / (cum[k] - cum[k - 1]) : 1;
+      const a = pts[k - 1], b = pts[k];
+      boat.pos = [a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f];
+      renderBoat();
+      if(d < total){ requestAnimationFrame(frame); return; }
+      boat.pos = normLonLat(pts[pts.length - 1]); boat.moving = false;
+      saveBoat(); renderBoat();
+      boatHint('Arrivé à destination (' + Math.round(path.km).toLocaleString('fr-FR') + ' km).');
+      boatPathTimer = setTimeout(() => { setBoatPath(null); boatHint(''); }, 2500);
+    }
+    requestAnimationFrame(frame);
+  }
+  function toggleBoatPlacing(){
+    if(boat.moving || !boatReady) return;
+    boat.placing = !boat.placing; boat.selected = false;
+    boatHint(boat.placing ? 'Cliquez sur la mer pour poser le bateau.' : '');
+    renderBoat();
+  }
+
   // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
   // Les couches sont creees de facon asynchrone (apres le calcul du
   // reseau): applyDevFilters() est rappele a leur creation et ignore
@@ -1440,25 +1507,16 @@
     { id:'land', label:'Voie terrestre' },
     { id:'towns', label:'Ville' },
     { id:'numbers', label:'Numéro' },
-    { id:'sea', label:'Voie maritime' },
   ];
   const DEV_STORAGE_KEY = 'paperConquestDevFilters';
-  const devState = { land:true, towns:true, numbers:true, sea:true };
+  const devState = { land:true, towns:true, numbers:true };
   try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
 
   function setLayerVisible(layerId, visible){
     if(map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
   }
   function applyDevFilters(){
-    // Une seule couche 'paths' porte les deux types de chemins (propriete
-    // kind): on filtre par type plutot que de masquer toute la couche.
-    if(map.getLayer('paths')){
-      const kinds = [];
-      if(devState.land) kinds.push('land');
-      if(devState.sea) kinds.push('sea');
-      map.setFilter('paths', ['in', ['get', 'kind'], ['literal', kinds]]);
-    }
-    setLayerVisible('coastal-route', devState.sea);
+    setLayerVisible('paths', devState.land);
     setLayerVisible('villages', devState.towns);
     setLayerVisible('villages-halo', devState.towns);
     setLayerVisible('regions-label', devState.numbers);
@@ -1478,7 +1536,7 @@
         try{ localStorage.setItem(DEV_STORAGE_KEY, JSON.stringify(devState)); }catch(e){}
         applyDevFilters();
       });
-      box.appendChild(btn);
+      document.getElementById('dev-filter-list').appendChild(btn);
     });
     tab.addEventListener('click', () => {
       const open = box.hidden;
@@ -1487,37 +1545,63 @@
     });
   })();
 
-  // ---------- Region panel / start selection (persisted in localStorage) ----------
-  const STORAGE_KEY = 'paperConquestStart';
+  // ---------- Regions: propriete, capitale, construction (sauvegarde locale) ----------
+  // Etat du joueur, memorise dans ce navigateur (localStorage):
+  //  - regions possedees (ids), achetees depuis le panneau de region;
+  //  - batiments construits, par region: [{ type, pos, bearing, builtAt }].
+  // Pas encore de serveur de jeu: "un autre joueur" n'existe pas encore, mais
+  // chaque achat verifie deja que la region n'a pas de proprietaire (owner).
+  const OWNED_STORAGE_KEY = 'paperConquestOwned';
+  const BUILDINGS_STORAGE_KEY = 'paperConquestBuildings';
+  const LEGACY_START_KEY = 'paperConquestStart'; // ancien achat unique, repris une fois
   let selectedId = null;
-  let locked = false;
+  let ownedRegions = new Set();
+  let buildings = {};
+  let regionTopo = null, regionGeoms = null;
 
-  function loadStart(){
+  function loadPlayerState(){
+    try{ const o = JSON.parse(localStorage.getItem(OWNED_STORAGE_KEY)); if(Array.isArray(o)) ownedRegions = new Set(o); }catch(e){}
+    try{ const b = JSON.parse(localStorage.getItem(BUILDINGS_STORAGE_KEY)); if(b && typeof b === 'object') buildings = b; }catch(e){}
     try{
-      const raw = localStorage.getItem(STORAGE_KEY);
-      return raw ? JSON.parse(raw) : null;
-    }catch(e){ return null; }
+      const legacy = JSON.parse(localStorage.getItem(LEGACY_START_KEY));
+      if(legacy && typeof legacy.id === 'number'){ ownedRegions.add(legacy.id); localStorage.removeItem(LEGACY_START_KEY); savePlayerState(); }
+    }catch(e){}
   }
-  function saveStart(id){
-    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, lockedAt:new Date().toISOString() })); }
-    catch(e){ console.warn('localStorage indisponible, choix non persisté:', e); }
+  function savePlayerState(){
+    try{
+      localStorage.setItem(OWNED_STORAGE_KEY, JSON.stringify([...ownedRegions]));
+      localStorage.setItem(BUILDINGS_STORAGE_KEY, JSON.stringify(buildings));
+    }catch(e){ console.warn('localStorage indisponible, partie non sauvegardee:', e); }
+  }
+  const regionFeature = id => regionsFc.features.find(x => x.id === id);
+  const ownerOf = id => ownedRegions.has(id) ? 'player' : null;
+  const regionBuildings = id => buildings[id] || [];
+
+  // Une interaction en cours (bateau, placement d'un batiment) a priorite
+  // sur la selection des regions au clic.
+  const interactionBusy = () => placement.active || boat.placing || boat.selected;
+
+  function updateRibbon(){
+    const ribbon = document.getElementById('map-ribbon');
+    const ids = [...ownedRegions].sort((a, b) => a - b);
+    ribbon.textContent = ids.length ? '🏳️ Vos régions : ' + ids.join(', ') : '📍 Achetez une région pour commencer';
+  }
+  function refreshOwnershipLayers(){
+    regionsFc.features.forEach(f => map.setFeatureState({ source:'regions', id:f.id }, { owned:ownedRegions.has(f.id) }));
+    if(map.getLayer('capitals-owned')) map.setFilter('capitals-owned', ['in', ['get', 'regionId'], ['literal', [...ownedRegions]]]);
+    renderBuildingsLayer();
+    updateRibbon();
   }
 
   function selectRegion(id){
-    if(locked) return;
-    const f = regionsFc.features.find(x => x.id === id);
-    if(f && f.properties.isNpc){
-      // Region NPC (comptoir de commerce): jamais selectionnable comme
-      // point de depart -- petit message temporaire sur le ruban plutot
-      // qu'un refus silencieux.
+    const f = regionFeature(id);
+    if(f && f.properties.isNpc && !ownedRegions.has(id)){
+      // Region NPC (comptoir de commerce): jamais achetable -- petit message
+      // temporaire sur le ruban plutot qu'un refus silencieux.
       const ribbon = document.getElementById('map-ribbon');
-      if(!selectRegion._npcTimer) selectRegion._npcOrigText = ribbon.textContent;
-      ribbon.textContent = '🟣 Comptoir de commerce -- non disponible comme point de départ';
+      ribbon.textContent = '🟣 Comptoir de commerce -- non disponible à l\'achat';
       clearTimeout(selectRegion._npcTimer);
-      selectRegion._npcTimer = setTimeout(() => {
-        ribbon.textContent = selectRegion._npcOrigText;
-        selectRegion._npcTimer = null;
-      }, 2200);
+      selectRegion._npcTimer = setTimeout(updateRibbon, 2200);
       return;
     }
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
@@ -1526,10 +1610,12 @@
     renderRegionPanel();
   }
 
-  function validateSelection(){
-    if(locked || selectedId === null) return;
-    locked = true;
-    saveStart(selectedId);
+  function buyRegion(id){
+    const f = regionFeature(id);
+    if(!f || f.properties.isNpc || ownerOf(id) !== null) return; // deja possedee: plus achetable
+    ownedRegions.add(id);
+    savePlayerState();
+    refreshOwnershipLayers();
     renderRegionPanel();
   }
 
@@ -1539,11 +1625,13 @@
       panel.innerHTML = '<div class="region-empty">Cliquez sur une région du globe pour voir ses informations.</div>';
       return;
     }
-    const f = regionsFc.features.find(x => x.id === selectedId);
+    const f = regionFeature(selectedId);
     const c = f && f.properties.continent ? CONTINENT_BY_ID[f.properties.continent] : null;
     const contName = c ? c.name : 'Territoire neutre';
     const contColor = c ? c.color : 'var(--paper-alt)';
     const area = f ? Math.round(f.properties.clusterArea || 0).toLocaleString('fr-FR') + ' km²' : '-';
+    const owned = ownedRegions.has(selectedId);
+    const ports = regionBuildings(selectedId).filter(b => b.type === 'port').length;
     panel.innerHTML =
       '<div class="region-art"><svg viewBox="0 0 300 170"><rect width="300" height="170" fill="' + contColor + '" opacity="0.25"/>' +
         '<path d="M0 130 L40 90 L70 110 L110 60 L150 100 L190 75 L230 115 L260 95 L300 130 V170 H0 Z" fill="none" stroke="var(--ink)" stroke-width="2" opacity="0.55"/>' +
@@ -1553,22 +1641,332 @@
       '<div class="region-row"><span>Numéro</span><span class="v">' + selectedId + '</span></div>' +
       '<div class="region-row"><span>Aire</span><span class="v">' + area + '</span></div>' +
       '<div class="region-row"><span>Continent</span><span class="v">' + contName + '</span></div>' +
-      '<button class="select-btn" id="select-btn" ' + (locked ? 'disabled' : '') + '>' + iconCheck() + (locked ? 'CHOIX VALIDÉ' : 'SÉLECTIONNER') + '</button>' +
-      '<div class="locked-note" id="locked-note" style="display:' + (locked ? 'flex' : 'none') + ';">' + iconCheck() + 'Choix de départ validé, définitif.</div>';
-    const btn = document.getElementById('select-btn');
-    if(!locked) btn.addEventListener('click', validateSelection);
+      '<div class="region-row"><span>Propriétaire</span><span class="v">' + (owned ? 'Vous' : 'Aucun') + '</span></div>' +
+      (owned ? '<div class="region-row"><span>Ports</span><span class="v">' + ports + '</span></div>' : '') +
+      (owned
+        ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
+          '<button class="select-btn" id="open-capital-btn">🏛️ OUVRIR LA CAPITALE</button>' +
+          '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
+        : '<button class="select-btn" id="buy-btn">' + iconCheck() + 'ACHETER CETTE RÉGION</button>');
+    const buy = document.getElementById('buy-btn');
+    if(buy) buy.addEventListener('click', () => buyRegion(selectedId));
+    const cap = document.getElementById('open-capital-btn');
+    if(cap) cap.addEventListener('click', () => openCapital(selectedId));
+    const boatBtn = document.getElementById('boat-place-btn');
+    if(boatBtn){ boatBtn.addEventListener('click', toggleBoatPlacing); renderBoat(); }
+  }
+
+  // Couches: regions possedees (teinte + contour), capitales possedees,
+  // batiments construits, apercu de placement. Appele une fois la carte prete.
+  function initOwnership(){
+    loadPlayerState();
+    map.addLayer({ id:'regions-owned', type:'fill', source:'regions',
+      paint:{ 'fill-color':'#f2a900', 'fill-opacity':['case', ['boolean', ['feature-state', 'owned'], false], 0.32, 0] } }, 'regions-outline');
+    map.addLayer({ id:'regions-owned-outline', type:'line', source:'regions',
+      paint:{ 'line-color':'#b8560f', 'line-width':['case', ['boolean', ['feature-state', 'owned'], false], 2.2, 0] } }, 'regions-selected');
+    if(map.getSource('villages')){
+      map.addLayer({ id:'capitals-owned', type:'circle', source:'villages', filter:['in', ['get', 'regionId'], ['literal', []]],
+        paint:{ 'circle-radius':7, 'circle-color':'#f2a900', 'circle-stroke-color':'#3c3527', 'circle-stroke-width':2 } });
+      map.on('mouseenter', 'capitals-owned', () => { if(!interactionBusy()) map.getCanvas().style.cursor = 'pointer'; });
+      map.on('mouseleave', 'capitals-owned', () => { map.getCanvas().style.cursor = ''; });
+    }
+    map.addImage('port-icon', drawPortIcon(), { pixelRatio:2 });
+    map.addSource('buildings', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addLayer({ id:'buildings-dir', type:'line', source:'buildings', filter:['==', ['geometry-type'], 'LineString'],
+      paint:{ 'line-color':'#1c3d5a', 'line-width':2.5 } });
+    map.addLayer({ id:'buildings-icon', type:'symbol', source:'buildings', filter:['==', ['geometry-type'], 'Point'],
+      layout:{ 'icon-image':'port-icon', 'icon-size':1, 'icon-allow-overlap':true, 'icon-ignore-placement':true } });
+    map.addSource('build-preview', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addLayer({ id:'build-preview-dir', type:'line', source:'build-preview', filter:['==', ['geometry-type'], 'LineString'],
+      paint:{ 'line-color':['case', ['get', 'valid'], '#2f9e44', '#e03131'], 'line-width':3 } });
+    map.addLayer({ id:'build-preview', type:'circle', source:'build-preview', filter:['==', ['geometry-type'], 'Point'],
+      paint:{ 'circle-radius':10, 'circle-color':['case', ['get', 'valid'], '#2f9e44', '#e03131'], 'circle-opacity':0.85,
+        'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5 } });
+    refreshOwnershipLayers();
+  }
+  function drawPortIcon(){
+    const c = document.createElement('canvas'); c.width = c.height = 44;
+    const g = c.getContext('2d');
+    g.fillStyle = '#1c3d5a'; g.strokeStyle = '#ffffff'; g.lineWidth = 3;
+    g.beginPath(); g.arc(22, 22, 18, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.strokeStyle = '#ffffff'; g.lineWidth = 2.6; g.lineCap = 'round';
+    g.beginPath(); g.arc(22, 13, 3.2, 0, Math.PI * 2); g.stroke();          // anneau
+    g.beginPath(); g.moveTo(22, 16.5); g.lineTo(22, 32); g.stroke();        // verge
+    g.beginPath(); g.moveTo(15, 21); g.lineTo(29, 21); g.stroke();          // jas
+    g.beginPath(); g.arc(22, 25, 8, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); // bras
+    return g.getImageData(0, 0, 44, 44);
+  }
+  function renderBuildingsLayer(){
+    if(!map.getSource('buildings')) return;
+    const feats = [];
+    for(const [rid, list] of Object.entries(buildings)){
+      if(!ownedRegions.has(+rid)) continue;
+      list.forEach(b => {
+        feats.push({ type:'Feature', properties:{ type:b.type, regionId:+rid }, geometry:{ type:'Point', coordinates:b.pos } });
+        if(typeof b.bearing === 'number') feats.push({ type:'Feature', properties:{ type:b.type }, geometry:{ type:'LineString', coordinates:[b.pos, offsetKm(b.pos, b.bearing, 30)] } });
+      });
+    }
+    map.getSource('buildings').setData({ type:'FeatureCollection', features:feats });
+  }
+
+  // ---------- Fenetre de la capitale (onglets modulaires) ----------
+  // Pour ajouter un onglet: une entree { id, label, render(el, regionId) }.
+  const CAPITAL_TABS = [
+    { id:'construction', label:'Construction', render:renderConstructionTab },
+  ];
+  let capitalRegion = null, capitalTab = CAPITAL_TABS[0].id;
+  function openCapital(regionId){
+    if(!ownedRegions.has(regionId)) return;
+    capitalRegion = regionId;
+    const modal = document.getElementById('capital-modal');
+    document.getElementById('capital-title').textContent = 'Capitale — Région ' + regionId;
+    const tabs = document.getElementById('capital-tabs');
+    tabs.innerHTML = '';
+    CAPITAL_TABS.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'cap-tab'; b.type = 'button'; b.textContent = t.label; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(t.id === capitalTab));
+      b.addEventListener('click', () => { capitalTab = t.id; openCapital(regionId); });
+      tabs.appendChild(b);
+    });
+    const tab = CAPITAL_TABS.find(t => t.id === capitalTab) || CAPITAL_TABS[0];
+    tab.render(document.getElementById('capital-body'), regionId);
+    modal.hidden = false;
+    document.getElementById('capital-close').focus();
+  }
+  function closeCapital(){ document.getElementById('capital-modal').hidden = true; capitalRegion = null; }
+
+  // ---------- Batiments (registre modulaire de l'onglet Construction) ----------
+  // Pour ajouter un batiment: une entree avec son nom, sa description, sa
+  // regle de placement (texte) et sa fonction validate(lonLat, regionId)
+  // -> { valid, reason, pos, bearing }. maxPerRegion: null = sans limite.
+  const BUILDINGS = [
+    { id:'port', name:'Port', icon:'⚓',
+      description:'Permet à vos navires d\'accoster et de partir de la région.',
+      rule:'Uniquement sur le littoral de la région, tourné vers la mer.',
+      maxPerRegion:1,
+      available: regionId => coastOf(regionId) !== null || 'Région sans littoral : aucun port possible.',
+      validate: validateCoastalPlacement },
+  ];
+  function renderConstructionTab(el, regionId){
+    const built = regionBuildings(regionId);
+    el.innerHTML = '<p class="cap-intro">Choisissez un bâtiment, puis placez-le sur la carte. L\'aperçu passe au vert quand l\'emplacement est valide.</p>' +
+      '<div class="build-list">' + BUILDINGS.map(b => {
+        const count = built.filter(x => x.type === b.id).length;
+        const avail = b.available(regionId);
+        const full = b.maxPerRegion !== null && count >= b.maxPerRegion;
+        const blocked = avail !== true ? avail : (full ? 'Déjà construit dans cette région (' + count + '/' + b.maxPerRegion + ').' : '');
+        return '<div class="build-card">' +
+          '<div class="build-icon" aria-hidden="true">' + b.icon + '</div>' +
+          '<div class="build-text"><div class="build-name">' + b.name + '</div><div class="build-desc">' + b.description + '</div>' +
+          '<div class="build-rule">Règle : ' + b.rule + '</div>' +
+          (blocked ? '<div class="build-blocked">' + blocked + '</div>' : '') + '</div>' +
+          '<button class="boat-btn build-go" type="button" data-building="' + b.id + '"' + (blocked ? ' disabled' : '') + '>Construire</button></div>';
+      }).join('') + '</div>' +
+      '<div class="region-section-title">Bâtiments de la région</div>' +
+      (built.length ? '<ul class="built-list">' + built.map(x => {
+        const def = BUILDINGS.find(b => b.id === x.type);
+        return '<li>' + (def ? def.icon + ' ' + def.name : x.type) + ' — construit le ' + new Date(x.builtAt).toLocaleDateString('fr-FR') + '</li>';
+      }).join('') + '</ul>' : '<p class="cap-empty">Aucun bâtiment pour le moment.</p>');
+    el.querySelectorAll('.build-go').forEach(btn => btn.addEventListener('click', () => startPlacement(btn.dataset.building, regionId)));
+  }
+
+  // ---------- Littoral d'une region et regle de placement cotier ----------
+  // Littoral = arcs de la region qui ne sont partages avec AUCUNE autre
+  // region (le reste de son contour est une frontiere terrestre).
+  const coastCache = new Map();
+  let arcUse = null;
+  function coastOf(regionId){
+    if(coastCache.has(regionId)) return coastCache.get(regionId);
+    if(!arcUse){
+      arcUse = new Map();
+      const walk = a => Array.isArray(a) ? a.forEach(walk) : arcUse.set(a < 0 ? ~a : a, (arcUse.get(a < 0 ? ~a : a) || 0) + 1);
+      regionGeoms.forEach(g => walk(g.arcs));
+    }
+    const g = regionGeoms[regionId - 1], coastArcs = [];
+    const walk = a => Array.isArray(a) ? a.forEach(walk) : (arcUse.get(a < 0 ? ~a : a) === 1 && coastArcs.push(a));
+    walk(g.arcs);
+    let result = null;
+    if(coastArcs.length){
+      const f = regionFeature(regionId), ref = turf.centroid(f).geometry.coordinates[0];
+      const lines = topojson.feature(regionTopo, { type:'MultiLineString', arcs:coastArcs.map(a => [a]) }).geometry.coordinates
+        .map(unwrapRingLongitudes)
+        .map(l => { const m = l.reduce((s, p) => s + p[0], 0) / l.length, k = Math.round((ref - m) / 360); return l.map(([x, y]) => [x + k * 360, y]); });
+      result = { lines:turf.multiLineString(lines), ref };
+    }
+    coastCache.set(regionId, result);
+    return result;
+  }
+  // point a distanceKm dans la direction bearing (degres, 0 = nord)
+  function offsetKm([lon, lat], bearing, distanceKm){
+    const r = bearing * Math.PI / 180;
+    return [lon + distanceKm * Math.sin(r) / (111.32 * Math.cos(lat * Math.PI / 180)), lat + distanceKm * Math.cos(r) / 110.57];
+  }
+  // Aimantation vers la cote: quelques pixels a l'ecran autour du curseur
+  // (convertis en km selon le zoom), jamais plus de 40 km -- au-dela, le
+  // curseur est clairement dans les terres ou en pleine mer.
+  const PORT_SNAP_PX = 14, PORT_SNAP_MAX_KM = 40;
+  function snapToleranceKm(lat){ const kmPerPx = 40075 * Math.cos(lat * Math.PI / 180) / (512 * Math.pow(2, map.getZoom())); return Math.min(PORT_SNAP_MAX_KM, Math.max(2, PORT_SNAP_PX * kmPerPx)); }
+  const SEA_PROBE_KM = 8;      // rayon de sondage autour du port (terre d'un cote, mer de l'autre)
+  function validateCoastalPlacement([lon, lat], regionId){
+    const coast = coastOf(regionId);
+    if(!coast) return { valid:false, reason:'Cette région n\'a pas de littoral.' };
+    const f = regionFeature(regionId);
+    const cur = [lon + Math.round((coast.ref - lon) / 360) * 360, lat];
+    const near = turf.nearestPointOnLine(coast.lines, cur, { units:'kilometers' });
+    const pos = near.geometry.coordinates;
+    // hors de la region: sur la terre d'une autre region, ou trop loin
+    const onOwnLand = turf.booleanPointInPolygon(cur, f);
+    if(!onOwnLand && !seaNavigator.isSea(...normLonLat(cur))) return { valid:false, reason:'Hors de votre région.', pos:cur };
+    if(near.properties.dist > snapToleranceKm(lat)) return { valid:false, pos:cur,
+      reason: onOwnLand ? 'Dans les terres : placez le port au bord de la côte.' : 'En pleine mer : placez le port au bord de la côte.' };
+    // orientation: sondage en etoile autour du point de cote -- il faut de la
+    // mer d'un cote (vers ou le port est tourne) et la region de l'autre
+    let sx = 0, sy = 0, sea = 0, land = 0;
+    for(let k = 0; k < 16; k++){
+      const b = k * 22.5, p = offsetKm(pos, b, SEA_PROBE_KM);
+      if(turf.booleanPointInPolygon(p, f)) land++;
+      else if(seaNavigator.isSea(...normLonLat(p))){ sea++; sx += Math.sin(b * Math.PI / 180); sy += Math.cos(b * Math.PI / 180); }
+    }
+    if(!sea) return { valid:false, reason:'Aucun accès à la mer ici.', pos };
+    if(!land) return { valid:false, reason:'Emplacement entièrement dans l\'eau.', pos };
+    const bearing = (Math.atan2(sx, sy) * 180 / Math.PI + 360) % 360;
+    const def = BUILDINGS.find(b => b.id === 'port');
+    const count = regionBuildings(regionId).filter(b => b.type === 'port').length;
+    if(def.maxPerRegion !== null && count >= def.maxPerRegion) return { valid:false, reason:'Un port existe déjà dans cette région.', pos, bearing };
+    return { valid:true, reason:'Emplacement valide : sur le littoral, tourné vers la mer.', pos, bearing };
+  }
+
+  // ---------- Placement d'un batiment sur la carte ----------
+  const placement = { active:false, building:null, regionId:null, last:null, pending:false };
+  function startPlacement(buildingId, regionId){
+    closeCapital();
+    boat.selected = false; boat.placing = false; renderBoat();
+    Object.assign(placement, { active:true, building:BUILDINGS.find(b => b.id === buildingId), regionId, last:null, pending:false });
+    const f = regionFeature(regionId);
+    try{ map.fitBounds(turf.bbox(f), { padding:60, maxZoom:6, duration:800 }); }catch(e){}
+    showBuildBar();
+    boatHint('Déplacez la souris sur le littoral de la région ' + regionId + ', puis cliquez.');
+  }
+  function stopPlacement(){
+    Object.assign(placement, { active:false, building:null, regionId:null, last:null, pending:false });
+    map.getSource('build-preview').setData({ type:'FeatureCollection', features:[] });
+    document.getElementById('build-bar').hidden = true;
+    map.getCanvas().style.cursor = '';
+    boatHint('');
+  }
+  function drawPreview(res){
+    const feats = [];
+    if(res.pos){
+      feats.push({ type:'Feature', properties:{ valid:res.valid }, geometry:{ type:'Point', coordinates:res.pos } });
+      if(typeof res.bearing === 'number') feats.push({ type:'Feature', properties:{ valid:res.valid }, geometry:{ type:'LineString', coordinates:[res.pos, offsetKm(res.pos, res.bearing, 30)] } });
+    }
+    map.getSource('build-preview').setData({ type:'FeatureCollection', features:feats });
+  }
+  function showBuildBar(){
+    const bar = document.getElementById('build-bar');
+    const b = placement.building, r = placement.last;
+    bar.hidden = false;
+    document.getElementById('build-bar-text').textContent = placement.pending
+      ? 'Construire le ' + b.name.toLowerCase() + ' ici ?'
+      : (r ? (r.valid ? '✅ ' : '⛔ ') + r.reason : 'Placement : ' + b.name + ' — ' + b.rule);
+    document.getElementById('build-confirm').hidden = !placement.pending;
+    document.getElementById('build-cancel').textContent = placement.pending ? 'Choisir un autre endroit' : 'Annuler';
+  }
+  let moveQueued = null;
+  function onPlacementMove(e){
+    if(!placement.active || placement.pending) return;
+    if(moveQueued){ moveQueued = e; return; }
+    moveQueued = e;
+    requestAnimationFrame(() => { const ev = moveQueued; moveQueued = null; validateAt(ev); });
+  }
+  function validateAt(e){
+    if(!placement.active || placement.pending) return;
+    const res = placement.building.validate(normLonLat([e.lngLat.lng, e.lngLat.lat]), placement.regionId);
+    placement.last = res;
+    drawPreview(res);
+    map.getCanvas().style.cursor = res.valid ? 'copy' : 'not-allowed';
+    showBuildBar();
+  }
+  function onPlacementClick(e){
+    if(!placement.active || placement.pending) return;
+    const res = placement.building.validate(normLonLat([e.lngLat.lng, e.lngLat.lat]), placement.regionId);
+    placement.last = res; drawPreview(res);
+    if(!res.valid){ showBuildBar(); return; } // construction empechee: la regle n'est pas respectee
+    placement.pending = true;
+    showBuildBar();
+  }
+  function confirmPlacement(){
+    const r = placement.last;
+    if(!placement.pending || !r || !r.valid) return;
+    const id = placement.regionId;
+    (buildings[id] = buildings[id] || []).push({ type:placement.building.id, pos:r.pos, bearing:Math.round(r.bearing), builtAt:new Date().toISOString() });
+    savePlayerState();
+    renderBuildingsLayer();
+    const name = placement.building.name;
+    stopPlacement();
+    boatHint(name + ' construit dans la région ' + id + '.');
+    setTimeout(() => boatHint(''), 2500);
+    if(selectedId === id) renderRegionPanel();
   }
 
   function initSelection(){
-    const saved = loadStart();
-    if(saved && typeof saved.id === 'number' && regionsFc.features.some(f => f.id === saved.id)){
-      selectedId = saved.id;
-      locked = true;
-      map.setFeatureState({ source:'regions', id:selectedId }, { selected:true });
-      document.getElementById('map-ribbon').textContent = '🔒 Région de départ verrouillée';
-    }
+    initOwnership();
+    map.on('mousemove', onPlacementMove);
+    map.on('click', onPlacementClick);
+    map.on('click', (e) => {
+      if(interactionBusy() || !map.getLayer('capitals-owned')) return;
+      const hit = map.queryRenderedFeatures([[e.point.x - 8, e.point.y - 8], [e.point.x + 8, e.point.y + 8]], { layers:['capitals-owned'] });
+      if(hit.length) openCapital(hit[0].properties.regionId);
+    });
+    document.getElementById('capital-close').addEventListener('click', closeCapital);
+    document.getElementById('capital-modal').addEventListener('click', (e) => { if(e.target.id === 'capital-modal') closeCapital(); });
+    document.addEventListener('keydown', (e) => {
+      if(e.key !== 'Escape') return;
+      if(!document.getElementById('capital-modal').hidden) closeCapital();
+      else if(placement.active) stopPlacement();
+    });
+    document.getElementById('build-confirm').addEventListener('click', confirmPlacement);
+    document.getElementById('build-cancel').addEventListener('click', () => {
+      if(placement.pending){ placement.pending = false; showBuildBar(); } else stopPlacement();
+    });
     renderRegionPanel();
   }
+
+  // Reset global (onglet Developpeur): efface les regions possedees, les
+  // batiments et le bateau, sans recharger la page (le reseau de la carte
+  // n'est pas recalcule). Les filtres d'affichage sont conserves.
+  function resetGame(){
+    try{ [OWNED_STORAGE_KEY, BUILDINGS_STORAGE_KEY, LEGACY_START_KEY, BOAT_STORAGE_KEY].forEach(k => localStorage.removeItem(k)); }catch(e){}
+    if(placement.active) stopPlacement();
+    closeCapital();
+    if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
+    selectedId = null;
+    ownedRegions = new Set(); buildings = {};
+    boat.pos = null; boat.selected = false; boat.placing = false;
+    // un bateau en route s'arrete a la prochaine image
+    sailRun++; boat.moving = false; clearTimeout(boatPathTimer); setBoatPath(null); boatHint('');
+    renderBoat();
+    refreshOwnershipLayers();
+    renderRegionPanel();
+  }
+  (function initResetButton(){
+    const btn = document.getElementById('dev-reset');
+    let armTimer = null;
+    const disarm = () => { clearTimeout(armTimer); armTimer = null; btn.classList.remove('confirm'); btn.textContent = 'Réinitialiser la partie'; };
+    btn.addEventListener('click', () => {
+      if(!armTimer){ // premier clic: demande de confirmation dans le bouton lui-meme
+        btn.classList.add('confirm'); btn.textContent = 'Confirmer : tout effacer';
+        armTimer = setTimeout(disarm, 4000);
+        return;
+      }
+      disarm();
+      if(!regionsFc) return;
+      resetGame();
+      boatHint('Partie réinitialisée : régions, bâtiments et bateau effacés.');
+      setTimeout(() => boatHint(''), 2500);
+    });
+  })();
 
   // ---------- Line chart (shared renderer, used by "Situation mondiale" and "Économie") ----------
   function renderLineChart(svg, legendEl, tipEl, tab){

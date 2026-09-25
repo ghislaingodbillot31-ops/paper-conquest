@@ -10,7 +10,9 @@ Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome 
 ├── src/
 │   ├── paper-conquest.html     # Page principale (autonome, CDN pour MapLibre/TopoJSON/Turf + Google Fonts)
 │   └── data/
-│       └── admin1.topojson     # Données des régions admin-1
+│       ├── admin1.topojson     # Les 500 régions
+│       └── nav-grid.json       # Grille de navigation des bateaux (mer / terre, ~5 km)
+├── docs/                       # Scripts Node de génération des données (régions, grille de navigation)
 └── README.md
 ```
 
