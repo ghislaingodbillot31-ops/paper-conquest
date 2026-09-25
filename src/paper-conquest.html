@@ -1404,7 +1404,14 @@
   }catch(e){}
   const saveBoat = () => { try{ localStorage.setItem(BOAT_STORAGE_KEY, JSON.stringify({ pos:boat.pos, voyage:boat.voyage })); }catch(e){} };
   const normLonLat = ([lon, lat]) => [((lon + 540) % 360) - 180, lat];
-  const dockedPort = () => (boat.voyage && boat.voyage.arrived && boat.voyage.destPort) || null;
+  // A quai = voyage arrive dans un port (comptoir ou votre port). Le bateau est
+  // alors range dans le port: son icone disparait de la carte, et il repart
+  // depuis la fenetre du port (ENVOYER, puis clic sur le port de destination).
+  const dockedAt = () => { const v = boat.voyage; if(!v || !v.arrived) return null;
+    if(v.destPort) return { kind:'npc', regionId:v.destPort }; if(v.destOwn) return { kind:'own', regionId:v.destOwn }; return null; };
+  const dockedPort = () => { const d = dockedAt(); return d && d.kind === 'npc' ? d.regionId : null; };
+  const dockedOwn = () => { const d = dockedAt(); return d && d.kind === 'own' ? d.regionId : null; };
+  const send = { active:false };
   const voyageLabel = v => v.destPort ? 'Comptoir de la région ' + v.destPort : (v.destOwn ? 'Votre port (région ' + v.destOwn + ')' : 'Point en mer');
 
   // Surbrillance des ports: un port survole, ou vise par le bateau (en route
@@ -1448,7 +1455,9 @@
     if(!boat.pos) return 'Aucun bateau en mer.';
     if(boat.moving) return 'En route vers : ' + voyageLabel(boat.voyage) + '.';
     if(boat.selected) return 'Bateau sélectionné : cliquez sur une destination (un comptoir violet, ou la mer).';
-    if(dockedPort()) return 'À quai au comptoir de la région ' + dockedPort() + '.';
+    if(send.active) return 'Choisissez le port de destination sur la carte.';
+    if(dockedPort()) return 'À quai au comptoir de la région ' + dockedPort() + ' : ouvrez le comptoir pour l\'envoyer.';
+    if(dockedOwn()) return 'À quai dans votre port (région ' + dockedOwn() + ') : ouvrez le port pour l\'envoyer.';
     return 'Cliquez sur le bateau pour le sélectionner.';
   }
   function renderBoat(){
@@ -1460,7 +1469,7 @@
       btn.textContent = boat.placing ? 'Annuler le placement' : (boat.pos ? 'Replacer le bateau' : 'Placer le bateau');
     }
     if(!boatReady) return;
-    map.getSource('boat').setData({ type:'FeatureCollection', features: boat.pos
+    map.getSource('boat').setData({ type:'FeatureCollection', features: boat.pos && !dockedAt()
       ? [{ type:'Feature', properties:{ selected:boat.selected }, geometry:{ type:'Point', coordinates:boat.pos } }] : [] });
   }
   function setBoatPath(coords){
@@ -1511,8 +1520,10 @@
       }
       const box = [[e.point.x - 10, e.point.y - 10], [e.point.x + 10, e.point.y + 10]];
       const hitPort = portAt(e.point);
+      if(send.active){ sendTo(hitPort); return; }
       const port = hitPort && hitPort.kind === 'npc' ? npcPorts.find(p => p.regionId === hitPort.regionId) : null;
       const ownPort = hitPort && hitPort.kind === 'own' ? regionBuildings(hitPort.regionId).find(b => b.type === 'port') : null;
+      if(ownPort && !boat.selected){ openOwnPort(hitPort.regionId); return; }
       if(boat.moving || !boat.pos){
         if(port && !boat.selected) boatHint('Comptoir de la région ' + port.regionId + ' : envoyez-y un bateau pour y accéder.');
         return;
@@ -1532,7 +1543,7 @@
         return;
       }
       // quai de votre port: juste devant lui, cote mer
-      const ownDock = ownPort ? seaNavigator.snap(...normLonLat(offsetKm(ownPort.pos, ownPort.bearing || 0, 6)), 20) : null;
+      const ownDock = ownPort ? ownPortDock(hitPort.regionId) : null;
       const target = port ? port.dock : (ownDock || [lon, lat]);
       const path = seaNavigator.findPath(boat.pos, target);
       if(!path){ boatHint('Aucun chemin maritime vers ce point.'); return; }
@@ -1615,23 +1626,32 @@
     const run = ++sailRun;
     updatePortHighlights();
     function frame(){
-      if(run !== sailRun) return; // voyage annule (reset global, nouveau voyage)
+      if(run !== sailRun || !boat.moving) return; // voyage annule ou deja termine
       const frac = voyageProgress(v);
       boat.pos = positionAlong(v, frac);
       renderBoat();
       if(frac < 1){ requestAnimationFrame(frame); return; }
-      boat.pos = normLonLat(v.coords[v.coords.length - 1]);
-      v.arrived = true; boat.moving = false;
-      saveBoat(); renderBoat();
-      boatHint(v.destPort ? 'Arrivé au comptoir de la région ' + v.destPort + ' : ouvrez l\'onglet Voyage de votre capitale.' : (v.destOwn ? 'Arrivé à votre port (région ' + v.destOwn + ').' : 'Arrivé à destination.'));
-      boatPathTimer = setTimeout(() => { setBoatPath(null); boatHint(''); }, 3500);
-      if(selectedId !== null) renderRegionPanel();
+      finishVoyage();
     }
     requestAnimationFrame(frame);
   }
+  // Arrivee: declenchee par l'animation, ou par la verification chaque seconde
+  // ci-dessous (onglet en arriere-plan: le navigateur suspend l'animation,
+  // mais le voyage doit quand meme se terminer a l'heure).
+  function finishVoyage(){
+    const v = boat.voyage;
+    if(!v || v.arrived) return;
+    boat.pos = normLonLat(v.coords[v.coords.length - 1]);
+    v.arrived = true; boat.moving = false;
+    saveBoat(); renderBoat(); updatePortHighlights();
+    boatHint(v.destPort ? 'Arrivé au comptoir de la région ' + v.destPort + ' : ouvrez le comptoir ou l\'onglet Voyage de votre capitale.' : (v.destOwn ? 'Arrivé à votre port (région ' + v.destOwn + ').' : 'Arrivé à destination.'));
+    boatPathTimer = setTimeout(() => { setBoatPath(null); boatHint(''); }, 3500);
+    if(selectedId !== null) renderRegionPanel();
+  }
+  setInterval(() => { if(boat.moving && boat.voyage && voyageProgress(boat.voyage) >= 1) finishVoyage(); }, 1000);
   function toggleBoatPlacing(){
     if(boat.moving || !boatReady) return;
-    boat.placing = !boat.placing; boat.selected = false;
+    boat.placing = !boat.placing; boat.selected = false; send.active = false;
     boatHint(boat.placing ? 'Cliquez sur la mer pour poser le bateau.' : '');
     renderBoat();
   }
@@ -1659,13 +1679,15 @@
       '</div>' +
       (v.arrived && v.destPort ? '<button class="select-btn" id="enter-port-btn" type="button">⚓ ACCÉDER AU PORT DU COMPTOIR</button>' : '') +
       (v.arrived && !v.destPort && !v.destOwn ? '<p class="cap-empty">Le bateau est arrivé en mer, loin de tout port.</p>' : '') +
-      (v.arrived && v.destOwn ? '<p class="cap-empty">Le bateau est à quai dans votre port.</p>' : '');
+      (v.arrived && v.destOwn ? '<button class="select-btn" id="enter-own-port-btn" type="button">⚓ ACCÉDER À VOTRE PORT</button>' : '');
     // rafraichi chaque seconde: on ne remplace le contenu que s'il a change,
     // pour ne jamais recreer un bouton sous le curseur du joueur
     if(el._voyageHtml === html) return;
     el._voyageHtml = html; el.innerHTML = html;
     const enter = el.querySelector('#enter-port-btn');
     if(enter) enter.addEventListener('click', () => openNpcPort(v.destPort));
+    const enterOwn = el.querySelector('#enter-own-port-btn');
+    if(enterOwn) enterOwn.addEventListener('click', () => openOwnPort(v.destOwn));
   }
 
   // Fenetre du port d'un comptoir NPC (accessible uniquement a quai).
@@ -1675,9 +1697,58 @@
         '<p class="cap-intro">Comptoir de commerce indépendant, installé sur le littoral de la région ' + regionId + '.</p>' +
         '<div class="voyage-card"><div class="voyage-head"><span class="voyage-dest">⚓ Votre bateau est à quai</span><span class="voyage-state done">À quai</span></div></div>' +
         '<div class="region-section-title">Services du comptoir</div>' +
-        '<ul class="built-list"><li>Commerce de marchandises — bientôt disponible</li><li>Ravitaillement — bientôt disponible</li></ul>';
+        '<ul class="built-list"><li>Commerce de marchandises — bientôt disponible</li><li>Ravitaillement — bientôt disponible</li></ul>' +
+        '<div class="region-section-title">Départ</div>' + SEND_HTML;
+      sendButton(el);
     } },
   ];
+  // quai de votre port: juste devant lui, cote mer
+  function ownPortDock(regionId){
+    const p = regionBuildings(regionId).find(b => b.type === 'port');
+    return p ? seaNavigator.snap(...normLonLat(offsetKm(p.pos, p.bearing || 0, 6)), 20) : null;
+  }
+  // ENVOYER: la fenetre se ferme, le joueur clique le port de destination.
+  function startSend(){
+    if(!dockedAt()) return;
+    closeCapital();
+    send.active = true;
+    boatHint('Cliquez sur le port de destination : un comptoir violet ou votre port (Échap pour annuler).');
+    renderBoat();
+  }
+  function cancelSend(){ send.active = false; boatHint(''); renderBoat(); }
+  function sendTo(hit){
+    if(!hit){ boatHint('Cliquez sur un port : un comptoir violet ou votre port (Échap pour annuler).'); return; }
+    const from = dockedAt();
+    if(from && from.kind === hit.kind && from.regionId === hit.regionId){ boatHint('Le bateau est déjà dans ce port : choisissez-en un autre.'); return; }
+    const target = hit.kind === 'npc' ? npcPorts.find(p => p.regionId === hit.regionId).dock : ownPortDock(hit.regionId);
+    const path = target && seaNavigator.findPath(boat.pos, target);
+    if(!path){ boatHint('Aucun chemin maritime vers ce port.'); return; }
+    send.active = false;
+    startVoyage(path, hit.kind === 'npc' ? hit.regionId : null, hit.kind === 'own' ? hit.regionId : null);
+  }
+  function sendButton(el){
+    const b = el.querySelector('#send-btn');
+    if(b) b.addEventListener('click', startSend);
+  }
+  const SEND_HTML = '<button class="select-btn" id="send-btn" type="button">⛵ ENVOYER</button>' +
+    '<p class="cap-empty">Puis cliquez sur le port de destination sur la carte.</p>';
+
+  // Fenetre de votre port: bateau a quai (ENVOYER) ou comment l'y faire venir.
+  const OWN_PORT_TABS = [
+    { id:'port', label:'Port', render:(el, regionId) => {
+      const here = dockedOwn() === regionId;
+      el.innerHTML =
+        '<p class="cap-intro">Votre port, sur le littoral de la région ' + regionId + '.</p>' +
+        (here
+          ? '<div class="voyage-card"><div class="voyage-head"><span class="voyage-dest">⚓ Votre bateau est à quai</span><span class="voyage-state done">À quai</span></div></div>' + SEND_HTML
+          : '<p class="cap-empty">Aucun bateau à quai. Sélectionnez votre bateau en mer, puis cliquez sur ce port pour l\'y faire venir.</p>');
+      sendButton(el);
+    } },
+  ];
+  function openOwnPort(regionId){
+    if(!ownedRegions.has(regionId)) return;
+    openWindow({ kind:'own-port', title:'Port — Région ' + regionId, tabs:OWN_PORT_TABS, ctx:regionId, tab:'port' });
+  }
   function openNpcPort(regionId){
     if(dockedPort() !== regionId){ boatHint('Votre bateau doit être à quai dans ce comptoir.'); return; }
     openWindow({ kind:'npc-port', title:'Comptoir — Région ' + regionId, tabs:NPC_PORT_TABS, ctx:regionId, tab:'comptoir' });
@@ -1764,7 +1835,7 @@
 
   // Une interaction en cours (bateau, placement d'un batiment) a priorite
   // sur la selection des regions au clic.
-  const interactionBusy = () => placement.active || boat.placing || boat.selected;
+  const interactionBusy = () => placement.active || boat.placing || boat.selected || send.active;
 
   function updateRibbon(){
     const ribbon = document.getElementById('map-ribbon');
@@ -2133,6 +2204,7 @@
       if(e.key !== 'Escape') return;
       if(!document.getElementById('capital-modal').hidden) closeCapital();
       else if(placement.active) stopPlacement();
+      else if(send.active) cancelSend();
     });
     document.getElementById('build-confirm').addEventListener('click', confirmPlacement);
     document.getElementById('build-cancel').addEventListener('click', () => {
@@ -2151,7 +2223,7 @@
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
     selectedId = null;
     ownedRegions = new Set(); buildings = {};
-    boat.pos = null; boat.selected = false; boat.placing = false; boat.voyage = null;
+    boat.pos = null; boat.selected = false; boat.placing = false; boat.voyage = null; send.active = false;
     // un bateau en route s'arrete a la prochaine image
     sailRun++; boat.moving = false; clearTimeout(boatPathTimer); setBoatPath(null); boatHint('');
     hoveredPort.npc = hoveredPort.own = null; updatePortHighlights();
