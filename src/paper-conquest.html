@@ -2494,9 +2494,13 @@
   // Ratio cible d'eau: part de la surface des terres couverte d'eau
   // (rivieres + lacs). Les systemes fluviaux sont ajoutes du plus grand au
   // plus petit jusqu'a l'atteindre.
-  const WATER_RATIO = 0.03;
-  const RIVER_PARAMS = { noise:30, basin:40, depth:1, branchFrac:0.1, minAcc:10, systemMin:12, systems:80,
-    lakes:true, lakeDepth:8, lakeMin:4, lakeMax:35, lakeFill:0.18, endorheic:false, seed:5 };
+  const WATER_RATIO = 0.045;
+  // Rivieres paralleles evitees: un trace dont plus de PARALLEL_MAX de la
+  // longueur passe a moins de PARALLEL_CELLS cases (~20 km chacune) d'une
+  // autre riviere deja retenue est ecarte.
+  const PARALLEL_CELLS = 4, PARALLEL_MAX = 0.3;
+  const RIVER_PARAMS = { noise:30, basin:40, depth:1, branchFrac:0.1, minAcc:4, systemMin:5, systems:200,
+    lakes:true, lakeDepth:1, lakeMin:1, lakeMax:30, lakeFill:0.2, endorheic:false, seed:5 };
   const AUS_RIDGE = [[-37.8,145.5],[-36.3,148.3],[-33.5,150],[-30.5,151.8],[-27.5,152],[-24.5,149.5],[-21.5,147.8],[-18.5,145.5],[-15.5,144.6],[-12.5,143]];
   const AUS_RANGES = [[-23.7,133.5,2,0.55],[-22.5,118,2.5,0.6],[-17,126,2.5,0.5],[-31.5,138.6,1.3,0.45],[-26,131.5,1.8,0.5],[-42,146.5,1.2,0.8],[-34,117,2,0.25]];
   let riverBase = null;
@@ -2572,7 +2576,7 @@
       const inBasin = new Set(cells), shown = [sink], seen = new Set([sink]), front = [];
       const addFront = c => { for(const n of nbrs(c)) if(inBasin.has(n) && !seen.has(n)){ seen.add(n); front.push(n); } };
       addFront(sink);
-      const limit = Math.min(v.lakeMax, Math.round(3 + cells.length * (v.lakeFill || 1)));   // grande cuvette = grand lac
+      const limit = Math.min(v.lakeMax, Math.round(1 + cells.length * (v.lakeFill || 1)));   // grande cuvette = grand lac
       while(shown.length < limit && front.length){ let b = 0; for(let k = 1; k < front.length; k++) if(elev[front[k]] < elev[front[b]]) b = k;
         const c = front.splice(b, 1)[0]; shown.push(c); addFront(c); }
       lakes.push({ cells, shown, sink, salt: v.endorheic && aridityAt(lat, lon) > 0.55 });
@@ -2710,15 +2714,28 @@
     }).filter(Boolean);
     let water = lakes.reduce((a, l) => a + turf.area(l.poly) / 1e6, 0);
     const rivers = [];
+    // occupation: systeme de la riviere la plus proche, a PARALLEL_CELLS pres
+    const { W, H } = riverBase, occ = new Int32Array(W * H).fill(-1);
+    const cellOfPt = ([lon, lat]) => { const x = Math.floor((lon - RIVER_BOX.lon0) / RIVER_BOX.res), y = Math.floor((RIVER_BOX.lat1 - lat) / RIVER_BOX.res);
+      return x < 0 || y < 0 || x >= W || y >= H ? -1 : y * W + x; };
+    const parallelShare = (l, k) => { let n = 0; for(const q of l.pts){ const c = cellOfPt(q); if(c >= 0 && occ[c] >= 0 && occ[c] !== k) n++; } return n / l.pts.length; };
+    const occupy = (l, k) => { for(const q of l.pts){ const c = cellOfPt(q); if(c < 0) continue; const cx = c % W, cy = (c / W) | 0;
+      for(let dy = -PARALLEL_CELLS; dy <= PARALLEL_CELLS; dy++) for(let dx = -PARALLEL_CELLS; dx <= PARALLEL_CELLS; dx++){
+        const x = cx + dx, y = cy + dy; if(x < 0 || y < 0 || x >= W || y >= H || dx * dx + dy * dy > PARALLEL_CELLS * PARALLEL_CELLS) continue;
+        if(occ[y * W + x] < 0) occ[y * W + x] = k; } } };
+    let skipped = 0;
     const nSys = r.lines.reduce((m, l) => Math.max(m, l.sys), -1) + 1;
     for(let k = 0; k < nSys && water < target; k++){
       const sys = r.lines.filter(l => l.sys === k), trunk = sys.find(l => !l.trib);
-      if(!trunk || trunk.pts.length < 8) continue;               // fleuve cotier trop court
+      if(!trunk || trunk.pts.length < 6) continue;               // fleuve cotier trop court
+      if(parallelShare(trunk, k) > PARALLEL_MAX){ skipped++; continue; }   // longe une autre riviere
+      occupy(trunk, k);
       const f = Math.sqrt(trunk.outAcc / r.accMax);               // taille du systeme (0..1)
       const w = snakeRiver(trunk.pts, seed + 97 * k, { w0:8, w1:12 + 12 * f, mouth:true });
       w.poly = riverPolygon(w);
       const trunkLine = turf.lineString(w.coords);
-      const tribs = sys.filter(l => l.trib && l.pts.length >= 8).map((l, j) => {
+      const tribs = sys.filter(l => l.trib && l.pts.length >= 6 && parallelShare(l, k) <= PARALLEL_MAX).map((l, j) => {
+        occupy(l, k);
         const t = snakeRiver(l.pts, seed + 97 * k + 31 * (j + 1), { w0:7, w1:9 + 5 * f, mouth:false });
         attachTributary(t, trunkLine);
         t.poly = riverPolygon(t);
@@ -2726,7 +2743,7 @@
       });
       for(const x of [w, ...tribs]){ rivers.push(x); water += turf.area(x.poly) / 1e6; }
     }
-    waterStats = { landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:water / landKm2, rivers:rivers.length, lakes:lakes.length };
+    waterStats = { landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:water / landKm2, rivers:rivers.length, lakes:lakes.length, parallelSkipped:skipped };
     console.info('Eau (Australie):', waterStats);
     return [...rivers, ...lakes];
   }
