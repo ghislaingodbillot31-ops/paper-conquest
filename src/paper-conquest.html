@@ -2491,7 +2491,15 @@
   const AUS_RIDGE = [[-37.8,145.5],[-36.3,148.3],[-33.5,150],[-30.5,151.8],[-27.5,152],[-24.5,149.5],[-21.5,147.8],[-18.5,145.5],[-15.5,144.6],[-12.5,143]];
   const AUS_RANGES = [[-23.7,133.5,2,0.55],[-22.5,118,2.5,0.6],[-17,126,2.5,0.5],[-31.5,138.6,1.3,0.45],[-26,131.5,1.8,0.5],[-42,146.5,1.2,0.8],[-34,117,2,0.25]];
   let riverBase = null;
-  let waterways = [];   // [{ coords:[[lon,lat]...], width:[km...], poly }]
+  let waterways = [];   // rivieres [{ coords, width, poly }] et lacs [{ lake, name, poly }]
+  // Lacs de test (3 formes): position [lon, lat] ou 'river' (sur le fleuve,
+  // a une fraction de sa longueur: le fleuve le traverse, les bateaux y
+  // entrent). Tailles en km.
+  const LAKES = [
+    { name:'Grand lac intérieur', shape:'lobes', at:[134.8, -25.6], r:90, seed:3 },
+    { name:'Lac de vallée', shape:'valley', at:[147.2, -34.6], length:230, width:36, bearing:35, bend:0.35, seed:8 },
+    { name:'Lac du fleuve', shape:'round', at:'river', along:0.55, r:48, seed:13 },
+  ];
 
   // Masque terre de l'Australie (grille de navigation, 0 = terre) et donnees communes
   function riverBaseOf(navGrid){
@@ -2648,6 +2656,34 @@
     }
     return parts.length > 1 ? turf.union(turf.featureCollection(parts)) : parts[0];
   }
+  // Contour d'un lac (polygone lisse, sans angle) selon sa forme
+  function lakePolygon(L, center){
+    const [lon0, lat0] = center, kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.57;
+    const toLL = ([x, y]) => [lon0 + x / kx, lat0 + y / ky];
+    const rnd = k => geoHash(k, L.seed, 991);          // 0..1 deterministe
+    const ring = [];
+    if(L.shape === 'valley'){
+      // long lac etroit, legerement courbe, effile aux deux bouts, rives ondulees
+      const n = 60, b = L.bearing * Math.PI / 180, ux = Math.sin(b), uy = Math.cos(b);
+      const center = t => { const along = (t - 0.5) * L.length, side = L.bend * L.length * 0.25 * (1 - (2 * t - 1) ** 2);
+        return [ux * along - uy * side, uy * along + ux * side]; };
+      const half = t => L.width / 2 * Math.pow(Math.sin(Math.PI * t), 0.55) * (1 + 0.18 * Math.sin(t * 17 + rnd(1) * 6) + 0.1 * Math.sin(t * 31 + rnd(2) * 6));
+      const left = [], right = [];
+      for(let i = 0; i <= n; i++){ const t = i / n, c = center(t), c2 = center(Math.min(1, t + 0.01)), c1 = center(Math.max(0, t - 0.01));
+        const tl = Math.hypot(c2[0] - c1[0], c2[1] - c1[1]) || 1, nx = -(c2[1] - c1[1]) / tl, ny = (c2[0] - c1[0]) / tl, h = half(t);
+        left.push([c[0] + nx * h, c[1] + ny * h]); right.push([c[0] - nx * h, c[1] - ny * h]); }
+      ring.push(...left, ...right.reverse().slice(1, -1));   // pointes communes: pas de doublon
+    } else {
+      // lobes: rayon module par quelques harmoniques (baies et presqu'iles)
+      const H = L.shape === 'lobes' ? [[2, 0.12], [3, 0.26], [5, 0.14], [8, 0.06]] : [[2, 0.1], [3, 0.06], [5, 0.04]];
+      const n = 120;
+      for(let i = 0; i < n; i++){ const a = i / n * 2 * Math.PI;
+        let f = 1; H.forEach(([k, amp], j) => { f += amp * Math.sin(k * a + rnd(j + 3) * 6.28); });
+        ring.push([Math.cos(a) * L.r * f, Math.sin(a) * L.r * f]); }
+    }
+    ring.push(ring[0]);
+    return turf.polygon([ring.map(toLL)]);
+  }
   // Genere les rivieres (appele avant la creation des regions et du bateau)
   function buildWaterways(navGrid){
     riverBase = riverBaseOf(navGrid);
@@ -2656,7 +2692,11 @@
     if(!trunk) return [];
     const w = snakeRiver(trunk.pts, RIVER_PARAMS.seed);
     w.poly = riverPolygon(w);
-    return [w];
+    const lakes = LAKES.map(L => {
+      const center = L.at === 'river' ? w.coords[Math.round(L.along * (w.coords.length - 1))] : L.at;
+      return { lake:true, name:L.name, center, poly:lakePolygon(L, center) };
+    });
+    return [w, ...lakes];
   }
   // Retire le lit des rivieres des polygones des regions traversees
   function carveRegions(fc, list){
@@ -2673,7 +2713,14 @@
   // Marque le lit comme eau dans la grille de navigation (tampons ronds le
   // long du trace, au moins ~2 cases de large pour que le bateau passe)
   function carveNav(nav, W, H, res, latTop, list){
-    for(const w of list) w.coords.forEach(([lon, lat], k) => {
+    for(const w of list.filter(x => x.lake)){
+      const [x0, y0, x1, y1] = turf.bbox(w.poly);
+      for(let y = Math.floor((latTop - y1) / res); y <= Math.ceil((latTop - y0) / res); y++){ if(y < 0 || y >= H) continue;
+        for(let x = Math.floor((x0 + 180) / res); x <= Math.ceil((x1 + 180) / res); x++){
+          const i = y * W + ((x % W) + W) % W;
+          if(!nav[i] && turf.booleanPointInPolygon([-180 + (x + 0.5) * res, latTop - (y + 0.5) * res], w.poly)) nav[i] = 1; } }
+    }
+    for(const w of list.filter(x => !x.lake)) w.coords.forEach(([lon, lat], k) => {
       const rKm = Math.max(w.width[k] / 2 + 2, 7), ry = rKm / 110.57 / res, rx = rKm / (111.32 * Math.cos(lat * Math.PI / 180)) / res;
       const cy = (latTop - lat) / res, cx = (lon + 180) / res;
       for(let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++){ if(y < 0 || y >= H) continue;
