@@ -309,6 +309,14 @@
     border-radius:8px 8px 0 0; font:inherit; font-size:0.74rem; font-weight:800; letter-spacing:0.08em; text-transform:uppercase; cursor:pointer; margin-bottom:-1.5px; }
   .cap-tab[aria-selected="true"]{ background:var(--card); color:var(--ink); }
   .capital-body{ padding:14px 16px 18px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+  /* Vue CAPITALE (menu de gauche): occupe toute la zone, comme la carte */
+  .capital-view{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow:hidden; padding:0; }
+  .capital-view .capital-head{ flex-wrap:wrap; }
+  .capital-view .capital-body{ flex:1 1 auto; min-height:0; }
+  .cap-switch{ display:flex; align-items:center; gap:8px; font-size:0.78rem; font-weight:700; color:var(--ink-soft); }
+  .cap-switch[hidden]{ display:none; }
+  .cap-switch select{ font:inherit; font-weight:700; color:var(--ink); padding:5px 8px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper-alt); }
+  .cap-none{ margin:auto; text-align:center; font-size:0.9rem; color:var(--ink-soft); padding:40px 16px; }
   .cap-intro, .cap-empty{ margin:0; font-size:0.82rem; color:var(--ink-soft); }
   .build-list{ display:flex; flex-direction:column; gap:10px; }
   .build-card{ display:grid; grid-template-columns:44px 1fr auto; gap:12px; align-items:center; padding:12px; border:1.5px solid var(--line); border-radius:10px; background:var(--paper); }
@@ -472,6 +480,17 @@
       </div>
     </section>
 
+    <section class="view" data-view="capitale" hidden>
+      <div class="card capital-view">
+        <div class="capital-head">
+          <h2 class="hand" id="capview-title">Capitale</h2>
+          <label class="cap-switch" id="capview-switch" hidden>Capitale de la région <select id="capview-select"></select></label>
+        </div>
+        <div class="capital-tabs" id="capview-tabs" role="tablist"></div>
+        <div class="capital-body" id="capview-body"></div>
+      </div>
+    </section>
+
   </main>
 </div>
 
@@ -491,6 +510,7 @@
   // ---------------------------------------------------------------
   const NAV_ITEMS = [
     { view:'carte', label:'Carte', icon:'M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2Z M9 4v14M15 6v14' },
+    { view:'capitale', label:'Capitale', icon:'M3 20h18 M5 20V10 M9 20V10 M15 20V10 M19 20V10 M2.5 10h19L12 3.5Z' },
   ];
 
   // Les 6 continents ne servent plus qu'a classer/colorer les vraies regions
@@ -559,7 +579,10 @@
     document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === activeBtn));
     const view = activeBtn.dataset.view;
     document.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== view);
+    if(view === 'capitale' && typeof renderCapitalView === 'function') renderCapitalView();
   }
+  const showView = view => switchView(document.querySelector('.nav-item[data-view="' + view + '"]'));
+  const currentView = () => { const b = document.querySelector('.nav-item.active'); return b ? b.dataset.view : null; };
 
   // ---------- Globe (MapLibre GL, vraie geographie) ----------
   // Chaque pays (adm0_a3) est classe dans l'un des 6 continents, seulement
@@ -2388,6 +2411,7 @@
     renderBuildingsLayer();
     updateRibbon();
     if(typeof updateCityHighlights === 'function') updateCityHighlights();
+    if(currentView() === 'capitale') renderCapitalView();
   }
 
   function selectRegion(id){
@@ -2443,13 +2467,10 @@
       regionResourcesHtml(selectedId) +
       (owned
         ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
-          '<button class="select-btn" id="open-capital-btn">🏛️ OUVRIR LA CAPITALE</button>' +
           '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
         : '<button class="select-btn" id="buy-btn">' + iconCheck() + 'ACHETER CETTE RÉGION</button>');
     const buy = document.getElementById('buy-btn');
     if(buy) buy.addEventListener('click', () => buyRegion(selectedId));
-    const cap = document.getElementById('open-capital-btn');
-    if(cap) cap.addEventListener('click', () => openCapital(selectedId));
     const boatBtn = document.getElementById('boat-place-btn');
     if(boatBtn){ boatBtn.addEventListener('click', toggleBoatPlacing); renderBoat(); }
   }
@@ -2536,40 +2557,70 @@
     { id:'caravane', label:'Caravane', render:renderCaravanTab, live:true },
     { id:'voyage', label:'Voyage', render:renderVoyageTab, live:true },
   ];
-  let capitalTab = CAPITAL_TABS[0].id, winState = null, winTicker = null;
+  // La capitale a sa propre vue (menu de gauche, meme taille que la carte);
+  // les autres fenetres (port, comptoir) restent en fenetre modale.
+  let capitalTab = CAPITAL_TABS[0].id, capitalRegion = null, winState = null;
   function openWindow(state){
     winState = state;
     renderWindow();
     document.getElementById('capital-modal').hidden = false;
     document.getElementById('capital-close').focus();
-    clearInterval(winTicker);
-    winTicker = setInterval(() => {
-      const t = winState && winState.tabs.find(x => x.id === winState.tab);
-      if(t && t.live) t.render(document.getElementById('capital-body'), winState.ctx);
-    }, 1000);
+  }
+  // Barre d'onglets + contenu de l'onglet courant dans les elements donnes
+  function renderTabs(tabsEl, bodyEl, tabs, current, onPick, ctx){
+    tabsEl.innerHTML = '';
+    tabs.forEach(t => {
+      const b = document.createElement('button');
+      b.className = 'cap-tab'; b.type = 'button'; b.textContent = t.label; b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(t.id === current));
+      b.addEventListener('click', () => onPick(t.id));
+      tabsEl.appendChild(b);
+    });
+    const tab = tabs.find(t => t.id === current) || tabs[0];
+    bodyEl._liveHtml = null;
+    tab.render(bodyEl, ctx);
   }
   function renderWindow(){
     const s = winState; if(!s) return;
     document.getElementById('capital-title').textContent = s.title;
-    const tabs = document.getElementById('capital-tabs');
-    tabs.innerHTML = '';
-    s.tabs.forEach(t => {
-      const b = document.createElement('button');
-      b.className = 'cap-tab'; b.type = 'button'; b.textContent = t.label; b.setAttribute('role', 'tab');
-      b.setAttribute('aria-selected', String(t.id === s.tab));
-      b.addEventListener('click', () => { s.tab = t.id; if(s.kind === 'capital') capitalTab = t.id; renderWindow(); });
-      tabs.appendChild(b);
-    });
-    const tab = s.tabs.find(t => t.id === s.tab) || s.tabs[0];
-    const body = document.getElementById('capital-body');
-    body._liveHtml = null;
-    tab.render(body, s.ctx);
+    renderTabs(document.getElementById('capital-tabs'), document.getElementById('capital-body'), s.tabs, s.tab,
+      id => { s.tab = id; renderWindow(); }, s.ctx);
+  }
+  function renderCapitalView(){
+    const owned = [...ownedRegions].sort((a, b) => a - b);
+    if(!owned.includes(capitalRegion)) capitalRegion = owned.length ? owned[0] : null;
+    const title = document.getElementById('capview-title'), sw = document.getElementById('capview-switch');
+    const tabsEl = document.getElementById('capview-tabs'), body = document.getElementById('capview-body');
+    sw.hidden = owned.length < 2;
+    document.getElementById('capview-select').innerHTML = owned.map(id => '<option value="' + id + '"' + (id === capitalRegion ? ' selected' : '') + '>' + id + '</option>').join('');
+    if(capitalRegion === null){
+      title.textContent = 'Capitale';
+      tabsEl.innerHTML = ''; body._liveHtml = null;
+      body.innerHTML = '<p class="cap-none">Vous n\'avez pas encore de capitale.<br>Achetez une région sur la carte pour commencer.</p>';
+      return;
+    }
+    title.textContent = 'Capitale — Région ' + capitalRegion;
+    renderTabs(tabsEl, body, CAPITAL_TABS, capitalTab, id => { capitalTab = id; renderCapitalView(); }, capitalRegion);
   }
   function openCapital(regionId){
     if(!ownedRegions.has(regionId)) return;
-    openWindow({ kind:'capital', title:'Capitale — Région ' + regionId, tabs:CAPITAL_TABS, ctx:regionId, tab:capitalTab });
+    capitalRegion = regionId;
+    showView('capitale');
   }
-  function closeCapital(){ document.getElementById('capital-modal').hidden = true; winState = null; clearInterval(winTicker); }
+  // Ferme la fenetre modale et, depuis la vue Capitale, revient a la carte
+  // (placement d'un batiment, envoi d'une caravane...).
+  function closeCapital(){
+    document.getElementById('capital-modal').hidden = true; winState = null;
+    if(currentView() === 'capitale') showView('carte');
+  }
+  // Onglets "live" (Caravane, Voyage): rafraichis chaque seconde s'ils sont affiches
+  setInterval(() => {
+    const live = (tabs, id) => { const t = tabs.find(x => x.id === id); return t && t.live ? t : null; };
+    const w = winState && live(winState.tabs, winState.tab);
+    if(w) w.render(document.getElementById('capital-body'), winState.ctx);
+    const c = currentView() === 'capitale' && capitalRegion !== null && live(CAPITAL_TABS, capitalTab);
+    if(c) c.render(document.getElementById('capview-body'), capitalRegion);
+  }, 1000);
 
   // ---------- Batiments (registre modulaire de l'onglet Construction) ----------
   // Pour ajouter un batiment: une entree avec son nom, sa description, sa
@@ -2783,6 +2834,7 @@
       if(hit.length) openCapital(hit[0].properties.regionId);
     });
     document.getElementById('capital-close').addEventListener('click', closeCapital);
+    document.getElementById('capview-select').addEventListener('change', e => { capitalRegion = +e.target.value; renderCapitalView(); });
     document.getElementById('capital-modal').addEventListener('click', (e) => { if(e.target.id === 'capital-modal') closeCapital(); });
     document.addEventListener('keydown', (e) => {
       if(e.key !== 'Escape') return;
