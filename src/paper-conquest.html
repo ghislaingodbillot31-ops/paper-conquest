@@ -538,11 +538,17 @@
 
   // Regions NPC (comptoirs de commerce, pour le futur systeme d'echanges):
   // non selectionnables comme point de depart, couleur violette distincte,
-  // mais restent pleinement integrees au reseau routier. Choix manuel de
-  // l'utilisateur, remappe sur le redecoupage compact mondial (4 des 30 regions
-  // d'Australie).
+  // mais restent pleinement integrees au reseau routier.
+  //  - 4 comptoirs d'Australie choisis a la main (449, 421, 477, 489);
+  //  - 38 comptoirs dans le reste du monde, choisis parmi les regions
+  //    cotieres (mer ouverte: pas la Caspienne ni l'Aral) ou traversees par
+  //    un grand fleuve navigable qui rejoint l'ocean (les deux a la fois de preference:
+  //    estuaires), au moins 1 800 km entre deux comptoirs, hors calotte,
+  //    grand Nord et deserts extremes. Tous accessibles en bateau.
   const NPC_COLOR = '#8f5fa8';
-  const NPC_REGION_IDS = new Set([449, 421, 477, 489]);
+  const NPC_REGION_IDS = new Set([449, 421, 477, 489,
+    21, 22, 23, 42, 52, 68, 77, 100, 111, 113, 134, 147, 182, 188, 222, 227, 236, 240, 248, 256, 261, 302, 311, 314, 319, 320, 329, 337,
+    370, 372, 398, 403, 411, 435, 469, 486, 497, 499]);
 
   const SITUATION_TABS = [
     { id:'economie', label:'Économie', series:[
@@ -838,10 +844,11 @@
       paint: { 'line-color': 'rgba(60,53,39,0.35)', 'line-width': 0.5 },
     });
     map.addLayer({
-      id: 'regions-selected', type: 'line', source: 'regions',
+      id: 'regions-selected', type: 'fill', source: 'regions',
+      // region selectionnee: plus de contour noir, juste un leger eclaircissement
       paint: {
-        'line-color': '#4a3418',
-        'line-width': ['case', ['boolean', ['feature-state', 'selected'], false], 3, 0],
+        'fill-color': '#ffffff',
+        'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.28, 0],
       },
     });
     // Numero de chaque region affiche dessus -- sert a reperer/signaler une
@@ -1644,6 +1651,30 @@
     });
   }
 
+  // Un port n'est valable que si un bateau peut en sortir vers le large
+  // (pas une baie refermee par la precision de la cote): chemin maritime
+  // vers un point en mer a 150 ou 300 km dans l'axe du port.
+  function reachesOpenSea(dock, pos, bearing){
+    for(const d of [150, 300, 500]){
+      const q = normLonLat(offsetKm(pos, bearing, d));
+      if(seaNavigator.isSea(...q) && seaNavigator.findPath(dock, q)) return true;
+    }
+    return false;
+  }
+  // Port fluvial d'une region: point navigable (lit de 5 km ou plus) d'un
+  // fleuve qui la traverse, le plus proche de sa capitale.
+  function riverPortFor(regionId){
+    if(!waterData || !seaNavigator) return null;
+    const land = topojson.feature(regionTopo, regionGeoms[regionId - 1]);
+    const cap = capitalById.get(regionId) || turf.centroid(land).geometry.coordinates;
+    let best = null, bd = Infinity;
+    waterData.rivers.filter(r => (r.r || []).includes(regionId)).forEach(r => r.c.forEach((pt, k) => {
+      if(r.w[k] < 5 || !turf.booleanPointInPolygon(pt, land)) return;
+      const d = geoDistance(pt, cap); if(d < bd){ bd = d; best = pt; } }));
+    if(!best) return null;
+    const dock = seaNavigator.snap(...normLonLat(best), 6);
+    return dock ? { regionId, pos:best, bearing:null, dock, river:true } : null;
+  }
   // Ports des comptoirs NPC: sur le littoral de chaque region NPC, au point de
   // cote le plus proche de sa capitale qui soit bien tourne vers la mer.
   function initNpcPorts(){
@@ -1663,14 +1694,19 @@
         const probe = probeCoast(p, f);
         if(probe.sea >= 4 && probe.land >= 4){
           const dock = seaNavigator.snap(...normLonLat(offsetKm(p, probe.bearing, 6)), 20);
-          if(dock){ npcPorts.push({ regionId:f.id, pos:p, bearing:Math.round(probe.bearing), dock }); break; }
+          if(dock && reachesOpenSea(dock, p, probe.bearing)){ npcPorts.push({ regionId:f.id, pos:p, bearing:Math.round(probe.bearing), dock }); break; }
         }
       }
+    });
+    // comptoirs sans port cotier: port sur le fleuve navigable qui les
+    // traverse, au point du fleuve le plus proche de la capitale
+    regionsFc.features.filter(f => f.properties.isNpc && !npcPorts.some(q => q.regionId === f.id)).forEach(f => {
+      const port = riverPortFor(f.id); if(port) npcPorts.push(port);
     });
     map.addImage('npc-port-icon', drawPortIcon('#6b3fa0'), { pixelRatio:2 });
     const feats = [];
     npcPorts.forEach(p => {
-      feats.push({ type:'Feature', properties:{ regionId:p.regionId }, geometry:{ type:'LineString', coordinates:[p.pos, offsetKm(p.pos, p.bearing, 30)] } });
+      if(p.bearing !== null) feats.push({ type:'Feature', properties:{ regionId:p.regionId }, geometry:{ type:'LineString', coordinates:[p.pos, offsetKm(p.pos, p.bearing, 30)] } });
       feats.push({ type:'Feature', id:p.regionId, properties:{ regionId:p.regionId, label:'Comptoir ' + p.regionId }, geometry:{ type:'Point', coordinates:p.pos } });
     });
     map.addSource('npc-ports', { type:'geojson', data:{ type:'FeatureCollection', features:feats } });

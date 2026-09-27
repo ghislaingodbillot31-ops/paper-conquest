@@ -60,6 +60,14 @@ for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
   const fy = Math.floor((NTOP - lat) / NRES), fx = Math.floor((lon + 180) / NRES);
   if(fy >= 0 && fy < NH && navLand[fy * NW + fx]) land[y * W + x] = 1;
 }
+// pleine eau: aucune terre (grille fine) dans un rayon de rKm
+function openSeaAt(lon, lat, rKm = 20){
+  const cy = Math.floor((NTOP - lat) / NRES), cx = Math.floor((((lon + 540) % 360) - 180 + 180) / NRES);
+  const ry = Math.ceil(rKm / 110.57 / NRES), rx = Math.ceil(rKm / (111.32 * Math.max(0.2, Math.cos(lat * Math.PI / 180))) / NRES);
+  for(let y = cy - ry; y <= cy + ry; y++){ if(y < 0 || y >= NH) return false;
+    for(let x = cx - rx; x <= cx + rx; x++) if(navLand[y * NW + ((x % NW) + NW) % NW]) return false; }
+  return true;
+}
 const nbrs = c => { const cx = c % W, cy = (c / W) | 0, out = [];
   for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ if(!dx && !dy) continue; const nx = cx + dx, ny = cy + dy;
     if(nx >= 0 && ny >= 0 && nx < W && ny < H) out.push(ny * W + nx); } return out; };
@@ -154,10 +162,15 @@ function snakeRiver(cellPts, seed, opt){
     const tp = opt.taper === false ? 1 : 0.15 + 0.85 * smooth01(sArr[i] / SOURCE_TAPER_KM);
     width.push((opt.w0 + (opt.w1 - opt.w0) * Math.pow(u, 0.8)) * tp);
   }
-  if(opt.mouth){ const e1 = out[out.length - 1], e0 = out[Math.max(0, out.length - 6)], el = d2(e0, e1) || 1;
-    for(let k = 1; k <= 4; k++){ out.push([e1[0] + (e1[0] - e0[0]) / el * 10 * k, e1[1] + (e1[1] - e0[1]) / el * 10 * k]); width.push(width[width.length - 1]); } }
-  if(opt.startSea){ const s0 = out[0], s1 = out[Math.min(out.length - 1, 5)], sl = d2(s0, s1) || 1;   // depart prolonge en mer
-    for(let k = 1; k <= 4; k++){ out.unshift([s0[0] + (s0[0] - s1[0]) / sl * 10 * k, s0[1] + (s0[1] - s1[1]) / sl * 10 * k]); width.unshift(width[0]); } }
+  // embouchure (et depart en mer d'une liaison) prolongee jusqu'a la mer
+  // LIBRE: au moins 40 km, puis jusqu'a deux points de suite en pleine eau
+  // (aucune terre a 20 km), 250 km au plus: jamais de poche fermee par les
+  // iles d'un delta
+  const extend = (from, dirFrom, add) => { const el = d2(dirFrom, from) || 1; let open = 0;
+    for(let k = 1; k <= 25; k++){ const pt = [from[0] + (from[0] - dirFrom[0]) / el * 10 * k, from[1] + (from[1] - dirFrom[1]) / el * 10 * k]; add(pt);
+      if(k >= 4 && openSeaAt(...toLL(pt))){ if(++open >= 2) break; } else open = 0; } };
+  if(opt.mouth) extend(out[out.length - 1], out[Math.max(0, out.length - 6)], pt => { out.push(pt); width.push(width[width.length - 1]); });
+  if(opt.startSea) extend(out[0], out[Math.min(out.length - 1, 5)], pt => { out.unshift(pt); width.unshift(width[0]); });
   return { coords:out.map(toLL), width };
 }
 // Colle le debut d'un bras au fleuve dont il part (miroir d'attachTributary)
