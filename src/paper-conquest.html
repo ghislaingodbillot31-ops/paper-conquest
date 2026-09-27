@@ -3090,6 +3090,7 @@
     }
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
     selectedId = id;
+    villageRegion = id;                 // la vue Village represente la region selectionnee
     map.setFeatureState({ source:'regions', id }, { selected:true });
     renderRegionPanel();
   }
@@ -3131,10 +3132,13 @@
         (() => { const pr = Object.entries(regionProduction(selectedId)); return '<div class="region-row"><span>Production / jour</span><span class="v">' +
           (pr.length ? pr.map(([k, q]) => q + ' ' + goodName(k)).join(', ') : 'aucune') + '</span></div>'; })() : '') +
       regionResourcesHtml(selectedId) +
+      '<button class="boat-btn" id="explore-btn" type="button">🔍 Explorer la région</button>' +
       (owned
         ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
           '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
         : '<button class="select-btn" id="buy-btn"' + (eco.gold < regionPrice() ? ' disabled title="Pas assez d\'Or"' : '') + '>' + iconCheck() + 'ACHETER CETTE RÉGION — ' + (regionPrice() ? fmtGold(regionPrice()) : 'OFFERTE') + '</button>');
+    const explore = document.getElementById('explore-btn');
+    if(explore) explore.addEventListener('click', () => { villageRegion = selectedId; showView('village'); });
     const buy = document.getElementById('buy-btn');
     if(buy) buy.addEventListener('click', () => buyRegion(selectedId));
     const boatBtn = document.getElementById('boat-place-btn');
@@ -3613,7 +3617,7 @@
 
   function renderVillageView(){
     if(!regionsFc) return;
-    if(villageRegion === null) villageRegion = ownedRegions.size ? [...ownedRegions][0] : pickVillageRegion();
+    if(villageRegion === null) villageRegion = selectedId !== null ? selectedId : ownedRegions.size ? [...ownedRegions][0] : pickVillageRegion();
     document.getElementById('village-mine').hidden = !ownedRegions.size;
     const body = document.getElementById('village-body'), title = document.getElementById('village-title');
     if(villageRegion === null){ body.innerHTML = '<p class="cap-none">Aucune région disponible.</p>'; return; }
