@@ -202,6 +202,8 @@
     background:transparent; color:var(--ink-soft); border:1.5px solid var(--line-strong); }
   .res-tab[aria-selected="true"]{ background:var(--ink); color:var(--card); border-color:var(--ink); }
   .soil-note{ font-size:0.7rem; color:var(--ink-soft); max-width:230px; }
+  .res-legend i.fish-high{ background:#1f5f8b; } .res-legend i.fish-coast{ background:#2a9d8f; }
+  .fish-zone-list{ margin:4px 0 0; padding-left:16px; font-size:0.7rem; max-width:230px; }
   .res-group{ display:flex; flex-wrap:wrap; align-items:center; gap:4px; margin-bottom:5px; }
   .res-cat{ width:100%; font-size:0.66rem; font-weight:800; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.05em; }
   .res-chip{ font-size:0.7rem; font-weight:700; padding:2px 7px; border-radius:99px; }
@@ -436,6 +438,7 @@
                     <div class="res-tabs" role="tablist" aria-label="Type de ressources">
                       <button class="res-tab" type="button" role="tab" data-restab="naturel" aria-selected="true">Minerais et gisements</button>
                       <button class="res-tab" type="button" role="tab" data-restab="sol" aria-selected="false">Sol / Qualité</button>
+                      <button class="res-tab" type="button" role="tab" data-restab="peche" aria-selected="false">Pêche</button>
                     </div>
                     <select class="dev-select" id="dev-resource" disabled><option>Calcul en cours…</option></select>
                     <div id="dev-resource-info"></div>
@@ -2047,9 +2050,15 @@
   // sol de la region (et non richesse geologique).
   const CROPS = ['ble', 'orge', 'seigle', 'avoine', 'lin', 'chanvre', 'garance', 'pastel', 'poivre', 'cannelle', 'girofle', 'muscade',
     'safran', 'bois', 'bois_chauffage', 'pierre'];
+  // Poissons d'eau douce (rivieres, lacs, etangs): rattaches aux regions
+  // traversees par leurs fleuves. Les poissons de mer vivent dans les zones
+  // de peche dessinees en mer (FISHING_ZONES, plus bas).
+  const FRESH_FISH = ['carpe', 'brochet', 'anguille', 'truite', 'saumon', 'esturgeon', 'carpe_amour', 'silure_mekong', 'gourami',
+    'sandre', 'carassin', 'capitaine', 'tilapia', 'silure_nil', 'arapaima', 'silure_americain', 'truite_rouge'];
   const RESOURCE_CATEGORIES = [
     { id:'naturel', label:'Minerais et gisements', items:MINERALS },
     { id:'sol', label:'Sol / Qualité', items:CROPS },
+    { id:'peche', label:'Pêche en eau douce', items:FRESH_FISH },
   ];
   const clamp01 = x => Math.max(0, Math.min(1, x));
   // fenetre climatique douce [a, b] avec transition de largeur s
@@ -2109,6 +2118,82 @@
     // sols minces et rocheux: la pierre affleure la ou la terre est pauvre
     pierre:        { name:'Pierre de taille',     score:p => (1 - p.fertility) * 0.45 + p.terrain.montagne * 0.4 + p.geo.pierre * 0.3 },
   };
+  // Eau douce: fleuves, lacs et etangs de chaque poisson, en zones
+  // [lat, lon, rayon en degres] (voir zoneScore).
+  const FRESHWATER_ZONES = {
+    carpe:[[45,20,5],[48,17,3],[48,4,4],[50.5,15,3],[30.5,114,6],[23,112,3],[35,113,4]],   // Danube, etangs des abbayes, Boheme, Yangzi, fleuve des Perles, fleuve Jaune
+    brochet:[[52,10,8],[58,25,6],[55,40,8],[48,4,4],[62,30,6]],
+    anguille:[[52,5,4],[48,0,4],[45,10,3],[53,-7,3],[54,-2,3],[55,12,3]],
+    truite:[[46.5,9,3],[42.8,0.5,2],[62,12,5],[56,-4,3],[47,24,3]],
+    saumon:[[57,-4,3],[53,-8,3],[48,-3,2.5],[46,-1,2],[64,24,4],[62,10,4],[65,-19,3],[60,32,4],[50,7,2]],
+    esturgeon:[[46.5,48,5],[45.2,29.5,3],[47,39.5,3],[45.2,-0.7,1.5],[45,11.5,2],[53,13,3]],   // Volga, Danube, Don, Gironde, Po, Oder
+    carpe_amour:[[30.5,114,6],[23,112,3],[28,112,3],[21,106,2]],
+    silure_mekong:[[13.5,105,5],[18,103,4],[11,106,2.5]],
+    gourami:[[13,104,6],[1,103,5],[-1,110,5],[10,99,4],[23,90,3]],
+    sandre:[[46,48,5],[45,60,5],[46,74,4],[46,62,4],[50,46,4]],           // Caspienne, Aral, Balkhach, basse Volga
+    carassin:[[45,60,5],[46,48,5],[50,80,5],[53,104,4],[47,88,4]],
+    capitaine:[[28,31,4],[15.5,32.5,5],[1,33,4],[13,14,3],[14,-4,4],[7,31,3]],   // Nil, lac Victoria, lac Tchad, Niger
+    tilapia:[[30.5,31,3],[25,32.5,3],[15.5,32.5,4],[1,33,4],[-6,29.5,3],[-12,34.5,3],[13,14,3],[14,-4,4],[7,5.5,3]],
+    silure_nil:[[28,31,4],[15.5,32.5,5],[9,31,4],[13,14,3],[14,-4,4],[1,33,3]],
+    arapaima:[[-3,-60,7],[-4,-70,5],[-2,-52,4]],
+    silure_americain:[[35,-90,6],[40,-88,5],[31,-92,4],[43,-84,4]],
+    truite_rouge:[[45,-114,6],[40,-106,5],[52,-120,5],[46,-75,4],[62,-150,4]],
+  };
+  const FRESH_FISH_NAMES = { carpe:'Carpe', brochet:'Brochet', anguille:'Anguille', truite:'Truite', saumon:'Saumon', esturgeon:'Esturgeon',
+    carpe_amour:'Carpe amour', silure_mekong:'Poisson-chat géant du Mékong', gourami:'Gourami', sandre:'Sandre', carassin:'Carassin',
+    capitaine:'Capitaine (perche du Nil)', tilapia:'Tilapia', silure_nil:'Poisson-chat du Nil', arapaima:'Arapaima / Pirarucu',
+    silure_americain:'Poisson-chat américain', truite_rouge:'Truite rouge' };
+  FRESH_FISH.forEach(k => { RESOURCES[k] = { name:FRESH_FISH_NAMES[k], score:p => zoneScore(p.lat, p.lon, FRESHWATER_ZONES[k], FRESH_REACH) }; });
+  // portee elargie: une region du jeu (~500 km) est bien plus vaste qu'un fleuve
+  const FRESH_REACH = 1.7;
+
+  // Zones de peche en mer: dessinees sur l'ocean (sous les terres, qui les
+  // masquent), chacune avec ses poissons. type: 'hauturiere' (haute mer,
+  // bancs) ou 'cotiere'. cercles: [lat, lon, rayon en degres], le premier
+  // porte l'etiquette et doit etre en mer.
+  const SEA_FISH = { hareng:'Hareng', morue:'Morue', maquereau:'Maquereau', sardine:'Sardine', anchois:'Anchois', bar:'Bar',
+    thon_rouge:'Thon rouge', chinchard:'Chinchard', saumon_pacifique:'Saumon du Pacifique', sebaste:'Sébaste', merou:'Mérou',
+    thon:'Thon', tassergal:'Tassergal', sardinelle:'Sardinelle', anchois_perou:'Anchois du Pérou', fletan:'Flétan' };
+  const FISHING_ZONES = [
+    // Europe
+    { name:'Mer du Nord', type:'hauturiere', fish:['hareng', 'morue'], circles:[[56,3,4.5],[53.5,4,2.5],[58.5,1,3]] },
+    { name:'Mer Baltique', type:'hauturiere', fish:['hareng', 'morue'], circles:[[55.5,16,3],[58,20,3],[60,22,2]] },
+    { name:'Lofoten et mer de Norvège', type:'hauturiere', fish:['morue', 'hareng'], circles:[[67.8,11.5,3.5],[64,7,3.5]] },
+    { name:'Bancs d\'Islande', type:'hauturiere', fish:['morue', 'hareng'], circles:[[63,-20,2.5],[66.8,-18,2.5],[65,-25,2.5]] },
+    { name:'Manche et mer Celtique', type:'cotiere', fish:['maquereau', 'sardine', 'bar'], circles:[[49.8,-3,2.5],[51,-8,3]] },
+    { name:'Golfe de Gascogne', type:'cotiere', fish:['sardine', 'anchois', 'thon_rouge', 'bar'], circles:[[45.5,-3.5,3]] },
+    { name:'Côte ibérique', type:'cotiere', fish:['sardine', 'anchois', 'maquereau'], circles:[[40,-10.5,3],[37,-8.5,2]] },
+    { name:'Madragues de Gibraltar', type:'cotiere', fish:['thon_rouge'], circles:[[36,-6.5,1.8]] },
+    { name:'Golfe du Lion et Ligurie', type:'cotiere', fish:['anchois', 'sardine', 'thon_rouge', 'bar'], circles:[[42.5,5,3],[43.5,9,1.8]] },
+    { name:'Mer Tyrrhénienne', type:'cotiere', fish:['thon_rouge', 'sardine', 'anchois'], circles:[[38.5,13,2.5],[40.5,12.5,2]] },
+    { name:'Mer Adriatique', type:'cotiere', fish:['sardine', 'anchois'], circles:[[43.5,15,2.5],[41.8,17,1.5]] },
+    { name:'Mer Égée et Bosphore', type:'cotiere', fish:['thon_rouge', 'maquereau', 'anchois'], circles:[[38.5,25,3],[41,29,1.2]] },
+    { name:'Mer Noire', type:'cotiere', fish:['anchois', 'maquereau'], circles:[[43,34,4],[44.5,30.5,2]] },
+    // Asie
+    { name:'Mer du Japon', type:'hauturiere', fish:['chinchard', 'saumon_pacifique', 'sebaste'], circles:[[40,135,5]] },
+    { name:'Mer d\'Okhotsk', type:'hauturiere', fish:['saumon_pacifique', 'sebaste'], circles:[[54,148,5],[57,153,3]] },
+    { name:'Mer de Chine orientale', type:'cotiere', fish:['chinchard', 'sebaste'], circles:[[30,124,4],[35,123,3]] },
+    { name:'Mer de Chine méridionale', type:'cotiere', fish:['chinchard'], circles:[[14,112,5],[9,108,3]] },
+    { name:'Côte de Malabar', type:'cotiere', fish:['sardinelle', 'thon'], circles:[[11,74.5,3]] },
+    // Afrique et Moyen-Orient
+    { name:'Mer Rouge', type:'cotiere', fish:['merou', 'thon', 'tassergal'], circles:[[20,38.5,3],[25,35.5,2.5],[15.5,41,2]] },
+    { name:'Golfe d\'Aden et mer d\'Arabie', type:'hauturiere', fish:['thon', 'sardinelle', 'merou'], circles:[[13,48,3],[22,62,4],[17,55,2.5]] },
+    { name:'Golfe Persique', type:'cotiere', fish:['merou', 'sardinelle'], circles:[[27,51,3]] },
+    { name:'Côte mauritanienne et sénégalaise', type:'cotiere', fish:['sardinelle', 'merou', 'tassergal', 'thon'], circles:[[18,-17.5,3.5],[14,-18,2.5]] },
+    { name:'Golfe de Guinée', type:'cotiere', fish:['sardinelle', 'thon'], circles:[[4.5,0,4],[3,6,2.5]] },
+    { name:'Courant de Benguela', type:'hauturiere', fish:['tassergal', 'sardinelle'], circles:[[-26,13,4],[-33,17,3],[-19,11,3]] },
+    { name:'Côte swahilie', type:'cotiere', fish:['thon', 'merou'], circles:[[-5,41,4],[-12,42,2.5]] },
+    { name:'Golfe de Gabès et Libye', type:'cotiere', fish:['thon', 'merou', 'sardinelle'], circles:[[35.5,12,2.5],[33,19,2.5]] },
+    // Ameriques
+    { name:'Courant de Humboldt', type:'hauturiere', fish:['anchois_perou'], circles:[[-10,-79.5,4],[-18,-72.5,3.5],[-25,-72,3]] },
+    { name:'Côte Nord-Ouest pacifique', type:'cotiere', fish:['saumon_pacifique', 'fletan'], circles:[[51,-130,5],[58,-138,4],[47.5,-125.5,2.5]] },
+    { name:'Golfe d\'Alaska et mer de Béring', type:'hauturiere', fish:['fletan', 'saumon_pacifique'], circles:[[57,-160,5],[58,-148,4]] },
+    { name:'Golfe du Maine', type:'cotiere', fish:['bar', 'fletan'], circles:[[42.5,-69,3]] },
+    { name:'Côte atlantique et Chesapeake', type:'cotiere', fish:['bar'], circles:[[37,-75.5,2.5],[40,-72,2]] },
+    { name:'Côte californienne', type:'cotiere', fish:['bar'], circles:[[33.5,-119,3]] },
+  ];
+  const FISH_ZONE_TYPES = { hauturiere:'Pêche hauturière', cotiere:'Pêche côtière' };
+
   // Berceaux historiques des epices: le climat seul les mettrait dans toute
   // la zone tropicale, leurs vraies terres d'origine sont bien plus etroites.
   const SPICE_ORIGINS = {
@@ -2239,7 +2324,7 @@
   const regionSoil = new Map();       // numero de region -> niveau de fertilite (0..4)
   function computeResources(){
     const feats = regionsFc.features, profiles = feats.map(regionProfile), res = feats.map(() => ({}));
-    for(const id of [...MINERALS, ...CROPS]){
+    for(const id of [...MINERALS, ...CROPS, ...FRESH_FISH]){
       const scores = profiles.map(p => Math.max(0, RESOURCES[id].score(p) || 0));
       const share = RESOURCE_SHARE[id];
       if(share === undefined){ scores.forEach((s, i) => { const lv = levelOf(s); if(lv) res[i][id] = lv; }); continue; }
@@ -2252,7 +2337,7 @@
   // Filtre developpeur, deux onglets: "Minerais et gisements" (une
   // ressource -> regions colorees selon l'abondance) et "Sol / Qualite"
   // (overlay de fertilite des sols, ou rendement d'une culture).
-  const SOIL_OVERLAY = '__sol';
+  const SOIL_OVERLAY = '__sol', SEA_PREFIX = 'mer:';
   let resourceFilter = null, resourceTab = 'naturel';
   function applyResourceFilter(){
     if(!map.getLayer('resource-fill')) return;
@@ -2265,6 +2350,15 @@
     map.setLayoutProperty('resource-fill', 'visibility', resourceFilter && !soil ? 'visible' : 'none');
     map.setLayoutProperty('soil-fill', 'visibility', soil ? 'visible' : 'none');
     const info = document.getElementById('dev-resource-info');
+    const seaFish = resourceFilter && resourceFilter.startsWith(SEA_PREFIX) ? resourceFilter.slice(SEA_PREFIX.length) : null;
+    highlightFishingZones(seaFish);
+    if(seaFish){
+      map.setLayoutProperty('resource-fill', 'visibility', 'none');
+      const zones = FISHING_ZONES.filter(z => z.fish.includes(seaFish));
+      info.innerHTML = '<div class="res-count">' + SEA_FISH[seaFish] + ' : <b>' + zones.length + '</b> zones de pêche en mer</div>' +
+        '<ul class="fish-zone-list">' + zones.map(z => '<li>' + z.name + '</li>').join('') + '</ul>';
+      return;
+    }
     if(!resourceFilter){ info.innerHTML = ''; return; }
     if(soil){
       info.innerHTML = '<div class="res-count">Qualité des sols — ' + regionsFc.features.length + ' régions</div>' +
@@ -2279,10 +2373,11 @@
   function renderResourceTab(){
     const sel = document.getElementById('dev-resource'), cat = RESOURCE_CATEGORIES.find(c => c.id === resourceTab);
     document.querySelectorAll('.res-tab').forEach(b => b.setAttribute('aria-selected', String(b.dataset.restab === resourceTab)));
-    const soil = resourceTab === 'sol';
+    const soil = resourceTab === 'sol', fish = resourceTab === 'peche';
     sel.innerHTML = '<option value="">— Aucun filtre —</option>' +
       (soil ? '<option value="' + SOIL_OVERLAY + '">Qualité des sols (fertilité)</option>' : '') +
-      '<optgroup label="' + (soil ? 'Cultures' : cat.label) + '">' + cat.items.map(id => '<option value="' + id + '">' + RESOURCES[id].name + '</option>').join('') + '</optgroup>';
+      (fish ? '<optgroup label="En mer (zones de pêche)">' + Object.entries(SEA_FISH).map(([id, n]) => '<option value="' + SEA_PREFIX + id + '">' + n + '</option>').join('') + '</optgroup>' : '') +
+      '<optgroup label="' + (soil ? 'Cultures' : fish ? 'En eau douce (régions)' : cat.label) + '">' + cat.items.map(id => '<option value="' + id + '">' + RESOURCES[id].name + '</option>').join('') + '</optgroup>';
     resourceFilter = soil ? SOIL_OVERLAY : null;
     sel.value = resourceFilter || '';
     applyResourceFilter();
@@ -2300,8 +2395,64 @@
     sel.disabled = false;
     sel.addEventListener('change', () => { resourceFilter = sel.value || null; applyResourceFilter(); });
     document.querySelectorAll('.res-tab').forEach(b => b.addEventListener('click', () => { resourceTab = b.dataset.restab; renderResourceTab(); }));
+    initFishingZones();
     renderResourceTab();
     if(selectedId !== null) renderRegionPanel();
+  }
+
+  // ---------- Zones de peche en mer ----------
+  // Un polygone par zone (union de ses cercles), dessine SOUS les regions:
+  // les terres le masquent, il n'apparait que sur l'eau.
+  let fishingFc = null;
+  function initFishingZones(){
+    fishingFc = turf.featureCollection(FISHING_ZONES.map((z, i) => {
+      const circles = z.circles.map(([lat, lon, r]) => turf.circle([lon, lat], r * 111, { steps:48, units:'kilometers' }));
+      const shape = circles.length > 1 ? turf.union(turf.featureCollection(circles)) : circles[0];
+      return { type:'Feature', id:i, properties:{ name:z.name, type:z.type, fish:',' + z.fish.join(',') + ',' }, geometry:shape.geometry };
+    }));
+    const labels = turf.featureCollection(FISHING_ZONES.map((z, i) => turf.point([z.circles[0][1], z.circles[0][0]], { name:z.name, zone:i })));
+    map.addSource('fishing', { type:'geojson', data:fishingFc });
+    map.addSource('fishing-labels', { type:'geojson', data:labels });
+    const color = ['match', ['get', 'type'], 'hauturiere', '#1f5f8b', '#2a9d8f'];
+    map.addLayer({ id:'fishing-fill', type:'fill', source:'fishing', paint:{ 'fill-color':color, 'fill-opacity':0.3 } }, 'regions');
+    map.addLayer({ id:'fishing-line', type:'line', source:'fishing', paint:{ 'line-color':color, 'line-width':1.2, 'line-dasharray':[2, 2], 'line-opacity':0.8 } }, 'regions');
+    map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:2,
+      layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-size':10, 'text-max-width':8 },
+      paint:{ 'text-color':'#12415e', 'text-halo-color':'#e8f3f6', 'text-halo-width':1.2 } });
+    // clic sur une zone: seulement en mer (pas sur une region posee dessus)
+    map.on('click', 'fishing-fill', (e) => {
+      if(interactionBusy() || !e.features.length) return;
+      if(map.queryRenderedFeatures(e.point, { layers:['regions'] }).length) return;
+      showFishingZone(e.features[0].id);
+    });
+    applyDevFilters();
+  }
+  function highlightFishingZones(fish){
+    if(!map.getLayer('fishing-fill')) return;
+    const has = ['in', ',' + fish + ',', ['get', 'fish']];
+    map.setPaintProperty('fishing-fill', 'fill-opacity', fish ? ['case', has, 0.65, 0.05] : 0.3);
+    map.setPaintProperty('fishing-line', 'line-opacity', fish ? ['case', has, 1, 0.15] : 0.8);
+  }
+  // Zones de peche au large d'une region cotiere (son littoral les touche)
+  const regionFishingCache = new Map();
+  function regionFishingZones(id){
+    if(!fishingFc) return [];
+    if(regionFishingCache.has(id)) return regionFishingCache.get(id);
+    const coast = coastOf(id);
+    const list = coast ? FISHING_ZONES.filter((z, i) => { try{ return turf.booleanIntersects(fishingFc.features[i], coast.lines); }catch(e){ return false; } }) : [];
+    regionFishingCache.set(id, list);
+    return list;
+  }
+  // Panneau de droite: fiche d'une zone de peche
+  function showFishingZone(i){
+    const z = FISHING_ZONES[i];
+    if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
+    selectedId = null;
+    document.getElementById('region-panel').innerHTML =
+      '<div><h3 class="region-name hand">🐟 ' + z.name + '</h3><div class="region-tagline">Zone de pêche — ' + FISH_ZONE_TYPES[z.type] + '</div></div>' +
+      '<div class="region-section-title">Poissons</div>' +
+      '<div class="res-group">' + z.fish.map(k => '<span class="res-chip lv2">' + SEA_FISH[k] + '</span>').join('') + '</div>' +
+      '<p class="cap-empty">Accessible depuis les ports des régions côtières voisines.</p>';
   }
   // Liste des ressources d'une region, par categorie (panneau de region)
   function regionResourcesHtml(id){
@@ -2312,9 +2463,12 @@
       return items.length ? '<div class="res-group"><span class="res-cat">' + cat.label + '</span>' +
         items.map(k => '<span class="res-chip lv' + r[k] + '" title="' + RESOURCE_LEVELS[r[k]] + '">' + RESOURCES[k].name + '</span>').join('') + '</div>' : '';
     }).join('');
+    const sea = regionFishingZones(id);
+    const seaHtml = sea.length ? '<div class="res-group"><span class="res-cat">Pêche en mer</span>' +
+      sea.map(z => '<span class="res-chip lv1" title="' + z.fish.map(k => SEA_FISH[k]).join(', ') + '">' + z.name + '</span>').join('') + '</div>' : '';
     return '<div class="region-section-title">Ressources</div>' +
       '<div class="region-row"><span>Qualité du sol</span><span class="v">' + SOIL_LEVELS[regionSoil.get(id)] + '</span></div>' +
-      (groups || '<p class="cap-empty">Aucune ressource notable.</p>');
+      ((groups + seaHtml) || '<p class="cap-empty">Aucune ressource notable.</p>');
   }
 
   // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
@@ -2326,9 +2480,10 @@
     { id:'land', label:'Voie terrestre' },
     { id:'towns', label:'Ville' },
     { id:'numbers', label:'Numéro' },
+    { id:'fishing', label:'Zones de pêche' },
   ];
   const DEV_STORAGE_KEY = 'paperConquestDevFilters';
-  const devState = { land:true, towns:true, numbers:true };
+  const devState = { land:true, towns:true, numbers:true, fishing:true };
   try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
 
   function setLayerVisible(layerId, visible){
@@ -2339,6 +2494,7 @@
     setLayerVisible('villages', devState.towns);
     setLayerVisible('villages-halo', devState.towns);
     setLayerVisible('regions-label', devState.numbers);
+    ['fishing-fill', 'fishing-line', 'fishing-label'].forEach(id => setLayerVisible(id, devState.fishing));
   }
 
   (function initDevPanel(){
