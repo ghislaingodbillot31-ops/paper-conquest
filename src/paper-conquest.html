@@ -781,9 +781,11 @@
   let regionsFc = null;
 
   async function addRegions(){
-    const [topo, navGrid] = await Promise.all([
+    const [topo, navGrid, waterTopo, water] = await Promise.all([
       fetch('data/admin1.topojson').then(r => r.json()),
       fetch('data/nav-grid.json').then(r => r.json()).catch(e => { console.warn('Grille de navigation indisponible:', e); return null; }),
+      fetch('data/regions-water.topojson').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
+      fetch('data/water.json').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
     ]);
     const objName = Object.keys(topo.objects)[0];
     const geometries = topo.objects[objName].geometries;
@@ -807,8 +809,14 @@
       try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
       catch(e){ /* garde la valeur stockee si le calcul echoue */ }
     });
-    // rivieres navigables: lit retire de la terre (voir buildWaterways)
-    if(navGrid){ try{ waterways = buildWaterways(navGrid); carveRegions(fc, waterways); }catch(e){ console.warn('Rivieres indisponibles:', e); waterways = []; } }
+    // rivieres et lacs: geometrie des regions avec l'eau deja retiree
+    if(waterTopo && water){
+      try{
+        const carved = topojson.feature(waterTopo, waterTopo.objects.regions).features;
+        if(carved.length === fc.features.length){ fc.features.forEach((f, i) => { f.geometry = carved[i].geometry; }); waterData = water; }
+        else console.warn('Rivieres: nombre de regions different, ignorees');
+      }catch(e){ console.warn('Rivieres indisponibles:', e); }
+    }
     regionsFc = fc;
     regionTopo = topo; regionGeoms = geometries;
 
@@ -1349,7 +1357,7 @@
     const RES = grid.res, LAT_TOP = grid.latTop, W = grid.w, H = grid.h;
     const nav = new Uint8Array(W * H);
     grid.rows.forEach((r, y) => { let x = 0; for(let k = 0; k < r.length; k += 2){ if(r[k]) nav.fill(r[k], y * W + x, y * W + x + r[k+1]); x += r[k+1]; } });
-    carveNav(nav, W, H, RES, LAT_TOP, waterways);
+    carveNav(nav, W, H, RES, LAT_TOP, waterData);
     const B = 3, W2 = Math.ceil(W / B), H2 = Math.ceil(H / B), N2 = W2 * H2;
     const coarse = new Uint8Array(N2);
     for(let y = 0; y < H; y++){ const cy = (y / B) | 0; for(let x = 0; x < W; x++){ const v = nav[y * W + x]; if(v){ const c = cy * W2 + ((x / B) | 0); if(v > coarse[c]) coarse[c] = v; } } }
@@ -2474,355 +2482,44 @@
       ((groups + seaHtml) || '<p class="cap-empty">Aucune ressource notable.</p>');
   }
 
-  // ---------- Rivieres navigables (test: une grande riviere en Australie) ----------
-  // La riviere n'est pas un calque: elle est CREUSEE dans la terre. Son lit
-  // est retire des polygones des regions (on voit la mer dessous, meme
-  // couleur) et marque comme eau dans la grille de navigation: les bateaux
-  // la remontent depuis la mer.
-  // 1. Relief simule + ecoulement (computeRivers, ci-dessous): distance a la
-  //    cote, Cordillere australienne, massifs, cuvette du lac Eyre, bruit;
-  //    l'eau cumule la pluie (inverse de l'aridite) jusqu'a la mer.
-  // 2. Systemes fluviaux (fleuve + principaux affluents, style "B"), du plus
-  //    grand au plus petit, jusqu'au ratio d'eau WATER_RATIO; largeur selon
-  //    la taille du systeme; chacun trace en serpent.
-  // 4. Lacs automatiques: fond des cuvettes du relief (priority-flood),
-  //    surface compacte autour du point le plus bas, contour arrondi.
-  // 3. Trace "serpent" (snakeRiver): le chemin de cases est lisse en grandes
-  //    courbes (spline), puis ondule en meandres reguliers d'amplitude et de
-  //    longueur d'onde variables: aucun angle.
-  const RIVER_BOX = { lon0:112.5, lon1:154, lat0:-44, lat1:-10.5, res:0.2 };
-  // Ratio cible d'eau: part de la surface des terres couverte d'eau
-  // (rivieres + lacs). Les systemes fluviaux sont ajoutes du plus grand au
-  // plus petit jusqu'a l'atteindre.
-  const WATER_RATIO = 0.045;
-  // Rivieres paralleles evitees: un trace dont plus de PARALLEL_MAX de la
-  // longueur passe a moins de PARALLEL_CELLS cases (~20 km chacune) d'une
-  // autre riviere deja retenue est ecarte.
-  const PARALLEL_CELLS = 4, PARALLEL_MAX = 0.3;
-  // Part de la cible d'eau reservee aux rivieres (le reste: lacs), et rive
-  // libre minimale entre un lac et une riviere ou un autre lac (km).
-  const RIVER_SHARE = 0.8, LAKE_CLEAR = 12, LAKE_TARGET = 40;
-  const RIVER_PARAMS = { noise:30, basin:40, depth:1, branchFrac:0.1, minAcc:4, systemMin:5, systems:200,
-    lakes:true, lakeDepth:1, lakeMin:1, lakeMax:30, lakeFill:0.2, endorheic:false, seed:5 };
-  const AUS_RIDGE = [[-37.8,145.5],[-36.3,148.3],[-33.5,150],[-30.5,151.8],[-27.5,152],[-24.5,149.5],[-21.5,147.8],[-18.5,145.5],[-15.5,144.6],[-12.5,143]];
-  const AUS_RANGES = [[-23.7,133.5,2,0.55],[-22.5,118,2.5,0.6],[-17,126,2.5,0.5],[-31.5,138.6,1.3,0.45],[-26,131.5,1.8,0.5],[-42,146.5,1.2,0.8],[-34,117,2,0.25]];
-  let riverBase = null;
-  let waterways = [];   // rivieres [{ coords, width, poly }] et lacs [{ lake, poly }]
-
-  // Masque terre de l'Australie (grille de navigation, 0 = terre) et donnees communes
-  function riverBaseOf(navGrid){
-    const B = RIVER_BOX, W = Math.round((B.lon1 - B.lon0) / B.res), H = Math.round((B.lat1 - B.lat0) / B.res);
-    const land = new Uint8Array(W * H), rows = new Map();
-    const fineRow = y => { if(rows.has(y)) return rows.get(y); const r = navGrid.rows[y], out = new Uint8Array(navGrid.w); let x = 0;
-      for(let k = 0; k < r.length; k += 2){ if(r[k]) out.fill(r[k], x, x + r[k+1]); x += r[k+1]; } rows.set(y, out); return out; };
-    const lonAt = x => B.lon0 + (x + 0.5) * B.res, latAt = y => B.lat1 - (y + 0.5) * B.res;
-    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
-      const lon = lonAt(x), lat = latAt(y);
-      if(lat > -11 && lon > 143.5) continue;                       // Nouvelle-Guinee
-      const fy = Math.floor((navGrid.latTop - lat) / navGrid.res), fx = Math.floor((lon + 180) / navGrid.res);
-      if(!fineRow(fy)[fx]) land[y * W + x] = 1;
-    }
-    // distance a la mer (en cases), pluie
-    const dist = new Float32Array(W * H).fill(1e9), q = [];
-    for(let i = 0; i < W * H; i++) if(!land[i]){ dist[i] = 0; q.push(i); }
-    for(let h = 0; h < q.length; h++){ const c = q[h], cx = c % W, cy = (c / W) | 0;
-      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const nx = cx + dx, ny = cy + dy;
-        if(nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const n = ny * W + nx;
-        if(dist[n] > dist[c] + 1){ dist[n] = dist[c] + 1; q.push(n); } } }
-    const rain = new Float32Array(W * H);
-    for(let i = 0; i < W * H; i++) if(land[i]) rain[i] = Math.pow(1 - aridityAt(latAt((i / W) | 0), lonAt(i % W)), 1.6) + 0.02;
-    return { W, H, land, dist, rain, lonAt, latAt };
-  }
-  function segDist(lat, lon, a, b){
-    const k = Math.cos(lat * Math.PI / 180), ax = a[1] * k, ay = a[0], bx = b[1] * k, by = b[0], px = lon * k, py = lat;
-    const dx = bx - ax, dy = by - ay, t = clamp01(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1));
-    return Math.hypot(px - ax - t * dx, py - ay - t * dy);
-  }
-  function computeRivers(v){
-    const { W, H, land, dist, rain, lonAt, latAt } = riverBase, N = W * H;
-    // 1. relief
-    const elev = new Float32Array(N);
-    for(let i = 0; i < N; i++){ if(!land[i]) continue;
-      const lon = lonAt(i % W), lat = latAt((i / W) | 0);
-      let ridge = 1e9; for(let k = 1; k < AUS_RIDGE.length; k++) ridge = Math.min(ridge, segDist(lat, lon, AUS_RIDGE[k-1], AUS_RIDGE[k]));
-      let e = 60 * Math.min(dist[i], 25) / 25 + 900 * Math.exp(-((ridge / 1.3) ** 2));
-      for(const [clat, clon, r, h] of AUS_RANGES) e += 900 * h * Math.exp(-((geoDist(lat, lon, clat, clon) / r) ** 2));
-      e -= v.basin * smooth01(1 - geoDist(lat, lon, -28.5, 137.5) / 7);
-      e += v.noise * (geoNoise(lon, lat, v.seed, 350) - 0.5) * 2 + v.noise * 0.5 * (geoNoise(lon, lat, v.seed + 17, 120) - 0.5);
-      elev[i] = e; }
-    // 2. remplissage des cuvettes + direction d'ecoulement (priority-flood)
-    const filled = new Float32Array(N), recv = new Int32Array(N).fill(-1), done = new Uint8Array(N), sea = new Int32Array(N).fill(-1);
-    const hk = [], hv = [];
-    const push = (key, val) => { hk.push(key); hv.push(val); let i = hk.length - 1;
-      while(i){ const p = (i - 1) >> 1; if(hk[p] <= hk[i]) break; [hk[p], hk[i]] = [hk[i], hk[p]]; [hv[p], hv[i]] = [hv[i], hv[p]]; i = p; } };
-    const pop = () => { const v0 = hv[0], lk = hk.pop(), lv = hv.pop();
-      if(hk.length){ hk[0] = lk; hv[0] = lv; let i = 0; for(;;){ const l = 2 * i + 1, r = l + 1; let m = i;
-        if(l < hk.length && hk[l] < hk[m]) m = l; if(r < hk.length && hk[r] < hk[m]) m = r; if(m === i) break;
-        [hk[m], hk[i]] = [hk[i], hk[m]]; [hv[m], hv[i]] = [hv[i], hv[m]]; i = m; } } return v0; };
-    const nbrs = c => { const cx = c % W, cy = (c / W) | 0, out = [];
-      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ if(!dx && !dy) continue; const nx = cx + dx, ny = cy + dy;
-        if(nx >= 0 && ny >= 0 && nx < W && ny < H) out.push(ny * W + nx); } return out; };
-    for(let i = 0; i < N; i++) if(land[i] && dist[i] <= 1.5){ filled[i] = elev[i]; done[i] = 1; push(elev[i], i);
-      sea[i] = nbrs(i).find(n => !land[n]) ?? -1; }
-    while(hk.length){ const c = pop();
-      for(const n of nbrs(c)) if(land[n] && !done[n]){ done[n] = 1; filled[n] = Math.max(elev[n], filled[c] + 0.01); recv[n] = c; push(filled[n], n); } }
-    // 3. lacs: composantes des cuvettes assez profondes
-    const lakeOf = new Int32Array(N).fill(-1), lakes = [];
-    if(v.lakes || v.endorheic) for(let i = 0; i < N; i++){
-      if(lakeOf[i] >= 0 || filled[i] - elev[i] < v.lakeDepth) continue;
-      const cells = [i]; lakeOf[i] = lakes.length;
-      for(let h = 0; h < cells.length; h++) for(const n of nbrs(cells[h])) if(land[n] && lakeOf[n] < 0 && filled[n] - elev[n] >= v.lakeDepth * 0.5){ lakeOf[n] = lakes.length; cells.push(n); }
-      let sink = cells[0]; for(const c of cells) if(elev[c] < elev[sink]) sink = c;
-      const lat = latAt((sink / W) | 0), lon = lonAt(sink % W);
-      // surface visible: compacte, montee depuis le point le plus bas de la
-      // cuvette (les cases les plus basses d'abord), plafonnee a lakeMax
-      const inBasin = new Set(cells), shown = [sink], seen = new Set([sink]), front = [];
-      const addFront = c => { for(const n of nbrs(c)) if(inBasin.has(n) && !seen.has(n)){ seen.add(n); front.push(n); } };
-      addFront(sink);
-      const limit = Math.min(v.lakeMax, Math.round(1 + cells.length * (v.lakeFill || 1)));   // grande cuvette = grand lac
-      while(shown.length < limit && front.length){ let b = 0; for(let k = 1; k < front.length; k++) if(elev[front[k]] < elev[front[b]]) b = k;
-        const c = front.splice(b, 1)[0]; shown.push(c); addFront(c); }
-      lakes.push({ cells, shown, sink, salt: v.endorheic && aridityAt(lat, lon) > 0.55 });
-    }
-    lakes.forEach((L, k) => { if(L.shown.length < v.lakeMin){ L.cells.forEach(c => lakeOf[c] = -1); L.small = true; return; }
-      if(L.salt){ L.cells.forEach(c => recv[c] = L.sink); recv[L.sink] = -1; } });  // bassin endoreique: tout finit au lac
-    // 4. debit cumule (ordre topologique)
-    const acc = Float32Array.from(rain), indeg = new Int32Array(N), kids = Array.from({ length:N }, () => null);
-    for(let i = 0; i < N; i++) if(land[i] && recv[i] >= 0){ indeg[recv[i]]++; (kids[recv[i]] = kids[recv[i]] || []).push(i); }
-    const order = []; for(let i = 0; i < N; i++) if(land[i] && !indeg[i]) order.push(i);
-    for(let h = 0; h < order.length; h++){ const c = order[h], r = recv[c]; if(r >= 0){ acc[r] += acc[c]; if(!--indeg[r]) order.push(r); } }
-    // 5. fleuves: tronc principal depuis chaque embouchure, puis affluents
-    const lines = [];
-    const traceStem = (start, depth, join) => {
-      const cells = [start]; let c = start;
-      for(;;){ const ks = kids[c]; if(!ks) break;
-        let main = ks[0]; for(const k of ks) if(acc[k] > acc[main]) main = k;
-        if(acc[main] < v.minAcc) break;
-        if(depth > 0) for(const k of ks) if(k !== main && acc[k] >= v.minAcc && acc[k] >= v.branchFrac * acc[c]) traceStem(k, depth - 1, c);
-        cells.push(main); c = main; }
-      if(cells.length < 3) return;
-      cells.reverse();                                              // source -> aval
-      const pts = cells.map(i => [lonAt(i % W), latAt((i / W) | 0)]);
-      if(join >= 0) pts.push([lonAt(join % W), latAt((join / W) | 0)]);
-      else if(sea[start] >= 0) pts.push([lonAt(sea[start] % W), latAt((sea[start] / W) | 0)]);
-      lines.push({ pts, acc:cells.map(i => acc[i]), trib:join >= 0 });
-    };
-    const outlets = []; for(let i = 0; i < N; i++) if(land[i] && recv[i] < 0 && acc[i] >= v.systemMin) outlets.push(i);
-    outlets.sort((a, b) => acc[b] - acc[a]).slice(0, v.systems).forEach((o, k) => {
-      const n0 = lines.length; traceStem(o, v.depth, -1);
-      for(let j = n0; j < lines.length; j++){ lines[j].sys = k; lines[j].outAcc = acc[o]; }
-    });
-    return { lines, lakes: lakes.filter(L => !L.small), accMax: outlets.length ? acc[outlets[0]] : 1, W, lonAt, latAt, elev };
-  }
-  // Trace serpent: points du tronc (source -> mer) -> courbe lisse ondulee.
-  function snakeRiver(cellPts, seed, opt = { w0:10, w1:24, mouth:true }){
-    const lat0 = cellPts.reduce((a, q) => a + q[1], 0) / cellPts.length;
-    const kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.57;
-    const toXY = ([lon, lat]) => [lon * kx, lat * ky], toLL = ([x, y]) => [x / kx, y / ky];
-    const d2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
-    let P = cellPts.map(toXY);
-    for(let it = 0; it < 6; it++) P = P.map((q, i) => i === 0 || i === P.length - 1 ? q : [(P[i-1][0] + 2 * q[0] + P[i+1][0]) / 4, (P[i-1][1] + 2 * q[1] + P[i+1][1]) / 4]);
-    // points de controle espaces de ~90 km, puis spline de Catmull-Rom
-    const ctrl = [P[0]]; let run = 0;
-    for(let i = 1; i < P.length; i++){ run += d2(P[i-1], P[i]); if(run >= 90){ ctrl.push(P[i]); run = 0; } }
-    if(d2(ctrl[ctrl.length - 1], P[P.length - 1]) < 40) ctrl.pop();
-    ctrl.push(P[P.length - 1]);
-    const base = [];
-    for(let i = 0; i < ctrl.length - 1; i++){
-      const p0 = ctrl[i - 1] || ctrl[i], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[i + 2] || p2, n = Math.max(2, Math.ceil(d2(p1, p2) / 2));
-      for(let k = 0; k < n; k++){ const t = k / n, t2 = t * t, t3 = t2 * t;
-        base.push([0, 1].map(j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3))); }
-    }
-    base.push(ctrl[ctrl.length - 1]);
-    // meandres: decalage lateral sinusoidal, phase integree (longueur d'onde
-    // variable), amplitude croissante vers l'aval, nulle a la source et a
-    // l'embouchure
-    const sArr = [0]; for(let i = 1; i < base.length; i++) sArr.push(sArr[i-1] + d2(base[i-1], base[i]));
-    const L = sArr[sArr.length - 1], out = [], width = [];
-    let phase = seed * 1.7;
-    for(let i = 0; i < base.length; i++){
-      const a = base[Math.max(0, i - 1)], b = base[Math.min(base.length - 1, i + 1)], tl = d2(a, b) || 1;
-      const nx = -(b[1] - a[1]) / tl, ny = (b[0] - a[0]) / tl;
-      const ll = toLL(base[i]), u = sArr[i] / L;
-      if(i) phase += 2 * Math.PI * (sArr[i] - sArr[i-1]) / (1.5 * (65 + 70 * geoNoise(ll[0], ll[1], seed + 21, 200)));   // x1.5: 1/3 de virages en moins
-      const taper = smooth01(sArr[i] / 25) * smooth01((L - sArr[i]) / 50);
-      const amp = (5 + 9 * u) * (0.6 + 0.8 * geoNoise(ll[0], ll[1], seed + 5, 400)) * taper;
-      const off = amp * (Math.sin(phase) + 0.25 * Math.sin(2 * phase + 1.3));
-      out.push([base[i][0] + nx * off, base[i][1] + ny * off]);
-      width.push(opt.w0 + (opt.w1 - opt.w0) * Math.pow(u, 0.8));
-    }
-    // embouchure prolongee en mer (le lit rejoint franchement la mer)
-    const e1 = out[out.length - 1], e0 = out[Math.max(0, out.length - 6)], el = d2(e0, e1) || 1;
-    if(opt.mouth) for(let k = 1; k <= 4; k++){ out.push([e1[0] + (e1[0] - e0[0]) / el * 10 * k, e1[1] + (e1[1] - e0[1]) / el * 10 * k]); width.push(width[width.length - 1]); }
-    return { coords:out.map(toLL), width };
-  }
-  // Lit de la riviere: morceaux de la ligne elargis (buffer) a leur largeur,
-  // reunis en un polygone
-  function riverPolygon(w){
-    const parts = [], CH = 24;
-    for(let i = 0; i < w.coords.length - 1; i += CH){
-      const seg = w.coords.slice(i, Math.min(w.coords.length, i + CH + 1));
-      if(seg.length < 2) continue;
-      const km = w.width[Math.min(w.width.length - 1, i + (seg.length >> 1))] / 2;
-      parts.push(turf.buffer(turf.lineString(seg), km, { units:'kilometers', steps:8 }));
-    }
-    return parts.length > 1 ? turf.union(turf.featureCollection(parts)) : parts[0];
-  }
-  // Contour d'un lac: forme compacte (ovale plus ou moins allonge, quelques
-  // lobes), centree sur le fond de la cuvette, sans angle. La cuvette ne
-  // donne que la position et la taille: le lac ne suit plus la vallee (il
-  // ressemblait sinon a une riviere elargie).
-  function lakeShape(center, rKm, seed){
-    const [lon0, lat0] = center, kx = 111.32 * Math.cos(lat0 * Math.PI / 180), ky = 110.57;
-    const rnd = k => geoHash(seed, k, 577);
-    const stretch = 1 + rnd(1) * 0.7, rot = rnd(2) * Math.PI;            // ovale, orientation
-    const H = [[2, 0.04 + rnd(3) * 0.08], [3, 0.03 + rnd(4) * 0.1], [5, rnd(5) * 0.05]];
-    const ring = [];
-    for(let i = 0; i < 96; i++){
-      const a = i / 96 * 2 * Math.PI;
-      let f = 1; H.forEach(([k, amp], j) => { f += amp * Math.sin(k * a + rnd(6 + j) * 6.28); });
-      const x0 = Math.cos(a) * rKm * f * Math.sqrt(stretch), y0 = Math.sin(a) * rKm * f / Math.sqrt(stretch);
-      const x = x0 * Math.cos(rot) - y0 * Math.sin(rot), y = x0 * Math.sin(rot) + y0 * Math.cos(rot);
-      ring.push([lon0 + x / kx, lat0 + y / ky]);
-    }
-    ring.push(ring[0]);
-    return turf.polygon([ring]);
-  }
-  // Colle la fin d'un affluent (serpent) au lit du fleuve deja trace: la
-  // queue est deplacee en douceur vers le point le plus proche du fleuve.
-  function attachTributary(t, trunkLine){
-    const end = t.coords[t.coords.length - 1];
-    const target = turf.nearestPointOnLine(trunkLine, end).geometry.coordinates;
-    const dx = target[0] - end[0], dy = target[1] - end[1];
-    let run = 0; const n = t.coords.length;
-    for(let i = n - 1; i >= 0; i--){
-      if(i < n - 1) run += turf.distance(t.coords[i], t.coords[i + 1]);
-      if(run > 70) break;
-      const k = smooth01(1 - run / 70);
-      t.coords[i] = [t.coords[i][0] + dx * k, t.coords[i][1] + dy * k];
-    }
-  }
-  // Surface des terres de la zone (km2)
-  function landAreaKm2(){
-    const { W, land, latAt } = riverBase, r = RIVER_BOX.res; let a = 0;
-    for(let i = 0; i < land.length; i++) if(land[i]) a += r * 111.32 * Math.cos(latAt((i / W) | 0) * Math.PI / 180) * r * 110.57;
-    return a;
-  }
-  let waterStats = null;
-  // Genere rivieres et lacs (appele avant la creation des regions et du bateau)
-  function buildWaterways(navGrid){
-    riverBase = riverBaseOf(navGrid);
-    const r = computeRivers(RIVER_PARAMS), seed = RIVER_PARAMS.seed;
-    const landKm2 = landAreaKm2(), target = landKm2 * WATER_RATIO;
-    let water = 0;
-    const rivers = [];
-    // occupation: systeme de la riviere la plus proche, a PARALLEL_CELLS pres
-    const { W, H } = riverBase, occ = new Int32Array(W * H).fill(-1);
-    const cellOfPt = ([lon, lat]) => { const x = Math.floor((lon - RIVER_BOX.lon0) / RIVER_BOX.res), y = Math.floor((RIVER_BOX.lat1 - lat) / RIVER_BOX.res);
-      return x < 0 || y < 0 || x >= W || y >= H ? -1 : y * W + x; };
-    const parallelShare = (l, k) => { let n = 0; for(const q of l.pts){ const c = cellOfPt(q); if(c >= 0 && occ[c] >= 0 && occ[c] !== k) n++; } return n / l.pts.length; };
-    const occupy = (l, k) => { for(const q of l.pts){ const c = cellOfPt(q); if(c < 0) continue; const cx = c % W, cy = (c / W) | 0;
-      for(let dy = -PARALLEL_CELLS; dy <= PARALLEL_CELLS; dy++) for(let dx = -PARALLEL_CELLS; dx <= PARALLEL_CELLS; dx++){
-        const x = cx + dx, y = cy + dy; if(x < 0 || y < 0 || x >= W || y >= H || dx * dx + dy * dy > PARALLEL_CELLS * PARALLEL_CELLS) continue;
-        if(occ[y * W + x] < 0) occ[y * W + x] = k; } } };
-    let skipped = 0;
-    const nSys = r.lines.reduce((m, l) => Math.max(m, l.sys), -1) + 1;
-    for(let k = 0; k < nSys && water < target * RIVER_SHARE; k++){
-      const sys = r.lines.filter(l => l.sys === k), trunk = sys.find(l => !l.trib);
-      if(!trunk || trunk.pts.length < 6) continue;               // fleuve cotier trop court
-      if(parallelShare(trunk, k) > PARALLEL_MAX){ skipped++; continue; }   // longe une autre riviere
-      occupy(trunk, k);
-      const f = Math.sqrt(trunk.outAcc / r.accMax);               // taille du systeme (0..1)
-      const w = snakeRiver(trunk.pts, seed + 97 * k, { w0:8, w1:12 + 12 * f, mouth:true });
-      w.poly = riverPolygon(w);
-      const trunkLine = turf.lineString(w.coords);
-      const tribs = sys.filter(l => l.trib && l.pts.length >= 6 && parallelShare(l, k) <= PARALLEL_MAX).map((l, j) => {
-        occupy(l, k);
-        const t = snakeRiver(l.pts, seed + 97 * k + 31 * (j + 1), { w0:7, w1:9 + 5 * f, mouth:false });
-        attachTributary(t, trunkLine);
-        t.poly = riverPolygon(t);
-        return t;
-      });
-      for(const x of [w, ...tribs]){ rivers.push(x); water += turf.area(x.poly) / 1e6; }
-    }
-    // Lacs ensuite, du plus grand au plus petit: jamais sur une riviere ni
-    // contre elle (LAKE_CLEAR km de rive libre), ni pres de la cote, ni
-    // colle a un autre lac. S'il ne rentre pas, il est reduit, sinon ecarte.
-    const riverBoxes = rivers.map(x => turf.bbox(x.poly));
-    const cellKm2 = RIVER_BOX.res * 111.32 * Math.cos(27 * Math.PI / 180) * RIVER_BOX.res * 110.57;
-    const onLand = ([lon, lat]) => { const c = cellOfPt([lon, lat]); return c >= 0 && riverBase.land[c] && riverBase.dist[c] >= 2; };
-    const lakes = [];
-    let lakesDropped = 0;
-    // essais: position d'origine puis decalee (40 et 80 km, 8 directions)
-    const OFFSETS = [[0, 0]]; for(const d of [40, 80]) for(let a = 0; a < 8; a++) OFFSETS.push([d * Math.sin(a * Math.PI / 4), d * Math.cos(a * Math.PI / 4)]);
-    const tryLake = (c0, r0, seed) => {
-      for(const [ox, oy] of OFFSETS) for(const scale of [1, 0.75, 0.55]){
-        const center = [c0[0] + ox / (111.32 * Math.cos(c0[1] * Math.PI / 180)), c0[1] + oy / 110.57];
-        const poly = lakeShape(center, r0 * scale, seed);
-        if(!poly.geometry.coordinates[0].every(onLand)) continue;
-        const halo = turf.buffer(poly, LAKE_CLEAR, { units:'kilometers', steps:8 }), hb = turf.bbox(halo);
-        const near = (bb) => !(hb[0] > bb[2] || hb[2] < bb[0] || hb[1] > bb[3] || hb[3] < bb[1]);
-        if(rivers.some((x, k) => near(riverBoxes[k]) && turf.booleanIntersects(halo, x.poly))) continue;
-        if(lakes.some(o => near(turf.bbox(o.poly)) && turf.booleanIntersects(halo, o.poly))) continue;
-        return poly;
-      }
-      return null;
-    };
-    const addLake = poly => { lakes.push({ lake:true, poly }); water += turf.area(poly) / 1e6; };
-    // 1. lacs des cuvettes
-    for(const L of r.lakes.slice().sort((a, b) => b.shown.length - a.shown.length)){
-      const c0 = [riverBase.lonAt(L.sink % W), riverBase.latAt((L.sink / W) | 0)];
-      const poly = tryLake(c0, Math.max(9, Math.sqrt(L.shown.length * cellKm2 * 0.55 / Math.PI)), L.sink);
-      if(poly) addLake(poly); else lakesDropped++;
-    }
-    // 2. petits lacs en plus (peche): creux locaux du relief, de preference
-    //    la ou il pleut, jusqu'a LAKE_TARGET lacs
-    const { land, dist, rain } = riverBase, el = r.elev, pits = [];
-    for(let i = 0; i < W * H; i++){
-      if(!land[i] || dist[i] < 4) continue;
-      const cx = i % W, cy = (i / W) | 0; let pit = true;
-      for(let dy = -1; dy <= 1 && pit; dy++) for(let dx = -1; dx <= 1; dx++){ const n = (cy + dy) * W + cx + dx; if(n !== i && land[n] && el[n] < el[i]){ pit = false; break; } }
-      if(pit) pits.push([i, rain[i] + geoHash(i, 3, 211) * 0.3]);
-    }
-    pits.sort((a, b) => b[1] - a[1]);
-    for(const [i] of pits){
-      if(lakes.length >= LAKE_TARGET) break;
-      const poly = tryLake([riverBase.lonAt(i % W), riverBase.latAt((i / W) | 0)], 8 + geoHash(i, 7, 313) * 12, i);
-      if(poly) addLake(poly);
-    }
-    waterStats = { landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:water / landKm2, rivers:rivers.length, lakes:lakes.length, lakesDropped, parallelSkipped:skipped };
-    console.info('Eau (Australie):', waterStats);
-    return [...rivers, ...lakes];
-  }
-  // Retire le lit des rivieres des polygones des regions traversees
-  function carveRegions(fc, list){
-    const boxes = list.map(w => turf.bbox(w.poly));
-    fc.features.forEach(f => {
-      const fb = turf.bbox(f);
-      const hits = list.filter((w, k) => { const bb = boxes[k]; return !(fb[0] > bb[2] || fb[2] < bb[0] || fb[1] > bb[3] || fb[3] < bb[1]); });
-      if(!hits.length) return;
-      try{ const d = turf.difference(turf.featureCollection([f, ...hits.map(w => w.poly)])); if(d) f.geometry = d.geometry; }
-      catch(e){ console.warn('Riviere: decoupe impossible pour la region', f.id, e); }
-    });
-  }
-  // Marque le lit comme eau dans la grille de navigation (tampons ronds le
-  // long du trace, au moins ~2 cases de large pour que le bateau passe)
-  function carveNav(nav, W, H, res, latTop, list){
-    for(const w of list.filter(x => x.lake)){
-      const [x0, y0, x1, y1] = turf.bbox(w.poly);
+  // ---------- Rivieres et lacs du monde (navigables) ----------
+  // Generes hors ligne par docs/build-waterways.js (relief simule, ecoulement,
+  // traces "serpent", lacs a l'ecart des rivieres, ratio d'eau cible):
+  //  - data/regions-water.topojson: les regions avec le lit des rivieres et
+  //    les lacs deja retires de la terre (on voit la mer dessous, meme
+  //    couleur); remplace la geometrie affichee, la topologie d'origine
+  //    (voisinages, cotes, routes) reste celle de admin1.topojson;
+  //  - data/water.json: traces (largeur par point) et lacs, marques comme eau
+  //    dans la grille de navigation: les bateaux remontent les rivieres.
+  let waterData = null;   // { stats, rivers:[{ c:[[lon,lat]], w:[km] }], lakes:[{ p:[[lon,lat]], a:km2 }] }
+  // Marque rivieres et lacs comme eau dans la grille de navigation. Le haut
+  // des rivieres (moins de 5 km de large, pres de la source) n'est pas
+  // navigable; ailleurs au moins ~2 cases de large pour que le bateau passe.
+  function carveNav(nav, W, H, res, latTop, data){
+    if(!data) return;
+    for(const L of data.lakes){
+      const poly = turf.polygon([L.p]), [x0, y0, x1, y1] = turf.bbox(poly);
       for(let y = Math.floor((latTop - y1) / res); y <= Math.ceil((latTop - y0) / res); y++){ if(y < 0 || y >= H) continue;
         for(let x = Math.floor((x0 + 180) / res); x <= Math.ceil((x1 + 180) / res); x++){
           const i = y * W + ((x % W) + W) % W;
-          if(!nav[i] && turf.booleanPointInPolygon([-180 + (x + 0.5) * res, latTop - (y + 0.5) * res], w.poly)) nav[i] = 1; } }
+          if(!nav[i] && turf.booleanPointInPolygon([-180 + (x + 0.5) * res, latTop - (y + 0.5) * res], poly)) nav[i] = 1; } }
     }
-    for(const w of list.filter(x => !x.lake)) w.coords.forEach(([lon, lat], k) => {
-      const rKm = Math.max(w.width[k] / 2 + 2, 7), ry = rKm / 110.57 / res, rx = rKm / (111.32 * Math.cos(lat * Math.PI / 180)) / res;
-      const cy = (latTop - lat) / res, cx = (lon + 180) / res;
-      for(let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++){ if(y < 0 || y >= H) continue;
-        for(let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++){
-          if(((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 > 1) continue;
-          const i = y * W + ((x % W) + W) % W; if(!nav[i]) nav[i] = 1; } }
-    });
+    for(const r of data.rivers){
+      // points tous les ~4 km: on interpole pour un trace continu
+      for(let k = 0; k < r.c.length; k++){
+        if(r.w[k] < 5) continue;
+        const next = r.c[Math.min(r.c.length - 1, k + 1)];
+        for(const f of [0, 0.5]){
+          const lon = r.c[k][0] + (next[0] - r.c[k][0]) * f, lat = r.c[k][1] + (next[1] - r.c[k][1]) * f;
+          const rKm = Math.max(r.w[k] / 2 + 2, 7), ry = rKm / 110.57 / res, rx = rKm / (111.32 * Math.cos(lat * Math.PI / 180)) / res;
+          const cy = (latTop - lat) / res, cx = (lon + 180) / res;
+          for(let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++){ if(y < 0 || y >= H) continue;
+            for(let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++){
+              if(((x + 0.5 - cx) / rx) ** 2 + ((y + 0.5 - cy) / ry) ** 2 > 1) continue;
+              const i = y * W + ((x % W) + W) % W; if(!nav[i]) nav[i] = 1; } }
+        }
+      }
+    }
   }
 
   // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
