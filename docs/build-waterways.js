@@ -149,12 +149,26 @@ function snakeRiver(cellPts, seed, opt){
     const amp = (5 + 9 * u) * (0.6 + 0.8 * geoNoise(ll[0], ll[1], seed + 5, 400)) * taper;
     const off = amp * (Math.sin(phase) + 0.25 * Math.sin(2 * phase + 1.3));
     out.push([base[i][0] + nx * off, base[i][1] + ny * off]);
-    // la source s'affine (0.15 x la largeur de depart a la pointe)
-    width.push((opt.w0 + (opt.w1 - opt.w0) * Math.pow(u, 0.8)) * (0.15 + 0.85 * smooth01(sArr[i] / SOURCE_TAPER_KM)));
+    // la source s'affine (0.15 x la largeur de depart a la pointe), sauf
+    // pour une liaison (depart en mer ou sur un fleuve): pleine largeur
+    const tp = opt.taper === false ? 1 : 0.15 + 0.85 * smooth01(sArr[i] / SOURCE_TAPER_KM);
+    width.push((opt.w0 + (opt.w1 - opt.w0) * Math.pow(u, 0.8)) * tp);
   }
   if(opt.mouth){ const e1 = out[out.length - 1], e0 = out[Math.max(0, out.length - 6)], el = d2(e0, e1) || 1;
     for(let k = 1; k <= 4; k++){ out.push([e1[0] + (e1[0] - e0[0]) / el * 10 * k, e1[1] + (e1[1] - e0[1]) / el * 10 * k]); width.push(width[width.length - 1]); } }
+  if(opt.startSea){ const s0 = out[0], s1 = out[Math.min(out.length - 1, 5)], sl = d2(s0, s1) || 1;   // depart prolonge en mer
+    for(let k = 1; k <= 4; k++){ out.unshift([s0[0] + (s0[0] - s1[0]) / sl * 10 * k, s0[1] + (s0[1] - s1[1]) / sl * 10 * k]); width.unshift(width[0]); } }
   return { coords:out.map(toLL), width };
+}
+// Colle le debut d'un bras au fleuve dont il part (miroir d'attachTributary)
+function attachHead(t, line){
+  const start = t.coords[0], target = turf.nearestPointOnLine(line, start).geometry.coordinates;
+  const dx = target[0] - start[0], dy = target[1] - start[1]; let run = 0;
+  for(let i = 0; i < t.coords.length; i++){
+    if(i) run += turf.distance(t.coords[i - 1], t.coords[i]);
+    if(run > 50) break;
+    const k = smooth01(1 - run / 50); t.coords[i] = [t.coords[i][0] + dx * k, t.coords[i][1] + dy * k];
+  }
 }
 // lit: morceaux elargis a leur largeur (fins pres de la source), reunis
 function riverPolygon(w){
@@ -214,9 +228,11 @@ function stamp(coords, width){
 // Affluent: coupe au premier contact. Fleuve vers la mer ou l'interieur:
 // coupe seulement dans ses derniers 15 % (estuaire partage), sinon garde
 // entier (w.grazed: frole une autre riviere, a signaler).
-function cutAtConfluence(w, joinRiver = true){
+function cutAtConfluence(w, joinRiver = true, fromRiver = false){
   const from = joinRiver ? 0 : Math.floor(w.coords.length * 0.85);
-  for(let i = 0; i < w.coords.length; i++){ const c = fineCell(...w.coords[i]);
+  // un bras qui part d'un fleuve: on ignore le debut, encore dans ce fleuve
+  let i0 = 0; if(fromRiver) while(i0 < w.coords.length){ const c = fineCell(...w.coords[i0]); if(c < 0 || !wet[c]) break; i0++; }
+  for(let i = i0; i < w.coords.length; i++){ const c = fineCell(...w.coords[i]);
     if(c < 0 || !wet[c]) continue;
     if(i < from){ w.grazed = true; continue; }
     if(i < 10) return null;
@@ -237,14 +253,19 @@ function densify(pts, stepKm){ const out = [pts[0]];
   return out; }
 const rivers = []; let water = 0, joined = 0; const cutEarly = [];
 for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
-  const opt = { ...WIDTH[R.cls], mouth:R.end === 'sea' };
+  const opt = { ...WIDTH[R.cls], mouth:R.end === 'sea', taper:!R.start, startSea:R.start === 'sea' };
   let w = snakeRiver(densify(R.pts, 20), nameSeed(R.n) % 1000, opt);
+  if(R.start === 'join' && rivers.length){   // bras: debut colle au fleuve dont il part
+    const st = turf.point(w.coords[0]);
+    let best = null, bd = Infinity; for(const o of rivers){ const d = turf.pointToLineDistance(st, o.line); if(d < bd){ bd = d; best = o; } }
+    if(best && bd < 150) attachHead(w, best.line);
+  }
   if(R.end === 'join' && rivers.length){   // queue collee au fleuve le plus proche
     const end = turf.point(w.coords[w.coords.length - 1]);
     let best = null, bd = Infinity; for(const o of rivers){ const d = turf.pointToLineDistance(end, o.line); if(d < bd){ bd = d; best = o; } }
     if(best && bd < 150) attachTributary(w, best.line);
   }
-  w = cutAtConfluence(w, R.end === 'join');
+  w = cutAtConfluence(w, R.end === 'join', R.start === 'join');
   if(!w){ cutEarly.push(R.n); continue; }
   if(w.joined) joined++;
   if(w.grazed) cutEarly.push(R.n + ' (frole une autre riviere)');

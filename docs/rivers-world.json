@@ -1,5 +1,5 @@
 {
-  "_doc": "Fleuves reels (listes Wikipedia 'Liste de fleuves dans le monde classes par continent' et Wiklimat 'Liste des principaux fleuves') et principaux affluents. pts = cours approche [lon, lat], de la source vers l'aval (villes traversees). cls: 1 geant, 2 grand, 3 moyen. end: sea (se jette en mer), join (affluent: finit sur son fleuve, liste apres lui), inland (bassin interieur).",
+  "_doc": "Fleuves reels (listes Wikipedia 'Liste de fleuves dans le monde classes par continent' et Wiklimat 'Liste des principaux fleuves') et principaux affluents. pts = cours approche [lon, lat], de la source vers l'aval (villes traversees). cls: 1 geant, 2 grand, 3 moyen. end: sea (se jette en mer), join (affluent: finit sur son fleuve, liste apres lui), inland (bassin interieur). start (facultatif): sea (commence en mer: liaison navigable, pas de source) ou join (bras qui part d'un fleuve deja liste); une liaison garde toute sa largeur.",
   "rivers": [
     { "n":"Nil", "cls":1, "end":"sea", "pts":[[33.2,0.4],[32.9,2.3],[31.6,4.9],[31.55,6.2],[30.9,8.2],[31.65,9.53],[32.66,13.16],[32.53,15.6],[33.98,17.7],[33.3,19.5],[31.8,18.55],[30.47,19.17],[31.35,21.8],[32.9,24.1],[32.64,25.7],[32.72,26.16],[31.18,27.18],[30.75,28.1],[31.25,30.05],[30.35,31.45]] },
     { "n":"Congo", "cls":1, "end":"sea", "pts":[[26.5,-11.0],[26.9,-8.5],[26.2,-5.5],[25.9,-2.95],[25.2,0.5],[23.5,1.5],[22.45,2.18],[20.5,1.8],[18.26,0.05],[17.0,-2.0],[15.3,-4.3],[13.45,-5.82],[12.3,-6.05]] },
@@ -16,6 +16,7 @@
     { "n":"Juba", "cls":3, "end":"sea", "pts":[[41.7,4.2],[42.3,2.0],[42.5,0.0],[42.55,-0.37]] },
     { "n":"Okavango", "cls":3, "end":"inland", "pts":[[16.8,-13.0],[18.5,-17.9],[21.0,-18.4],[22.5,-19.3]] },
     { "n":"Chari", "cls":3, "end":"inland", "pts":[[18.5,8.0],[17.0,9.5],[15.05,12.1],[14.5,12.9]] },
+    { "n":"Canal de Coptos", "cls":3, "start":"join", "end":"sea", "pts":[[32.72,26.16],[33.2,26.05],[33.7,26.0],[34.28,26.1]] },
     { "n":"Nil Bleu", "cls":2, "end":"join", "pts":[[37.4,11.6],[38.0,10.2],[36.5,10.3],[35.1,11.2],[34.38,11.8],[33.6,13.55],[32.53,15.6]] },
     { "n":"Bénoué", "cls":2, "end":"join", "pts":[[13.5,9.3],[12.4,9.2],[10.5,8.9],[8.53,7.73],[6.73,7.8]] },
     { "n":"Oubangui", "cls":2, "end":"join", "pts":[[27.0,4.8],[23.0,4.5],[20.6,4.4],[18.55,4.37],[17.9,1.0],[17.7,-0.6]] },
@@ -97,7 +98,7 @@
     { "n":"Syr-Daria", "cls":2, "end":"inland", "pts":[[72.0,41.0],[71.0,40.9],[69.6,40.28],[68.6,41.5],[67.5,43.5],[65.5,44.85],[63.0,45.8],[61.0,46.1]] },
     { "n":"Amou-Daria", "cls":2, "end":"inland", "pts":[[71.5,37.2],[69.5,37.3],[67.28,37.22],[65.5,38.2],[63.6,39.07],[62.0,40.5],[60.63,41.55],[59.6,42.45],[59.3,43.9]] },
     { "n":"Tigre", "cls":2, "end":"sea", "pts":[[39.9,38.4],[40.23,37.9],[42.2,37.3],[43.13,36.35],[43.7,34.6],[44.37,33.33],[45.8,32.5],[47.15,31.85],[47.43,31.0],[47.8,30.5],[48.5,29.9]] },
-    { "n":"Euphrate", "cls":2, "end":"join", "pts":[[38.5,39.3],[38.75,38.8],[38.3,37.5],[37.95,37.03],[39.0,35.95],[40.15,35.33],[41.0,34.4],[43.3,33.43],[44.3,32.5],[46.26,31.05],[47.43,31.0]] },
+    { "n":"Euphrate", "cls":2, "start":"sea", "end":"join", "pts":[[39.72,41.05],[39.75,40.55],[39.5,39.75],[39.0,39.55],[38.75,38.8],[38.3,37.5],[37.95,37.03],[39.0,35.95],[40.15,35.33],[41.0,34.4],[43.3,33.43],[44.3,32.5],[46.26,31.05],[47.43,31.0]] },
     { "n":"Irrawaddy", "cls":1, "end":"sea", "pts":[[97.7,26.0],[97.4,25.38],[96.3,23.5],[96.08,21.97],[94.93,20.15],[95.22,18.82],[95.3,17.0],[95.2,15.9]] },
     { "n":"Salouen", "cls":2, "end":"sea", "pts":[[93.0,32.5],[96.5,30.5],[98.2,28.0],[98.6,25.0],[98.6,22.5],[98.0,21.0],[97.8,18.5],[97.6,16.5]] },
     { "n":"Rivière des Perles", "cls":2, "end":"sea", "pts":[[104.0,25.0],[106.5,24.5],[108.5,23.5],[111.3,23.48],[113.0,23.0],[113.7,22.3]] },

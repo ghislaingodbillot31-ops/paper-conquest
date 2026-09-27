@@ -26,7 +26,7 @@
     { "name":"Golfe du Bengale", "type":"hauturiere", "fish":["thon","sardinelle","requin"], "line":[[80.5,15.5],[84,18.5],[87,21],[91,22],[93.5,19],[94.3,16]], "reach":220, "band":300 },
     { "name":"Pacifique au large du Japon", "type":"pleine-mer", "fish":["thon","cachalot","baleine"], "center":[146,36], "rx":650, "ry":380, "rot":35, "clear":120 },
 
-    { "name":"Mer Rouge", "type":"cotiere", "fish":["merou","thon","tassergal","requin"], "line":[[34.8,28],[36,26],[37.3,22],[38.8,18.5],[41,15.8],[42.8,13],[40,21],[39,22.5],[37,25.5]], "reach":110, "band":120 },
+    { "name":"Mer Rouge", "type":"cotiere", "fish":["merou","thon","tassergal","requin"], "line":[[32.6,29.8],[33.5,28.3],[34.9,27.1],[36.2,25.6],[37.6,22],[39.3,18.5],[41.3,15.8],[42.8,13]], "reach":260, "band":200 },
     { "name":"Golfe d'Aden et mer d'Arabie", "type":"hauturiere", "fish":["thon","sardinelle","merou","tortue"], "line":[[44,12.5],[48,13.8],[52,15.5],[55,17],[57.5,19],[59,22],[58,23.5]], "reach":170, "band":260 },
     { "name":"Golfe Persique", "type":"cotiere", "fish":["merou","sardinelle"], "line":[[48.5,29.5],[50.5,27.5],[52,25.5],[55,25.2],[56.3,26.5],[51.5,27.8]], "reach":130, "band":160 },
     { "name":"Côte mauritanienne et sénégalaise", "type":"cotiere", "fish":["sardinelle","merou","tassergal","thon"], "line":[[-16.2,21],[-16.5,19],[-16.2,17],[-16.8,15],[-17.2,13]], "reach":150, "band":170 },

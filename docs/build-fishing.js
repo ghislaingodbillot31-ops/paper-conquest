@@ -20,8 +20,9 @@ function unwrapRing(ring){ const out = [[ring[0][0], ring[0][1]]]; let off = 0;
   for(let i = 1; i < ring.length; i++){ const d = ring[i][0] - ring[i-1][0]; if(d > 180) off -= 360; else if(d < -180) off += 360; out.push([ring[i][0] + off, ring[i][1]]); } return out; }
 const lands = fc.features.map(f => {
   const g = f.geometry; if(g.type === 'Polygon') g.coordinates = g.coordinates.map(unwrapRing); else g.coordinates = g.coordinates.map(p => p.map(unwrapRing));
+  f.bbox = turf.bbox(f);
   let s; try{ s = turf.simplify(f, { tolerance:0.03, highQuality:false }); }catch(e){ s = f; }   // ilots degeneres: gardes tels quels
-  s.bbox = turf.bbox(s); return s; });
+  s.bbox = f.bbox; s.full = f; return s; });
 const hitsBox = (bb, pad) => lands.filter(l => !(l.bbox[0] > bb[2] + pad || l.bbox[2] < bb[0] - pad || l.bbox[1] > bb[3] + pad || l.bbox[3] < bb[1] - pad));
 const union = list => list.length > 1 ? turf.union(turf.featureCollection(list)) : list[0];
 const hash = (a, b) => { let h = (a * 374761393 + b * 668265263) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967295; };
@@ -80,6 +81,10 @@ for(const { z, i } of zones){
   if(over.length){ try{ const d = turf.difference(turf.featureCollection([shape, ...over])); if(d) shape = d; }catch(e){ console.warn('chevauchement non retire:', z.name, e.message); } }
   try{ shape = turf.simplify(shape, { tolerance:0.02, highQuality:true }); }catch(e){}
   shape.bbox = turf.bbox(shape); taken.push(shape);
+  // precision: la zone s'arrete exactement au trait de cote (terres non
+  // simplifiees): jamais dans un fleuve, un estuaire creuse ou un lac
+  const coast = hitsBox(shape.bbox, 0.05).map(l => l.full);
+  if(coast.length){ try{ const d = turf.difference(turf.featureCollection([shape, ...coast])); if(d) shape = d; }catch(e){ console.warn('decoupe cote impossible:', z.name, e.message); } }
   const g = shape.geometry, round = rings => rings.map(r => r.map(([x, y]) => [r3(x), r3(y)]));
   out[i] = { name:z.name, type:z.type, fish:z.fish, label:labelPoint(shape).map(r3),
     geometry:{ type:g.type, coordinates:g.type === 'Polygon' ? round(g.coordinates) : g.coordinates.map(round) },

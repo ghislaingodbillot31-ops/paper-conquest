@@ -2142,7 +2142,7 @@
   FRESH_FISH.forEach(k => { RESOURCES[k] = { name:FRESH_FISH_NAMES[k], score:() => 0 }; });
   // Poissons de chaque fleuve reel (nom de data/water.json)
   const RIVER_FISH = {
-    'Nil':['capitaine', 'tilapia', 'silure_nil'], 'Nil Bleu':['tilapia', 'silure_nil'], 'Niger':['capitaine', 'tilapia', 'silure_nil'],
+    'Nil':['capitaine', 'tilapia', 'silure_nil'], 'Canal de Coptos':['capitaine', 'tilapia'], 'Nil Bleu':['tilapia', 'silure_nil'], 'Niger':['capitaine', 'tilapia', 'silure_nil'],
     'Bénoué':['capitaine', 'tilapia', 'silure_nil'], 'Chari':['capitaine', 'tilapia'], 'Sénégal':['capitaine', 'tilapia'], 'Volta':['capitaine', 'tilapia'],
     'Gambie':['capitaine', 'tilapia'],
     'Amazone':['arapaima', 'surubi'], 'Rio Negro':['arapaima'], 'Madeira':['arapaima', 'surubi'], 'Purus':['arapaima'], 'Tapajós':['arapaima'],
@@ -2435,6 +2435,40 @@
     if(selectedId !== null) renderRegionPanel();
   }
 
+  // ---------- Noms des oceans et des mers ----------
+  // [nom, lon, lat, rang]: 1 ocean (visible de loin), 2 grande mer, 3 mer
+  // ou golfe plus petit (apparait en zoomant).
+  const SEA_LABELS = [
+    ['Océan Atlantique', -38, 32, 1], ['Océan Atlantique', -22, -22, 1], ['Océan Pacifique', -150, 15, 1], ['Océan Pacifique', 170, 28, 1],
+    ['Océan Pacifique', -118, -28, 1], ['Océan Indien', 80, -22, 1], ['Océan Arctique', 60, 81, 1], ['Océan Austral', 20, -60, 1],
+    ['Océan Austral', 140, -60, 1], ['Océan Austral', -100, -62, 1],
+    ['Mer Méditerranée', 18, 34.5, 2], ['Mer du Nord', 3.5, 56, 2], ['Mer Baltique', 19, 57.5, 2], ['Mer Noire', 34.5, 43.2, 2],
+    ['Mer Caspienne', 50.8, 42, 2], ['Mer Rouge', 38.2, 20.5, 2], ['Golfe Persique', 51.3, 27.2, 2], ["Mer d'Arabie", 64, 15, 2],
+    ['Golfe du Bengale', 89, 15, 2], ['Mer de Chine méridionale', 114, 13, 2], ['Mer de Chine orientale', 125.5, 29, 2],
+    ['Mer du Japon', 135, 40.5, 2], ["Mer d'Okhotsk", 150, 55, 2], ['Mer de Béring', -178, 58, 2], ['Golfe du Mexique', -90, 25, 2],
+    ['Mer des Caraïbes', -75, 15, 2], ["Baie d'Hudson", -86, 60, 2], ['Mer de Norvège', 3, 68, 2], ['Mer de Barents', 40, 73.5, 2],
+    ['Mer de Tasman', 160, -38, 2], ['Mer de Corail', 155, -15, 2], ["Mer d'Arafura", 135, -10, 2], ['Mer de Java', 111, -5, 2],
+    ['Golfe de Guinée', 2.5, 2, 2], ['Canal du Mozambique', 41.5, -18, 2], ['Mer du Labrador', -55, 58.5, 2], ['Mer de Kara', 70, 75.5, 2],
+    ['Mer des Philippines', 132, 18, 2], ['Mer des Laptev', 125, 76, 2], ['Mer de Sibérie orientale', 160, 73.5, 2],
+    ["Golfe d'Alaska", -146, 56.5, 2], ['Mer des Sargasses', -60, 28, 2], ['Mer du Groenland', -5, 75, 2],
+    ['Manche', -1.8, 50.1, 3], ['Golfe de Gascogne', -4.5, 45.5, 3], ['Mer Adriatique', 15.5, 42.9, 3], ['Mer Égée', 25, 38.6, 3],
+    ['Mer Tyrrhénienne', 12, 40, 3], ['Mer Ionienne', 18.5, 37.5, 3], ["Mer d'Azov", 36.5, 46.2, 3], ['Mer Blanche', 38, 65.8, 3],
+    ['Golfe de Botnie', 20.5, 62.5, 3], ["Golfe d'Aden", 48, 12.6, 3], ["Golfe d'Oman", 58.6, 24.6, 3], ['Mer Jaune', 123, 36, 3],
+    ['Golfe de Thaïlande', 101.5, 9.5, 3], ['Mer de Célèbes', 122, 3.5, 3], ['Golfe de Californie', -110, 27, 3], ["Mer d'Irlande", -5, 53.7, 3],
+    ['Mer Celtique', -7.5, 50.5, 3], ['Golfe du Saint-Laurent', -62, 48, 3], ['Grande Baie australienne', 130, -35.8, 3],
+    ['Golfe de Carpentarie', 139, -14, 3], ['Mer de Banda', 127, -5.5, 3], ['Mer de Marmara', 28, 40.75, 3], ['Mer de Ligurie', 8.8, 43.6, 3],
+  ];
+  function initSeaLabels(){
+    map.addSource('sea-names', { type:'geojson', data:turf.featureCollection(SEA_LABELS.map(([name, lon, lat, rank]) => turf.point([lon, lat], { name, rank }))) });
+    map.addLayer({ id:'sea-names', type:'symbol', source:'sea-names',
+      filter:['any', ['==', ['get', 'rank'], 1], ['all', ['==', ['get', 'rank'], 2], ['>=', ['zoom'], 1.6]], ['all', ['==', ['get', 'rank'], 3], ['>=', ['zoom'], 3]]],
+      layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-max-width':7,
+        'text-size':['match', ['get', 'rank'], 1, 17, 2, 12.5, 10.5],
+        'text-letter-spacing':['match', ['get', 'rank'], 1, 0.25, 2, 0.12, 0.05], 'text-transform':['match', ['get', 'rank'], 1, 'uppercase', 'none'] },
+      paint:{ 'text-color':['match', ['get', 'rank'], 1, '#3f6f8a', '#4a7d99'], 'text-halo-color':'rgba(232,243,246,0.85)', 'text-halo-width':1.3 } });
+    applyDevFilters();
+  }
+
   // ---------- Zones de peche en mer, fleuves et lacs ----------
   // Zones dessinees SOUS les regions: les terres les masquent. Un clic en
   // mer ouvre la fiche de la zone; un clic sur un fleuve ou un lac, sa fiche
@@ -2444,16 +2478,19 @@
     FISHING_ZONES = fishingData ? fishingData.zones : [];
     fishingFc = turf.featureCollection(FISHING_ZONES.map((z, i) => ({ type:'Feature', id:i,
       properties:{ name:z.name, type:z.type, fish:',' + z.fish.join(',') + ',' }, geometry:z.geometry })));
-    const labels = turf.featureCollection(FISHING_ZONES.map((z, i) => turf.point(z.label, { name:z.name, zone:i })));
+    // pas de doublon avec le nom de la mer (ex. Mer Rouge)
+    const seaNames = new Set(SEA_LABELS.map(l => l[0]));
+    const labels = turf.featureCollection(FISHING_ZONES.map((z, i) => turf.point(z.label, { name:z.name, zone:i })).filter(f => !seaNames.has(f.properties.name)));
     map.addSource('fishing', { type:'geojson', data:fishingFc });
     map.addSource('fishing-labels', { type:'geojson', data:labels });
     const color = ['match', ['get', 'type'], ...Object.entries(FISH_ZONE_COLORS).flat(), '#2a9d8f'];
     map.addLayer({ id:'fishing-fill', type:'fill', source:'fishing', paint:{ 'fill-color':color, 'fill-opacity':0.3 } }, 'regions');
     map.addLayer({ id:'fishing-line', type:'line', source:'fishing', paint:{ 'line-color':color, 'line-width':1.2, 'line-dasharray':[2, 2], 'line-opacity':0.8 } }, 'regions');
-    map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:2,
+    map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:3.5,
       layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-size':10, 'text-max-width':8 },
       paint:{ 'text-color':'#12415e', 'text-halo-color':'#e8f3f6', 'text-halo-width':1.2 } });
     initFreshWaters();
+    initSeaLabels();
     // clic hors des regions: fleuve / lac d'abord, sinon zone de peche en mer
     map.on('click', (e) => {
       if(interactionBusy() || map.queryRenderedFeatures(e.point, { layers:['regions'] }).length) return;
@@ -2609,9 +2646,10 @@
     { id:'towns', label:'Ville' },
     { id:'numbers', label:'Numéro' },
     { id:'fishing', label:'Zones de pêche' },
+    { id:'seas', label:'Noms des mers' },
   ];
   const DEV_STORAGE_KEY = 'paperConquestDevFilters';
-  const devState = { land:true, towns:true, numbers:true, fishing:true };
+  const devState = { land:true, towns:true, numbers:true, fishing:true, seas:true };
   try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
 
   function setLayerVisible(layerId, visible){
@@ -2623,6 +2661,7 @@
     setLayerVisible('villages-halo', devState.towns);
     setLayerVisible('regions-label', devState.numbers);
     ['fishing-fill', 'fishing-line', 'fishing-label'].forEach(id => setLayerVisible(id, devState.fishing));
+    setLayerVisible('sea-names', devState.seas);
   }
 
   (function initDevPanel(){
