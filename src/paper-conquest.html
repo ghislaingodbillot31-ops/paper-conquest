@@ -325,8 +325,20 @@
   .cap-none{ margin:auto; text-align:center; font-size:0.9rem; color:var(--ink-soft); padding:40px 16px; }
   .cap-intro, .cap-empty{ margin:0; font-size:0.82rem; color:var(--ink-soft); }
   /* Vue Village: carte locale dessinee a la main */
-  .capital-head .village-reroll{ width:auto; padding:6px 12px; margin-left:auto; }
+  .capital-head .village-reroll{ width:auto; padding:6px 12px; }
+  .capital-head #village-mine, .capital-head #village-mine[hidden] + #village-reroll{ margin-left:auto; }
+  .capital-head #village-mine[hidden]{ display:none; }
   .village-svg{ width:100%; height:auto; margin:0 auto; display:block; border:1.5px solid var(--line-strong); border-radius:10px; }
+  /* Exploration de la region (vue Village) */
+  .rx-stage{ position:relative; flex:1 1 auto; min-height:360px; height:calc(100vh - 235px); border:1.5px solid var(--line-strong); border-radius:10px; overflow:hidden; background:#a7c8d3; }
+  .rx-svg{ position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:none; user-select:none; }
+  .rx-svg.dragging{ cursor:grabbing; }
+  .rx-tools{ position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:2; }
+  .rx-tools button{ width:36px; height:36px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--card); font:800 1.1rem sans-serif; color:var(--ink); cursor:pointer; box-shadow:0 2px 0 var(--shadow); }
+  .rx-mini{ position:absolute; left:10px; top:10px; width:170px; height:130px; background:rgba(167,200,211,0.9); border:1.5px solid var(--line-strong); border-radius:8px; z-index:2; cursor:pointer; }
+  .rx-scale{ position:absolute; left:12px; bottom:12px; z-index:2; background:rgba(246,239,224,0.9); border:1.5px solid var(--line-strong); border-radius:8px; padding:4px 10px 6px; font:700 0.75rem sans-serif; color:var(--ink); }
+  .rx-scale i{ display:block; height:6px; border:2.5px solid var(--ink); border-top:none; margin-top:3px; }
+  .rx-hint{ position:absolute; right:12px; bottom:12px; z-index:2; background:rgba(246,239,224,0.9); border:1.5px solid var(--line-strong); border-radius:8px; padding:4px 10px; font-size:0.72rem; color:var(--ink-soft); }
   .village-info{ display:flex; flex-wrap:wrap; gap:6px 18px; font-size:0.8rem; color:var(--ink-soft); }
   .village-info b{ color:var(--ink); }
   /* Onglet Plan: carte detaillee de la region */
@@ -521,6 +533,7 @@
       <div class="card capital-view">
         <div class="capital-head">
           <h2 class="hand" id="village-title">Village</h2>
+          <button class="boat-btn village-reroll" id="village-mine" type="button" hidden>🏛️ Ma capitale</button>
           <button class="boat-btn village-reroll" id="village-reroll" type="button">🎲 Autre région au hasard</button>
         </div>
         <div class="capital-body" id="village-body"></div>
@@ -3521,6 +3534,7 @@
     document.getElementById('capital-close').addEventListener('click', closeCapital);
     document.getElementById('capview-select').addEventListener('change', e => { capitalRegion = +e.target.value; renderCapitalView(); });
     document.getElementById('village-reroll').addEventListener('click', () => { villageRegion = pickVillageRegion(); renderVillageView(); });
+    document.getElementById('village-mine').addEventListener('click', () => { const own = [...ownedRegions].sort((a, b) => a - b); if(own.length){ villageRegion = own.includes(capitalRegion) ? capitalRegion : own[0]; renderVillageView(); } });
     document.getElementById('capital-modal').addEventListener('click', (e) => { if(e.target.id === 'capital-modal') closeCapital(); });
     document.addEventListener('keydown', (e) => {
       if(e.key !== 'Escape') return;
@@ -3575,24 +3589,19 @@
     });
   })();
 
-  // ---------- Village: carte locale d'une region (prototype) ----------
-  // Nouvelle carte, independante du globe: environ 6 x 3,75 km autour de la
-  // capitale d'une region tiree au hasard, dessinee "a la main" (papier,
-  // traits tremblants). On y pose ce que la region a vraiment:
-  //  - le fleuve qui la traverse, dans sa vraie direction (celle de son cours
-  //    pres de la capitale), avec des meandres;
-  //  - les routes terrestres reelles: chacune part dans la direction de la
-  //    region voisine qu'elle rejoint; les deux plus opposees forment la
-  //    grand-route qui traverse le site; un pont la ou une route croise le
-  //    fleuve;
-  //  - des points d'eau (etangs, puits, ruisseau), plus nombreux en climat humide;
-  //  - l'emplacement du futur village, au carrefour des routes.
-  // Tout est deterministe pour une region donnee (graine = numero de region).
-  const VILLAGE_W = 1600, VILLAGE_H = 1000, VILLAGE_KM = 6;
-  let villageRegion = null;
+  // ---------- Village: exploration de la vraie region ----------
+  // La region avec sa vraie forme et ses vraies dimensions, en kilometres
+  // (projection locale centree sur la region). On s'y deplace: glisser,
+  // molette ou boutons pour zoomer (de toute la region a ~2 km), fleches ou
+  // ZQSD. Mini-carte et echelle suivent la vue.
+  //  - fleuves reels a largeur realiste (0,3 a 1,5 km, pas la largeur du
+  //    globe), lacs reels, routes reelles, ponts la ou une route croise un fleuve;
+  //  - capitale et emplacement du futur village (~1 km);
+  //  - details generes a la volee pour la zone visible, toujours identiques
+  //    au meme endroit (graine = region + case de 10 km): forets, etangs,
+  //    ruisseaux, hameaux, plus nombreux en climat humide.
+  let villageRegion = null, rx = null;
   function villageRng(seed){ let a = (seed * 2654435761) >>> 0; return () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
-  // cap (degres, 0 = nord) de a vers b
-  function bearingTo(a, b){ const k = Math.cos(a[1] * Math.PI / 180); return (Math.atan2((normLon(b[0]) - normLon(a[0])) * k, b[1] - a[1]) * 180 / Math.PI + 360) % 360; }
   // regions candidates: un fleuve la traverse et des routes en partent, pas un comptoir
   function villageCandidates(){
     if(!waterData) return [];
@@ -3600,176 +3609,193 @@
     return regionsFc.features.filter(f => !f.properties.isNpc && withRiver.has(f.id) && (roadGraph.get(f.id) || []).length >= 2).map(f => f.id);
   }
   function pickVillageRegion(){ const c = villageCandidates(); return c.length ? c[Math.floor(Math.random() * c.length)] : null; }
+  const RIVER_REAL_KM = { 1:1.5, 2:0.7, 3:0.35 };      // largeur realiste d'un fleuve selon sa taille
 
   function renderVillageView(){
-    if(!regionsFc){ return; }
-    if(villageRegion === null) villageRegion = pickVillageRegion();
+    if(!regionsFc) return;
+    if(villageRegion === null) villageRegion = ownedRegions.size ? [...ownedRegions][0] : pickVillageRegion();
+    document.getElementById('village-mine').hidden = !ownedRegions.size;
     const body = document.getElementById('village-body'), title = document.getElementById('village-title');
     if(villageRegion === null){ body.innerHTML = '<p class="cap-none">Aucune région disponible.</p>'; return; }
-    const v = buildVillageMap(villageRegion);
     title.textContent = 'Village — Région ' + villageRegion;
-    body.innerHTML = '<div class="plan-wrap">' +
-      '<div class="village-info"><span>Climat : <b>' + v.climate + '</b></span><span>Fleuve : <b>' + (v.river ? v.river.n : 'aucun') + '</b></span>' +
-        '<span>Routes : <b>' + v.roads.map(r => 'vers ' + r.to).join(', ') + '</b></span><span>Points d\'eau : <b>' + v.waterPoints + '</b></span>' +
-        '<span>Carte : <b>' + VILLAGE_KM + ' × ' + (VILLAGE_KM * VILLAGE_H / VILLAGE_W).toFixed(2).replace('.', ',') + ' km</b> autour de la capitale</span></div>' +
-      '<svg class="village-svg" style="max-width:calc((100vh - 250px) * ' + (VILLAGE_W / VILLAGE_H).toFixed(3) + ')" viewBox="0 0 ' + VILLAGE_W + ' ' + VILLAGE_H + '" role="img" aria-label="Carte du village de la région ' + villageRegion + '">' + v.svg + '</svg>' +
-      '<div class="plan-legend"><span><i></i>Route terrestre</span><span><i class="water"></i>Fleuve, étangs, ruisseau</span><span>▭ Pont</span><span>◎ Puits</span><span>⌂ Emplacement du village</span></div></div>';
+    buildRegionExplorer(villageRegion, body);
   }
 
-  function buildVillageMap(regionId){
-    const f = regionFeature(regionId), rnd = villageRng(regionId * 7919 + 13);
-    const cap = capitalById.get(regionId) || turf.pointOnFeature(f).geometry.coordinates;
-    const arid = aridityAt(cap[1], normLon(cap[0])), humid = 1 - arid;
-    const climate = arid > 0.65 ? 'aride' : arid > 0.45 ? 'sec' : Math.abs(cap[1]) > 55 ? 'froid et humide' : Math.abs(cap[1]) < 20 ? 'tropical humide' : 'tempéré';
-    const W = VILLAGE_W, H = VILLAGE_H, cx = W / 2, cy = H / 2;
-    // direction (cap) -> point d'entree sur le bord de la carte, depuis le centre
-    const edgePoint = (brg, ox = cx, oy = cy) => { const a = brg * Math.PI / 180, dx = Math.sin(a), dy = -Math.cos(a);
-      const t = Math.min(dx > 0 ? (W - ox) / dx : dx < 0 ? -ox / dx : 1e9, dy > 0 ? (H - oy) / dy : dy < 0 ? -oy / dy : 1e9); return [ox + dx * t, oy + dy * t]; };
-    // ligne tremblante (dessin a la main) entre deux points
-    const wobblyLine = (a, b, amp, n) => { const pts = []; const nx = -(b[1] - a[1]), ny = b[0] - a[0], L = Math.hypot(nx, ny) || 1;
-      const ph = rnd() * 6.28, ph2 = rnd() * 6.28, fr = 1 + rnd() * 1.5;
-      for(let i = 0; i <= n; i++){ const t = i / n, env = Math.sin(Math.PI * t);
-        const off = amp * env * (Math.sin(t * Math.PI * 2 * fr + ph) * 0.7 + Math.sin(t * Math.PI * 5.3 + ph2) * 0.3);
-        pts.push([a[0] + (b[0] - a[0]) * t + nx / L * off, a[1] + (b[1] - a[1]) * t + ny / L * off]); }
-      return pts; };
-    const pathD = pts => 'M' + pts.map(q => q[0].toFixed(1) + ' ' + q[1].toFixed(1)).join('L');
-    const smoothD = pts => { let d = 'M' + pts[0][0].toFixed(1) + ' ' + pts[0][1].toFixed(1);
-      for(let i = 1; i < pts.length - 1; i++){ const mx = (pts[i][0] + pts[i + 1][0]) / 2, my = (pts[i][1] + pts[i + 1][1]) / 2;
-        d += 'Q' + pts[i][0].toFixed(1) + ' ' + pts[i][1].toFixed(1) + ' ' + mx.toFixed(1) + ' ' + my.toFixed(1); }
-      const e = pts[pts.length - 1]; return d + 'L' + e[0].toFixed(1) + ' ' + e[1].toFixed(1); };
-
-    // --- fleuve: le plus grand qui traverse la region, direction de son cours pres de la capitale
-    let river = null, riverPts = null;
-    if(waterData){
-      const rs = waterData.rivers.filter(r => (r.r || []).includes(regionId)).sort((a, b) => a.cls - b.cls);
-      if(rs.length){
-        river = rs[0];
-        let k = 0, bd = Infinity; river.c.forEach((q, i) => { const d = geoDistance(q, cap); if(d < bd){ bd = d; k = i; } });
-        const a = river.c[Math.max(0, k - 3)], b = river.c[Math.min(river.c.length - 1, k + 3)];
-        const brg = bearingTo(a, b);                                    // sens du courant
-        // le fleuve passe a cote du centre (le village sera sur une rive)
-        const side = (rnd() < 0.5 ? -1 : 1) * (H * (0.16 + rnd() * 0.1)), a2 = brg * Math.PI / 180;
-        const ox = cx + Math.cos(a2) * side, oy = cy + Math.sin(a2) * side;
-        const p0 = edgePoint((brg + 180) % 360, ox, oy), p1 = edgePoint(brg, ox, oy);
-        riverPts = wobblyLine(p0, p1, 70 + rnd() * 50, 40);
-      }
-    }
-    // --- routes reelles: direction de la region voisine
-    const roads = (roadGraph.get(regionId) || []).map(r => {
-      const far = r.coords[Math.min(r.coords.length - 1, Math.max(1, Math.floor(r.coords.length * 0.25)))];
-      return { to:r.to, brg:bearingTo(cap, far) };
-    });
-    // grand-route: les deux directions les plus opposees
-    let main = null, best = -1;
-    for(let i = 0; i < roads.length; i++) for(let j = i + 1; j < roads.length; j++){
-      const d = Math.abs(((roads[i].brg - roads[j].brg + 540) % 360) - 180); if(d > best){ best = d; main = [i, j]; } }
-    const cross = [cx + (rnd() - 0.5) * 60, cy + (rnd() - 0.5) * 60];   // carrefour = emplacement du village
-    const roadLines = roads.map((r, i) => {
-      const end = edgePoint(r.brg); const isMain = main && main.includes(i);
-      return { ...r, main:isMain, pts:wobblyLine(cross, end, isMain ? 18 : 28, 24) };
-    });
-    // --- points d'eau
-    const nPonds = Math.round(1 + humid * 4 * (0.6 + rnd() * 0.6));
-    const ponds = [];
-    for(let t = 0; t < 60 && ponds.length < nPonds; t++){
-      const x = 120 + rnd() * (W - 240), y = 100 + rnd() * (H - 200), r = 22 + rnd() * 38;
-      if(Math.hypot(x - cross[0], y - cross[1]) < 170) continue;
-      if(riverPts && riverPts.some(q => Math.hypot(q[0] - x, q[1] - y) < r + 70)) continue;
-      if(roadLines.some(rl => rl.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < r + 30))) continue;
-      if(ponds.some(o => Math.hypot(o.x - x, o.y - y) < o.r + r + 60)) continue;
-      ponds.push({ x, y, r, rot:rnd() * 180, e:0.55 + rnd() * 0.35 });
-    }
-    const wells = [[cross[0] + 55, cross[1] - 40]].concat(humid < 0.5 ? [[cross[0] - 70, cross[1] + 45]] : []);
-    // ruisseau: du plus grand etang vers le fleuve
-    let stream = null;
-    if(ponds.length && riverPts){
-      const pd = ponds.slice().sort((a, b) => b.r - a.r)[0];
-      let q = riverPts[0], d0 = Infinity; riverPts.forEach(r => { const d = Math.hypot(r[0] - pd.x, r[1] - pd.y); if(d < d0){ d0 = d; q = r; } });
-      if(d0 < 650) stream = wobblyLine([pd.x, pd.y], q, 30, 16);
-    }
-    // --- ponts: intersection route / fleuve
+  function buildRegionExplorer(regionId, body){
+    const land = topojson.feature(regionTopo, regionGeoms[regionId - 1]);          // forme d'origine (fleuves traces a part)
+    const bbox = turf.bbox(land), lon0 = (bbox[0] + bbox[2]) / 2, lat0 = (bbox[1] + bbox[3]) / 2;
+    const KX = 111.32 * Math.cos(lat0 * Math.PI / 180), KY = 110.57;
+    const nl = lon => lon + 360 * Math.round((lon0 - lon) / 360);
+    const P = ([lon, lat]) => [(nl(lon) - lon0) * KX, -(lat - lat0) * KY];         // km, nord en haut
+    const f2 = v => v.toFixed(2);
+    const ringD = ring => { const off = 360 * Math.round((lon0 - ring[0][0]) / 360); return 'M' + ring.map(([x, y]) => { const q = P([x + off, y]); return f2(q[0]) + ' ' + f2(q[1]); }).join('L') + 'Z'; };
+    const geomD = g => (g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : []).map(poly => poly.map(ringD).join('')).join('');
+    const lineD = pts => 'M' + pts.map(q => { const k = P(q); return f2(k[0]) + ' ' + f2(k[1]); }).join('L');
+    const [x0, y1] = P([bbox[0], bbox[1]]), [x1, y0] = P([bbox[2], bbox[3]]);
+    const regionW = x1 - x0, regionH = y1 - y0, cap = capitalById.get(regionId) || turf.pointOnFeature(land).geometry.coordinates, capK = P(cap);
+    const pad = Math.max(regionW, regionH) * 0.25, vb = [x0 - pad, y0 - pad, x1 + pad, y1 + pad];
+    // zone chargee: tout ce qu'on peut voir en dezoomant au maximum (voisines, fleuves, routes)
+    const far = Math.max(regionW, regionH) * 1.6, ext = [x0 - far, y0 - far, x1 + far, y1 + far];
+    const inBox = bb => { const a2 = P([bb[0], bb[3]]), b2 = P([bb[2], bb[1]]); return !(b2[0] < ext[0] || a2[0] > ext[2] || b2[1] < ext[1] || a2[1] > ext[3]); };
+    const allLand = topojson.feature(regionTopo, regionTopo.objects[Object.keys(regionTopo.objects)[0]]).features;
+    const others = allLand.map((g, i) => ({ g, id:i + 1 })).filter(o => o.id !== regionId && inBox(turf.bbox(o.g)));
+    const color = regionFeature(regionId).properties.fillColor;
+    let st = '';
+    // voisines
+    st += others.map(o => '<path d="' + geomD(o.g.geometry) + '" fill="' + (regionFeature(o.id).properties.fillColor || '#ccc') + '" fill-opacity="0.4" fill-rule="evenodd" stroke="rgba(60,53,39,0.4)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
+    // la region
+    st += '<path d="' + geomD(land.geometry) + '" fill="' + color + '" fill-rule="evenodd" filter="url(#rx-paper)"/>';
+    // lacs reels
+    const lakes = waterData ? waterData.lakes.filter(l => inBox(turf.bbox(turf.polygon([l.p])))) : [];
+    st += lakes.map(l => '<path d="' + ringD(l.p) + '" fill="#a7c8d3" stroke="#5f8fa6" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
+    // fleuves reels, largeur realiste (plus un trait fin toujours visible)
+    const rivers = waterData ? waterData.rivers.filter(r => inBox(turf.bbox(turf.lineString(r.c)))) : [];
+    rivers.forEach(r => { const d = lineD(r.c), w = RIVER_REAL_KM[r.cls] || 0.35;
+      st += '<path d="' + d + '" fill="none" stroke="#5f8fa6" stroke-width="' + (w + 0.25) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>' +
+        '<path d="' + d + '" fill="none" stroke="#a7c8d3" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="#6f9fb5" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/>'; });
+    // contour de la region par-dessus l'eau
+    st += '<path d="' + geomD(land.geometry) + '" fill="none" stroke="#3c3527" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+    // routes reelles (de la region et de ses voisines visibles)
+    const seen = new Set(), roads = [];
+    [regionId, ...others.map(o => o.id)].forEach(id => (roadGraph.get(id) || []).forEach(r => { const key = Math.min(id, r.to) + '-' + Math.max(id, r.to);
+      if(!seen.has(key)){ seen.add(key); roads.push({ coords:r.coords, own:id === regionId || r.to === regionId, to:id === regionId ? r.to : null }); } }));
+    roads.forEach(r => { const d = lineD(r.coords);
+      st += '<path d="' + d + '" fill="none" stroke="#7a5a36" stroke-width="' + (r.own ? 5 : 3) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 0.9 : 0.5) + '"/>' +
+        '<path d="' + d + '" fill="none" stroke="#e2cda6" stroke-width="' + (r.own ? 2.5 : 1.4) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 1 : 0.6) + '"/>'; });
+    // ponts: croisement route (de la region) / fleuve
     const bridges = [];
-    if(riverPts) roadLines.forEach(rl => {
-      for(let i = 0; i < rl.pts.length - 1; i++) for(let j = 0; j < riverPts.length - 1; j++){
-        const [a, b] = [rl.pts[i], rl.pts[i + 1]], [c, d] = [riverPts[j], riverPts[j + 1]];
-        const den = (b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0]); if(!den) continue;
-        const t = ((c[0] - a[0]) * (d[1] - c[1]) - (c[1] - a[1]) * (d[0] - c[0])) / den, u = ((c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])) / den;
-        if(t >= 0 && t <= 1 && u >= 0 && u <= 1){ bridges.push({ x:a[0] + (b[0] - a[0]) * t, y:a[1] + (b[1] - a[1]) * t, ang:Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI }); return; }
+    roads.filter(r => r.own).forEach(r => rivers.forEach(rv => {
+      try{ turf.lineIntersect(turf.lineString(r.coords), turf.lineString(rv.c)).features.forEach(pt => {
+        const c = pt.geometry.coordinates; let k = 0, bd = Infinity; r.coords.forEach((q, i) => { const dd = geoDistance(q, c); if(dd < bd){ bd = dd; k = i; } });
+        const a2 = P(r.coords[Math.max(0, k - 1)]), b2 = P(r.coords[Math.min(r.coords.length - 1, k + 1)]);
+        bridges.push({ p:P(c), ang:Math.atan2(b2[1] - a2[1], b2[0] - a2[0]) * 180 / Math.PI, len:(RIVER_REAL_KM[rv.cls] || 0.35) + 0.5, name:rv.n }); }); }catch(e){} }));
+    st += bridges.map(b => '<g transform="translate(' + f2(b.p[0]) + ' ' + f2(b.p[1]) + ') rotate(' + b.ang.toFixed(0) + ')"><rect x="' + f2(-b.len / 2) + '" y="-0.12" width="' + f2(b.len) + '" height="0.24" fill="#b08a5a" stroke="#4a3418" stroke-width="1.5" vector-effect="non-scaling-stroke"/></g>').join('');
+    // capitale + emplacement du futur village (rayon 0,5 km)
+    const top = '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.5" fill="rgba(179,38,30,0.12)" stroke="#b3261e" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>' +
+      '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.06" fill="#b3261e" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" class="rx-dot"/>';
+    // etiquettes (taille ajustee au zoom)
+    const labels = [];
+    rivers.forEach(r => { let best = -1, bd = Infinity; r.c.forEach((q, k) => { if(!turf.booleanPointInPolygon(q, land)) return; const d = geoDistance(q, cap); if(d < bd){ bd = d; best = k; } });
+      if(best >= 0){ const a2 = P(r.c[Math.max(0, best - 2)]), b2 = P(r.c[Math.min(r.c.length - 1, best + 2)]); let ang = Math.atan2(b2[1] - a2[1], b2[0] - a2[0]) * 180 / Math.PI; if(ang > 90) ang -= 180; if(ang < -90) ang += 180;
+        labels.push({ p:P(r.c[best]), t:r.n, cls:'rx-lab-river', ang }); } });
+    labels.push({ p:capK, t:'Futur village', cls:'rx-lab-cap', ang:0, dy:-1.2 });
+    others.forEach(o => { try{ const c = turf.pointOnFeature(o.g).geometry.coordinates; labels.push({ p:P(c), t:'Région ' + o.id, cls:'rx-lab-num', ang:0 }); }catch(e){} });
+
+    const humidAt = (lon, lat) => 1 - aridityAt(lat, ((lon + 540) % 360) - 180);
+    rx = { regionId, land, P, KX, KY, lon0, lat0, vb, regionW, regionH, capK, labels, view:null, detailKey:'' };
+    const html = '<div class="plan-wrap">' +
+      '<div class="village-info"><span>Région <b>' + regionId + '</b> : <b>' + Math.round(regionW) + ' × ' + Math.round(regionH) + ' km</b> (' + Math.round(turf.area(land) / 1e6).toLocaleString('fr-FR') + ' km²)</span>' +
+        '<span>Fleuves : <b>' + (rivers.filter(r => (r.r || []).includes(regionId)).map(r => r.n).join(', ') || 'aucun') + '</b></span>' +
+        '<span>Routes : <b>' + roads.filter(r => r.own).length + '</b>, ponts : <b>' + bridges.length + '</b></span><span>Lacs : <b>' + lakes.filter(l => l.r === regionId).length + '</b></span></div>' +
+      '<div class="rx-stage" id="rx-stage">' +
+        '<svg class="rx-svg" id="rx-svg" role="img" aria-label="Région ' + regionId + ' à l\'échelle">' +
+          '<defs><filter id="rx-paper"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.07 0"/><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>' +
+          '<style>.rx-lab-river{font-family:Caveat,"Segoe Script",cursive;fill:#1f4f73;text-anchor:middle;paint-order:stroke;stroke:#eef5f2;font-weight:700}' +
+          '.rx-lab-cap{font-family:Caveat,"Segoe Script",cursive;fill:#7a1d16;text-anchor:middle;paint-order:stroke;stroke:#faf6ec;font-weight:700}' +
+          '.rx-lab-num{font-family:sans-serif;fill:#3c3527;opacity:.5;text-anchor:middle;font-weight:600}' +
+          '.rx-lab-hamlet{font-family:Caveat,"Segoe Script",cursive;fill:#4a3418;text-anchor:middle;paint-order:stroke;stroke:#faf6ec}</style></defs>' +
+          '<g id="rx-static">' + st + '</g><g id="rx-detail"></g><g id="rx-top">' + top + '</g><g id="rx-labels"></g></svg>' +
+        '<svg class="rx-mini" id="rx-mini" viewBox="' + vb.join(' ').replace(/(\S+) (\S+) (\S+) (\S+)/, (m, a1, b1, c1, d1) => a1 + ' ' + b1 + ' ' + (c1 - a1) + ' ' + (d1 - b1)) + '">' +
+          '<path d="' + geomD(land.geometry) + '" fill="' + color + '" stroke="#3c3527" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
+          '<rect id="rx-mini-view" fill="rgba(179,38,30,0.15)" stroke="#b3261e" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>' +
+        '<div class="rx-tools"><button type="button" id="rx-in" title="Zoomer">+</button><button type="button" id="rx-out" title="Dézoomer">−</button>' +
+          '<button type="button" id="rx-home" title="Voir toute la région">⤢</button><button type="button" id="rx-cap" title="Aller au village">⌂</button></div>' +
+        '<div class="rx-scale" id="rx-scale"></div>' +
+        '<div class="rx-hint">Glisser pour se déplacer · molette pour zoomer · flèches / ZQSD</div>' +
+      '</div></div>';
+    body.innerHTML = html;
+    const svg = document.getElementById('rx-svg'), stage = document.getElementById('rx-stage');
+    // vue: centre (km) + largeur visible (km)
+    const fitWhole = () => { rx.view = { cx:(vb[0] + vb[2]) / 2, cy:(vb[1] + vb[3]) / 2, w:Math.max(vb[2] - vb[0], (vb[3] - vb[1]) * stage.clientWidth / Math.max(1, stage.clientHeight)) }; };
+    fitWhole();
+    const MIN_W = 2, MAX_W = Math.max(regionW, regionH) * 2.6;
+    function apply(){
+      const W = stage.clientWidth || 800, H = stage.clientHeight || 500, v = rx.view, h = v.w * H / W;
+      svg.setAttribute('viewBox', [v.cx - v.w / 2, v.cy - h / 2, v.w, h].map(n => n.toFixed(3)).join(' '));
+      const mv = document.getElementById('rx-mini-view'); mv.setAttribute('x', v.cx - v.w / 2); mv.setAttribute('y', v.cy - h / 2); mv.setAttribute('width', v.w); mv.setAttribute('height', h);
+      // echelle: longueur "ronde" ~ 120 px
+      const kmPerPx = v.w / W, target = kmPerPx * 120, steps = [0.1, 0.2, 0.25, 0.5, 1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500];
+      const km = steps.find(x => x >= target) || 500;
+      document.getElementById('rx-scale').innerHTML = (km < 1 ? Math.round(km * 1000) + ' m' : km + ' km') + '<i style="width:' + (km / kmPerPx).toFixed(0) + 'px"></i>';
+      // etiquettes a taille constante a l'ecran
+      const fs1 = kmPerPx * 16;
+      document.getElementById('rx-labels').innerHTML = rx.labels.map(l => '<text x="' + f2(l.p[0]) + '" y="' + f2(l.p[1] + (l.dy || 0) * fs1) + '" class="' + l.cls + '" font-size="' + (fs1 * (l.cls === 'rx-lab-num' ? 0.8 : 1.15)).toFixed(3) + '" stroke-width="' + (fs1 * 0.25).toFixed(3) + '"' +
+        (l.ang ? ' transform="rotate(' + l.ang.toFixed(0) + ' ' + f2(l.p[0]) + ' ' + f2(l.p[1]) + ')"' : '') + (l.cls === 'rx-lab-river' ? ' dy="' + (-fs1 * 0.7).toFixed(3) + '"' : '') + '>' + l.t + '</text>').join('');
+      scheduleDetails();
+    }
+    // details generes pour la zone visible (cases de 10 km)
+    let detailTimer = null;
+    function scheduleDetails(){ clearTimeout(detailTimer); detailTimer = setTimeout(renderDetails, 120); }
+    function renderDetails(){
+      const v = rx.view, W = stage.clientWidth || 800, H = stage.clientHeight || 500, h = v.w * H / W;
+      const g = document.getElementById('rx-detail'); if(!g) return;
+      if(v.w > 160){ g.innerHTML = ''; rx.detailKey = ''; return; }
+      const C = 10, i0 = Math.floor((v.cx - v.w / 2) / C), i1 = Math.floor((v.cx + v.w / 2) / C), j0 = Math.floor((v.cy - h / 2) / C), j1 = Math.floor((v.cy + h / 2) / C);
+      const lod = v.w < 20 ? 3 : v.w < 60 ? 2 : 1, key = [i0, i1, j0, j1, lod].join(',');
+      if(key === rx.detailKey) return; rx.detailKey = key;
+      const inv = (x, y) => [lon0 + x / KX, lat0 - y / KY];
+      let out = '';
+      for(let i = i0; i <= i1; i++) for(let j = j0; j <= j1; j++){
+        const rnd = villageRng(regionId * 1000003 + (i + 5000) * 10007 + (j + 5000));
+        const ccx = (i + 0.5) * C, ccy = (j + 0.5) * C, hum = humidAt(...inv(ccx, ccy));
+        const inside = (x, y) => turf.booleanPointInPolygon(inv(x, y), land) && Math.hypot(x - rx.capK[0], y - rx.capK[1]) > 0.9;
+        // forets: taches irregulieres
+        const nF = Math.floor(hum * 3.2 * rnd() + (hum > 0.5 ? 1 : 0));
+        for(let k = 0; k < nF; k++){ const x = i * C + rnd() * C, y = j * C + rnd() * C, r = 0.4 + rnd() * 1.6; if(!inside(x, y)){ rnd(); continue; }
+          const n = 10, ph = rnd() * 6; let d = '';
+          for(let q = 0; q <= n; q++){ const a3 = q / n * Math.PI * 2, rr = r * (0.75 + 0.25 * Math.sin(a3 * 3 + ph)); d += (q ? 'L' : 'M') + f2(x + Math.cos(a3) * rr) + ' ' + f2(y + Math.sin(a3) * rr); }
+          out += '<path d="' + d + 'Z" fill="#4f7a3a" fill-opacity="0.75" stroke="#2f4a26" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+          if(lod >= 3) for(let t = 0; t < 14; t++){ const tx = x + (rnd() - 0.5) * r * 1.4, ty = y + (rnd() - 0.5) * r * 1.4; out += '<circle cx="' + f2(tx) + '" cy="' + f2(ty) + '" r="0.06" fill="#355e2a"/>'; }
+        }
+        // etangs
+        if(rnd() < hum * 0.6){ const x = i * C + rnd() * C, y = j * C + rnd() * C, r = 0.08 + rnd() * 0.3;
+          if(inside(x, y)) out += '<ellipse cx="' + f2(x) + '" cy="' + f2(y) + '" rx="' + f2(r) + '" ry="' + f2(r * (0.55 + rnd() * 0.4)) + '" fill="#a7c8d3" stroke="#5f8fa6" stroke-width="1" vector-effect="non-scaling-stroke"/>'; }
+        // ruisseaux (vue < 60 km)
+        if(lod >= 2 && rnd() < hum * 0.7){ let x = i * C + rnd() * C, y = j * C + rnd() * C, a3 = rnd() * Math.PI * 2; const pts = [];
+          if(inside(x, y)){ for(let t = 0; t < 14; t++){ pts.push(f2(x) + ' ' + f2(y)); a3 += (rnd() - 0.5) * 0.9; x += Math.cos(a3) * 0.45; y += Math.sin(a3) * 0.45; }
+            out += '<path d="M' + pts.join('L') + '" fill="none" stroke="#6f9fb5" stroke-width="1.3" vector-effect="non-scaling-stroke" stroke-linecap="round"/>'; } }
+        // hameaux (vue < 60 km: point; < 20 km: maisons)
+        if(lod >= 2 && rnd() < 0.18 + hum * 0.1){ const x = i * C + rnd() * C, y = j * C + rnd() * C;
+          if(inside(x, y)){ if(lod >= 3){ const nH = 3 + Math.floor(rnd() * 5); for(let t = 0; t < nH; t++){ const hx = x + (rnd() - 0.5) * 0.35, hy = y + (rnd() - 0.5) * 0.35;
+                out += '<rect x="' + f2(hx) + '" y="' + f2(hy) + '" width="0.05" height="0.04" fill="#b5835a" stroke="#4a3418" stroke-width="0.8" vector-effect="non-scaling-stroke"/>'; }
+              out += '<text x="' + f2(x) + '" y="' + f2(y - 0.3) + '" class="rx-lab-hamlet" font-size="' + f2(v.w / W * 13) + '" stroke-width="' + f2(v.w / W * 3) + '">hameau</text>'; }
+            else out += '<circle cx="' + f2(x) + '" cy="' + f2(y) + '" r="' + f2(v.w / W * 3) + '" fill="#8a5a33"/>'; } }
       }
-    });
-    // --- decor: bosquets (plus en climat humide), cailloux (plus en climat sec)
-    const trees = [];
-    const nTrees = Math.round(20 + humid * 70);
-    for(let t = 0; t < nTrees * 3 && trees.length < nTrees; t++){
-      const x = 40 + rnd() * (W - 80), y = 40 + rnd() * (H - 80);
-      if(Math.hypot(x - cross[0], y - cross[1]) < 190) continue;
-      if(riverPts && riverPts.some(q => Math.hypot(q[0] - x, q[1] - y) < 60)) continue;
-      if(roadLines.some(rl => rl.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < 26))) continue;
-      if(ponds.some(o => Math.hypot(o.x - x, o.y - y) < o.r + 22)) continue;
-      trees.push([x, y, 7 + rnd() * 9]);
+      g.innerHTML = out;
     }
-    // --- dessin
-    const f0 = f.properties.fillColor || '#b8c98a';
-    let svg = '<defs>' +
-      '<filter id="vg-wobble"><feTurbulence type="fractalNoise" baseFrequency="0.02" numOctaves="2" seed="' + (regionId % 97) + '"/><feDisplacementMap in="SourceGraphic" scale="6"/></filter>' +
-      '<filter id="vg-paper"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.08 0"/><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>' +
-      '<pattern id="vg-hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><path d="M0 0V10" stroke="#5f8fa6" stroke-width="1" opacity="0.35"/></pattern>' +
-      '<style>.vg-lab{font-family:Caveat,"Segoe Script",cursive;font-size:30px;fill:#2c3f4d;paint-order:stroke;stroke:#f6efe0;stroke-width:5px;text-anchor:middle}' +
-      '.vg-road{font-family:Caveat,"Segoe Script",cursive;font-size:24px;fill:#4a3418;paint-order:stroke;stroke:#f6efe0;stroke-width:5px;text-anchor:middle}</style></defs>';
-    // sol
-    svg += '<rect width="' + W + '" height="' + H + '" fill="' + f0 + '" filter="url(#vg-paper)"/>' +
-      '<rect width="' + W + '" height="' + H + '" fill="#f6efe0" opacity="0.35"/>';
-    // cailloux (climat sec)
-    for(let i = 0; i < Math.round(arid * 60); i++){ const x = rnd() * W, y = rnd() * H;
-      svg += '<ellipse cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" rx="' + (3 + rnd() * 5).toFixed(1) + '" ry="' + (2 + rnd() * 3).toFixed(1) + '" fill="#8a7a5c" opacity="0.45"/>'; }
-    // fleuve: lit (rives) + eau + hachures
-    if(riverPts){
-      const d = smoothD(riverPts), wRiver = 34 + (3 - Math.min(3, river.cls)) * 14;
-      svg += '<g filter="url(#vg-wobble)"><path d="' + d + '" fill="none" stroke="#6f8f6a" stroke-width="' + (wRiver + 14) + '" stroke-linecap="round" opacity="0.55"/>' +
-        '<path d="' + d + '" fill="none" stroke="#a7c8d3" stroke-width="' + wRiver + '" stroke-linecap="round"/>' +
-        '<path d="' + d + '" fill="none" stroke="url(#vg-hatch)" stroke-width="' + wRiver + '" stroke-linecap="round"/>' +
-        '<path d="' + d + '" fill="none" stroke="#5f8fa6" stroke-width="2" stroke-dasharray="14 18" opacity="0.6"/></g>';
+    // zoom autour d'un point ecran
+    function zoomAt(factor, sx, sy){
+      const W = stage.clientWidth, H = stage.clientHeight, v = rx.view, h = v.w * H / W;
+      const px = v.cx - v.w / 2 + sx / W * v.w, py = v.cy - h / 2 + sy / H * h;
+      const nw = Math.min(MAX_W, Math.max(MIN_W, v.w * factor)), k = nw / v.w;
+      v.cx = px + (v.cx - px) * k; v.cy = py + (v.cy - py) * k; v.w = nw; apply();
     }
-    if(stream) svg += '<path d="' + smoothD(stream) + '" fill="none" stroke="#a7c8d3" stroke-width="7" stroke-linecap="round" filter="url(#vg-wobble)"/>' +
-      '<path d="' + smoothD(stream) + '" fill="none" stroke="#5f8fa6" stroke-width="1.5" opacity="0.6" filter="url(#vg-wobble)"/>';
-    // etangs
-    ponds.forEach(o => { svg += '<g filter="url(#vg-wobble)" transform="rotate(' + o.rot.toFixed(0) + ' ' + o.x.toFixed(0) + ' ' + o.y.toFixed(0) + ')">' +
-      '<ellipse cx="' + o.x.toFixed(0) + '" cy="' + o.y.toFixed(0) + '" rx="' + (o.r + 8).toFixed(0) + '" ry="' + (o.r * o.e + 8).toFixed(0) + '" fill="#6f8f6a" opacity="0.45"/>' +
-      '<ellipse cx="' + o.x.toFixed(0) + '" cy="' + o.y.toFixed(0) + '" rx="' + o.r.toFixed(0) + '" ry="' + (o.r * o.e).toFixed(0) + '" fill="#a7c8d3" stroke="#5f8fa6" stroke-width="2"/>' +
-      '<ellipse cx="' + o.x.toFixed(0) + '" cy="' + o.y.toFixed(0) + '" rx="' + o.r.toFixed(0) + '" ry="' + (o.r * o.e).toFixed(0) + '" fill="url(#vg-hatch)"/></g>'; });
-    // routes: chemin de terre (bord sombre, coeur clair, ornières)
-    roadLines.forEach(rl => { const d = smoothD(rl.pts), w = rl.main ? 26 : 17;
-      svg += '<g filter="url(#vg-wobble)"><path d="' + d + '" fill="none" stroke="#7a5a36" stroke-width="' + (w + 5) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.8"/>' +
-        '<path d="' + d + '" fill="none" stroke="#d9c09a" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="' + d + '" fill="none" stroke="#9c7b52" stroke-width="1.6" stroke-dasharray="10 12" opacity="0.8"/></g>'; });
-    // ponts
-    bridges.forEach(b => { svg += '<g transform="translate(' + b.x.toFixed(0) + ' ' + b.y.toFixed(0) + ') rotate(' + b.ang.toFixed(0) + ')">' +
-      '<rect x="-46" y="-17" width="92" height="34" rx="3" fill="#b08a5a" stroke="#4a3418" stroke-width="3"/>' +
-      [-30, -15, 0, 15, 30].map(x => '<path d="M' + x + ' -17V17" stroke="#6b4a2a" stroke-width="2"/>').join('') +
-      '<path d="M-46 -21H46M-46 21H46" stroke="#4a3418" stroke-width="3"/></g>'; });
-    // arbres
-    trees.forEach(([x, y, r]) => { svg += '<circle cx="' + x.toFixed(0) + '" cy="' + (y + r * 0.35).toFixed(0) + '" r="' + r.toFixed(1) + '" fill="#2f4a26" opacity="0.25"/>' +
-      '<circle cx="' + x.toFixed(0) + '" cy="' + y.toFixed(0) + '" r="' + r.toFixed(1) + '" fill="#4f7a3a" stroke="#2f4a26" stroke-width="1.5"/>'; });
-    // puits
-    wells.forEach(([x, y]) => { svg += '<g transform="translate(' + x.toFixed(0) + ' ' + y.toFixed(0) + ')"><circle r="13" fill="#cfc3a8" stroke="#4a3418" stroke-width="3"/><circle r="6" fill="#5f8fa6"/></g>'; });
-    // emplacement du village
-    svg += '<g transform="translate(' + cross[0].toFixed(0) + ' ' + cross[1].toFixed(0) + ')"><circle r="110" fill="none" stroke="#4a3418" stroke-width="3" stroke-dasharray="12 10" opacity="0.7"/>' +
-      '<text y="8" class="vg-lab" style="font-size:34px;fill:#4a3418">⌂ Futur village</text></g>';
-    // etiquettes: fleuve, routes (bord de carte)
-    if(riverPts){ const m = riverPts[Math.floor(riverPts.length * 0.25)], m2 = riverPts[Math.floor(riverPts.length * 0.25) + 1];
-      let ang = Math.atan2(m2[1] - m[1], m2[0] - m[0]) * 180 / Math.PI; if(ang > 90) ang -= 180; if(ang < -90) ang += 180;
-      svg += '<text x="' + m[0].toFixed(0) + '" y="' + m[1].toFixed(0) + '" dy="-30" class="vg-lab" transform="rotate(' + ang.toFixed(0) + ' ' + m[0].toFixed(0) + ' ' + m[1].toFixed(0) + ')">' + river.n + '</text>'; }
-    roadLines.forEach(rl => { const e = rl.pts[rl.pts.length - 1], x = Math.min(W - 90, Math.max(90, e[0])), y = Math.min(H - 20, Math.max(34, e[1]));
-      svg += '<text x="' + x.toFixed(0) + '" y="' + y.toFixed(0) + '" class="vg-road">→ Région ' + rl.to + '</text>'; });
-    // echelle et nord
-    const px1km = W / VILLAGE_KM;
-    svg += '<g transform="translate(40 ' + (H - 40) + ')"><rect x="-12" y="-34" width="' + (px1km + 24) + '" height="48" rx="8" fill="#f6efe0" opacity="0.85"/>' +
-      '<path d="M0 0H' + px1km.toFixed(0) + 'M0 -8V8M' + px1km.toFixed(0) + ' -8V8" stroke="#3c3527" stroke-width="3"/><text x="' + (px1km / 2).toFixed(0) + '" y="-12" class="vg-road">1 km</text></g>' +
-      '<g transform="translate(' + (W - 50) + ' 60)"><circle r="28" fill="#f6efe0" opacity="0.85"/><path d="M0 -20L10 12L0 5L-10 12Z" fill="#3c3527"/><text y="-32" class="vg-road">N</text></g>';
-    // cadre
-    svg += '<rect x="6" y="6" width="' + (W - 12) + '" height="' + (H - 12) + '" fill="none" stroke="#4a3418" stroke-width="4" rx="8" filter="url(#vg-wobble)"/>';
-    return { svg, river, roads, climate, waterPoints:ponds.length + ' étang(s), ' + wells.length + ' puits' + (stream ? ', 1 ruisseau' : '') };
+    svg.addEventListener('wheel', e => { e.preventDefault(); const r = svg.getBoundingClientRect(); zoomAt(e.deltaY > 0 ? 1.25 : 0.8, e.clientX - r.left, e.clientY - r.top); }, { passive:false });
+    let drag = null;
+    svg.addEventListener('pointerdown', e => { drag = { x:e.clientX, y:e.clientY, cx:rx.view.cx, cy:rx.view.cy }; svg.setPointerCapture(e.pointerId); svg.classList.add('dragging'); });
+    svg.addEventListener('pointermove', e => { if(!drag) return; const k = rx.view.w / stage.clientWidth; rx.view.cx = drag.cx - (e.clientX - drag.x) * k; rx.view.cy = drag.cy - (e.clientY - drag.y) * k; apply(); });
+    const endDrag = () => { drag = null; svg.classList.remove('dragging'); };
+    svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
+    const center = () => [stage.clientWidth / 2, stage.clientHeight / 2];
+    document.getElementById('rx-in').addEventListener('click', () => zoomAt(0.6, ...center()));
+    document.getElementById('rx-out').addEventListener('click', () => zoomAt(1 / 0.6, ...center()));
+    document.getElementById('rx-home').addEventListener('click', () => { fitWhole(); apply(); });
+    document.getElementById('rx-cap').addEventListener('click', () => { rx.view = { cx:rx.capK[0], cy:rx.capK[1], w:6 }; apply(); });
+    document.getElementById('rx-mini').addEventListener('click', e => { const m = e.currentTarget, r = m.getBoundingClientRect(), vbm = m.viewBox.baseVal;
+      const sc = Math.min(r.width / vbm.width, r.height / vbm.height), ox = (r.width - vbm.width * sc) / 2, oy = (r.height - vbm.height * sc) / 2;
+      rx.view.cx = vbm.x + (e.clientX - r.left - ox) / sc; rx.view.cy = vbm.y + (e.clientY - r.top - oy) / sc; apply(); });
+    if(!rx.resizeBound){ window.addEventListener('resize', () => { if(rx && document.getElementById('rx-svg')) rx.apply(); }); }
+    rx.apply = apply; rx.resizeBound = true;
+    requestAnimationFrame(apply);
   }
+  // clavier: fleches / ZQSD deplacent la vue (vue Village affichee)
+  document.addEventListener('keydown', e => {
+    if(!rx || currentView() !== 'village' || !document.getElementById('rx-svg') || /INPUT|SELECT|TEXTAREA/.test(e.target.tagName)) return;
+    const k = e.key.toLowerCase(), step = rx.view.w * 0.12;
+    const d = { arrowleft:[-1, 0], q:[-1, 0], a:[-1, 0], arrowright:[1, 0], d:[1, 0], arrowup:[0, -1], z:[0, -1], w:[0, -1], arrowdown:[0, 1], s:[0, 1] }[k];
+    if(!d) return; e.preventDefault(); rx.view.cx += d[0] * step; rx.view.cy += d[1] * step; rx.apply();
+  });
 
   // ---------- Plan de la region (onglet de la capitale) ----------
   // Carte detaillee dessinee en SVG: la region (fleuves et lacs deja creuses
