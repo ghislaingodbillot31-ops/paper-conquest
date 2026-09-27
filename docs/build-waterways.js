@@ -248,7 +248,7 @@ for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
   if(!w){ cutEarly.push(R.n); continue; }
   if(w.joined) joined++;
   if(w.grazed) cutEarly.push(R.n + ' (frole une autre riviere)');
-  w.name = R.n; w.line = turf.lineString(w.coords);
+  w.name = R.n; w.cls = R.cls; w.line = turf.lineString(w.coords);
   w.poly = riverPolygon(w); stamp(w.coords, w.width);
   rivers.push(w); water += turf.area(w.poly) / 1e6;
 }
@@ -307,7 +307,11 @@ let carved = 0, failed = 0;
 fc.features.forEach((f, idx) => {
   const g = f.geometry;
   if(g.type === 'Polygon') g.coordinates = g.coordinates.map(unwrapRing); else if(g.type === 'MultiPolygon') g.coordinates = g.coordinates.map(p => p.map(unwrapRing));
-  const fb = turf.bbox(f);
+  const fb = turf.bbox(f), over = bb => !(fb[0] > bb[2] || fb[2] < bb[0] || fb[1] > bb[3] || fb[3] < bb[1]);
+  // regions traversees par chaque fleuve (un point tous les ~20 km) et region de chaque lac
+  rivers.forEach((r, k) => { if(!over(riverBoxes[k])) return;
+    for(let i = 0; i < r.coords.length; i += 5) if(turf.booleanPointInPolygon(r.coords[i], f)){ (r.regions = r.regions || new Set()).add(idx + 1); break; } });
+  lakes.forEach((l, k) => { if(over(lakeBoxes[k]) && turf.booleanPointInPolygon(turf.centroid(l.poly), f)) l.region = idx + 1; });
   const hits = waters.filter((w, k) => { const bb = waterBoxes[k]; return !(fb[0] > bb[2] || fb[2] < bb[0] || fb[1] > bb[3] || fb[3] < bb[1]); });
   if(!hits.length) return;
   try{ const d = turf.difference(turf.featureCollection([f, ...hits])); if(d){ f.geometry = d.geometry; carved++; } }
@@ -326,8 +330,8 @@ function resample(w, stepKm){ const c = [w.coords[0]], ww = [w.width[0]]; let ru
   return { c:c.map(([x, y]) => [r3(x), r3(y)]), w:ww.map(v => Math.round(v * 10) / 10) }; }
 const waterOut = {
   stats:{ landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:+(water / landKm2).toFixed(4), rivers:rivers.length, lakes:lakes.length, confluences:joined },
-  rivers:rivers.map(w => ({ n:w.name, ...resample(w, 4) })),
-  lakes:lakes.map(l => ({ p:l.poly.geometry.coordinates[0].map(([x, y]) => [r3(x), r3(y)]), a:Math.round(turf.area(l.poly) / 1e6) })),
+  rivers:rivers.map(w => ({ n:w.name, cls:w.cls, r:[...(w.regions || [])].sort((a, b) => a - b), ...resample(w, 4) })),
+  lakes:lakes.map(l => ({ p:l.poly.geometry.coordinates[0].map(([x, y]) => [r3(x), r3(y)]), a:Math.round(turf.area(l.poly) / 1e6), r:l.region || null })),
 };
 fs.writeFileSync(path.join(OUT, 'water.json'), JSON.stringify(waterOut));
 // simplification legere (triangles < ~0.25 km2 retires) puis ~400 m de precision: invisible a l'echelle du jeu
