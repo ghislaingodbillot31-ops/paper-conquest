@@ -324,6 +324,19 @@
   .cap-switch select{ font:inherit; font-weight:700; color:var(--ink); padding:5px 8px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--paper-alt); }
   .cap-none{ margin:auto; text-align:center; font-size:0.9rem; color:var(--ink-soft); padding:40px 16px; }
   .cap-intro, .cap-empty{ margin:0; font-size:0.82rem; color:var(--ink-soft); }
+  /* Onglet Stocks (economie) */
+  .eco-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; }
+  .eco-card{ padding:10px 12px; border:1.5px solid var(--line); border-radius:10px; background:var(--paper); }
+  .eco-card .k{ font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); }
+  .eco-card .v{ font-size:1.25rem; font-weight:800; font-variant-numeric:tabular-nums; }
+  .eco-card .s{ font-size:0.72rem; color:var(--ink-soft); }
+  .eco-table{ width:100%; max-width:640px; border-collapse:collapse; font-size:0.82rem; font-variant-numeric:tabular-nums; }
+  .eco-table th{ text-align:left; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); padding:4px 6px; border-bottom:1.5px solid var(--line); }
+  .eco-table td{ padding:4px 6px; border-bottom:1px solid var(--line); }
+  .eco-table td.n, .eco-table th.n{ text-align:right; }
+  .eco-table .cat td{ font-weight:800; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-soft); background:var(--paper-alt); }
+  .eco-plus{ color:var(--good); font-weight:700; }
+  .build-cost{ font-size:0.76rem; font-weight:800; margin-top:3px; }
   .build-list{ display:flex; flex-direction:column; gap:10px; }
   .build-card{ display:grid; grid-template-columns:44px 1fr auto; gap:12px; align-items:center; padding:12px; border:1.5px solid var(--line); border-radius:10px; background:var(--paper); }
   .build-icon{ width:44px; height:44px; border-radius:50%; background:#1c3d5a; color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.3rem; }
@@ -399,7 +412,7 @@
     </div>
     <div class="stat-pills">
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 9c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5-1.3 2-3 2.5-3 1.1-3 2.5 1.3 2.5 3 2.5 3-1.1 3-2.5"/></svg>
-        <div><span class="num">0</span><span class="delta">+0 / jour</span></div></div>
+        <div><span class="num" id="eco-gold" title="Trésor (monnaie : Or)">0 Or</span><span class="delta" id="eco-gold-delta">+0 / jour</span></div></div>
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="18" cy="9" r="2.6"/><path d="M15.5 14.2c2.9.4 5 2.6 5 5.8"/></svg>
         <div><span class="num">0</span><span class="delta">+0 / jour</span></div></div>
       <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 1.1 2.4 1.7 4 1.7s3-.6 4-1.7"/></svg>
@@ -900,6 +913,7 @@
     initBoat(navGrid);
     initCaravan();
     initResources();
+    initEconomy();
   }
 
   // ---------- Reseau de chemins (mondial, adjacence topologique reelle) ----------
@@ -2211,7 +2225,7 @@
     alun:          { name:'Alun',                 score:p => local(p.terrain.hydrothermal * 0.95 + p.terrain.volcan * 0.35, p.geo.alun) },
     argent:        { name:'Argent',               score:p => { const t = p.terrain;
       return local(p.deposit.argent * 0.95 + t.volcan * t.montagne * 0.5 + p.deposit.plomb * 0.25 + p.deposit.cuivre * 0.15, p.geo.argent); } },
-    or:            { name:'Or',                   score:p => { const t = p.terrain;
+    or:            { name:'Minerai d\'or',        score:p => { const t = p.terrain;
       return local(p.deposit.or * 0.95 + t.ancien * 0.45 + t.alluvial * 0.3, p.geo.or); } },
     // Ambre: cote sud et est de la Baltique, le plus riche au Sambland
     ambre:         { name:'Ambre de la Baltique', score:p => p.coastal && p.lon > 9 && p.lon < 30 && p.lat > 53 && p.lat < 61
@@ -3042,6 +3056,7 @@
   function buyRegion(id){
     const f = regionFeature(id);
     if(!f || f.properties.isNpc || ownerOf(id) !== null) return; // deja possedee: plus achetable
+    if(!spendGold(regionPrice())) return;                          // pas assez d'Or
     ownedRegions.add(id);
     savePlayerState();
     refreshOwnershipLayers();
@@ -3071,12 +3086,14 @@
       '<div class="region-row"><span>Aire</span><span class="v">' + area + '</span></div>' +
       '<div class="region-row"><span>Continent</span><span class="v">' + contName + '</span></div>' +
       '<div class="region-row"><span>Propriétaire</span><span class="v">' + (owned ? 'Vous' : 'Aucun') + '</span></div>' +
-      (owned ? '<div class="region-row"><span>Ports</span><span class="v">' + ports + '</span></div>' : '') +
+      (owned ? '<div class="region-row"><span>Ports</span><span class="v">' + ports + '</span></div>' +
+        (() => { const pr = Object.entries(regionProduction(selectedId)); return '<div class="region-row"><span>Production / jour</span><span class="v">' +
+          (pr.length ? pr.map(([k, q]) => q + ' ' + goodName(k)).join(', ') : 'aucune') + '</span></div>'; })() : '') +
       regionResourcesHtml(selectedId) +
       (owned
         ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
           '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
-        : '<button class="select-btn" id="buy-btn">' + iconCheck() + 'ACHETER CETTE RÉGION</button>');
+        : '<button class="select-btn" id="buy-btn"' + (eco.gold < regionPrice() ? ' disabled title="Pas assez d\'Or"' : '') + '>' + iconCheck() + 'ACHETER CETTE RÉGION — ' + (regionPrice() ? fmtGold(regionPrice()) : 'OFFERTE') + '</button>');
     const buy = document.getElementById('buy-btn');
     if(buy) buy.addEventListener('click', () => buyRegion(selectedId));
     const boatBtn = document.getElementById('boat-place-btn');
@@ -3161,6 +3178,7 @@
   // capitale: une entree { id, label, render(el, regionId), live? } dans
   // CAPITAL_TABS (live: rafraichi chaque seconde tant qu'il est affiche).
   const CAPITAL_TABS = [
+    { id:'stocks', label:'Stocks', render:renderStocksTab, live:true },
     { id:'construction', label:'Construction', render:renderConstructionTab },
     { id:'caravane', label:'Caravane', render:renderCaravanTab, live:true },
     { id:'voyage', label:'Voyage', render:renderVoyageTab, live:true },
@@ -3238,17 +3256,41 @@
     { id:'port', name:'Port', icon:'⚓',
       description:'Permet à vos navires d\'accoster et de partir de la région.',
       rule:'Uniquement sur le littoral de la région, tourné vers la mer.',
-      maxPerRegion:1,
+      maxPerRegion:1, cost:300,
       available: regionId => coastOf(regionId) !== null || 'Région sans littoral : aucun port possible.',
       hint:'sur le littoral',
       validate: validateCoastalPlacement },
     { id:'mine', name:'Atelier de mineur', icon:'⛏️',
       description:'Extrait les minerais et gisements naturels de la région.',
       rule:'N\'importe où sur les terres de la région.',
-      maxPerRegion:1,
+      maxPerRegion:1, cost:200,
       available: regionId => regionMinerals(regionId).length > 0 || 'Aucun minerai ni gisement dans cette région.',
       details: regionId => { const r = regionResources.get(regionId) || {}, list = regionMinerals(regionId);
         return list.length ? 'Extraction : ' + list.map(k => RESOURCES[k].name + ' (' + RESOURCE_LEVELS[r[k]].toLowerCase() + ')').join(', ') + '.' : ''; },
+      hint:'dans les terres',
+      validate: validateLandPlacement },
+    { id:'ferme', name:'Ferme', icon:'🌾',
+      description:'Cultive les terres de la région : céréales, lin, chanvre, plantes tinctoriales, épices.',
+      rule:'N\'importe où sur les terres de la région.',
+      maxPerRegion:1, cost:150,
+      available: regionId => Object.keys(productionOf('ferme', regionId)).length > 0 || 'Aucune culture possible dans cette région.',
+      details: regionId => productionText('ferme', regionId),
+      hint:'dans les terres',
+      validate: validateLandPlacement },
+    { id:'pecherie', name:'Pêcherie', icon:'🎣',
+      description:'Pêche en mer (zones de pêche voisines), dans les fleuves et les lacs de la région.',
+      rule:'N\'importe où sur les terres de la région.',
+      maxPerRegion:1, cost:200,
+      available: regionId => Object.keys(productionOf('pecherie', regionId)).length > 0 || 'Ni zone de pêche, ni fleuve, ni lac dans cette région.',
+      details: regionId => productionText('pecherie', regionId),
+      hint:'dans les terres',
+      validate: validateLandPlacement },
+    { id:'elevage', name:'Élevage', icon:'🐄',
+      description:'Élève les animaux de la région : lait, viande, laine, cuir, montures.',
+      rule:'N\'importe où sur les terres de la région.',
+      maxPerRegion:1, cost:180,
+      available: regionId => Object.keys(productionOf('elevage', regionId)).length > 0 || 'Aucun animal d\'élevage dans cette région.',
+      details: regionId => productionText('elevage', regionId),
       hint:'dans les terres',
       validate: validateLandPlacement },
   ];
@@ -3271,11 +3313,13 @@
         const count = built.filter(x => x.type === b.id).length;
         const avail = b.available(regionId);
         const full = b.maxPerRegion !== null && count >= b.maxPerRegion;
-        const blocked = avail !== true ? avail : (full ? 'Déjà construit dans cette région (' + count + '/' + b.maxPerRegion + ').' : '');
+        const poor = b.cost && eco.gold < b.cost;
+        const blocked = avail !== true ? avail : (full ? 'Déjà construit dans cette région (' + count + '/' + b.maxPerRegion + ').' : (poor ? 'Pas assez d\'Or (' + fmtGold(b.cost) + ' nécessaires).' : ''));
         return '<div class="build-card">' +
           '<div class="build-icon" aria-hidden="true">' + b.icon + '</div>' +
           '<div class="build-text"><div class="build-name">' + b.name + '</div><div class="build-desc">' + b.description + '</div>' +
           '<div class="build-rule">Règle : ' + b.rule + '</div>' +
+          (b.cost ? '<div class="build-cost">Coût : ' + fmtGold(b.cost) + '</div>' : '') +
           (b.details && b.details(regionId) ? '<div class="build-rule">' + b.details(regionId) + '</div>' : '') +
           (blocked ? '<div class="build-blocked">' + blocked + '</div>' : '') + '</div>' +
           '<button class="boat-btn build-go" type="button" data-building="' + b.id + '"' + (blocked ? ' disabled' : '') + '>Construire</button></div>';
@@ -3283,7 +3327,8 @@
       '<div class="region-section-title">Bâtiments de la région</div>' +
       (built.length ? '<ul class="built-list">' + built.map(x => {
         const def = BUILDINGS.find(b => b.id === x.type);
-        const extra = def && def.id === 'mine' && regionMinerals(regionId).length ? ' — extrait : ' + regionMinerals(regionId).map(k => RESOURCES[k].name).join(', ') : '';
+        const prod = def ? productionOf(def.id, regionId) : {};
+        const extra = Object.keys(prod).length ? ' — produit : ' + Object.entries(prod).map(([k, q]) => q + ' ' + goodName(k)).join(', ') + ' / jour' : '';
         return '<li>' + (def ? def.icon + ' ' + def.name : x.type) + ' — construit le ' + new Date(x.builtAt).toLocaleDateString('fr-FR') + extra + '</li>';
       }).join('') + '</ul>' : '<p class="cap-empty">Aucun bâtiment pour le moment.</p>');
     el.querySelectorAll('.build-go').forEach(btn => btn.addEventListener('click', () => startPlacement(btn.dataset.building, regionId)));
@@ -3362,6 +3407,8 @@
   // ---------- Placement d'un batiment sur la carte ----------
   const placement = { active:false, building:null, regionId:null, last:null, pending:false };
   function startPlacement(buildingId, regionId){
+    const bdef = BUILDINGS.find(b => b.id === buildingId);
+    if(bdef && bdef.cost && eco.gold < bdef.cost){ boatHint('Pas assez d\'Or pour construire : ' + bdef.name + ' (' + fmtGold(bdef.cost) + ').'); return; }
     closeCapital();
     boat.selected = false; boat.placing = false; renderBoat();
     Object.assign(placement, { active:true, building:BUILDINGS.find(b => b.id === buildingId), regionId, last:null, pending:false });
@@ -3422,6 +3469,7 @@
     const r = placement.last;
     if(!placement.pending || !r || !r.valid) return;
     const id = placement.regionId;
+    if(!spendGold(placement.building.cost || 0)){ boatHint('Pas assez d\'Or pour construire : ' + placement.building.name + '.'); stopPlacement(); return; }
     (buildings[id] = buildings[id] || []).push({ type:placement.building.id, pos:r.pos, bearing:typeof r.bearing === 'number' ? Math.round(r.bearing) : undefined, builtAt:new Date().toISOString() });
     savePlayerState();
     renderBuildingsLayer();
@@ -3462,7 +3510,8 @@
   // batiments et le bateau, sans recharger la page (le reseau de la carte
   // n'est pas recalcule). Les filtres d'affichage sont conserves.
   function resetGame(){
-    try{ [OWNED_STORAGE_KEY, BUILDINGS_STORAGE_KEY, LEGACY_START_KEY, BOAT_STORAGE_KEY, CARAVAN_STORAGE_KEY].forEach(k => localStorage.removeItem(k)); }catch(e){}
+    try{ [OWNED_STORAGE_KEY, BUILDINGS_STORAGE_KEY, LEGACY_START_KEY, BOAT_STORAGE_KEY, CARAVAN_STORAGE_KEY, ECO_STORAGE_KEY].forEach(k => localStorage.removeItem(k)); }catch(e){}
+    eco = newEconomy(); renderEconomy();
     if(placement.active) stopPlacement();
     closeCapital();
     if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
@@ -3495,6 +3544,114 @@
       setTimeout(() => boatHint(''), 2500);
     });
   })();
+
+  // ---------- Economie: temps de jeu, tresor (Or), production, stocks ----------
+  // Monnaie: l'Or. Le minerai d'or extrait par un atelier de mineur n'est
+  // qu'un stock comme un autre: il ne cree PAS de monnaie (pour l'instant).
+  // - Temps: 1 jour de jeu toutes les ECO.dayMs (60 s reelles). Les jours
+  //   manques pendant l'absence du joueur sont rattrapes (plafond).
+  // - Revenu: un impot fixe par region possedee et par jour.
+  // - Depenses: achat de regions (la premiere est offerte), batiments.
+  // - Production: chaque batiment produit chaque jour les ressources de sa
+  //   region selon leur niveau (faible 1, moyen 2, eleve 4 unites / jour),
+  //   rangees dans le stock de la region (sa capitale).
+  const ECO = { startGold:1000, dayMs:60000, taxPerRegion:15, regionBasePrice:400, maxCatchUpDays:240,
+    startDate:new Date(2027, 2, 15), perLevel:[0, 1, 2, 4] };
+  const ECO_STORAGE_KEY = 'paperConquestEconomy';
+  const newEconomy = () => ({ gold:ECO.startGold, day:0, lastTick:Date.now(), stocks:{} });
+  let eco = newEconomy();
+  try{ const saved = JSON.parse(localStorage.getItem(ECO_STORAGE_KEY)); if(saved && typeof saved.gold === 'number') eco = Object.assign(newEconomy(), saved); }catch(e){}
+  const saveEconomy = () => { try{ localStorage.setItem(ECO_STORAGE_KEY, JSON.stringify(eco)); }catch(e){} };
+  const fmtGold = n => Math.floor(n).toLocaleString('fr-FR') + ' Or';
+  const goodName = k => (RESOURCES[k] && RESOURCES[k].name) || SEA_NAMES[k] || k;
+  // prix d'une nouvelle region: la premiere est offerte, puis 400, 800, 1 200 Or...
+  const regionPrice = () => ownedRegions.size * ECO.regionBasePrice;
+  function spendGold(n){ if(eco.gold < n) return false; eco.gold -= n; saveEconomy(); renderEconomy(); return true; }
+
+  // Ce qu'un batiment produit chaque jour dans une region: { ressource: unites }
+  const FARM_EXCLUDE = new Set(['bois', 'bois_chauffage', 'pierre']);   // scierie, carriere: plus tard
+  function productionOf(buildingId, regionId){
+    const r = regionResources.get(regionId) || {}, out = {};
+    const add = (k, lv) => { if(lv > 0) out[k] = Math.max(out[k] || 0, ECO.perLevel[lv]); };
+    if(buildingId === 'mine') MINERALS.forEach(k => add(k, r[k] || 0));
+    else if(buildingId === 'ferme') CROPS.filter(k => !FARM_EXCLUDE.has(k)).forEach(k => add(k, r[k] || 0));
+    else if(buildingId === 'elevage') animalsOf('elevage').forEach(k => add(k, r[k] || 0));
+    else if(buildingId === 'pecherie'){
+      FRESH_FISH.forEach(k => add(k, r[k] || 0));                                    // fleuves et lacs
+      regionFishingZones(regionId).forEach(z => z.fish.filter(k => SEA_FISH[k]).forEach(k => add(k, seaLevel(z, k))));   // mer
+    }
+    return out;
+  }
+  function productionText(buildingId, regionId){
+    const prod = productionOf(buildingId, regionId), list = Object.entries(prod);
+    return list.length ? 'Production : ' + list.map(([k, q]) => q + ' ' + goodName(k)).join(', ') + ' / jour.' : '';
+  }
+  // production totale d'une region par jour
+  function regionProduction(regionId){
+    const out = {};
+    regionBuildings(regionId).forEach(b => Object.entries(productionOf(b.type, regionId)).forEach(([k, q]) => { out[k] = (out[k] || 0) + q; }));
+    return out;
+  }
+  const dailyIncome = () => ownedRegions.size * ECO.taxPerRegion;
+
+  // Un jour de jeu: impots, puis production de chaque region
+  function economyDay(){
+    eco.day++;
+    eco.gold += dailyIncome();
+    ownedRegions.forEach(id => {
+      const prod = regionProduction(id), st = eco.stocks[id] = eco.stocks[id] || {};
+      Object.entries(prod).forEach(([k, q]) => { st[k] = (st[k] || 0) + q; });
+    });
+  }
+  function economyTick(){
+    const due = Math.floor((Date.now() - eco.lastTick) / ECO.dayMs);
+    if(due > 0){
+      for(let i = 0; i < Math.min(due, ECO.maxCatchUpDays); i++) economyDay();
+      eco.lastTick += due * ECO.dayMs;
+      saveEconomy();
+      if(selectedId !== null && ownedRegions.has(selectedId)) renderRegionPanel();
+    }
+    renderEconomy();
+  }
+  function renderEconomy(){
+    const g = document.getElementById('eco-gold'); if(!g) return;
+    g.textContent = fmtGold(eco.gold);
+    document.getElementById('eco-gold-delta').textContent = '+' + dailyIncome() + ' / jour';
+    const date = new Date(ECO.startDate); date.setDate(date.getDate() + eco.day);
+    document.getElementById('topbar-date').textContent = date.toLocaleDateString('fr-FR', { day:'numeric', month:'long', year:'numeric' });
+    const left = Math.max(0, Math.ceil((eco.lastTick + ECO.dayMs - Date.now()) / 1000));
+    document.getElementById('topbar-time').textContent = 'Jour ' + eco.day + ' · demain dans ' + left + ' s';
+  }
+  function initEconomy(){
+    economyTick();                    // rattrape les jours manques
+    setInterval(economyTick, 1000);
+  }
+
+  // Onglet Stocks de la capitale: tresor, revenu, stock et production de la region
+  function renderStocksTab(el, regionId){
+    const st = eco.stocks[regionId] || {}, prod = regionProduction(regionId);
+    const keys = [...new Set([...Object.keys(st), ...Object.keys(prod)])];
+    const cats = [
+      ['Minerais et gisements', k => MINERALS.includes(k)], ['Cultures', k => CROPS.includes(k)],
+      ['Élevage', k => LAND_ANIMALS[k] && LAND_ANIMALS[k].cat === 'elevage'], ['Pêche', k => FRESH_FISH.includes(k) || !!SEA_FISH[k]],
+    ];
+    const rows = cats.map(([label, test]) => {
+      const ks = keys.filter(test).sort((a, b) => (st[b] || 0) - (st[a] || 0));
+      return ks.length ? '<tr class="cat"><td colspan="3">' + label + '</td></tr>' + ks.map(k => '<tr><td>' + goodName(k) + '</td><td class="n">' +
+        Math.floor(st[k] || 0).toLocaleString('fr-FR') + '</td><td class="n">' + (prod[k] ? '<span class="eco-plus">+' + prod[k] + '</span>' : '—') + '</td></tr>').join('') : '';
+    }).join('');
+    const nb = regionBuildings(regionId).filter(b => b.type !== 'port').length;
+    setLiveHtml(el,
+      '<div class="eco-cards">' +
+        '<div class="eco-card"><div class="k">Trésor</div><div class="v">' + fmtGold(eco.gold) + '</div><div class="s">monnaie de tout le royaume</div></div>' +
+        '<div class="eco-card"><div class="k">Revenu</div><div class="v eco-plus">+' + dailyIncome() + ' / jour</div><div class="s">impôts : ' + ownedRegions.size + ' région(s) × ' + ECO.taxPerRegion + ' Or</div></div>' +
+        '<div class="eco-card"><div class="k">Jour ' + eco.day + '</div><div class="v">' + document.getElementById('topbar-date').textContent + '</div><div class="s">1 jour = ' + (ECO.dayMs / 1000) + ' s réelles</div></div>' +
+      '</div>' +
+      '<div class="region-section-title">Stocks de la région ' + regionId + '</div>' +
+      (rows ? '<table class="eco-table"><thead><tr><th>Ressource</th><th class="n">Stock</th><th class="n">Production / jour</th></tr></thead><tbody>' + rows + '</tbody></table>'
+        : '<p class="cap-empty">' + (nb ? 'La production arrive au prochain jour.' : 'Aucune production : construisez une ferme, une pêcherie, un élevage ou un atelier de mineur (onglet Construction).') + '</p>') +
+      '<p class="cap-empty">Le minerai d\'or extrait est un stock : il ne crée pas de monnaie.</p>');
+  }
 
   // ---------- Line chart (shared renderer, used by "Situation mondiale" and "Économie") ----------
   function renderLineChart(svg, legendEl, tipEl, tab){
@@ -3598,10 +3755,5 @@
   }
 
   // ---------- Clock ----------
-  function tickClock(){
-    const now = new Date();
-    document.getElementById('topbar-time').textContent = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
-  }
-  tickClock();
-  setInterval(tickClock, 30000);
+  // (date et jour de jeu: voir l'economie, renderEconomy)
 </script>
