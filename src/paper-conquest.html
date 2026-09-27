@@ -2672,8 +2672,8 @@
     const show = !!sp || devState.animals;
     const filter = sp ? ['in', ',' + sp + ',', ['get', 'animals']] : ['has', 'name'];
     ['animal-fill', 'animal-line', 'animal-label'].forEach(id => { setLayerVisible(id, show); map.setFilter(id, filter); });
-    // une espece choisie: les regions portent la couleur de son abondance, la zone n'est qu'un contour
-    if(sp) setLayerVisible('animal-fill', false);
+    // une espece choisie: seules les regions, colorees selon son abondance (pas de contour de zone)
+    if(sp) ['animal-fill', 'animal-line', 'animal-label'].forEach(id => setLayerVisible(id, false));
   }
 
   // ---------- Noms des oceans et des mers ----------
