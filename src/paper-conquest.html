@@ -330,12 +330,13 @@
   .capital-head #village-mine[hidden]{ display:none; }
   .village-svg{ width:100%; height:auto; margin:0 auto; display:block; border:1.5px solid var(--line-strong); border-radius:10px; }
   /* Exploration de la region (vue Village) */
-  .rx-stage{ position:relative; flex:1 1 auto; min-height:360px; height:calc(100vh - 235px); border:1.5px solid var(--line-strong); border-radius:10px; overflow:hidden; background:#a7c8d3; }
+  .rx-stage{ position:relative; flex:1 1 auto; min-height:360px; height:calc(100vh - 235px); border:1.5px solid var(--line-strong); border-radius:10px; overflow:hidden;
+    background:radial-gradient(ellipse at center, #f3ead6 0%, #e6d9bb 100%); }
   .rx-svg{ position:absolute; inset:0; width:100%; height:100%; cursor:grab; touch-action:none; user-select:none; }
   .rx-svg.dragging{ cursor:grabbing; }
   .rx-tools{ position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:6px; z-index:2; }
   .rx-tools button{ width:36px; height:36px; border-radius:8px; border:1.5px solid var(--line-strong); background:var(--card); font:800 1.1rem sans-serif; color:var(--ink); cursor:pointer; box-shadow:0 2px 0 var(--shadow); }
-  .rx-mini{ position:absolute; left:10px; top:10px; width:170px; height:130px; background:rgba(167,200,211,0.9); border:1.5px solid var(--line-strong); border-radius:8px; z-index:2; cursor:pointer; }
+  .rx-mini{ position:absolute; left:10px; top:10px; width:170px; height:130px; background:rgba(243,234,214,0.92); border:1.5px solid var(--line-strong); border-radius:8px; z-index:2; cursor:pointer; }
   .rx-scale{ position:absolute; left:12px; bottom:12px; z-index:2; background:rgba(246,239,224,0.9); border:1.5px solid var(--line-strong); border-radius:8px; padding:4px 10px 6px; font:700 0.75rem sans-serif; color:var(--ink); }
   .rx-scale i{ display:block; height:6px; border:2.5px solid var(--ink); border-top:none; margin-top:3px; }
   .rx-hint{ position:absolute; right:12px; bottom:12px; z-index:2; background:rgba(246,239,224,0.9); border:1.5px solid var(--line-strong); border-radius:8px; padding:4px 10px; font-size:0.72rem; color:var(--ink-soft); }
@@ -3594,7 +3595,7 @@
   })();
 
   // ---------- Village: exploration de la vraie region ----------
-  // La region avec sa vraie forme et ses vraies dimensions, en kilometres
+  // UNIQUEMENT la region (pas ses voisines), avec sa vraie forme et ses vraies dimensions, en kilometres
   // (projection locale centree sur la region). On s'y deplace: glisser,
   // molette ou boutons pour zoomer (de toute la region a ~2 km), fleches ou
   // ZQSD. Mini-carte et echelle suivent la vue.
@@ -3637,33 +3638,25 @@
     const lineD = pts => 'M' + pts.map(q => { const k = P(q); return f2(k[0]) + ' ' + f2(k[1]); }).join('L');
     const [x0, y1] = P([bbox[0], bbox[1]]), [x1, y0] = P([bbox[2], bbox[3]]);
     const regionW = x1 - x0, regionH = y1 - y0, cap = capitalById.get(regionId) || turf.pointOnFeature(land).geometry.coordinates, capK = P(cap);
-    const pad = Math.max(regionW, regionH) * 0.25, vb = [x0 - pad, y0 - pad, x1 + pad, y1 + pad];
-    // zone chargee: tout ce qu'on peut voir en dezoomant au maximum (voisines, fleuves, routes)
-    const far = Math.max(regionW, regionH) * 1.6, ext = [x0 - far, y0 - far, x1 + far, y1 + far];
-    const inBox = bb => { const a2 = P([bb[0], bb[3]]), b2 = P([bb[2], bb[1]]); return !(b2[0] < ext[0] || a2[0] > ext[2] || b2[1] < ext[1] || a2[1] > ext[3]); };
-    const allLand = topojson.feature(regionTopo, regionTopo.objects[Object.keys(regionTopo.objects)[0]]).features;
-    const others = allLand.map((g, i) => ({ g, id:i + 1 })).filter(o => o.id !== regionId && inBox(turf.bbox(o.g)));
-    const color = regionFeature(regionId).properties.fillColor;
+    // uniquement la region: rien autour (fond papier), tout est coupe a sa frontiere
+    const pad = Math.max(regionW, regionH) * 0.08, vb = [x0 - pad, y0 - pad, x1 + pad, y1 + pad];
+    const color = regionFeature(regionId).properties.fillColor, landD = geomD(land.geometry);
     let st = '';
-    // voisines
-    st += others.map(o => '<path d="' + geomD(o.g.geometry) + '" fill="' + (regionFeature(o.id).properties.fillColor || '#ccc') + '" fill-opacity="0.4" fill-rule="evenodd" stroke="rgba(60,53,39,0.4)" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
-    // la region
-    st += '<path d="' + geomD(land.geometry) + '" fill="' + color + '" fill-rule="evenodd" filter="url(#rx-paper)"/>';
-    // lacs reels
-    const lakes = waterData ? waterData.lakes.filter(l => inBox(turf.bbox(turf.polygon([l.p])))) : [];
+    // ombre portee puis la region
+    st += '<path d="' + landD + '" fill="#6b5a3a" fill-opacity="0.35" fill-rule="evenodd" filter="url(#rx-shadow)"/>';
+    st += '<path d="' + landD + '" fill="' + color + '" fill-rule="evenodd" filter="url(#rx-paper)"/>';
+    st += '<g clip-path="url(#rx-clip)">';
+    // lacs de la region
+    const lakes = waterData ? waterData.lakes.filter(l => l.r === regionId) : [];
     st += lakes.map(l => '<path d="' + ringD(l.p) + '" fill="#a7c8d3" stroke="#5f8fa6" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
-    // fleuves reels, largeur realiste (plus un trait fin toujours visible)
-    const rivers = waterData ? waterData.rivers.filter(r => inBox(turf.bbox(turf.lineString(r.c)))) : [];
+    // fleuves qui traversent la region, largeur realiste (plus un trait fin toujours visible)
+    const rivers = waterData ? waterData.rivers.filter(r => (r.r || []).includes(regionId)) : [];
     rivers.forEach(r => { const d = lineD(r.c), w = RIVER_REAL_KM[r.cls] || 0.35;
       st += '<path d="' + d + '" fill="none" stroke="#5f8fa6" stroke-width="' + (w + 0.25) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>' +
         '<path d="' + d + '" fill="none" stroke="#a7c8d3" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
         '<path d="' + d + '" fill="none" stroke="#6f9fb5" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/>'; });
-    // contour de la region par-dessus l'eau
-    st += '<path d="' + geomD(land.geometry) + '" fill="none" stroke="#3c3527" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
-    // routes reelles (de la region et de ses voisines visibles)
-    const seen = new Set(), roads = [];
-    [regionId, ...others.map(o => o.id)].forEach(id => (roadGraph.get(id) || []).forEach(r => { const key = Math.min(id, r.to) + '-' + Math.max(id, r.to);
-      if(!seen.has(key)){ seen.add(key); roads.push({ coords:r.coords, own:id === regionId || r.to === regionId, to:id === regionId ? r.to : null }); } }));
+    // routes de la region (coupees a la frontiere)
+    const roads = (roadGraph.get(regionId) || []).map(r => ({ coords:r.coords, own:true, to:r.to }));
     roads.forEach(r => { const d = lineD(r.coords);
       st += '<path d="' + d + '" fill="none" stroke="#7a5a36" stroke-width="' + (r.own ? 5 : 3) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 0.9 : 0.5) + '"/>' +
         '<path d="' + d + '" fill="none" stroke="#e2cda6" stroke-width="' + (r.own ? 2.5 : 1.4) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 1 : 0.6) + '"/>'; });
@@ -3675,6 +3668,9 @@
         const a2 = P(r.coords[Math.max(0, k - 1)]), b2 = P(r.coords[Math.min(r.coords.length - 1, k + 1)]);
         bridges.push({ p:P(c), ang:Math.atan2(b2[1] - a2[1], b2[0] - a2[0]) * 180 / Math.PI, len:(RIVER_REAL_KM[rv.cls] || 0.35) + 0.5, name:rv.n }); }); }catch(e){} }));
     st += bridges.map(b => '<g transform="translate(' + f2(b.p[0]) + ' ' + f2(b.p[1]) + ') rotate(' + b.ang.toFixed(0) + ')"><rect x="' + f2(-b.len / 2) + '" y="-0.12" width="' + f2(b.len) + '" height="0.24" fill="#b08a5a" stroke="#4a3418" stroke-width="1.5" vector-effect="non-scaling-stroke"/></g>').join('');
+    st += '</g>';
+    // contour de la region par-dessus tout
+    st += '<path d="' + landD + '" fill="none" stroke="#3c3527" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
     // capitale + emplacement du futur village (rayon 0,5 km)
     const top = '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.5" fill="rgba(179,38,30,0.12)" stroke="#b3261e" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>' +
       '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.06" fill="#b3261e" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" class="rx-dot"/>';
@@ -3684,22 +3680,23 @@
       if(best >= 0){ const a2 = P(r.c[Math.max(0, best - 2)]), b2 = P(r.c[Math.min(r.c.length - 1, best + 2)]); let ang = Math.atan2(b2[1] - a2[1], b2[0] - a2[0]) * 180 / Math.PI; if(ang > 90) ang -= 180; if(ang < -90) ang += 180;
         labels.push({ p:P(r.c[best]), t:r.n, cls:'rx-lab-river', ang }); } });
     labels.push({ p:capK, t:'Futur village', cls:'rx-lab-cap', ang:0, dy:-1.2 });
-    others.forEach(o => { try{ const c = turf.pointOnFeature(o.g).geometry.coordinates; labels.push({ p:P(c), t:'Région ' + o.id, cls:'rx-lab-num', ang:0 }); }catch(e){} });
 
     const humidAt = (lon, lat) => 1 - aridityAt(lat, ((lon + 540) % 360) - 180);
     rx = { regionId, land, P, KX, KY, lon0, lat0, vb, regionW, regionH, capK, labels, view:null, detailKey:'' };
     const html = '<div class="plan-wrap">' +
       '<div class="village-info"><span>Région <b>' + regionId + '</b> : <b>' + Math.round(regionW) + ' × ' + Math.round(regionH) + ' km</b> (' + Math.round(turf.area(land) / 1e6).toLocaleString('fr-FR') + ' km²)</span>' +
-        '<span>Fleuves : <b>' + (rivers.filter(r => (r.r || []).includes(regionId)).map(r => r.n).join(', ') || 'aucun') + '</b></span>' +
-        '<span>Routes : <b>' + roads.filter(r => r.own).length + '</b>, ponts : <b>' + bridges.length + '</b></span><span>Lacs : <b>' + lakes.filter(l => l.r === regionId).length + '</b></span></div>' +
+        '<span>Fleuves : <b>' + (rivers.map(r => r.n).join(', ') || 'aucun') + '</b></span>' +
+        '<span>Routes : <b>' + roads.filter(r => r.own).length + '</b>, ponts : <b>' + bridges.length + '</b></span><span>Lacs : <b>' + lakes.length + '</b></span></div>' +
       '<div class="rx-stage" id="rx-stage">' +
         '<svg class="rx-svg" id="rx-svg" role="img" aria-label="Région ' + regionId + ' à l\'échelle">' +
-          '<defs><filter id="rx-paper"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.07 0"/><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>' +
+          '<defs><clipPath id="rx-clip"><path d="' + landD + '" clip-rule="evenodd"/></clipPath>' +
+          '<filter id="rx-shadow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="' + (Math.max(regionW, regionH) / 120).toFixed(2) + '"/><feOffset dx="' + (Math.max(regionW, regionH) / 160).toFixed(2) + '" dy="' + (Math.max(regionW, regionH) / 110).toFixed(2) + '"/></filter>' +
+          '<filter id="rx-paper"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.07 0"/><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>' +
           '<style>.rx-lab-river{font-family:Caveat,"Segoe Script",cursive;fill:#1f4f73;text-anchor:middle;paint-order:stroke;stroke:#eef5f2;font-weight:700}' +
           '.rx-lab-cap{font-family:Caveat,"Segoe Script",cursive;fill:#7a1d16;text-anchor:middle;paint-order:stroke;stroke:#faf6ec;font-weight:700}' +
           '.rx-lab-num{font-family:sans-serif;fill:#3c3527;opacity:.5;text-anchor:middle;font-weight:600}' +
           '.rx-lab-hamlet{font-family:Caveat,"Segoe Script",cursive;fill:#4a3418;text-anchor:middle;paint-order:stroke;stroke:#faf6ec}</style></defs>' +
-          '<g id="rx-static">' + st + '</g><g id="rx-detail"></g><g id="rx-top">' + top + '</g><g id="rx-labels"></g></svg>' +
+          '<g id="rx-static">' + st + '</g><g id="rx-detail" clip-path="url(#rx-clip)"></g><g id="rx-top">' + top + '</g><g id="rx-labels"></g></svg>' +
         '<svg class="rx-mini" id="rx-mini" viewBox="' + vb.join(' ').replace(/(\S+) (\S+) (\S+) (\S+)/, (m, a1, b1, c1, d1) => a1 + ' ' + b1 + ' ' + (c1 - a1) + ' ' + (d1 - b1)) + '">' +
           '<path d="' + geomD(land.geometry) + '" fill="' + color + '" stroke="#3c3527" stroke-width="1" vector-effect="non-scaling-stroke"/>' +
           '<rect id="rx-mini-view" fill="rgba(179,38,30,0.15)" stroke="#b3261e" stroke-width="1.5" vector-effect="non-scaling-stroke"/></svg>' +
@@ -3713,7 +3710,7 @@
     // vue: centre (km) + largeur visible (km)
     const fitWhole = () => { rx.view = { cx:(vb[0] + vb[2]) / 2, cy:(vb[1] + vb[3]) / 2, w:Math.max(vb[2] - vb[0], (vb[3] - vb[1]) * stage.clientWidth / Math.max(1, stage.clientHeight)) }; };
     fitWhole();
-    const MIN_W = 2, MAX_W = Math.max(regionW, regionH) * 2.6;
+    const MIN_W = 2, MAX_W = Math.max(regionW, regionH) * 1.5;
     function apply(){
       const W = stage.clientWidth || 800, H = stage.clientHeight || 500, v = rx.view, h = v.w * H / W;
       svg.setAttribute('viewBox', [v.cx - v.w / 2, v.cy - h / 2, v.w, h].map(n => n.toFixed(3)).join(' '));
