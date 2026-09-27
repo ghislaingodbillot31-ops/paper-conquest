@@ -192,11 +192,15 @@
   .res-legend{ display:flex; align-items:center; gap:6px; font-size:0.74rem; font-variant-numeric:tabular-nums; }
   .res-legend span{ margin-left:auto; font-weight:800; }
   .res-legend i{ width:12px; height:12px; border-radius:3px; }
-  .res-legend i.lv2, .res-chip.lv2{ background:#0b7a3e; color:#fff; }
-  .res-legend i.lv1, .res-chip.lv1{ background:#9fdc8a; color:#1f3d16; }
+  /* Echelle commune a tous les filtres: 0 absent gris, 1 faible rouge,
+     2 moyen orange, 3 eleve vert */
+  .res-legend i.lv3, .res-chip.lv3{ background:#2e9e4f; color:#fff; }
+  .res-legend i.lv2, .res-chip.lv2{ background:#f0932b; color:#3a2205; }
+  .res-legend i.lv1, .res-chip.lv1{ background:#d64541; color:#fff; }
   .res-legend i.lv0{ background:#9a9a9a; }
-  .res-legend i.soil0{ background:#e9dfc8; } .res-legend i.soil1{ background:#cdb38a; } .res-legend i.soil2{ background:#a47e4a; }
-  .res-legend i.soil3{ background:#6f4f26; } .res-legend i.soil4{ background:#3f2a12; }
+  .res-chip.lvz{ background:#2a6f97; color:#fff; }   /* zone de peche voisine (pas un niveau) */
+  .res-legend i.soil0{ background:#9a9a9a; } .res-legend i.soil1{ background:#d64541; } .res-legend i.soil2{ background:#f0932b; }
+  .res-legend i.soil3{ background:#2e9e4f; } .res-legend i.soil4{ background:#1c6e34; }
   .res-tabs{ display:flex; gap:3px; }
   .res-tab{ flex:1; font:inherit; font-size:0.7rem; font-weight:800; padding:5px 6px; border-radius:6px; cursor:pointer;
     background:transparent; color:var(--ink-soft); border:1.5px solid var(--line-strong); }
@@ -2284,7 +2288,8 @@
   const spiceOrigin = (p, k) => 0.15 + zoneScore(p.lat, p.lon, SPICE_ORIGINS[k], 1.3) * 1.5;
   // Qualite des sols (overlay "Sol / Qualite"): 5 niveaux de fertilite
   const SOIL_LEVELS = ['Stérile', 'Pauvre', 'Moyen', 'Fertile', 'Très fertile'];
-  const SOIL_COLORS = ['#e9dfc8', '#cdb38a', '#a47e4a', '#6f4f26', '#3f2a12'];
+  // meme echelle que les autres filtres (sterile gris ... fertile vert, tres fertile vert fonce)
+  const SOIL_COLORS = ['#9a9a9a', '#d64541', '#f0932b', '#2e9e4f', '#1c6e34'];
   const soilLevelOf = F => F < 0.15 ? 0 : F < 0.35 ? 1 : F < 0.55 ? 2 : F < 0.75 ? 3 : 4;
   // Terres reellement tres fertiles: tchernoziom, loess, grandes plaines
   // alluviales et deltas (y compris en climat sec: Nil, Mesopotamie, Indus).
@@ -2301,7 +2306,10 @@
     return clamp01(Math.max(F, zone * 0.9));
   }
   const RESOURCE_SEEDS = { fer:11, etain:23, cuivre:37, plomb:41, argent:53, or:67, alun:71, sel:83, pierre:97, sol:149 };
-  const RESOURCE_LEVELS = ['Absente', 'Moyenne', 'Riche']; // 0 gris, 1 vert clair, 2 vert fonce
+  // Echelle commune a tous les filtres: 0 absente (gris), 1 faible (rouge),
+  // 2 moyenne (orange), 3 elevee (vert)
+  const RESOURCE_LEVELS = ['Absente', 'Faible', 'Moyenne', 'Élevée'];
+  const LEVEL_COLORS = ['#9a9a9a', '#d64541', '#f0932b', '#2e9e4f'];
 
   // ---------- Geologie (minerais "Naturel") ----------
   // Contextes geologiques reels, en zones [lat, lon, rayon en degres]:
@@ -2397,7 +2405,7 @@
   // pierre (sinon presente presque partout).
   const RESOURCE_SHARE = { fer:0.42, sel:0.3, cuivre:0.2, plomb:0.15, etain:0.09, alun:0.07, argent:0.055, or:0.045,
     poivre:0.07, cannelle:0.05, girofle:0.03, muscade:0.03, safran:0.05, pierre:0.4 };
-  const levelOf = s => s >= 0.7 ? 2 : s >= 0.38 ? 1 : 0;
+  const levelOf = s => s >= 0.7 ? 3 : s >= 0.5 ? 2 : s >= 0.33 ? 1 : 0;
   const regionResources = new Map();  // numero de region -> { ressource: niveau }
   const regionSoil = new Map();       // numero de region -> niveau de fertilite (0..4)
   function computeResources(){
@@ -2407,7 +2415,7 @@
       const share = RESOURCE_SHARE[id];
       if(share === undefined){ scores.forEach((s, i) => { const lv = levelOf(s); if(lv) res[i][id] = lv; }); continue; }
       const ranked = scores.map((s, i) => [s, i]).filter(x => x[0] > 0).sort((x, y) => y[0] - x[0]).slice(0, Math.round(share * feats.length));
-      ranked.forEach(([, i], k) => { const q = k / ranked.length; res[i][id] = q < 0.3 ? 2 : 1; });
+      ranked.forEach(([, i], k) => { const q = k / ranked.length; res[i][id] = q < 0.25 ? 3 : q < 0.6 ? 2 : 1; });
     }
     feats.forEach((f, i) => { regionResources.set(f.id, res[i]); regionSoil.set(f.id, soilLevelOf(profiles[i].fertility)); });
     applyWaterFish();
@@ -2419,10 +2427,12 @@
     if(!waterData) return;
     const give = (rid, fish, lv) => { const r = regionResources.get(rid); if(!r) return; fish.forEach(k => { r[k] = Math.max(r[k] || 0, lv); }); };
     const note = rid => { if(!regionWaters.has(rid)) regionWaters.set(rid, { rivers:[], lakes:0 }); return regionWaters.get(rid); };
-    waterData.rivers.forEach(r => { const fish = riverFish(r), lv = r.cls <= 2 ? 2 : 1;
+    waterData.rivers.forEach(r => { const fish = riverFish(r), lv = riverLevel(r);
       (r.r || []).forEach(rid => { give(rid, fish, lv); note(rid).rivers.push(r.n); }); });
-    waterData.lakes.forEach(l => { if(!l.r) return; give(l.r, lakeFish(l), l.a >= 2000 ? 2 : 1); note(l.r).lakes++; });
+    waterData.lakes.forEach(l => { if(!l.r) return; give(l.r, lakeFish(l), lakeLevel(l)); note(l.r).lakes++; });
   }
+  const riverLevel = r => r.cls === 1 ? 3 : r.cls === 2 ? 2 : 1;
+  const lakeLevel = l => l.a >= 5000 ? 3 : l.a >= 1500 ? 2 : 1;
 
   // Filtre developpeur, deux onglets: "Minerais et gisements" (une
   // ressource -> regions colorees selon l'abondance) et "Sol / Qualite"
@@ -2431,7 +2441,7 @@
   let resourceFilter = null, resourceTab = 'naturel';
   function applyResourceFilter(){
     if(!map.getLayer('resource-fill')) return;
-    const soil = resourceFilter === SOIL_OVERLAY, counts = soil ? [0, 0, 0, 0, 0] : [0, 0, 0];
+    const soil = resourceFilter === SOIL_OVERLAY, counts = soil ? [0, 0, 0, 0, 0] : [0, 0, 0, 0];
     regionsFc.features.forEach(f => {
       const lv = soil ? regionSoil.get(f.id) : resourceFilter ? (regionResources.get(f.id)[resourceFilter] || 0) : 0;
       counts[lv]++;
@@ -2446,23 +2456,23 @@
     highlightFreshWaters(fresh);
     if(seaFish){
       map.setLayoutProperty('resource-fill', 'visibility', 'none');
+      const zc = [0, 0, 0, 0]; FISHING_ZONES.forEach(z => zc[seaLevel(z, seaFish)]++);
       const zones = FISHING_ZONES.filter(z => z.fish.includes(seaFish));
-      info.innerHTML = '<div class="res-count">' + SEA_NAMES[seaFish] + ' : <b>' + zones.length + '</b> zones de pêche en mer</div>' +
-        '<ul class="fish-zone-list">' + zones.map(z => '<li>' + z.name + '</li>').join('') + '</ul>';
+      info.innerHTML = '<div class="res-count">' + SEA_NAMES[seaFish] + ' : <b>' + zones.length + '</b> zones de pêche en mer</div>' + levelLegend(zc) +
+        '<ul class="fish-zone-list">' + zones.map(z => '<li>' + z.name + ' — ' + RESOURCE_LEVELS[seaLevel(z, seaFish)].toLowerCase() + '</li>').join('') + '</ul>';
       return;
     }
     if(fresh && waterData){
       const rivers = waterData.rivers.filter(r => riverFish(r).includes(fresh)), lakes = waterData.lakes.filter(l => lakeFish(l).includes(fresh)).length;
-      info.innerHTML = '<div class="res-count">' + RESOURCES[fresh].name + ' : <b>' + rivers.length + '</b> fleuves, <b>' + lakes + '</b> lacs, <b>' + (counts[1] + counts[2]) + '</b> régions</div>' +
+      info.innerHTML = '<div class="res-count">' + RESOURCES[fresh].name + ' : <b>' + rivers.length + '</b> fleuves, <b>' + lakes + '</b> lacs, <b>' + (counts[1] + counts[2] + counts[3]) + '</b> régions</div>' + levelLegend(counts) +
         (rivers.length ? '<ul class="fish-zone-list">' + rivers.slice(0, 12).map(r => '<li>' + r.n + '</li>').join('') + (rivers.length > 12 ? '<li>…</li>' : '') + '</ul>' : '');
       return;
     }
     updateAnimalLayers();
     const animal = resourceFilter && LAND_ANIMALS[resourceFilter] ? resourceFilter : null;
     if(animal){
-      map.setLayoutProperty('resource-fill', 'visibility', 'none');
       const zones = ANIMAL_ZONES.filter(z => zoneAnimals(z).includes(animal)), nReg = zones.reduce((a, z) => a + z.regions.length, 0);
-      info.innerHTML = '<div class="res-count">' + LAND_ANIMALS[animal].name + ' : <b>' + zones.length + '</b> zones, <b>' + nReg + '</b> régions</div>' +
+      info.innerHTML = '<div class="res-count">' + LAND_ANIMALS[animal].name + ' : <b>' + zones.length + '</b> zones, <b>' + nReg + '</b> régions</div>' + levelLegend(counts) +
         '<div class="soil-note">' + LAND_ANIMALS[animal].uses + '</div>' +
         '<ul class="fish-zone-list">' + zones.map(z => '<li>' + z.name + '</li>').join('') + '</ul>';
       return;
@@ -2474,9 +2484,13 @@
         '<div class="soil-note">La fertilité détermine le rendement des cultures de cet onglet.</div>';
       return;
     }
-    info.innerHTML = '<div class="res-count">Présente dans <b>' + (counts[1] + counts[2]) + '</b> régions sur ' + regionsFc.features.length + '</div>' +
-      [2, 1, 0].map(lv => '<div class="res-legend"><i class="lv' + lv + '"></i>' + RESOURCE_LEVELS[lv] + '<span>' + counts[lv] + '</span></div>').join('');
+    info.innerHTML = '<div class="res-count">Présente dans <b>' + (counts[1] + counts[2] + counts[3]) + '</b> régions sur ' + regionsFc.features.length + '</div>' + levelLegend(counts);
   }
+  // Legende commune: eleve, moyen, faible, absent (avec le nombre de regions ou de zones)
+  const levelLegend = counts => [3, 2, 1, 0].map(lv => '<div class="res-legend"><i class="lv' + lv + '"></i>' + RESOURCE_LEVELS[lv] + '<span>' + counts[lv] + '</span></div>').join('');
+  // Abondance d'une espece dans une zone de peche: la premiere espece de la
+  // liste est la plus abondante (elevee), la deuxieme moyenne, les autres faibles
+  const seaLevel = (z, sp) => { const i = z.fish.indexOf(sp); return i < 0 ? 0 : i === 0 ? 3 : i === 1 ? 2 : 1; };
   // Contenu du selecteur selon l'onglet; l'onglet Sol s'ouvre sur l'overlay
   function renderResourceTab(){
     const sel = document.getElementById('dev-resource'), cat = RESOURCE_CATEGORIES.find(c => c.id === resourceTab);
@@ -2501,8 +2515,8 @@
     computeResources();
     map.addLayer({ id:'resource-fill', type:'fill', source:'regions', layout:{ visibility:'none' },
       paint:{
-        'fill-color':['match', ['feature-state', 'res'], 2, '#0b7a3e', 1, '#9fdc8a', '#9a9a9a'],
-        'fill-opacity':['match', ['feature-state', 'res'], 2, 0.85, 1, 0.8, 0.7],
+        'fill-color':['match', ['feature-state', 'res'], 3, LEVEL_COLORS[3], 2, LEVEL_COLORS[2], 1, LEVEL_COLORS[1], LEVEL_COLORS[0]],
+        'fill-opacity':['match', ['feature-state', 'res'], 0, 0.6, 0.85],
       } }, 'regions-outline');
     map.addLayer({ id:'soil-fill', type:'fill', source:'regions', layout:{ visibility:'none' },
       paint:{ 'fill-color':['match', ['feature-state', 'soil'], ...SOIL_COLORS.flatMap((c, lv) => [lv, c]), SOIL_COLORS[0]], 'fill-opacity':0.85 } }, 'regions-outline');
@@ -2616,10 +2630,17 @@
       const m = macroOf(c); let best = -1, bd = Infinity;
       ANIMAL_ZONES.forEach((z, k) => { if(z.macro !== m) return; for(const a of z.anchors){ const d = turf.distance(c, a); if(d < bd){ bd = d; best = k; } } });
       if(best < 0) return;
-      regionAnimalZone.set(f.id, best); ANIMAL_ZONES[best].regions.push(f.id);
-      const r = regionResources.get(f.id); if(r) zoneAnimals(ANIMAL_ZONES[best]).forEach(k => { r[k] = Math.max(r[k] || 0, 1); });
+      regionAnimalZone.set(f.id, best); ANIMAL_ZONES[best].regions.push(f.id); dAnchor.set(f.id, bd);
+    });
+    // abondance: le tiers des regions le plus proche d'un point d'ancrage
+    // (coeur de la zone) eleve, le tiers suivant moyen, la peripherie faible
+    ANIMAL_ZONES.forEach(z => {
+      const sorted = z.regions.slice().sort((a, b) => dAnchor.get(a) - dAnchor.get(b));
+      sorted.forEach((id, k) => { const q = k / sorted.length, lv = q < 1 / 3 ? 3 : q < 2 / 3 ? 2 : 1;
+        const r = regionResources.get(id); if(r) zoneAnimals(z).forEach(a => { r[a] = Math.max(r[a] || 0, lv); }); });
     });
   }
+  const dAnchor = new Map();
   // Couches: une zone = ses regions fusionnees (geometrie creusee: jamais sur
   // un fleuve ou un lac). Cachees par defaut: interrupteur "Zones animales"
   // ou choix d'une espece dans l'onglet Animaux du filtre developpeur.
@@ -2651,6 +2672,8 @@
     const show = !!sp || devState.animals;
     const filter = sp ? ['in', ',' + sp + ',', ['get', 'animals']] : ['has', 'name'];
     ['animal-fill', 'animal-line', 'animal-label'].forEach(id => { setLayerVisible(id, show); map.setFilter(id, filter); });
+    // une espece choisie: les regions portent la couleur de son abondance, la zone n'est qu'un contour
+    if(sp) setLayerVisible('animal-fill', false);
   }
 
   // ---------- Noms des oceans et des mers ----------
@@ -2721,9 +2744,13 @@
   }
   function highlightFishingZones(fish){
     if(!map.getLayer('fishing-fill')) return;
-    const has = ['in', ',' + fish + ',', ['get', 'fish']];
-    map.setPaintProperty('fishing-fill', 'fill-opacity', fish ? ['case', has, 0.65, 0.05] : 0.3);
-    map.setPaintProperty('fishing-line', 'line-opacity', fish ? ['case', has, 1, 0.15] : 0.8);
+    const typeColor = ['match', ['get', 'type'], ...Object.entries(FISH_ZONE_COLORS).flat(), '#2a9d8f'];
+    if(fish) FISHING_ZONES.forEach((z, i) => map.setFeatureState({ source:'fishing', id:i }, { lv:seaLevel(z, fish) }));
+    const byLevel = ['match', ['feature-state', 'lv'], 3, LEVEL_COLORS[3], 2, LEVEL_COLORS[2], 1, LEVEL_COLORS[1], LEVEL_COLORS[0]];
+    map.setPaintProperty('fishing-fill', 'fill-color', fish ? byLevel : typeColor);
+    map.setPaintProperty('fishing-fill', 'fill-opacity', fish ? ['match', ['feature-state', 'lv'], 0, 0.35, 0.7] : 0.3);
+    map.setPaintProperty('fishing-line', 'line-color', fish ? byLevel : typeColor);
+    map.setPaintProperty('fishing-line', 'line-opacity', fish ? 0.9 : 0.8);
   }
   // Fleuves et lacs: reperes pour le clic et surbrillance (filtre developpeur)
   let riverBoxes = [], lakePolys = [];
@@ -2736,7 +2763,7 @@
       ...waterData.rivers.map((r, i) => turf.lineString(r.c, { fish:tag(riverFish(r)), kind:'river', i })),
       ...waterData.lakes.map((l, i) => turf.lineString(l.p, { fish:tag(lakeFish(l)), kind:'lake', i })) ]) });
     map.addLayer({ id:'fresh-hl', type:'line', source:'fresh-waters', layout:{ visibility:'none', 'line-cap':'round', 'line-join':'round' },
-      paint:{ 'line-color':'#e8590c', 'line-width':['match', ['get', 'kind'], 'river', 2.5, 2], 'line-opacity':0.9 } }, 'regions-label');
+      paint:{ 'line-color':'#1c4f8c', 'line-width':['match', ['get', 'kind'], 'river', 2.5, 2], 'line-opacity':0.9 } }, 'regions-label');
   }
   function highlightFreshWaters(fish){
     if(!map.getLayer('fresh-hl')) return;
@@ -2766,7 +2793,7 @@
       '<div><h3 class="region-name hand">' + (river ? '🏞️ ' + it.n : '💧 Lac') + '</h3><div class="region-tagline">Pêche en eau douce — ' +
         (river ? 'fleuve navigable' : 'lac de ' + it.a.toLocaleString('fr-FR') + ' km²') + '</div></div>' +
       '<div class="region-section-title">Poissons</div>' +
-      '<div class="res-group">' + fish.map(k => '<span class="res-chip lv2">' + RESOURCES[k].name + '</span>').join('') + '</div>' +
+      '<div class="res-group">' + fish.map(k => '<span class="res-chip lv' + (river ? riverLevel(it) : lakeLevel(it)) + '">' + RESOURCES[k].name + '</span>').join('') + '</div>' +
       '<div class="region-row"><span>' + (river ? 'Régions traversées' : 'Région') + '</span><span class="v">' + (regions.join(', ') || '—') + '</span></div>' +
       '<p class="cap-empty">Ses poissons profitent aux régions ' + (river ? 'qu\'il traverse' : 'qui le bordent') + '.</p>';
   }
@@ -2788,9 +2815,9 @@
     document.getElementById('region-panel').innerHTML =
       '<div><h3 class="region-name hand">🐟 ' + z.name + '</h3><div class="region-tagline">Zone de pêche — ' + FISH_ZONE_TYPES[z.type] + '</div></div>' +
       (z.fish.some(k => SEA_FISH[k]) ? '<div class="region-section-title">Poissons</div>' +
-        '<div class="res-group">' + z.fish.filter(k => SEA_FISH[k]).map(k => '<span class="res-chip lv2">' + SEA_FISH[k] + '</span>').join('') + '</div>' : '') +
+        '<div class="res-group">' + z.fish.filter(k => SEA_FISH[k]).map(k => '<span class="res-chip lv' + seaLevel(z, k) + '">' + SEA_FISH[k] + '</span>').join('') + '</div>' : '') +
       (z.fish.some(k => SEA_ANIMALS[k]) ? '<div class="region-section-title">Animaux marins</div>' +
-        '<div class="res-group">' + z.fish.filter(k => SEA_ANIMALS[k]).map(k => '<span class="res-chip lv2">' + SEA_ANIMALS[k] + '</span>').join('') + '</div>' : '') +
+        '<div class="res-group">' + z.fish.filter(k => SEA_ANIMALS[k]).map(k => '<span class="res-chip lv' + seaLevel(z, k) + '">' + SEA_ANIMALS[k] + '</span>').join('') + '</div>' : '') +
       '<div class="region-row"><span>Surface</span><span class="v">' + z.km2.toLocaleString('fr-FR') + ' km²</span></div>' +
       '<p class="cap-empty">' + (z.type === 'pleine-mer' ? 'En pleine mer : accessible aux navires depuis n\'importe quel port.' : 'Accessible depuis les ports des régions côtières voisines.') + '</p>';
   }
@@ -2801,11 +2828,11 @@
     const groups = RESOURCE_CATEGORIES.map(cat => {
       const items = cat.items.filter(k => r[k]);
       return items.length ? '<div class="res-group"><span class="res-cat">' + cat.label + '</span>' +
-        items.map(k => '<span class="res-chip lv' + r[k] + '" title="' + (LAND_ANIMALS[k] ? LAND_ANIMALS[k].uses : RESOURCE_LEVELS[r[k]]) + '">' + RESOURCES[k].name + '</span>').join('') + '</div>' : '';
+        items.map(k => '<span class="res-chip lv' + r[k] + '" title="' + RESOURCE_LEVELS[r[k]] + (LAND_ANIMALS[k] ? ' — ' + LAND_ANIMALS[k].uses : '') + '">' + RESOURCES[k].name + '</span>').join('') + '</div>' : '';
     }).join('');
     const sea = regionFishingZones(id);
     const seaHtml = sea.length ? '<div class="res-group"><span class="res-cat">Pêche en mer</span>' +
-      sea.map(z => '<span class="res-chip lv1" title="' + z.fish.map(k => SEA_NAMES[k]).join(', ') + '">' + z.name + '</span>').join('') + '</div>' : '';
+      sea.map(z => '<span class="res-chip lvz" title="' + z.fish.map(k => SEA_NAMES[k]).join(', ') + '">' + z.name + '</span>').join('') + '</div>' : '';
     const wat = regionWaters.get(id);
     const watHtml = wat ? '<div class="region-row"><span>Fleuves</span><span class="v">' + (wat.rivers.join(', ') || '—') + '</span></div>' +
       (wat.lakes ? '<div class="region-row"><span>Lacs</span><span class="v">' + wat.lakes + '</span></div>' : '') : '';
