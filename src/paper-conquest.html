@@ -108,7 +108,14 @@
   .nav-item.active svg{ color:var(--accent-ink); }
 
   /* ---------- Main workspace ---------- */
-  main.workspace{ grid-area:main; padding:16px 22px; min-height:0; display:flex; flex-direction:column; }
+  main.workspace{ grid-area:main; padding:16px 22px; min-height:0; display:flex; flex-direction:column; position:relative; }
+  /* Mode "village seul": tout le reste est masque pour le moment. La carte du
+     monde continue de se charger en arriere-plan (invisible) car le village
+     utilise ses donnees (regions, fleuves, routes). */
+  html.village-only .sidebar, html.village-only .stat-pills, html.village-only .topbar-actions{ display:none; }
+  html.village-only .app{ grid-template-columns:0 1fr; }
+  html.village-only .view[data-view="carte"]{ display:flex !important; position:absolute; inset:16px 22px; visibility:hidden; pointer-events:none; }
+  html.village-only .view[data-view="carte"] *{ visibility:hidden !important; }
   .view{ flex:1 1 auto; min-height:0; display:flex; flex-direction:column; overflow-y:auto; }
   .view[hidden]{ display:none; }
 
@@ -340,7 +347,7 @@
   .rx-scale{ position:absolute; left:12px; bottom:12px; z-index:2; background:rgba(246,239,224,0.9); border:1.5px solid var(--line-strong); border-radius:8px; padding:4px 10px 6px; font:700 0.75rem sans-serif; color:var(--ink); }
   .rx-scale i{ display:block; height:6px; border:2.5px solid var(--ink); border-top:none; margin-top:3px; }
   /* Construction dans la region: onglets + cartes sous la carte */
-  .rx-stage{ height:calc(100vh - 380px) !important; }
+  .rx-stage{ height:calc(100vh - 330px) !important; background:radial-gradient(ellipse at center, #efe3c2 0%, #e2d3ac 100%) !important; }
   .rx-build{ border:1.5px solid var(--line-strong); border-radius:10px; background:var(--card); padding:8px 10px 10px; display:flex; flex-direction:column; gap:8px; }
   .rx-build-tabs{ display:flex; gap:4px; flex-wrap:wrap; border-bottom:1.5px solid var(--line-strong); }
   .rx-build-tabs button{ border:1.5px solid var(--line-strong); border-bottom:none; background:var(--paper-alt); color:var(--ink-soft); padding:5px 12px;
@@ -448,6 +455,7 @@
   }
 </style>
 
+<script>document.documentElement.classList.add('village-only');</script>
 <div class="app">
   <header class="topbar">
     <div class="brand">
@@ -974,6 +982,7 @@
     initCaravan();
     initResources();
     initEconomy();
+    if(document.documentElement.classList.contains('village-only')) showView('village');
   }
 
   // ---------- Reseau de chemins (mondial, adjacence topologique reelle) ----------
@@ -3636,7 +3645,9 @@
 
   function renderVillageView(){
     if(!regionsFc) return;
-    if(villageRegion === null) villageRegion = selectedId !== null ? selectedId : ownedRegions.size ? [...ownedRegions][0] : pickVillageRegion();
+    let saved = null; try{ saved = +localStorage.getItem('paperConquestVillageRegion') || null; }catch(e){}
+    if(villageRegion === null) villageRegion = selectedId !== null ? selectedId : ownedRegions.size ? [...ownedRegions][0] : saved && regionGeoms[saved - 1] ? saved : pickVillageRegion();
+    try{ localStorage.setItem('paperConquestVillageRegion', villageRegion); }catch(e){}
     document.getElementById('village-mine').hidden = !ownedRegions.size;
     const body = document.getElementById('village-body'), title = document.getElementById('village-title');
     if(villageRegion === null){ body.innerHTML = '<p class="cap-none">Aucune région disponible.</p>'; return; }
@@ -3658,7 +3669,7 @@
     const regionW = x1 - x0, regionH = y1 - y0, cap = capitalById.get(regionId) || turf.pointOnFeature(land).geometry.coordinates, capK = P(cap);
     // uniquement la region: rien autour (fond papier), tout est coupe a sa frontiere
     const pad = Math.max(regionW, regionH) * 0.08, vb = [x0 - pad, y0 - pad, x1 + pad, y1 + pad];
-    const color = regionFeature(regionId).properties.fillColor, landD = geomD(land.geometry);
+    const color = VG.land, landD = geomD(land.geometry);
     let st = '';
     // ombre portee puis la region
     st += '<path d="' + landD + '" fill="#6b5a3a" fill-opacity="0.35" fill-rule="evenodd" filter="url(#rx-shadow)"/>';
@@ -3666,18 +3677,18 @@
     st += '<g clip-path="url(#rx-clip)">';
     // lacs de la region
     const lakes = waterData ? waterData.lakes.filter(l => l.r === regionId) : [];
-    st += lakes.map(l => '<path d="' + ringD(l.p) + '" fill="#a7c8d3" stroke="#5f8fa6" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
+    st += lakes.map(l => '<path d="' + ringD(l.p) + '" fill="' + VG.water + '" stroke="' + VG.waterEdge + '" stroke-width="1.2" vector-effect="non-scaling-stroke"/>').join('');
     // fleuves qui traversent la region, largeur realiste (plus un trait fin toujours visible)
     const rivers = waterData ? waterData.rivers.filter(r => (r.r || []).includes(regionId)) : [];
     rivers.forEach(r => { const d = lineD(r.c), w = RIVER_REAL_KM[r.cls] || 0.35;
-      st += '<path d="' + d + '" fill="none" stroke="#5f8fa6" stroke-width="' + (w + 0.25) + '" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>' +
-        '<path d="' + d + '" fill="none" stroke="#a7c8d3" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="' + d + '" fill="none" stroke="#6f9fb5" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linecap="round"/>'; });
+      st += '<path d="' + d + '" fill="none" stroke="' + VG.waterEdge + '" stroke-width="' + (w + 0.03) + '" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + VG.water + '" stroke-width="' + w + '" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + VG.water + '" stroke-width="2" vector-effect="non-scaling-stroke" stroke-linecap="round"/>'; });
     // routes de la region (coupees a la frontiere)
     const roads = (roadGraph.get(regionId) || []).map(r => ({ coords:r.coords, own:true, to:r.to }));
     roads.forEach(r => { const d = lineD(r.coords);
-      st += '<path d="' + d + '" fill="none" stroke="#7a5a36" stroke-width="' + (r.own ? 5 : 3) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 0.9 : 0.5) + '"/>' +
-        '<path d="' + d + '" fill="none" stroke="#e2cda6" stroke-width="' + (r.own ? 2.5 : 1.4) + '" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round" opacity="' + (r.own ? 1 : 0.6) + '"/>'; });
+      st += '<path d="' + d + '" fill="none" stroke="' + VG.roadEdge + '" stroke-width="4" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>' +
+        '<path d="' + d + '" fill="none" stroke="' + VG.road + '" stroke-width="2.2" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>'; });
     // ponts: croisement route (de la region) / fleuve
     const bridges = [];
     roads.filter(r => r.own).forEach(r => rivers.forEach(rv => {
@@ -3688,16 +3699,15 @@
     st += bridges.map(b => '<g transform="translate(' + f2(b.p[0]) + ' ' + f2(b.p[1]) + ') rotate(' + b.ang.toFixed(0) + ')"><rect x="' + f2(-b.len / 2) + '" y="-0.12" width="' + f2(b.len) + '" height="0.24" fill="#b08a5a" stroke="#4a3418" stroke-width="1.5" vector-effect="non-scaling-stroke"/></g>').join('');
     st += '</g>';
     // contour de la region par-dessus tout
-    st += '<path d="' + landD + '" fill="none" stroke="#3c3527" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
-    // capitale + emplacement du futur village (rayon 0,5 km)
-    const top = '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.5" fill="rgba(179,38,30,0.12)" stroke="#b3261e" stroke-width="2" stroke-dasharray="6 5" vector-effect="non-scaling-stroke"/>' +
-      '<circle cx="' + f2(capK[0]) + '" cy="' + f2(capK[1]) + '" r="0.06" fill="#b3261e" stroke="#fff" stroke-width="2.5" vector-effect="non-scaling-stroke" class="rx-dot"/>';
+    st += '<path d="' + landD + '" fill="none" stroke="' + VG.coast + '" stroke-width="2.5" vector-effect="non-scaling-stroke"/>';
+    // le village (genere, puis zonage du joueur) est dessine par le module Village
+    const top = '';
     // etiquettes (taille ajustee au zoom)
     const labels = [];
     rivers.forEach(r => { let best = -1, bd = Infinity; r.c.forEach((q, k) => { if(!turf.booleanPointInPolygon(q, land)) return; const d = geoDistance(q, cap); if(d < bd){ bd = d; best = k; } });
       if(best >= 0){ const a2 = P(r.c[Math.max(0, best - 2)]), b2 = P(r.c[Math.min(r.c.length - 1, best + 2)]); let ang = Math.atan2(b2[1] - a2[1], b2[0] - a2[0]) * 180 / Math.PI; if(ang > 90) ang -= 180; if(ang < -90) ang += 180;
         labels.push({ p:P(r.c[best]), t:r.n, cls:'rx-lab-river', ang }); } });
-    labels.push({ p:capK, t:'Futur village', cls:'rx-lab-cap', ang:0, dy:-1.2 });
+
 
     const humidAt = (lon, lat) => 1 - aridityAt(lat, ((lon + 540) % 360) - 180);
     rx = { regionId, land, P, KX, KY, lon0, lat0, vb, regionW, regionH, capK, labels, view:null, detailKey:'',
@@ -3714,7 +3724,9 @@
           '<defs><clipPath id="rx-clip"><path d="' + landD + '" clip-rule="evenodd"/></clipPath>' +
           '<filter id="rx-shadow" x="-10%" y="-10%" width="120%" height="120%"><feGaussianBlur stdDeviation="' + (Math.max(regionW, regionH) / 120).toFixed(2) + '"/><feOffset dx="' + (Math.max(regionW, regionH) / 160).toFixed(2) + '" dy="' + (Math.max(regionW, regionH) / 110).toFixed(2) + '"/></filter>' +
           '<filter id="rx-paper"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="2" seed="3" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.07 0"/><feComposite in2="SourceGraphic" operator="in"/><feBlend in="SourceGraphic" mode="multiply"/></filter>' +
-          '<style>.rx-lab-river{font-family:Caveat,"Segoe Script",cursive;fill:#1f4f73;text-anchor:middle;paint-order:stroke;stroke:#eef5f2;font-weight:700}' +
+          '<style>.vg-lab{font-family:Georgia,"Times New Roman",serif;font-style:italic;fill:#3b3226;text-anchor:middle;paint-order:stroke;stroke:#fbf0cf;font-weight:700}' +
+          '.vg-title{font-family:Georgia,"Times New Roman",serif;fill:#3b3226;text-anchor:middle;paint-order:stroke;stroke:#fbf0cf;font-weight:700}' +
+          '.rx-lab-river{font-family:Georgia,serif;font-style:italic;fill:#34503c;text-anchor:middle;paint-order:stroke;stroke:#eef5f2;font-weight:700}' +
           '.rx-lab-cap{font-family:Caveat,"Segoe Script",cursive;fill:#7a1d16;text-anchor:middle;paint-order:stroke;stroke:#faf6ec;font-weight:700}' +
           '.rx-lab-num{font-family:sans-serif;fill:#3c3527;opacity:.5;text-anchor:middle;font-weight:600}' +
           '.rx-lab-hamlet{font-family:Caveat,"Segoe Script",cursive;fill:#4a3418;text-anchor:middle;paint-order:stroke;stroke:#faf6ec}</style></defs>' +
@@ -3745,8 +3757,13 @@
       // point de la capitale et etiquettes: taille constante a l'ecran
       document.querySelectorAll('.rx-dot').forEach(c => c.setAttribute('r', (kmPerPx * 6).toFixed(4)));
       const fs1 = kmPerPx * 16;
-      document.getElementById('rx-labels').innerHTML = rx.labels.map(l => '<text x="' + f2(l.p[0]) + '" y="' + f2(l.p[1] + (l.dy || 0) * fs1) + '" class="' + l.cls + '" font-size="' + (fs1 * (l.cls === 'rx-lab-num' ? 0.8 : 1.15)).toFixed(3) + '" stroke-width="' + (fs1 * 0.25).toFixed(3) + '"' +
-        (l.ang ? ' transform="rotate(' + l.ang.toFixed(0) + ' ' + f2(l.p[0]) + ' ' + f2(l.p[1]) + ')"' : '') + (l.cls === 'rx-lab-river' ? ' dy="' + (-fs1 * 0.7).toFixed(3) + '"' : '') + '>' + l.t + '</text>').join('');
+      rx.drawLabels = () => {
+        const W2 = stage.clientWidth || 800, k2 = rx.view.w / W2 * 16;
+        document.getElementById('rx-labels').innerHTML = rx.labels.concat(rx.villageLabels || []).map(l => l.cls.startsWith('vg-')
+          ? '<text x="' + f2(l.p[0]) + '" y="' + f2(l.p[1]) + '" class="' + l.cls + '" font-size="' + (k2 * (l.size || 1)).toFixed(4) + '" stroke-width="' + (k2 * 0.3).toFixed(4) + '">' + l.t + '</text>'
+          : '<text x="' + f2(l.p[0]) + '" y="' + f2(l.p[1]) + '" class="' + l.cls + '" font-size="' + (k2 * 1.15).toFixed(4) + '" stroke-width="' + (k2 * 0.25).toFixed(4) + '"' + (l.ang ? ' transform="rotate(' + l.ang.toFixed(0) + ' ' + f2(l.p[0]) + ' ' + f2(l.p[1]) + ')"' : '') + (l.cls === 'rx-lab-river' ? ' dy="' + (-k2 * 0.7).toFixed(4) + '"' : '') + '>' + l.t + '</text>').join('');
+      };
+      rx.drawLabels();
       scheduleDetails();
     }
     // details generes pour la zone visible (cases de 10 km)
@@ -3764,13 +3781,13 @@
       for(let i = i0; i <= i1; i++) for(let j = j0; j <= j1; j++){
         const rnd = villageRng(regionId * 1000003 + (i + 5000) * 10007 + (j + 5000));
         const ccx = (i + 0.5) * C, ccy = (j + 0.5) * C, hum = humidAt(...inv(ccx, ccy));
-        const inside = (x, y) => turf.booleanPointInPolygon(inv(x, y), land) && Math.hypot(x - rx.capK[0], y - rx.capK[1]) > 0.9;
+        const inside = (x, y) => turf.booleanPointInPolygon(inv(x, y), land) && Math.hypot(x - rx.capK[0], y - rx.capK[1]) > 1.6;
         // forets: taches irregulieres
         const nF = Math.floor(hum * 3.2 * rnd() + (hum > 0.5 ? 1 : 0));
         for(let k = 0; k < nF; k++){ const x = i * C + rnd() * C, y = j * C + rnd() * C, r = 0.4 + rnd() * 1.6; if(!inside(x, y)){ rnd(); continue; }
           const n = 10, ph = rnd() * 6; let d = '';
           for(let q = 0; q <= n; q++){ const a3 = q / n * Math.PI * 2, rr = r * (0.75 + 0.25 * Math.sin(a3 * 3 + ph)); d += (q ? 'L' : 'M') + f2(x + Math.cos(a3) * rr) + ' ' + f2(y + Math.sin(a3) * rr); }
-          out += '<path d="' + d + 'Z" fill="#4f7a3a" fill-opacity="0.75" stroke="#2f4a26" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+          out += '<path d="' + d + 'Z" fill="' + VG.forest + '" fill-opacity="0.8" stroke="' + VG.forestEdge + '" stroke-width="1" vector-effect="non-scaling-stroke"/>';
           if(lod >= 3) for(let t = 0; t < 14; t++){ const tx = x + (rnd() - 0.5) * r * 1.4, ty = y + (rnd() - 0.5) * r * 1.4; out += '<circle cx="' + f2(tx) + '" cy="' + f2(ty) + '" r="0.06" fill="#355e2a"/>'; }
         }
         // etangs
@@ -3815,161 +3832,262 @@
     rx.zoomTo = (cx, cy, w) => { rx.view = { cx, cy, w }; apply(); };
     rx.screenToKm = (clientX, clientY) => { const r = svg.getBoundingClientRect(), W = stage.clientWidth, H = stage.clientHeight, v = rx.view, h = v.w * H / W;
       return [v.cx - v.w / 2 + (clientX - r.left) / W * v.w, v.cy - h / 2 + (clientY - r.top) / H * h]; };
-    initRegionBuild(svg);
+    initVillage(svg);
     requestAnimationFrame(apply);
   }
-  // ---------- Construction dans la region (algorithme de placement) ----------
-  // Catalogue par onglet. Chaque batiment a sa vraie emprise (metres) et des
-  // regles de placement: toujours sur la terre de la region, jamais dans
-  // l'eau (fleuve, lac) ni sur un autre batiment; regles propres en plus
-  // (pres d'un fleuve, pres d'une route, pres du village...). Le chemin se
-  // trace point par point. Tout est enregistre par region (navigateur).
-  // CATALOGUE PROVISOIRE: a remplacer par la liste de l'utilisateur.
-  const REGION_BUILD_TABS = [
-    { id:'habitat', label:'Habitat', items:[
-      { id:'maison', name:'Maison', icon:'🏠', w:12, h:10, color:'#c8845a' },
-      { id:'grande_maison', name:'Grande maison', icon:'🏡', w:18, h:14, color:'#b8744a' },
-      { id:'manoir', name:'Manoir', icon:'🏰', w:40, h:30, color:'#9c5e3a', rule:'village', ruleText:'Dans le village (≤ 1 km de la capitale)' } ] },
-    { id:'production', label:'Production', items:[
-      { id:'ferme', name:'Ferme', icon:'🧑‍🌾', w:30, h:20, color:'#a67c3d' },
-      { id:'champ', name:'Champ', icon:'🌾', w:150, h:100, color:'#d9c46a' },
-      { id:'moulin', name:'Moulin à eau', icon:'⚙️', w:14, h:14, color:'#8a7a5c', rule:'river', near:0.15, ruleText:'Au bord d\'un fleuve (≤ 150 m)' },
-      { id:'scierie', name:'Scierie', icon:'🪵', w:22, h:14, color:'#7a5a36' },
-      { id:'atelier', name:'Atelier', icon:'🔨', w:14, h:10, color:'#8a6a4a' } ] },
-    { id:'eau', label:'Eau', items:[
-      { id:'puits', name:'Puits', icon:'◎', w:4, h:4, color:'#6f8fa6' },
-      { id:'quai', name:'Quai fluvial', icon:'⚓', w:30, h:10, color:'#5f7f96', rule:'river', near:0.08, ruleText:'Sur la rive d\'un fleuve (≤ 80 m)' },
-      { id:'fontaine', name:'Fontaine', icon:'⛲', w:6, h:6, color:'#7fa6b5', rule:'village', ruleText:'Dans le village (≤ 1 km de la capitale)' } ] },
-    { id:'commerce', label:'Commerce', items:[
-      { id:'marche', name:'Marché', icon:'🛒', w:40, h:40, color:'#c9a24a', rule:'road', near:0.1, ruleText:'Près d\'une route (≤ 100 m)' },
-      { id:'auberge', name:'Auberge', icon:'🍺', w:18, h:12, color:'#b07a3a', rule:'road', near:0.05, ruleText:'Au bord d\'une route (≤ 50 m)' },
-      { id:'entrepot', name:'Entrepôt', icon:'📦', w:25, h:15, color:'#9a8060' } ] },
-    { id:'chemins', label:'Chemins', items:[
-      { id:'chemin', name:'Chemin', icon:'〰️', line:true, color:'#d9c09a', ruleText:'Cliquez les points, double-clic pour finir' } ] },
-    { id:'defense', label:'Défense', items:[
-      { id:'tour', name:'Tour de guet', icon:'🗼', w:6, h:6, color:'#7d7468' },
-      { id:'caserne', name:'Caserne', icon:'🛡️', w:30, h:20, color:'#6d655a' },
-      { id:'palissade', name:'Palissade', icon:'🪵', w:60, h:3, color:'#6b4a2a' } ] },
-    { id:'culte', label:'Culte', items:[
-      { id:'chapelle', name:'Chapelle', icon:'⛪', w:15, h:10, color:'#c9c0ad' },
-      { id:'eglise', name:'Église', icon:'⛪', w:30, h:15, color:'#bdb4a0', rule:'village', ruleText:'Dans le village (≤ 1 km de la capitale)' } ] },
+  // ---------- Village: generation de base, routes et zonage ----------
+  // Style de reference (plan de ville medieval): fond creme, eau vert-de-gris,
+  // parcelles pastel (orange, rouge, ocre, kaki) cernees de brun, rues creme.
+  //  1. Village de base genere (deterministe pour la region): place du
+  //     marche, rues qui partent dans la direction des vraies routes, rue en
+  //     anneau, parcelles alignees le long des rues (denses dans l'enceinte,
+  //     faubourgs le long des grands axes), petite fortification (palissade,
+  //     tours, portes la ou passent les rues), donjon fortifie a part,
+  //     champs en laniere autour, nom du village.
+  //  2. Zonage "a la Cities: Skylines": le joueur trace des ROUTES (points,
+  //     double-clic pour finir) puis delimite des ZONES (points, double-clic
+  //     ou clic sur le 1er point pour fermer). Les maisons apparaissent
+  //     d'elles-memes, alignees le long des routes qui traversent la zone;
+  //     les champs se decoupent en lanieres. Ce sont les routes qui
+  //     structurent le zonage. Sauvegarde par region (navigateur).
+  const VG = { land:'#f8ecc4', coast:'#8a7652', water:'#86a38c', waterEdge:'#5f7d67', road:'#fff8e8', roadEdge:'#c4ae84',
+    forest:'#b9c28e', forestEdge:'#8e9a66', lotEdge:'#5b4636', wall:'#44574d',
+    lots:{ habitat:['#e8956b', '#e3876a', '#ec9f73', '#d9776a'], artisan:['#e0a458', '#d4a04e', '#c9a35a'], marche:['#e7b07a', '#e2a36a'], pauvre:['#c7a86b', '#b9a26a', '#a8a466'], champs:['#d9d08a', '#cfc47c', '#e2d99a', '#c9bf78'] } };
+  const ZONE_TYPES = [
+    { id:'habitat', label:'Habitations', icon:'🏠', color:'#e3876a' },
+    { id:'artisan', label:'Artisans', icon:'🔨', color:'#d4a04e' },
+    { id:'marche', label:'Marché', icon:'🛒', color:'#e2a36a' },
+    { id:'champs', label:'Champs', icon:'🌾', color:'#cfc47c' },
   ];
-  const REGION_BUILD_ITEMS = Object.fromEntries(REGION_BUILD_TABS.flatMap(t => t.items.map(i => [i.id, { ...i, tab:t.id }])));
-  const VILLAGE_STORAGE_KEY = 'paperConquestVillages';
-  let villageBuilds = {};
-  try{ const v = JSON.parse(localStorage.getItem(VILLAGE_STORAGE_KEY)); if(v && typeof v === 'object') villageBuilds = v; }catch(e){}
-  const saveVillageBuilds = () => { try{ localStorage.setItem(VILLAGE_STORAGE_KEY, JSON.stringify(villageBuilds)); }catch(e){} };
-  const rb = { tab:'habitat', item:null, rot:0, preview:null, pathPts:[] };
-  // distance point-segment (km)
+  const VILLAGE_STORAGE_KEY = 'paperConquestVillageZones';
+  let villageZones = {};
+  try{ const v = JSON.parse(localStorage.getItem(VILLAGE_STORAGE_KEY)); if(v && typeof v === 'object') villageZones = v; }catch(e){}
+  const saveVillageZones = () => { try{ localStorage.setItem(VILLAGE_STORAGE_KEY, JSON.stringify(villageZones)); }catch(e){} };
+  const vz = () => (villageZones[rx.regionId] = villageZones[rx.regionId] || { roads:[], zones:[] });
+  const tool = { mode:null, pts:[] };              // mode: 'road' | zone type id | 'erase'
+  const M = v => v / 1000;                           // metres -> km
   function segDistKm(p, a, b){ const dx = b[0] - a[0], dy = b[1] - a[1], L = dx * dx + dy * dy || 1e-12, t = Math.max(0, Math.min(1, ((p[0] - a[0]) * dx + (p[1] - a[1]) * dy) / L));
     return Math.hypot(p[0] - a[0] - t * dx, p[1] - a[1] - t * dy); }
-  const fmtKm = d => d < 1 ? Math.round(d * 1000) + ' m' : (d < 10 ? d.toFixed(1).replace('.', ',') : Math.round(d)) + ' km';
   const polyDist = (p, pts) => { let d = Infinity; for(let i = 1; i < pts.length; i++) d = Math.min(d, segDistKm(p, pts[i - 1], pts[i])); return d; };
-  // coins d'une emprise (km) centree en (x, y), tournee de rot degres
-  function footprint(x, y, it, rot){ const w = it.w / 1000, h = it.h / 1000, a = rot * Math.PI / 180, c = Math.cos(a), s2 = Math.sin(a);
-    return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(([u, v]) => [x + u * c - v * s2, y + u * s2 + v * c]); }
-  // regles de placement -> { ok, reason }
-  function checkPlacement(x, y, it, rot){
-    const corners = footprint(x, y, it, rot), pts = [[x, y], ...corners];
-    if(!pts.every(q => turf.booleanPointInPolygon(rx.inv(...q), rx.land))) return { ok:false, reason:'Hors de la région (ou dans la mer).' };
-    const r0 = Math.hypot(it.w, it.h) / 2000;
-    for(const rv of rx.riversKm){ if(polyDist([x, y], rv.pts) < rv.half + r0 + 0.01) return { ok:false, reason:'Dans le lit du fleuve : ' + rv.name + '.' }; }
-    if(rx.lakesLL.some(l => pts.some(q => turf.booleanPointInPolygon(rx.inv(...q), l)))) return { ok:false, reason:'Dans un lac.' };
-    const list = villageBuilds[rx.regionId] || [];
-    for(const b of list){ if(b.line) continue; const o = REGION_BUILD_ITEMS[b.type]; if(!o) continue;
-      if(Math.hypot(b.x - x, b.y - y) < (Math.hypot(o.w, o.h) + Math.hypot(it.w, it.h)) / 2000 * 0.85) return { ok:false, reason:'Trop près d\'un bâtiment : ' + o.name + '.' }; }
-    if(it.rule === 'river'){ const d = Math.min(...rx.riversKm.map(rv => polyDist([x, y], rv.pts) - rv.half), Infinity);
-      if(!(d <= it.near + r0)) return { ok:false, reason:'Doit être ' + it.ruleText.toLowerCase() + (isFinite(d) ? ' (fleuve à ' + fmtKm(d) + ').' : ' : aucun fleuve dans la région.') }; }
-    if(it.rule === 'road'){ const roadsAll = [...rx.roadsKm, ...list.filter(b => b.line).map(b => b.pts)];
-      const d = Math.min(...roadsAll.map(pp => polyDist([x, y], pp)), Infinity);
-      if(!(d <= it.near + r0)) return { ok:false, reason:'Doit être ' + it.ruleText.toLowerCase() + (isFinite(d) ? ' (route à ' + fmtKm(d) + ').' : '.') }; }
-    if(it.rule === 'village' && Math.hypot(x - rx.capK[0], y - rx.capK[1]) > 1) return { ok:false, reason:it.ruleText + '.' };
-    return { ok:true, reason:'Emplacement valide.' };
+  function pointInPoly(p, poly){ let c = false; for(let i = 0, j = poly.length - 1; i < poly.length; j = i++){ const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if((yi > p[1]) !== (yj > p[1]) && p[0] < (xj - xi) * (p[1] - yi) / (yj - yi) + xi) c = !c; } return c; }
+  const dStr = pts => 'M' + pts.map(q => q[0].toFixed(5) + ' ' + q[1].toFixed(5)).join('L');
+  // terrain constructible: dans la region, hors fleuve et lac
+  function buildable(p){
+    if(!turf.booleanPointInPolygon(rx.inv(...p), rx.land)) return false;
+    for(const rv of rx.riversKm) if(polyDist(p, rv.pts) < rv.half + M(12)) return false;
+    return !rx.lakesLL.some(l => turf.booleanPointInPolygon(rx.inv(...p), l));
   }
-  function drawVillageBuilds(){
-    const g = document.getElementById('rx-builds'); if(!g) return;
-    const list = villageBuilds[rx.regionId] || [];
-    g.innerHTML = list.map(b => {
-      if(b.line) return '<path d="M' + b.pts.map(q => q[0].toFixed(4) + ' ' + q[1].toFixed(4)).join('L') + '" fill="none" stroke="#7a5a36" stroke-width="5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>' +
-        '<path d="M' + b.pts.map(q => q[0].toFixed(4) + ' ' + q[1].toFixed(4)).join('L') + '" fill="none" stroke="#e2cda6" stroke-width="2.5" vector-effect="non-scaling-stroke" stroke-linecap="round" stroke-linejoin="round"/>';
-      const it = REGION_BUILD_ITEMS[b.type]; if(!it) return '';
-      return buildingSvg(b.x, b.y, it, b.rot, it.color, 1);
-    }).join('');
+  // ligne sinueuse (rue organique) de a vers b
+  function wobble(a, b, amp, n, rnd){ const nx = -(b[1] - a[1]), ny = b[0] - a[0], L = Math.hypot(nx, ny) || 1, ph = rnd() * 6.28, pts = [];
+    for(let i = 0; i <= n; i++){ const t = i / n, off = amp * Math.sin(Math.PI * t) * Math.sin(t * 5 + ph); pts.push([a[0] + (b[0] - a[0]) * t + nx / L * off, a[1] + (b[1] - a[1]) * t + ny / L * off]); }
+    return pts; }
+  // grille d'occupation (parcelles deja posees), cases de 10 m
+  function makeOcc(){ const m = new Map(); const key = (x, y) => Math.floor(x / M(10)) + ',' + Math.floor(y / M(10));
+    return { hit:(poly) => { const xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
+        for(let x = Math.min(...xs); x <= Math.max(...xs); x += M(5)) for(let y = Math.min(...ys); y <= Math.max(...ys); y += M(5)){ const c = m.get(key(x, y)); if(c && c.some(o => o.some(q => pointInPoly(q, poly)) || poly.some(q => pointInPoly(q, o)))) return true; }
+        return false; },
+      add:(poly) => { const xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
+        for(let x = Math.min(...xs); x <= Math.max(...xs) + M(10); x += M(10)) for(let y = Math.min(...ys); y <= Math.max(...ys) + M(10); y += M(10)){ const k = key(x, y); if(!m.has(k)) m.set(k, []); m.get(k).push(poly); } } }; }
+  // parcelles le long d'une rue: rectangles des deux cotes, sur 1 ou 2 rangs
+  function lotsAlong(street, opts, rnd, occ, accept){
+    const out = [], half = M(opts.streetW / 2 + 1.5);
+    for(let i = 1; i < street.length; i++){
+      const a = street[i - 1], b = street[i], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if(L < M(4)) continue;
+      const ux = (b[0] - a[0]) / L, uy = (b[1] - a[1]) / L, nx = -uy, ny = ux;
+      for(const side of [-1, 1]) for(let row = 0; row < opts.rows; row++){
+        let t = rnd() * M(4);
+        while(t < L){
+          const w = M(opts.wMin + rnd() * (opts.wMax - opts.wMin)), d = M(opts.dMin + rnd() * (opts.dMax - opts.dMin));
+          if(t + w > L) break;
+          if(rnd() < opts.gap){ t += w; continue; }
+          const off = half + row * M(opts.dMax + 2), cx = a[0] + ux * (t + w / 2) + nx * side * (off + d / 2), cy = a[1] + uy * (t + w / 2) + ny * side * (off + d / 2);
+          const poly = [[-w / 2, -d / 2], [w / 2, -d / 2], [w / 2, d / 2], [-w / 2, d / 2]].map(([u, v]) => [cx + ux * u + nx * v, cy + uy * u + ny * v]);
+          if(poly.every(q => accept(q) && buildable(q)) && !occ.hit(poly)){ occ.add(poly); out.push(poly); }
+          t += w + M(opts.spacing);
+        }
+      }
+    }
+    return out;
   }
-  function buildingSvg(x, y, it, rot, fill, op){
-    const w = it.w / 1000, h = it.h / 1000;
-    return '<g transform="translate(' + x.toFixed(4) + ' ' + y.toFixed(4) + ') rotate(' + rot + ')" opacity="' + op + '"><rect x="' + (-w / 2).toFixed(4) + '" y="' + (-h / 2).toFixed(4) + '" width="' + w.toFixed(4) + '" height="' + h.toFixed(4) + '" fill="' + fill + '" stroke="#3c2a14" stroke-width="1.4" vector-effect="non-scaling-stroke"/>' +
-      '<text font-size="' + (Math.min(w, h) * 0.8).toFixed(4) + '" text-anchor="middle" dominant-baseline="central">' + it.icon + '</text></g>';
+  // nom de village deterministe
+  function villageName(seed){ const r = villageRng(seed), A = ['Bel', 'Roc', 'Mont', 'Val', 'Saint-', 'Clair', 'Haut', 'Fonte', 'Ber', 'Lau', 'Mar', 'Vil'], B = ['aigue', 'fort', 'mont', 'lieu', 'ville', 'bourg', 'court', 'val', 'roche', 'brune', 'donne', 'nay'];
+    const n = A[Math.floor(r() * A.length)] + B[Math.floor(r() * B.length)]; return n.charAt(0).toUpperCase() + n.slice(1); }
+
+  // ---- 1. village de base ----
+  function generateBaseVillage(){
+    const rnd = villageRng(rx.regionId * 7331 + 17), C = rx.capK, occ = makeOcc(), streets = [], lots = [];
+    // directions: celles des vraies routes de la region (depuis la capitale), completees a 4
+    const dirs = rx.roadsKm.map(pts => { const far = pts[Math.min(pts.length - 1, 3)] || pts[pts.length - 1]; return Math.atan2(far[1] - C[1], far[0] - C[0]); });
+    while(dirs.length < 4) dirs.push((dirs.length ? dirs[0] : rnd() * 6.28) + Math.PI / 2 * dirs.length + (rnd() - 0.5) * 0.4);
+    const market = []; const mr = M(24);
+    for(let k = 0; k < 7; k++){ const an = k / 7 * Math.PI * 2 + rnd() * 0.3; market.push([C[0] + Math.cos(an) * mr * (0.8 + rnd() * 0.4), C[1] + Math.sin(an) * mr * (0.8 + rnd() * 0.4)]); }
+    // rues principales vers les portes puis faubourgs (jusqu'a 520 m)
+    dirs.forEach(an => { const end = [C[0] + Math.cos(an) * M(520), C[1] + Math.sin(an) * M(520)], st = [C[0] + Math.cos(an) * mr, C[1] + Math.sin(an) * mr];
+      streets.push({ pts:wobble(st, end, M(18), 14, rnd), main:true }); });
+    // rue en anneau (dans l'enceinte) et ruelles transversales
+    const ringR = M(125), ring = []; for(let k = 0; k <= 24; k++){ const an = k / 24 * Math.PI * 2; ring.push([C[0] + Math.cos(an) * ringR * (0.92 + 0.12 * Math.sin(an * 3 + rnd())), C[1] + Math.sin(an) * ringR * (0.92 + 0.12 * Math.cos(an * 2 + rnd()))]); }
+    streets.push({ pts:ring, main:false });
+    for(let k = 0; k < 5; k++){ const an = rnd() * 6.28, a0 = [C[0] + Math.cos(an) * M(45), C[1] + Math.sin(an) * M(45)], a1 = [C[0] + Math.cos(an + 0.25) * M(200), C[1] + Math.sin(an + 0.25) * M(200)];
+      streets.push({ pts:wobble(a0, a1, M(10), 8, rnd), main:false }); }
+    // enceinte: palissade polygonale ~ 190 m, tours aux angles, portes sur les rues principales
+    const wallR = M(190), wall = []; const nW = 11;
+    for(let k = 0; k < nW; k++){ const an = k / nW * Math.PI * 2 + 0.2; wall.push([C[0] + Math.cos(an) * wallR * (0.88 + rnd() * 0.22), C[1] + Math.sin(an) * wallR * (0.88 + rnd() * 0.22)]); }
+    const inWall = q => pointInPoly(q, wall);
+    // donjon fortifie hors les murs, du cote oppose au 1er axe
+    let kAng = 0, kBest = -1; for(let k = 0; k < 24; k++){ const an = k / 24 * Math.PI * 2, gap = Math.min(...dirs.map(d => Math.abs(Math.atan2(Math.sin(an - d), Math.cos(an - d))))); if(gap > kBest){ kBest = gap; kAng = an; } }
+    const kc = [C[0] + Math.cos(kAng) * M(290), C[1] + Math.sin(kAng) * M(300)];
+    const keepWall = [0, 1, 2, 3, 4].map(k => { const an = k / 5 * Math.PI * 2 + rnd() * 0.3; return [kc[0] + Math.cos(an) * M(55), kc[1] + Math.sin(an) * M(55)]; });
+    const keep = [[-M(18), -M(14)], [M(10), -M(14)], [M(10), -M(2)], [M(18), -M(2)], [M(18), M(16)], [-M(18), M(16)]].map(([u, v]) => [kc[0] + u, kc[1] + v]);
+    keepWall.forEach(q => occ.add([q, q, q, q]));
+    occ.add(keepWall);
+    // parcelles: denses dans l'enceinte (2 rangs), faubourgs le long des grands axes (1 rang)
+    const inMarket = q => pointInPoly(q, market);
+    const dense = { streetW:6, wMin:7, wMax:13, dMin:11, dMax:20, rows:2, gap:0.08, spacing:0.8 };
+    const sparse = { streetW:6, wMin:8, wMax:15, dMin:10, dMax:18, rows:1, gap:0.35, spacing:3 };
+    streets.forEach(st2 => { const ok = q => inWall(q) && !inMarket(q) && Math.hypot(q[0] - C[0], q[1] - C[1]) > M(28);
+      lotsAlong(st2.pts, dense, rnd, occ, ok).forEach(poly => lots.push({ poly, kind:Math.hypot(poly[0][0] - C[0], poly[0][1] - C[1]) < M(70) ? 'marche' : rnd() < 0.35 ? 'artisan' : 'habitat' })); });
+    streets.filter(x => x.main).forEach(st2 => { const ok = q => !inWall(q) && Math.hypot(q[0] - C[0], q[1] - C[1]) < M(470) && !pointInPoly(q, keepWall);
+      lotsAlong(st2.pts, sparse, rnd, occ, ok).forEach(poly => lots.push({ poly, kind:rnd() < 0.5 ? 'pauvre' : 'habitat' })); });
+    // champs en lanieres autour du village
+    const fields = [];
+    for(let k = 0; k < 7; k++){ const an = rnd() * 6.28, dist = M(560 + rnd() * 260), c0 = [C[0] + Math.cos(an) * dist, C[1] + Math.sin(an) * dist], rot = rnd() * Math.PI;
+      const nS = 4 + Math.floor(rnd() * 5), sw = M(18 + rnd() * 12), sl = M(90 + rnd() * 80);
+      for(let q = 0; q < nS; q++){ const off = (q - nS / 2) * (sw + M(3)), cx = c0[0] + Math.cos(rot + Math.PI / 2) * off, cy = c0[1] + Math.sin(rot + Math.PI / 2) * off;
+        const poly = [[-sl / 2, -sw / 2], [sl / 2, -sw / 2], [sl / 2, sw / 2], [-sl / 2, sw / 2]].map(([u, v]) => [cx + Math.cos(rot) * u - Math.sin(rot) * v, cy + Math.sin(rot) * u + Math.cos(rot) * v]);
+        if(poly.every(buildable) && !occ.hit(poly)){ occ.add(poly); fields.push(poly); } } }
+    return { streets, lots, wall, keepWall, keep, market, fields, name:villageName(rx.regionId), occ };
   }
-  function setBuildStatus(text, cls){ const el = document.getElementById('rx-build-status'); if(el){ el.textContent = text; el.className = 'rx-build-status' + (cls ? ' ' + cls : ''); } }
-  function renderBuildPanel(){
+
+  // ---- 2. zonage: parcelles d'une zone ----
+  function fillZone(zone, occ, allRoads){
+    const rnd = villageRng(zone.seed), poly = zone.pts, inside = q => pointInPoly(q, poly), out = [];
+    if(zone.type === 'champs'){
+      // lanieres orientees selon le plus long cote de la zone
+      let best = 0, ang = 0; for(let i = 0; i < poly.length; i++){ const a = poly[i], b = poly[(i + 1) % poly.length], L = Math.hypot(b[0] - a[0], b[1] - a[1]); if(L > best){ best = L; ang = Math.atan2(b[1] - a[1], b[0] - a[0]); } }
+      const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux, xs = poly.map(q => q[0]), ys = poly.map(q => q[1]);
+      const cx = (Math.min(...xs) + Math.max(...xs)) / 2, cy = (Math.min(...ys) + Math.max(...ys)) / 2, R = Math.hypot(Math.max(...xs) - Math.min(...xs), Math.max(...ys) - Math.min(...ys));
+      for(let v = -R; v < R; v += M(24)) for(let u = -R; u < R; u += M(110)){
+        const w = M(20 + rnd() * 3), l = M(95 + rnd() * 12), px = cx + ux * u + nx * v, py = cy + uy * u + ny * v;
+        const q = [[0, 0], [l, 0], [l, w], [0, w]].map(([a2, b2]) => [px + ux * a2 + nx * b2, py + uy * a2 + ny * b2]);
+        if(q.every(pt => inside(pt) && buildable(pt)) && !occ.hit(q)){ occ.add(q); out.push({ poly:q, kind:'champs' }); } }
+      return out;
+    }
+    // habitations / artisans / marche: le long des routes qui traversent la zone
+    const opts = zone.type === 'marche' ? { streetW:7, wMin:10, wMax:16, dMin:10, dMax:16, rows:1, gap:0.05, spacing:1 }
+      : zone.type === 'artisan' ? { streetW:6, wMin:9, wMax:15, dMin:12, dMax:22, rows:2, gap:0.1, spacing:1 }
+      : { streetW:6, wMin:7, wMax:12, dMin:10, dMax:18, rows:2, gap:0.12, spacing:0.8 };
+    allRoads.forEach(pts => lotsAlong(pts, opts, rnd, occ, inside).forEach(q => out.push({ poly:q, kind:zone.type })));
+    return out;
+  }
+
+  // ---- dessin ----
+  function drawVillage(){
+    const g = document.getElementById('vg-layer'); if(!g) return;
+    const base = rx.village || (rx.village = generateBaseVillage());
+    const data = vz(), occ = makeOcc();
+    base.lots.forEach(l => occ.add(l.poly)); base.fields.forEach(f => occ.add(f)); occ.add(base.keepWall);
+    // routes du joueur + rues du village = support du zonage
+    const allRoads = [...base.streets.map(x => x.pts), ...data.roads.map(r => r.pts), ...rx.roadsKm];
+    const zoneLots = data.zones.map(z => fillZone(z, occ, allRoads));
+    let o = '';
+    // zones (fond leger)
+    data.zones.forEach(z => { const t = ZONE_TYPES.find(x => x.id === z.type) || ZONE_TYPES[0];
+      o += '<path d="' + dStr(z.pts) + 'Z" fill="' + t.color + '" fill-opacity="0.13" stroke="' + t.color + '" stroke-width="1.5" stroke-dasharray="5 4" vector-effect="non-scaling-stroke"/>'; });
+    // champs
+    const fieldCol = i => VG.lots.champs[i % VG.lots.champs.length];
+    o += base.fields.map((f, i) => '<path d="' + dStr(f) + 'Z" fill="' + fieldCol(i) + '" stroke="' + VG.lotEdge + '" stroke-width="0.8" vector-effect="non-scaling-stroke"/>').join('');
+    // rues (bord puis coeur creme)
+    const streetSvg = (pts, wM) => '<path d="' + dStr(pts) + '" fill="none" stroke="' + VG.roadEdge + '" stroke-width="' + M(wM + 1.5) + '" stroke-linecap="round" stroke-linejoin="round"/>' +
+      '<path d="' + dStr(pts) + '" fill="none" stroke="' + VG.road + '" stroke-width="' + M(wM) + '" stroke-linecap="round" stroke-linejoin="round"/>';
+    o += base.streets.map(x => streetSvg(x.pts, x.main ? 8 : 5)).join('') + data.roads.map(r => streetSvg(r.pts, 6)).join('');
+    o += '<path d="' + dStr(base.market) + 'Z" fill="' + VG.road + '" stroke="' + VG.roadEdge + '" stroke-width="1" vector-effect="non-scaling-stroke"/>';
+    // parcelles
+    const lotCol = (kind, i) => { const pal = VG.lots[kind] || VG.lots.habitat; return pal[i % pal.length]; };
+    const lotSvg = (l, i) => '<path d="' + dStr(l.poly) + 'Z" fill="' + lotCol(l.kind, i) + '" stroke="' + VG.lotEdge + '" stroke-width="0.9" vector-effect="non-scaling-stroke"/>';
+    o += base.lots.map(lotSvg).join('');
+    zoneLots.forEach(list => { o += list.map((l, i) => l.kind === 'champs' ? '<path d="' + dStr(l.poly) + 'Z" fill="' + fieldCol(i) + '" stroke="' + VG.lotEdge + '" stroke-width="0.8" vector-effect="non-scaling-stroke"/>' : lotSvg(l, i)).join(''); });
+    // fortifications: palissade + tours; donjon fortifie
+    o += '<path d="' + dStr(base.wall) + 'Z" fill="none" stroke="' + VG.wall + '" stroke-width="' + M(4) + '" stroke-linejoin="round"/>';
+    o += base.wall.map(q => '<circle cx="' + q[0].toFixed(5) + '" cy="' + q[1].toFixed(5) + '" r="' + M(6) + '" fill="' + VG.wall + '"/>').join('');
+    // portes: la ou les rues principales traversent l'enceinte
+    base.streets.filter(x => x.main).forEach(x => { for(let i = 1; i < x.pts.length; i++) if(pointInPoly(x.pts[i - 1], base.wall) !== pointInPoly(x.pts[i], base.wall)){
+      const q = x.pts[i]; o += '<rect x="' + (q[0] - M(7)).toFixed(5) + '" y="' + (q[1] - M(7)).toFixed(5) + '" width="' + M(14) + '" height="' + M(14) + '" fill="' + VG.road + '" stroke="' + VG.wall + '" stroke-width="' + M(3) + '"/>'; break; } });
+    o += '<path d="' + dStr(base.keepWall) + 'Z" fill="none" stroke="' + VG.wall + '" stroke-width="' + M(5) + '" stroke-linejoin="round"/>';
+    o += base.keepWall.map(q => '<circle cx="' + q[0].toFixed(5) + '" cy="' + q[1].toFixed(5) + '" r="' + M(7) + '" fill="' + VG.wall + '"/>').join('');
+    o += '<path d="' + dStr(base.keep) + 'Z" fill="#e8a77a" stroke="' + VG.lotEdge + '" stroke-width="1.2" vector-effect="non-scaling-stroke"/>';
+    // trace en cours (route ou zone)
+    if(tool.pts.length) o += '<path d="' + dStr(tool.pts) + (tool.mode !== 'road' && tool.pts.length > 2 ? 'Z' : '') + '" fill="' + (tool.mode === 'road' ? 'none' : 'rgba(46,158,79,0.12)') + '" stroke="#2e9e4f" stroke-width="2.5" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' +
+      tool.pts.map(q => '<circle cx="' + q[0].toFixed(5) + '" cy="' + q[1].toFixed(5) + '" r="' + (rx.view.w / 300).toFixed(5) + '" fill="#2e9e4f"/>').join('');
+    g.innerHTML = o + '<g id="vg-cursor"></g>';
+    // etiquettes du village
+    const C = rx.capK, kc = [(base.keep[0][0] + base.keep[4][0]) / 2, (base.keep[0][1] + base.keep[4][1]) / 2];
+    rx.villageLabels = [{ p:[C[0], C[1] - M(230)], t:base.name, cls:'vg-title', size:2.2 }, { p:C, t:'Marché', cls:'vg-lab', size:1 }, { p:kc, t:'Donjon', cls:'vg-lab', size:1 }];
+    const nLots = base.lots.length + zoneLots.reduce((a2, l) => a2 + l.filter(x => x.kind !== 'champs').length, 0);
+    const info = document.getElementById('vg-stats'); if(info) info.textContent = base.name + ' — ' + nLots + ' maisons · ' + (base.fields.length + zoneLots.reduce((a2, l) => a2 + l.filter(x => x.kind === 'champs').length, 0)) + ' champs · ' + data.roads.length + ' route(s) tracée(s) · ' + data.zones.length + ' zone(s)';
+    if(rx.drawLabels) rx.drawLabels();
+  }
+
+  // ---- panneau d'outils sous la carte ----
+  function renderVillagePanel(){
     const el = document.getElementById('rx-build'); if(!el) return;
-    const list = villageBuilds[rx.regionId] || [], count = id => list.filter(b => b.type === id).length;
-    const tab = REGION_BUILD_TABS.find(t => t.id === rb.tab) || REGION_BUILD_TABS[0];
-    el.innerHTML = '<div class="rx-build-tabs" role="tablist">' + REGION_BUILD_TABS.map(t => '<button type="button" role="tab" data-tab="' + t.id + '" aria-selected="' + (t.id === tab.id) + '">' + t.label + '</button>').join('') + '</div>' +
-      '<div class="rx-build-cards">' + tab.items.map(i => '<button type="button" class="rx-bcard" data-item="' + i.id + '" aria-pressed="' + (rb.item && rb.item.id === i.id) + '">' +
-        '<span class="ic">' + i.icon + '</span><span class="nm">' + i.name + '</span>' +
-        '<span class="sz">' + (i.line ? 'tracé libre' : i.w + ' × ' + i.h + ' m') + '</span>' + (i.ruleText ? '<span class="rl">' + i.ruleText + '</span>' : '') +
-        '<span class="ct">' + (count(i.id) ? count(i.id) + ' construit' + (count(i.id) > 1 ? 's' : '') : '') + '</span></button>').join('') + '</div>' +
-      '<div class="rx-build-status" id="rx-build-status">' + (rb.item ? '' : 'Choisissez une construction, puis placez-la sur la carte (R : tourner · Échap : annuler).') + '</div>';
-    el.querySelectorAll('[data-tab]').forEach(b => b.addEventListener('click', () => { rb.tab = b.dataset.tab; renderBuildPanel(); }));
-    el.querySelectorAll('[data-item]').forEach(b => b.addEventListener('click', () => startRegionBuild(b.dataset.item)));
+    const btn = (id, icon, label, hint) => '<button type="button" class="rx-bcard" data-tool="' + id + '" aria-pressed="' + (tool.mode === id) + '"><span class="ic">' + icon + '</span><span class="nm">' + label + '</span><span class="rl">' + hint + '</span></button>';
+    el.innerHTML = '<div class="rx-build-tabs" role="tablist"><button type="button" aria-selected="true">Village</button></div>' +
+      '<div class="rx-build-cards">' +
+        btn('road', '〰️', 'Route', 'points · double-clic pour finir') +
+        ZONE_TYPES.map(z => btn(z.id, z.icon, 'Zone : ' + z.label, 'points · double-clic pour fermer')).join('') +
+        btn('erase', '🧽', 'Effacer', 'clic sur une zone ou une route') +
+        '<button type="button" class="rx-bcard" data-tool="regen"><span class="ic">🎲</span><span class="nm">Autre région</span><span class="rl">nouveau village</span></button>' +
+      '</div><div class="rx-build-status" id="rx-build-status"><span id="vg-stats"></span></div>';
+    el.querySelectorAll('[data-tool]').forEach(b2 => b2.addEventListener('click', () => {
+      const t = b2.dataset.tool;
+      if(t === 'regen'){ villageRegion = pickVillageRegion(); renderVillageView(); return; }
+      tool.mode = tool.mode === t ? null : t; tool.pts = []; renderVillagePanel(); drawVillage();
+      if(tool.mode) setVillageStatus(tool.mode === 'road' ? 'Route : cliquez les points sur la carte, double-clic pour terminer. Les maisons s\'alignent sur les routes.'
+        : tool.mode === 'erase' ? 'Effacer : cliquez dans une zone ou près d\'une route tracée.'
+        : 'Zone ' + (ZONE_TYPES.find(z => z.id === tool.mode) || {}).label + ' : cliquez les points du contour, double-clic pour fermer.' + (tool.mode !== 'champs' ? ' Les maisons apparaissent le long des routes de la zone.' : ''));
+    }));
+    drawVillage();
   }
-  function startRegionBuild(id){
-    const it = REGION_BUILD_ITEMS[id];
-    if(rb.item && rb.item.id === id){ stopRegionBuild(); return; }
-    rb.item = it; rb.pathPts = []; rb.rot = 0;
-    // il faut etre assez pres pour construire: on zoome sur le village
-    if(rx.view.w > 3) rx.zoomTo(rx.capK[0], rx.capK[1], 1.5);
-    renderBuildPanel();
-    setBuildStatus(it.line ? 'Chemin : cliquez les points sur la carte, double-clic pour terminer (Échap : annuler).' : 'Placez « ' + it.name + ' » sur la carte (R : tourner · Échap : annuler).');
+  function setVillageStatus(text, cls){ const el = document.getElementById('rx-build-status'); if(el){ el.innerHTML = '<b class="' + (cls || '') + '">' + text + '</b> · <span id="vg-stats"></span>'; drawVillage(); } }
+
+  function finishTool(){
+    const data = vz();
+    if(tool.mode === 'road' && tool.pts.length >= 2){ data.roads.push({ pts:tool.pts.slice() }); saveVillageZones(); }
+    else if(ZONE_TYPES.some(z => z.id === tool.mode) && tool.pts.length >= 3){ data.zones.push({ type:tool.mode, pts:tool.pts.slice(), seed:Math.floor(Math.random() * 1e9) }); saveVillageZones(); }
+    tool.pts = []; drawVillage();
   }
-  function stopRegionBuild(){ rb.item = null; rb.pathPts = []; const pv = document.getElementById('rx-preview'); if(pv) pv.innerHTML = ''; renderBuildPanel(); }
-  function initRegionBuild(svg){
-    svg.insertAdjacentHTML('beforeend', '');
-    const top = document.getElementById('rx-top');
-    top.insertAdjacentHTML('beforebegin', '<g id="rx-builds" clip-path="url(#rx-clip)"></g><g id="rx-preview"></g>');
-    rb.item = null; rb.pathPts = [];
-    drawVillageBuilds(); renderBuildPanel();
-    let down = null;
+  function initVillage(svg){
+    document.getElementById('rx-detail').insertAdjacentHTML('afterend', '<g id="vg-layer"></g>');
+    rx.village = null; tool.mode = null; tool.pts = [];
+    renderVillagePanel();
+    // ouverture: vue sur le village (~1,4 km)
+    rx.view = { cx:rx.capK[0], cy:rx.capK[1], w:1.4 };
+    // double-clic detecte a la main: le calque est redessine entre deux clics, le navigateur ne declenche donc pas 'dblclick'
+    let down = null, last = null;
     svg.addEventListener('pointerdown', e => { down = [e.clientX, e.clientY]; });
-    svg.addEventListener('pointermove', e => {
-      if(!rb.item) return;
-      const [x, y] = rx.screenToKm(e.clientX, e.clientY), pv = document.getElementById('rx-preview');
-      if(rb.item.line){
-        const pts = [...rb.pathPts, [x, y]];
-        pv.innerHTML = pts.length > 1 ? '<path d="M' + pts.map(q => q[0].toFixed(4) + ' ' + q[1].toFixed(4)).join('L') + '" fill="none" stroke="#2e9e4f" stroke-width="3" stroke-dasharray="6 4" vector-effect="non-scaling-stroke"/>' : '';
-        return;
-      }
-      const res = checkPlacement(x, y, rb.item, rb.rot); rb.preview = { x, y, res };
-      pv.innerHTML = buildingSvg(x, y, rb.item, rb.rot, res.ok ? '#2e9e4f' : '#d64541', 0.75);
-      setBuildStatus((res.ok ? '✅ ' : '⛔ ') + rb.item.name + ' : ' + res.reason, res.ok ? 'ok' : 'ko');
-    });
     svg.addEventListener('pointerup', e => {
-      if(!rb.item || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;   // glisser = se deplacer
-      const [x, y] = rx.screenToKm(e.clientX, e.clientY);
-      if(rb.item.line){
-        if(!turf.booleanPointInPolygon(rx.inv(x, y), rx.land)){ setBuildStatus('⛔ Point hors de la région.', 'ko'); return; }
-        rb.pathPts.push([x, y]); setBuildStatus('Chemin : ' + rb.pathPts.length + ' point(s) — double-clic pour terminer.', 'ok'); return;
+      if(!tool.mode || !down || Math.hypot(e.clientX - down[0], e.clientY - down[1]) > 5) return;     // glisser = se deplacer
+      const p = rx.screenToKm(e.clientX, e.clientY), data = vz(), now = performance.now();
+      const dbl = last && now - last.t < 400 && Math.hypot(e.clientX - last.x, e.clientY - last.y) < 8; last = { t:now, x:e.clientX, y:e.clientY };
+      if(dbl && tool.mode !== 'erase'){ last = null; finishTool(); return; }
+      if(tool.mode === 'erase'){
+        const zi = data.zones.map((z, i) => [z, i]).reverse().find(([z]) => pointInPoly(p, z.pts));
+        const ri = data.roads.findIndex(r => polyDist(p, r.pts) < rx.view.w / 120);
+        if(ri >= 0) data.roads.splice(ri, 1); else if(zi) data.zones.splice(zi[1], 1);
+        saveVillageZones(); drawVillage(); return;
       }
-      const res = checkPlacement(x, y, rb.item, rb.rot);
-      if(!res.ok){ setBuildStatus('⛔ Impossible : ' + res.reason, 'ko'); return; }
-      (villageBuilds[rx.regionId] = villageBuilds[rx.regionId] || []).push({ type:rb.item.id, x, y, rot:rb.rot });
-      saveVillageBuilds(); drawVillageBuilds(); renderBuildPanel();
-      setBuildStatus('✅ ' + rb.item.name + ' construit(e). Cliquez pour en placer un(e) autre, Échap pour arrêter.', 'ok');
+      // fermer une zone en cliquant sur son premier point
+      if(tool.mode !== 'road' && tool.pts.length >= 3 && Math.hypot(p[0] - tool.pts[0][0], p[1] - tool.pts[0][1]) < rx.view.w / 80){ finishTool(); return; }
+      if(!turf.booleanPointInPolygon(rx.inv(...p), rx.land)){ setVillageStatus('⛔ Point hors de la région.', 'ko'); return; }
+      tool.pts.push(p); drawVillage();
     });
-    svg.addEventListener('dblclick', e => {
-      if(!rb.item || !rb.item.line) return; e.preventDefault();
-      if(rb.pathPts.length >= 2){ (villageBuilds[rx.regionId] = villageBuilds[rx.regionId] || []).push({ type:'chemin', line:true, pts:rb.pathPts.slice() });
-        saveVillageBuilds(); drawVillageBuilds(); }
-      rb.pathPts = []; document.getElementById('rx-preview').innerHTML = ''; renderBuildPanel(); setBuildStatus('✅ Chemin tracé. Cliquez pour en commencer un autre, Échap pour arrêter.', 'ok');
-    });
+    svg.addEventListener('dblclick', e => { if(tool.mode) e.preventDefault(); });
   }
   document.addEventListener('keydown', e => {
-    if(!rx || currentView() !== 'village' || !rb.item) return;
-    if(e.key === 'Escape'){ stopRegionBuild(); return; }
-    if(e.key.toLowerCase() === 'r' && !rb.item.line){ rb.rot = (rb.rot + 15) % 180; if(rb.preview){ const pv = document.getElementById('rx-preview'), res = checkPlacement(rb.preview.x, rb.preview.y, rb.item, rb.rot);
-      pv.innerHTML = buildingSvg(rb.preview.x, rb.preview.y, rb.item, rb.rot, res.ok ? '#2e9e4f' : '#d64541', 0.75); } }
+    if(!rx || currentView() !== 'village' || !tool.mode) return;
+    if(e.key === 'Escape'){ tool.mode = null; tool.pts = []; renderVillagePanel(); }
+    if(e.key === 'Backspace' && tool.pts.length){ e.preventDefault(); tool.pts.pop(); drawVillage(); }
   });
 
   // clavier: fleches / ZQSD deplacent la vue (vue Village affichee)
