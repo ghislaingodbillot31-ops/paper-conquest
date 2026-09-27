@@ -443,6 +443,11 @@
                     <select class="dev-select" id="dev-resource" disabled><option>Calcul en cours…</option></select>
                     <div id="dev-resource-info"></div>
                   </div>
+                  <div class="dev-section">
+                    <label class="dev-section-title" for="dev-river">Rivières et lacs (exemples, Australie)</label>
+                    <select class="dev-select" id="dev-river" disabled><option>Calcul en cours…</option></select>
+                    <div class="soil-note" id="dev-river-info"></div>
+                  </div>
                   <button class="dev-reset" id="dev-reset" type="button">Réinitialiser la partie</button>
                 </div>
               </div>
@@ -875,6 +880,7 @@
     initBoat(navGrid);
     initCaravan();
     initResources();
+    initRivers(navGrid);
   }
 
   // ---------- Reseau de chemins (mondial, adjacence topologique reelle) ----------
@@ -2469,6 +2475,197 @@
     return '<div class="region-section-title">Ressources</div>' +
       '<div class="region-row"><span>Qualité du sol</span><span class="v">' + SOIL_LEVELS[regionSoil.get(id)] + '</span></div>' +
       ((groups + seaHtml) || '<p class="cap-empty">Aucune ressource notable.</p>');
+  }
+
+  // ---------- Rivieres et lacs (4 exemples generes sur l'Australie) ----------
+  // Relief simule (pas de vraie altitude dans le jeu): distance a la cote,
+  // Cordillere australienne a l'est, massifs de l'interieur, cuvette du lac
+  // Eyre et bruit. Les cuvettes sont remplies (priority-flood): leur fond
+  // devient un lac; l'eau suit ensuite la pente jusqu'a la mer, ou jusqu'a
+  // un lac sale interieur (bassin endoreique, exemple D). Le debit cumule la
+  // pluie (inverse de l'aridite de la carte): peu de fleuves au desert.
+  // Les exemples ne different que par leurs parametres (RIVER_VARIANTS).
+  const RIVER_BOX = { lon0:112.5, lon1:154, lat0:-44, lat1:-10.5, res:0.2 };
+  const RIVER_VARIANTS = {
+    A:{ label:'A — Grands fleuves, sans branches', desc:'Quelques très longs fleuves, un seul lit chacun, de la source à la mer. Aucun lac.',
+        noise:25, basin:30, depth:0, minAcc:5, systemMin:45, systems:12, lakes:false, endorheic:false, seed:3 },
+    B:{ label:'B — Fleuves avec quelques affluents', desc:'Les grands fleuves reçoivent leurs principaux affluents (une seule génération de branches). Quelques lacs d\'eau douce.',
+        noise:30, basin:40, depth:1, branchFrac:0.1, minAcc:10, systemMin:70, systems:12, lakes:true, lakeDepth:8, lakeMin:4, lakeMax:14, endorheic:false, seed:5 },
+    C:{ label:'C — Réseau dense et ramifié', desc:'Arbre complet d\'affluents, largeur du trait selon le débit, fleuves côtiers courts. Lacs d\'eau douce.',
+        noise:35, basin:40, depth:4, branchFrac:0.02, minAcc:4, systemMin:12, systems:60, lakes:true, lakeDepth:5, lakeMin:3, lakeMax:10, endorheic:false, seed:7 },
+    D:{ label:'D — Bassins intérieurs et lacs salés', desc:'Au désert, les rivières n\'atteignent pas la mer : elles finissent dans des lacs salés (pâles), comme le lac Eyre. Lacs d\'eau douce ailleurs.',
+        noise:40, basin:70, depth:2, branchFrac:0.06, minAcc:5, systemMin:25, systems:40, lakes:true, lakeDepth:5, lakeMin:3, lakeMax:30, endorheic:true, seed:11 },
+  };
+  const RIVER_STORAGE_KEY = 'paperConquestRiverVariant';
+  // Cordillere australienne (lat, lon) et massifs [lat, lon, rayon, hauteur]
+  const AUS_RIDGE = [[-37.8,145.5],[-36.3,148.3],[-33.5,150],[-30.5,151.8],[-27.5,152],[-24.5,149.5],[-21.5,147.8],[-18.5,145.5],[-15.5,144.6],[-12.5,143]];
+  const AUS_RANGES = [[-23.7,133.5,2,0.55],[-22.5,118,2.5,0.6],[-17,126,2.5,0.5],[-31.5,138.6,1.3,0.45],[-26,131.5,1.8,0.5],[-42,146.5,1.2,0.8],[-34,117,2,0.25]];
+  let riverBase = null, riverVariant = 'A';
+  const riverCache = {};
+  try{ const v = localStorage.getItem(RIVER_STORAGE_KEY); if(v === '' || RIVER_VARIANTS[v]) riverVariant = v; }catch(e){}
+
+  // Masque terre de l'Australie (grille de navigation, 0 = terre) et donnees communes
+  function riverBaseOf(navGrid){
+    const B = RIVER_BOX, W = Math.round((B.lon1 - B.lon0) / B.res), H = Math.round((B.lat1 - B.lat0) / B.res);
+    const land = new Uint8Array(W * H), rows = new Map();
+    const fineRow = y => { if(rows.has(y)) return rows.get(y); const r = navGrid.rows[y], out = new Uint8Array(navGrid.w); let x = 0;
+      for(let k = 0; k < r.length; k += 2){ if(r[k]) out.fill(r[k], x, x + r[k+1]); x += r[k+1]; } rows.set(y, out); return out; };
+    const lonAt = x => B.lon0 + (x + 0.5) * B.res, latAt = y => B.lat1 - (y + 0.5) * B.res;
+    for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
+      const lon = lonAt(x), lat = latAt(y);
+      if(lat > -11 && lon > 143.5) continue;                       // Nouvelle-Guinee
+      const fy = Math.floor((navGrid.latTop - lat) / navGrid.res), fx = Math.floor((lon + 180) / navGrid.res);
+      if(!fineRow(fy)[fx]) land[y * W + x] = 1;
+    }
+    // distance a la mer (en cases), pluie
+    const dist = new Float32Array(W * H).fill(1e9), q = [];
+    for(let i = 0; i < W * H; i++) if(!land[i]){ dist[i] = 0; q.push(i); }
+    for(let h = 0; h < q.length; h++){ const c = q[h], cx = c % W, cy = (c / W) | 0;
+      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ const nx = cx + dx, ny = cy + dy;
+        if(nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const n = ny * W + nx;
+        if(dist[n] > dist[c] + 1){ dist[n] = dist[c] + 1; q.push(n); } } }
+    const rain = new Float32Array(W * H);
+    for(let i = 0; i < W * H; i++) if(land[i]) rain[i] = Math.pow(1 - aridityAt(latAt((i / W) | 0), lonAt(i % W)), 1.6) + 0.02;
+    return { W, H, land, dist, rain, lonAt, latAt };
+  }
+  function segDist(lat, lon, a, b){
+    const k = Math.cos(lat * Math.PI / 180), ax = a[1] * k, ay = a[0], bx = b[1] * k, by = b[0], px = lon * k, py = lat;
+    const dx = bx - ax, dy = by - ay, t = clamp01(((px - ax) * dx + (py - ay) * dy) / (dx * dx + dy * dy || 1));
+    return Math.hypot(px - ax - t * dx, py - ay - t * dy);
+  }
+  function computeRivers(v){
+    const { W, H, land, dist, rain, lonAt, latAt } = riverBase, N = W * H;
+    // 1. relief
+    const elev = new Float32Array(N);
+    for(let i = 0; i < N; i++){ if(!land[i]) continue;
+      const lon = lonAt(i % W), lat = latAt((i / W) | 0);
+      let ridge = 1e9; for(let k = 1; k < AUS_RIDGE.length; k++) ridge = Math.min(ridge, segDist(lat, lon, AUS_RIDGE[k-1], AUS_RIDGE[k]));
+      let e = 60 * Math.min(dist[i], 25) / 25 + 900 * Math.exp(-((ridge / 1.3) ** 2));
+      for(const [clat, clon, r, h] of AUS_RANGES) e += 900 * h * Math.exp(-((geoDist(lat, lon, clat, clon) / r) ** 2));
+      e -= v.basin * smooth01(1 - geoDist(lat, lon, -28.5, 137.5) / 7);
+      e += v.noise * (geoNoise(lon, lat, v.seed, 350) - 0.5) * 2 + v.noise * 0.5 * (geoNoise(lon, lat, v.seed + 17, 120) - 0.5);
+      elev[i] = e; }
+    // 2. remplissage des cuvettes + direction d'ecoulement (priority-flood)
+    const filled = new Float32Array(N), recv = new Int32Array(N).fill(-1), done = new Uint8Array(N), sea = new Int32Array(N).fill(-1);
+    const hk = [], hv = [];
+    const push = (key, val) => { hk.push(key); hv.push(val); let i = hk.length - 1;
+      while(i){ const p = (i - 1) >> 1; if(hk[p] <= hk[i]) break; [hk[p], hk[i]] = [hk[i], hk[p]]; [hv[p], hv[i]] = [hv[i], hv[p]]; i = p; } };
+    const pop = () => { const v0 = hv[0], lk = hk.pop(), lv = hv.pop();
+      if(hk.length){ hk[0] = lk; hv[0] = lv; let i = 0; for(;;){ const l = 2 * i + 1, r = l + 1; let m = i;
+        if(l < hk.length && hk[l] < hk[m]) m = l; if(r < hk.length && hk[r] < hk[m]) m = r; if(m === i) break;
+        [hk[m], hk[i]] = [hk[i], hk[m]]; [hv[m], hv[i]] = [hv[i], hv[m]]; i = m; } } return v0; };
+    const nbrs = c => { const cx = c % W, cy = (c / W) | 0, out = [];
+      for(let dy = -1; dy <= 1; dy++) for(let dx = -1; dx <= 1; dx++){ if(!dx && !dy) continue; const nx = cx + dx, ny = cy + dy;
+        if(nx >= 0 && ny >= 0 && nx < W && ny < H) out.push(ny * W + nx); } return out; };
+    for(let i = 0; i < N; i++) if(land[i] && dist[i] <= 1.5){ filled[i] = elev[i]; done[i] = 1; push(elev[i], i);
+      sea[i] = nbrs(i).find(n => !land[n]) ?? -1; }
+    while(hk.length){ const c = pop();
+      for(const n of nbrs(c)) if(land[n] && !done[n]){ done[n] = 1; filled[n] = Math.max(elev[n], filled[c] + 0.01); recv[n] = c; push(filled[n], n); } }
+    // 3. lacs: composantes des cuvettes assez profondes
+    const lakeOf = new Int32Array(N).fill(-1), lakes = [];
+    if(v.lakes || v.endorheic) for(let i = 0; i < N; i++){
+      if(lakeOf[i] >= 0 || filled[i] - elev[i] < v.lakeDepth) continue;
+      const cells = [i]; lakeOf[i] = lakes.length;
+      for(let h = 0; h < cells.length; h++) for(const n of nbrs(cells[h])) if(land[n] && lakeOf[n] < 0 && filled[n] - elev[n] >= v.lakeDepth * 0.5){ lakeOf[n] = lakes.length; cells.push(n); }
+      let sink = cells[0]; for(const c of cells) if(elev[c] < elev[sink]) sink = c;
+      const lat = latAt((sink / W) | 0), lon = lonAt(sink % W);
+      // surface visible: compacte, montee depuis le point le plus bas de la
+      // cuvette (les cases les plus basses d'abord), plafonnee a lakeMax
+      const inBasin = new Set(cells), shown = [sink], seen = new Set([sink]), front = [];
+      const addFront = c => { for(const n of nbrs(c)) if(inBasin.has(n) && !seen.has(n)){ seen.add(n); front.push(n); } };
+      addFront(sink);
+      while(shown.length < v.lakeMax && front.length){ let b = 0; for(let k = 1; k < front.length; k++) if(elev[front[k]] < elev[front[b]]) b = k;
+        const c = front.splice(b, 1)[0]; shown.push(c); addFront(c); }
+      lakes.push({ cells, shown, sink, salt: v.endorheic && aridityAt(lat, lon) > 0.55 });
+    }
+    lakes.forEach((L, k) => { if(L.shown.length < v.lakeMin){ L.cells.forEach(c => lakeOf[c] = -1); L.small = true; return; }
+      if(L.salt){ L.cells.forEach(c => recv[c] = L.sink); recv[L.sink] = -1; } });  // bassin endoreique: tout finit au lac
+    // 4. debit cumule (ordre topologique)
+    const acc = Float32Array.from(rain), indeg = new Int32Array(N), kids = Array.from({ length:N }, () => null);
+    for(let i = 0; i < N; i++) if(land[i] && recv[i] >= 0){ indeg[recv[i]]++; (kids[recv[i]] = kids[recv[i]] || []).push(i); }
+    const order = []; for(let i = 0; i < N; i++) if(land[i] && !indeg[i]) order.push(i);
+    for(let h = 0; h < order.length; h++){ const c = order[h], r = recv[c]; if(r >= 0){ acc[r] += acc[c]; if(!--indeg[r]) order.push(r); } }
+    // 5. fleuves: tronc principal depuis chaque embouchure, puis affluents
+    const lines = [];
+    const traceStem = (start, depth, join) => {
+      const cells = [start]; let c = start;
+      for(;;){ const ks = kids[c]; if(!ks) break;
+        let main = ks[0]; for(const k of ks) if(acc[k] > acc[main]) main = k;
+        if(acc[main] < v.minAcc) break;
+        if(depth > 0) for(const k of ks) if(k !== main && acc[k] >= v.minAcc && acc[k] >= v.branchFrac * acc[c]) traceStem(k, depth - 1, c);
+        cells.push(main); c = main; }
+      if(cells.length < 3) return;
+      cells.reverse();                                              // source -> aval
+      const pts = cells.map(i => [lonAt(i % W), latAt((i / W) | 0)]);
+      if(join >= 0) pts.push([lonAt(join % W), latAt((join / W) | 0)]);
+      else if(sea[start] >= 0) pts.push([lonAt(sea[start] % W), latAt((sea[start] / W) | 0)]);
+      lines.push({ pts, acc:cells.map(i => acc[i]) });
+    };
+    const outlets = []; for(let i = 0; i < N; i++) if(land[i] && recv[i] < 0 && acc[i] >= v.systemMin) outlets.push(i);
+    outlets.sort((a, b) => acc[b] - acc[a]).slice(0, v.systems).forEach(o => traceStem(o, v.depth, -1));
+    return { lines, lakes: lakes.filter(L => !L.small), accMax: outlets.length ? acc[outlets[0]] : 1, W, lonAt, latAt };
+  }
+  // Lignes lissees (Chaikin) et legerement sinueuses; largeur selon le debit
+  function riverFeatures(r, v){
+    const feats = [], res = RIVER_BOX.res;
+    for(const L of r.lines){
+      let pts = L.pts.map(([x, y], k) => k === 0 || k === L.pts.length - 1 ? [x, y]
+        : [x + (geoNoise(x, y, v.seed + 3, 60) - 0.5) * res * 1.1, y + (geoNoise(x, y, v.seed + 9, 60) - 0.5) * res * 1.1]);
+      for(let it = 0; it < 3; it++){ const out = [pts[0]];
+        for(let k = 0; k < pts.length - 1; k++){ const [a, b] = [pts[k], pts[k+1]];
+          out.push([a[0] * 0.75 + b[0] * 0.25, a[1] * 0.75 + b[1] * 0.25], [a[0] * 0.25 + b[0] * 0.75, a[1] * 0.25 + b[1] * 0.75]); }
+        out.push(pts[pts.length - 1]); pts = out; }
+      const CH = 16, span = Math.log(Math.max(r.accMax / v.minAcc, 2));
+      for(let s = 0; s < pts.length - 1; s += CH){
+        const seg = pts.slice(s, Math.min(pts.length, s + CH + 1));
+        const a = L.acc[Math.min(L.acc.length - 1, Math.floor(s / pts.length * L.acc.length))];
+        feats.push({ type:'Feature', properties:{ w:0.6 + 2.6 * clamp01(Math.log(a / v.minAcc) / span) }, geometry:{ type:'LineString', coordinates:seg } });
+      }
+    }
+    const lakeFeats = r.lakes.map(L => {
+      const pts = turf.featureCollection(L.shown.map(i => turf.point([r.lonAt(i % r.W), r.latAt((i / r.W) | 0)])));
+      let poly = null;
+      if(L.shown.length >= 4){ try{ poly = turf.concave(pts, { maxEdge:RIVER_BOX.res * 111 * 1.8, units:'kilometers' }) || turf.convex(pts); }catch(e){} }
+      if(!poly) poly = turf.circle(turf.center(pts), Math.sqrt(L.shown.length) * RIVER_BOX.res * 60, { steps:24, units:'kilometers' });
+      try{ poly = turf.polygonSmooth(poly, { iterations:2 }).features[0]; }catch(e){}
+      poly.properties = { salt:L.salt };
+      return poly;
+    });
+    return { rivers:turf.featureCollection(feats), lakes:turf.featureCollection(lakeFeats) };
+  }
+  function showRiverVariant(){
+    if(!map.getSource('rivers')) return;
+    const v = RIVER_VARIANTS[riverVariant], info = document.getElementById('dev-river-info');
+    const empty = { type:'FeatureCollection', features:[] };
+    if(!v){ map.getSource('rivers').setData(empty); map.getSource('lakes').setData(empty); info.textContent = ''; return; }
+    if(!riverCache[riverVariant]) riverCache[riverVariant] = riverFeatures(computeRivers(v), v);
+    const d = riverCache[riverVariant];
+    map.getSource('rivers').setData(d.rivers);
+    map.getSource('lakes').setData(v.lakes || v.endorheic ? d.lakes : empty);
+    const nLakes = v.lakes || v.endorheic ? d.lakes.features.length : 0, salt = d.lakes.features.filter(f => f.properties.salt).length;
+    info.textContent = v.desc + ' — ' + nLakes + ' lacs' + (salt ? ' (dont ' + salt + ' salés)' : '') + '.';
+  }
+  function initRivers(navGrid){
+    const sel = document.getElementById('dev-river');
+    if(!navGrid){ sel.innerHTML = '<option>Indisponible</option>'; return; }
+    riverBase = riverBaseOf(navGrid);
+    map.addSource('rivers', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addSource('lakes', { type:'geojson', data:{ type:'FeatureCollection', features:[] } });
+    map.addLayer({ id:'rivers', type:'line', source:'rivers', layout:{ 'line-cap':'round', 'line-join':'round' },
+      paint:{ 'line-color':'#2f6fb0', 'line-opacity':0.9,
+        'line-width':['interpolate', ['linear'], ['zoom'], 1, ['*', 0.7, ['get', 'w']], 4, ['*', 1.4, ['get', 'w']], 7, ['*', 3, ['get', 'w']]] } }, 'regions-selected');
+    map.addLayer({ id:'lakes', type:'fill', source:'lakes',
+      paint:{ 'fill-color':['case', ['get', 'salt'], '#eef3f1', '#5b9bd5'], 'fill-opacity':0.95 } }, 'regions-selected');
+    map.addLayer({ id:'lakes-outline', type:'line', source:'lakes',
+      paint:{ 'line-color':['case', ['get', 'salt'], '#9ab7c9', '#2f6fb0'], 'line-width':1 } }, 'regions-selected');
+    sel.innerHTML = '<option value="">— Aucun —</option>' + Object.entries(RIVER_VARIANTS).map(([k, v]) => '<option value="' + k + '">' + v.label + '</option>').join('');
+    sel.value = riverVariant; sel.disabled = false;
+    sel.addEventListener('change', () => {
+      riverVariant = sel.value;
+      try{ localStorage.setItem(RIVER_STORAGE_KEY, riverVariant); }catch(e){}
+      showRiverVariant();
+    });
+    showRiverVariant();
   }
 
   // ---------- Onglet DEVELOPPEUR: afficher/masquer les couches ----------
