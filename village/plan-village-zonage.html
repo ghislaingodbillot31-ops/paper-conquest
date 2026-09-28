@@ -1,0 +1,1783 @@
+<title>Village par zonage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --desk:#d6ddd9; --sheet:#f5f7f2; --ground:#edf1e2; --panel:#e9eee9;
+  --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
+  --zone:#3c8a5c; --zone-fill:rgba(255,252,232,.30); --zone-line:rgba(255,253,240,.9); --verge:#d9d8bf;
+  --house:#c9ae7e; --house-edge:#4e3b21; --roof-line:rgba(78,59,33,.45);
+  --earth:#b99468; --earth-edge:#7a5a36; --gravel:#cbc6b8; --gravel-edge:#7e786a; --paving:#b3aea4; --paving-edge:#5d5850;
+  --wall:#a39b8b; --wall-edge:#3f3a32;
+  --water:#9cc3d6; --water-edge:#4f86a3; --bridge:#6d5a41;
+  --grass:#a8c889; --grass-dark:#7da464; --tree:#4c7d3c; --tree-dark:#2c5224; --bush:#6a984c;
+  --accent:#d2602a; --bad:#c23b30; --shadow:rgba(40,48,36,.20);
+  --btn:#fbfcfa; --btn-on:#1e3a4c; --btn-on-ink:#f5f7f2;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+    --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+    --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45); --verge:#34402e;
+    --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
+    --earth:#6b5236; --earth-edge:#a8875f; --gravel:#5f5c55; --gravel-edge:#a29d90; --paving:#6e6a63; --paving-edge:#2a2826;
+    --wall:#7a7468; --wall-edge:#d9d2c3;
+    --water:#1f4a5e; --water-edge:#5d9dbd; --bridge:#b89a70;
+    --grass:#2d4a2b; --grass-dark:#213a21; --tree:#3f6d36; --tree-dark:#16301a; --bush:#4b7a3d;
+    --accent:#f08a4c; --bad:#ef5a4c; --shadow:rgba(0,0,0,.45);
+    --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+  --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+  --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45); --verge:#34402e;
+  --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
+  --earth:#6b5236; --earth-edge:#a8875f; --gravel:#5f5c55; --gravel-edge:#a29d90; --paving:#6e6a63; --paving-edge:#2a2826;
+  --wall:#7a7468; --wall-edge:#d9d2c3;
+  --water:#1f4a5e; --water-edge:#5d9dbd; --bridge:#b89a70;
+  --grass:#2d4a2b; --grass-dark:#213a21; --tree:#3f6d36; --tree-dark:#16301a; --bush:#4b7a3d;
+  --accent:#f08a4c; --bad:#ef5a4c; --shadow:rgba(0,0,0,.45);
+  --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{
+  margin:0; box-sizing:border-box; padding-inline:16px; padding-block:12px;
+  background:var(--desk); color:var(--ink);
+  font:14px/1.45 "Barlow",system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:inherit}
+.app{display:grid; grid-template-columns:292px minmax(0,1fr); gap:12px; height:100%}
+.panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:4px;
+  overflow:auto; padding:14px 14px 18px; display:flex; flex-direction:column; gap:16px;
+}
+.panel h1{font:700 22px/1.1 "Barlow Condensed",sans-serif; letter-spacing:.02em; margin:0; text-wrap:balance}
+.panel .sub{margin:2px 0 0; color:var(--ink-soft); font-size:13px}
+.panel h2{
+  font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--ink-soft); margin:0 0 8px;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+button,select,input{font:inherit; color:inherit}
+button{background:var(--btn); border:1px solid var(--line); border-radius:3px; padding:6px 10px; cursor:pointer}
+button:hover{border-color:var(--ink-soft)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+button[aria-pressed="true"]{background:var(--btn-on); color:var(--btn-on-ink); border-color:var(--btn-on)}
+button.danger{color:var(--bad)}
+.seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px}
+.seg button{display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 4px}
+.seg kbd{font:400 10px "IBM Plex Mono",monospace; opacity:.6}
+.presets{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.preset{display:grid; grid-template-columns:auto 1fr; gap:2px 8px; align-items:center; text-align:left; padding:7px 8px}
+.preset .mini{grid-row:span 2; display:grid; gap:1px; background:var(--house-edge); border:1px solid var(--house-edge)}
+.preset .mini i{background:var(--house); width:9px; height:9px}
+.preset b{font-weight:600; font-size:13px; line-height:1.1}
+.preset span{font:400 11px "IBM Plex Mono",monospace; opacity:.75}
+.row{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.row label{display:flex; flex-direction:column; font-size:12px; color:var(--ink-soft); gap:2px}
+.row input[type=number]{width:74px; padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.row select{padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0 0 8px; font-size:13px}
+.kv dt{color:var(--ink-soft)}
+.kv dd{margin:0; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-soft); font-size:13px; margin:0}
+.check{display:flex; gap:8px; align-items:center; font-size:13px}
+.stack{display:flex; flex-direction:column; gap:6px}
+details summary{cursor:pointer; font:600 12px "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+details ul{margin:8px 0 0; padding-left:18px; font-size:13px}
+details kbd{font:400 11px "IBM Plex Mono",monospace; border:1px solid var(--line); border-radius:3px; padding:0 4px}
+
+.sheet{position:relative; background:var(--sheet); border:1px solid var(--line); border-radius:4px; overflow:hidden; min-height:0; display:flex; flex-direction:column}
+.canvas-wrap{position:relative; flex:1; min-height:0}
+canvas{position:absolute; inset:0; touch-action:none; display:block}
+.zoom{position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:4px}
+.zoom button{width:32px; height:32px; padding:0; font:500 16px "IBM Plex Mono",monospace}
+.status{
+  display:flex; flex-wrap:wrap; gap:4px 18px; padding:7px 12px; border-top:1px solid var(--line);
+  font:400 12px "IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+}
+.status b{color:var(--ink); font-weight:500}
+.toast{
+  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+  background:var(--ink); color:var(--sheet); padding:6px 12px; border-radius:3px; font-size:13px;
+  pointer-events:none; transition:opacity .25s; max-width:calc(100% - 32px); text-align:center;
+}
+.toast.bad{background:var(--bad); color:#fff}
+.overlay{position:absolute; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:center; padding:16px}
+.dialog{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:14px; width:min(560px,100%); display:flex; flex-direction:column; gap:10px}
+.dialog textarea{width:100%; height:220px; font:12px "IBM Plex Mono",monospace; background:var(--btn); color:var(--ink); border:1px solid var(--line); border-radius:3px; padding:8px; resize:vertical}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr; grid-template-rows:minmax(340px,1fr) auto; height:auto; min-height:100%}
+  .sheet{order:1; height:62vh}
+  .panel{order:2}
+}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+</style>
+
+<div class="app">
+  <aside class="panel" aria-label="Outils du plan">
+    <header>
+      <h1>Village par zonage</h1>
+      <p class="sub">Terrain de 400 × 300 m · cases de 8 m le long des routes, 4 cases de profondeur · routes d'une case de large</p>
+    </header>
+
+    <section>
+      <h2>Outil</h2>
+      <div class="seg" role="group" aria-label="Outil actif">
+        <button id="tool-select" data-tool="select">Sélection<kbd>1</kbd></button>
+        <button id="tool-house" data-tool="house">Bâtiment<kbd>2</kbd></button>
+        <button id="tool-road" data-tool="road">Route<kbd>3</kbd></button>
+        <button id="tool-wall" data-tool="wall">Fortification<kbd>4</kbd></button>
+        <button id="tool-tower" data-tool="tower">Tour<kbd>5</kbd></button>
+        <button id="tool-gate" data-tool="gate">Porte<kbd>6</kbd></button>
+      </div>
+    </section>
+
+    <section id="wall-opts" hidden>
+      <h2>Fortification</h2>
+      <div class="row">
+        <button id="finish-wall">Valider la muraille (Entrée)</button>
+        <button id="undo-wall-point">Retirer le dernier point</button>
+        <button id="cancel-wall">Abandonner</button>
+      </div>
+      <p class="muted" style="margin-top:8px"><b>Clic gauche</b> : poser un point. <b>Clic droit</b> : retirer le dernier point. <b>Entrée</b> : valider. La muraille suit le même principe qu'une route : une case de large, accroches orange au milieu des cases, pas de 10°, tronçons d'un nombre entier de cases, branches calées pour remplir l'espace. Elle ne crée aucune case à bâtir, mais borne les zones des routes. Elle peut partir librement, se referme en recliquant sur son premier point et peut couper une route : placez-y une porte.</p>
+    </section>
+
+    <section id="tower-opts" hidden>
+      <h2>Tour</h2>
+      <p class="muted">Une tour se pose uniquement sur un point orange : angle ou bout de muraille, ou croisement de deux murailles.</p>
+    </section>
+
+    <section id="gate-opts" hidden>
+      <h2>Porte</h2>
+      <p class="muted">Une porte se pose uniquement sur un point orange de muraille (milieu de chaque case), comme le départ d'une route. Elle perce la muraille : une route ne franchit une muraille que par une porte, et peut partir d'une porte.</p>
+    </section>
+
+    <section id="house-opts" hidden>
+      <h2>Gabarit (façade × profondeur)</h2>
+      <div class="presets" id="presets"></div>
+      <div class="row" style="margin-top:10px">
+        <label for="cf">Façade (cases)<input id="cf" type="number" min="1" max="4" step="1" value="2"></label>
+        <label for="cd">Profondeur<input id="cd" type="number" min="1" max="4" step="1" value="3"></label>
+        <button id="use-custom" style="align-self:flex-end">Sur mesure</button>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="swap">Pivoter (façade ↔ profondeur)</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Survolez n'importe quelle case verte : le bâtiment se cale sur le quadrillage, au plus près du curseur, sur des cases libres (en bordure de route ou en fond de parcelle, et à cheval sur deux zones alignées). S'il ne tient pas dans ce sens, il est essayé pivoté.</p>
+    </section>
+
+    <section id="road-opts" hidden>
+      <h2>Revêtement (même largeur : 6 m de chaussée)</h2>
+      <div class="seg" id="road-kinds"></div>
+      <div class="stack" style="margin-top:10px">
+        <label class="check" for="snap-len"><input id="snap-len" type="checkbox" checked> Longueur en multiples de 8 m</label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="finish-road">Valider la route (Entrée)</button>
+        <button id="undo-point">Retirer le dernier point</button>
+        <button id="cancel-road">Abandonner</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Une route part toujours d'une route existante, sur un point orange (milieu de chaque case, ou bout de route). <b>Clic gauche</b> : poser un point. <b>Clic droit</b> : retirer le dernier point. <b>Entrée</b> : valider la route. Chaque tronçon est orienté par pas de 10° et mesure un nombre entier de cases. Toute route occupe une case de large (8 m, chaussée et bas-côtés), comme la grille.</p>
+    </section>
+
+    <section>
+      <h2>Paysage</h2>
+      <div class="row">
+        <button id="new-river">Nouvelle rivière</button>
+        <button id="new-lake">Nouveau lac</button>
+        <button id="new-land">Nouvelle végétation</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="del-river" class="danger">Retirer la rivière</button>
+        <button id="del-lake" class="danger">Retirer le lac</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Le tracé est tiré au hasard, sans toucher vos bâtiments. La rivière s'élargit vers l'aval ; le lac reste à l'écart de la rivière. Une route franchit la rivière par un pont, mais ne passe pas sur le lac. La végétation (herbe claire et foncée, bosquets, buissons) est générée d'après une graine ; arbres et buissons s'effacent devant routes, murailles, bâtiments et cases à bâtir.</p>
+    </section>
+
+    <section>
+      <h2>Sélection</h2>
+      <div id="sel-body"></div>
+    </section>
+
+    <section>
+      <h2>Plan</h2>
+      <div class="row">
+        <button id="undo">Annuler l'action</button>
+        <button id="json">Exporter / importer</button>
+        <button id="load-sample">Charger l'exemple</button>
+        <button id="clear" class="danger">Vider le plan</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>Raccourcis</summary>
+      <ul>
+        <li><kbd>1</kbd> à <kbd>6</kbd> changer d'outil</li>
+        <li><kbd>R</kbd> pivoter le bâtiment</li>
+        <li><kbd>Suppr</kbd> supprimer la sélection</li>
+        <li>Route et muraille : clic gauche pose un point, clic droit retire le dernier, <kbd>Entrée</kbd> valide, <kbd>Échap</kbd> abandonne le tracé</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> annuler</li>
+        <li>Molette : zoom. Glisser dans le vide : déplacer la vue</li>
+      </ul>
+    </details>
+  </aside>
+
+  <main class="sheet">
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="plan" aria-label="Plan du village avec zones le long des routes"></canvas>
+      <div class="zoom">
+        <button id="zin" aria-label="Zoomer">+</button>
+        <button id="zout" aria-label="Dézoomer">−</button>
+        <button id="zfit" aria-label="Voir tout le terrain" style="font-size:12px">⤢</button>
+      </div>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="json-dlg" hidden>
+        <div class="dialog" role="dialog" aria-label="Exporter ou importer le plan">
+          <h2 style="margin:0">Plan au format JSON</h2>
+          <p class="muted">Copiez ce texte pour garder le plan, ou collez un plan exporté puis importez-le.</p>
+          <textarea id="json-text" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="json-copy">Copier</button>
+            <button id="json-import">Importer ce texte</button>
+            <button id="json-close" style="margin-left:auto">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+
+<script>
+(() => {
+const TW = 400, TH = 300;
+const CELL = 8, DEPTH = 4;
+// muraille : même emprise qu'une route (une case), maçonnerie de 6 m au centre ;
+// rayon des tours ; longueur d'une porte le long de la route (m)
+const WALL_W = CELL, WALL_SURF = 6, TOWER_R = 6, GATE_L = CELL;
+const ANG_STEP = Math.PI / 18; // routes orientées uniquement par pas de 10°
+const KEY = 'planVillageZonage.v4';
+const PRESETS = [
+  { id:'cabane',  name:'Cabane',        f:1, d:1 },
+  { id:'maison',  name:'Maison',        f:1, d:2 },
+  { id:'grande',  name:'Grande maison', f:2, d:2 },
+  { id:'longere', name:'Longère',       f:3, d:1 },
+  { id:'grange',  name:'Grange',        f:2, d:3 },
+  { id:'halle',   name:'Halle',         f:3, d:4 },
+];
+const ROADS = [
+  // toute route occupe exactement une case de large (w = CELL) : une branche prend
+  // une colonne de cases pile, et deux routes parallèles sont à un nombre entier de cases.
+  // `surf` = largeur de la chaussée dessinée ; le reste de la bande est du bas-côté.
+  // les trois revêtements ont la même chaussée de 6 m ; seul le matériau change
+  { id:'terre',   name:'Terre',   w:CELL, surf:6 },
+  { id:'gravier', name:'Gravier', w:CELL, surf:6 },
+  { id:'pave',    name:'Pavé',    w:CELL, surf:6 },
+];
+const typeName = (f, d) => (PRESETS.find(p => p.f === f && p.d === d) || { name:'Sur mesure' }).name;
+
+/* ---------- géométrie ---------- */
+function corners(h) {
+  const a = h.a * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), hw = h.w / 2, hl = h.l / 2;
+  return [[-hw,-hl],[hw,-hl],[hw,hl],[-hw,hl]].map(([u,v]) => [h.x + u*c - v*s, h.y + u*s + v*c]);
+}
+function local(h, u, v) {
+  const a = h.a * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  return [h.x + u*c - v*s, h.y + u*s + v*c];
+}
+function polysOverlap(A, B) {
+  for (const P of [A, B]) for (let i = 0; i < P.length; i++) {
+    const p = P[i], q = P[(i+1) % P.length], nx = q[1]-p[1], ny = p[0]-q[0];
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (const v of A) { const d = v[0]*nx + v[1]*ny; a0 = Math.min(a0,d); a1 = Math.max(a1,d); }
+    for (const v of B) { const d = v[0]*nx + v[1]*ny; b0 = Math.min(b0,d); b1 = Math.max(b1,d); }
+    if (a1 <= b0 + 1e-6 || b1 <= a0 + 1e-6) return false;
+  }
+  return true;
+}
+function bbox(P) {
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y] of P) { x0 = Math.min(x0,x); y0 = Math.min(y0,y); x1 = Math.max(x1,x); y1 = Math.max(y1,y); }
+  return [x0, y0, x1, y1];
+}
+const bbHit = (a, b) => a[0] < b[2] && b[0] < a[2] && a[1] < b[3] && b[1] < a[3];
+function ptSeg(p, a, b) {
+  const dx = b[0]-a[0], dy = b[1]-a[1], L = dx*dx + dy*dy;
+  let t = L ? ((p[0]-a[0])*dx + (p[1]-a[1])*dy) / L : 0;
+  t = Math.max(0, Math.min(1, t));
+  return { d: Math.hypot(p[0]-a[0]-t*dx, p[1]-a[1]-t*dy), q: [a[0]+t*dx, a[1]+t*dy] };
+}
+function inPoly(p, P) {
+  let r = false;
+  for (let i = 0, j = P.length-1; i < P.length; j = i++) {
+    const [xi,yi] = P[i], [xj,yj] = P[j];
+    if ((yi > p[1]) !== (yj > p[1]) && p[0] < (xj-xi)*(p[1]-yi)/(yj-yi) + xi) r = !r;
+  }
+  return r;
+}
+// emprise d'un tronçon droit à bouts carrés
+function segRect(a, b, w) {
+  const dx = b[0]-a[0], dy = b[1]-a[1], L = Math.hypot(dx, dy) || 1, ux = dx/L, uy = dy/L, nx = -uy, ny = ux, r = w/2;
+  const A = [a[0]-ux*r, a[1]-uy*r], B = [b[0]+ux*r, b[1]+uy*r];
+  return [[A[0]+nx*r, A[1]+ny*r], [B[0]+nx*r, B[1]+ny*r], [B[0]-nx*r, B[1]-ny*r], [A[0]-nx*r, A[1]-ny*r]];
+}
+const inTerrain = p => p[0] >= -1e-6 && p[1] >= -1e-6 && p[0] <= TW + 1e-6 && p[1] <= TH + 1e-6;
+const shrunk = h => corners({ ...h, w:h.w - .1, l:h.l - .1 });
+const round2 = v => Math.round(v * 100) / 100;
+const segLen = (a, b) => Math.hypot(b[0]-a[0], b[1]-a[1]);
+const roadLen = r => r.pts.reduce((s, q, i) => i ? s + segLen(r.pts[i-1], q) : 0, 0);
+// point de croisement de [a,b] et [c,d] (bouts compris), ou null
+function segCross(a, b, c, d) {
+  const e = [b[0]-a[0], b[1]-a[1]], f = [d[0]-c[0], d[1]-c[1]], den = e[0]*f[1] - e[1]*f[0];
+  if (Math.abs(den) < 1e-9) return null;
+  const g = [c[0]-a[0], c[1]-a[1]];
+  const t = (g[0]*f[1] - g[1]*f[0]) / den, v = (g[0]*e[1] - g[1]*e[0]) / den, eps = 1e-6;
+  if (t < -eps || t > 1 + eps || v < -eps || v > 1 + eps) return null;
+  return [a[0] + e[0]*t, a[1] + e[1]*t];
+}
+/* ---------- eau ----------
+   Rivière : ligne médiane sinueuse d'un bord à l'autre, largeur croissante de la
+   source (w0) vers l'aval (w1). Lac : nappe arrondie autour d'un centre.
+   Pour les tests de chevauchement (SAT, polygones convexes), la rivière est découpée
+   en quadrilatères entre deux rives et le lac en triangles en éventail. */
+function riverBanks(rv) {
+  const n = rv.pts.length, L = [], R = [];
+  for (let i = 0; i < n; i++) {
+    const a = rv.pts[Math.max(0, i - 1)], b = rv.pts[Math.min(n - 1, i + 1)];
+    const d = segLen(a, b) || 1, nx = -(b[1] - a[1]) / d, ny = (b[0] - a[0]) / d;
+    const hw = (rv.w0 + (rv.w1 - rv.w0) * i / (n - 1)) / 2, p = rv.pts[i];
+    L.push([p[0] + nx * hw, p[1] + ny * hw]); R.push([p[0] - nx * hw, p[1] - ny * hw]);
+  }
+  return { L, R };
+}
+function waterPolys() {
+  const river = [], lake = [];
+  if (S.river) {
+    const { L, R } = riverBanks(S.river);
+    for (let i = 0; i < L.length - 1; i++) river.push([L[i], L[i+1], R[i+1], R[i]]);
+  }
+  if (S.lake) {
+    const P = S.lake.pts, c = S.lake.c;
+    for (let i = 0; i < P.length; i++) lake.push([c, P[i], P[(i + 1) % P.length]]);
+  }
+  return { river:river.map(P => ({ P, bb:bbox(P) })), lake:lake.map(P => ({ P, bb:bbox(P) })) };
+}
+const hitsAny = (P, list) => { const bb = bbox(P); return list.some(q => bbHit(bb, q.bb) && polysOverlap(P, q.P)); };
+function makeRiver(o) {
+  // o : { vertical, base, a1, f1, p1, a2, f2, p2 } — deux sinusoïdes superposées
+  const len = o.vertical ? TH : TW, pts = [];
+  for (let s = -12; s <= len + 12; s += 4) {
+    const v = o.base + o.a1 * Math.sin(o.f1 * s + o.p1) + o.a2 * Math.sin(o.f2 * s + o.p2);
+    pts.push(o.vertical ? [round2(v), s] : [s, round2(v)]);
+  }
+  return { pts, w0:9, w1:18 };
+}
+function makeLake(cx, cy, R, p1, p2) {
+  const pts = [];
+  for (let i = 0; i < 40; i++) {
+    const t = i / 40 * Math.PI * 2, r = R * (1 + .16 * Math.sin(3 * t + p1) + .08 * Math.sin(5 * t + p2));
+    pts.push([round2(cx + Math.cos(t) * r), round2(cy + Math.sin(t) * r)]);
+  }
+  return { c:[cx, cy], pts };
+}
+/* ---------- paysage ----------
+   Bruit de valeur à plusieurs octaves, tiré d'une graine (S.landSeed) : il colore le sol
+   (herbe claire → herbe foncée) et règle la densité des arbres (bosquets dans le foncé).
+   Les candidats arbres / buissons sont fixés par la graine ; on retire ensuite ceux
+   qui tombent sur l'eau, une route, une muraille, un ouvrage, un bâtiment ou une case. */
+function seeded(seed) {
+  let s = (seed >>> 0) || 1;
+  return () => { s = (s * 1664525 + 1013904223) >>> 0; return s / 4294967296; };
+}
+let noiseFn = null, noiseSeed = null;
+function landNoise() {
+  if (noiseFn && noiseSeed === S.landSeed) return noiseFn;
+  const rnd = seeded(S.landSeed), G = 64, grid = Array.from({ length:G * G }, rnd);
+  const at = (x, y) => grid[(((y % G) + G) % G) * G + (((x % G) + G) % G)];
+  const sm = t => t * t * (3 - 2 * t);
+  const v = (x, y) => {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi);
+    const a = at(xi, yi), b = at(xi + 1, yi), c = at(xi, yi + 1), d = at(xi + 1, yi + 1);
+    return a + (b - a) * xf + (c - a) * yf + (a - b - c + d) * xf * yf;
+  };
+  noiseSeed = S.landSeed;
+  // x, y en mètres : grandes nappes (60 m), taches (22 m), grain (8 m)
+  return noiseFn = (x, y) => v(x / 60, y / 60) * .6 + v(x / 22 + 17, y / 22 + 5) * .3 + v(x / 8 + 3, y / 8 + 11) * .1;
+}
+let floraCands = null, floraSeed = null;
+function floraCandidates() {
+  if (floraCands && floraSeed === S.landSeed) return floraCands;
+  const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), out = [];
+  for (let y = 2; y < TH; y += 5) for (let x = 2; x < TW; x += 5) {
+    const px = x + rnd() * 4, py = y + rnd() * 4, n = nz(px, py), r = rnd();
+    // forêt : dense là où l'herbe est foncée ; ailleurs quelques arbres isolés
+    const pTree = n > .58 ? .75 : n > .5 ? .25 : .025;
+    if (r < pTree) out.push({ x:round2(px), y:round2(py), r:2.2 + rnd() * 2.2, kind:'tree', v:rnd() });
+    else if (r < pTree + (n > .45 ? .12 : .05)) out.push({ x:round2(px), y:round2(py), r:.9 + rnd() * .9, kind:'bush', v:rnd() });
+  }
+  floraSeed = S.landSeed;
+  return floraCands = out;
+}
+let flora = [];
+function computeFlora() {
+  const obstacles = [];
+  const add = P => obstacles.push({ P, bb:bbox(P) });
+  for (const o of [...S.roads, ...S.walls]) for (let k = 0; k < o.pts.length - 1; k++) add(segRect(o.pts[k], o.pts[k+1], o.w));
+  S.towers.forEach(t => add(towerPoly(t)));
+  S.gates.forEach(g => add(gatePoly(g)));
+  S.houses.forEach(h => add(corners(h)));
+  const water = [...Z.water.river, ...Z.water.lake];
+  flora = floraCandidates().filter(f => {
+    if (cellAt([f.x, f.y])) return false; // les cases à bâtir restent dégagées
+    const P = corners({ x:f.x, y:f.y, a:0, w:f.r * 1.6, l:f.r * 1.6 }), bb = bbox(P);
+    if (!P.every(inTerrain)) return false;
+    for (const o of obstacles) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return false;
+    for (const o of water) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return false;
+    return true;
+  }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
+}
+// sol peint une fois (2 m par pixel), redessiné à l'échelle
+let groundImg = null, groundSeed = null;
+function groundImage() {
+  if (groundImg && groundSeed === S.landSeed) return groundImg;
+  groundSeed = S.landSeed;
+  const c = document.createElement('canvas'), w = TW / 2, h = TH / 2;
+  c.width = w; c.height = h;
+  const g = c.getContext('2d'), img = g.createImageData(w, h), nz = landNoise();
+  const hex = s => { const m = s.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']; return m.slice(0, 3).map(x => parseInt(x, 16)); };
+  const A = hex(Col.grass), B = hex(Col['grass-dark']);
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    let t = (nz(x * 2 + 1, y * 2 + 1) - .38) / .3;
+    t = Math.max(0, Math.min(1, t)); t = t * t * (3 - 2 * t);
+    const i = (y * w + x) * 4;
+    img.data[i] = A[0] + (B[0] - A[0]) * t; img.data[i+1] = A[1] + (B[1] - A[1]) * t; img.data[i+2] = A[2] + (B[2] - A[2]) * t; img.data[i+3] = 255;
+  }
+  g.putImageData(img, 0, 0);
+  return groundImg = c;
+}
+// emprises des ouvrages défensifs
+const towerPoly = t => corners({ x:t.x, y:t.y, a:0, w:TOWER_R * 2, l:TOWER_R * 2 });
+const gatePoly = g => corners({ x:g.x, y:g.y, a:g.a, w:GATE_L, l:CELL + 3 });
+
+/* ---------- zones façon Cities: Skylines ----------
+   Chaque tronçon de route porte, de chaque côté, une bande de cases de CELL m
+   sur DEPTH cases de profondeur, alignée sur la route. Une case disparaît si elle
+   touche une route ou une case d'une route plus ancienne ; les cases derrière
+   une case disparue disparaissent aussi (la zone reste collée à la route). */
+let Z = { cells:[], geos:new Map(), anchors:[], wallAnchors:[], wallNodes:[], gateSpots:[], water:{ river:[], lake:[] } };
+function computeZones() {
+  const foot = [];
+  for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
+    const P = segRect(r.pts[k], r.pts[k+1], r.w); foot.push({ P, bb:bbox(P) });
+  }
+  // murailles, tours et portes retirent aussi les cases qu'elles recouvrent
+  for (const w of S.walls) for (let k = 0; k < w.pts.length - 1; k++) {
+    const P = segRect(w.pts[k], w.pts[k+1], WALL_W); foot.push({ P, bb:bbox(P) });
+  }
+  for (const t of S.towers) { const P = towerPoly(t); foot.push({ P, bb:bbox(P) }); }
+  for (const g of S.gates) { const P = gatePoly(g); foot.push({ P, bb:bbox(P) }); }
+  // l'eau ne se bâtit pas
+  const water = waterPolys();
+  foot.push(...water.river, ...water.lake);
+  const cells = [], geos = new Map();
+  for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
+    const { a, u, parts } = segLayout(r, k);
+    parts.forEach(({ off, n }, pi) => { for (const side of [1, -1]) {
+      const nv = [-u[1] * side, u[0] * side];
+      const geo = { road:r.id, seg:k, side, a, u, n:nv, off, t0:r.w / 2, cols:n, cells:[],
+                    ang:Math.atan2(u[1], u[0]) * 180 / Math.PI };
+      const P = (s, t) => [a[0] + u[0]*s + nv[0]*t, a[1] + u[1]*s + nv[1]*t];
+      geo.P = P;
+      for (let i = 0; i < n; i++) {
+        const col = [];
+        for (let j = 0; j < DEPTH; j++) {
+          const s0 = off + i*CELL, t0 = geo.t0 + j*CELL, e = .15;
+          const poly = [P(s0, t0), P(s0+CELL, t0), P(s0+CELL, t0+CELL), P(s0, t0+CELL)];
+          const test = [P(s0+e, t0+e), P(s0+CELL-e, t0+e), P(s0+CELL-e, t0+CELL-e), P(s0+e, t0+CELL-e)];
+          const bb = bbox(poly);
+          let ok = poly.every(inTerrain);
+          if (ok) for (const f of foot) if (bbHit(bb, f.bb) && polysOverlap(test, f.P)) { ok = false; break; }
+          if (ok) for (const c of cells) if (bbHit(bb, c.bb) && polysOverlap(test, c.poly)) { ok = false; break; }
+          if (!ok) break;
+          const cell = { poly, bb, geo, i, j, c:P(s0 + CELL/2, t0 + CELL/2), occ:null };
+          cells.push(cell); col.push(cell);
+        }
+        geo.cells.push(col);
+      }
+      geos.set(`${r.id}:${k}:${pi}:${side}`, geo);
+    } });
+  }
+  // points d'accroche pour démarrer une route : le milieu de chaque case le long
+  // de chaque tronçon (une branche ne mange qu'une colonne de cases) et les bouts de route
+  // (les murailles ont les mêmes accroches, dans leur propre liste)
+  const anchorsOf = list => {
+    const out = [];
+    for (const r of list) {
+      const last = r.pts.length - 2;
+      for (let k = 0; k <= last; k++) {
+        const { a, u, parts } = segLayout(r, k);
+        for (const { off, n } of parts) for (let i = 0; i < n; i++) {
+          const s = off + (i + .5) * CELL;
+          out.push({ pt:[round2(a[0] + u[0] * s), round2(a[1] + u[1] * s)], kind:'anchor', w:r.w, dir:u, line:r.id });
+        }
+      }
+      const u0 = segLayout(r, 0).u, u1 = segLayout(r, last).u;
+      out.push({ pt:r.pts[0].slice(), kind:'end', w:r.w, dir:u0 }, { pt:r.pts[last + 1].slice(), kind:'end', w:r.w, dir:u1 });
+    }
+    return out;
+  };
+  const anchors = anchorsOf(S.roads), wallAnchors = anchorsOf(S.walls);
+  // index spatial des cases (seaux de CELL m) pour retrouver vite la case sous un point
+  const hash = new Map();
+  for (const c of cells) {
+    for (let gx = Math.floor(c.bb[0] / CELL); gx <= Math.floor(c.bb[2] / CELL); gx++)
+      for (let gy = Math.floor(c.bb[1] / CELL); gy <= Math.floor(c.bb[3] / CELL); gy++) {
+        const k = gx + ',' + gy;
+        if (!hash.has(k)) hash.set(k, []);
+        hash.get(k).push(c);
+      }
+  }
+  // emplacements des tours : angles et bouts de muraille, croisements de murailles
+  const wallNodes = [], wsegs = [];
+  const addNode = p => { if (!wallNodes.some(q => segLen(q, p) < .5)) wallNodes.push([round2(p[0]), round2(p[1])]); };
+  for (const w of S.walls) {
+    w.pts.forEach(addNode);
+    for (let k = 0; k < w.pts.length - 1; k++) wsegs.push([w.pts[k], w.pts[k+1]]);
+  }
+  for (let i = 0; i < wsegs.length; i++) for (let j = i + 1; j < wsegs.length; j++) {
+    const p = segCross(wsegs[i][0], wsegs[i][1], wsegs[j][0], wsegs[j][1]);
+    if (p) addNode(p);
+  }
+  // une porte est aussi un point de départ de route, qui traverse la muraille
+  for (const g of S.gates) {
+    const w = S.walls.find(x => x.id === g.wall);
+    if (w) anchors.push({ pt:[g.x, g.y], kind:'gate', w:w.w, dir:[Math.cos((g.a - 90) * Math.PI / 180), Math.sin((g.a - 90) * Math.PI / 180)] });
+  }
+  Z = { cells, geos, anchors, wallAnchors, hash, wallNodes, water };
+  computeOcc();
+}
+/* Découpage d'un tronçon en cases, comme Cities: Skylines : le tronçon est coupé
+   par chaque route qui le rejoint ou le croise, et chaque portion est remplie de cases
+   à partir du bord du carrefour. Deux routes parallèles reliées par les mêmes branches
+   ont donc leurs colonnes de cases exactement face à face. */
+function segLayout(r, k) {
+  const a = r.pts[k], b = r.pts[k+1], L = segLen(a, b) || 1;
+  const u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L];
+  const e = [b[0]-a[0], b[1]-a[1]];
+  // plages occupées par les carrefours, en mètres le long du tronçon
+  const cuts = [], isWall = S.walls.includes(r);
+  const closed = r.pts.length > 3 && segLen(r.pts[0], r.pts[r.pts.length - 1]) < .01; // enceinte refermée
+  if (k > 0 || closed) cuts.push([-1, r.w / 2]);
+  if (k < r.pts.length - 2 || closed) cuts.push([L - r.w / 2, L + 1]);
+  // une route est coupée par les routes et murailles (une muraille borne une zone comme
+  // un carrefour) ; une muraille n'est coupée que par les murailles, pour que ses accroches
+  // (où se posent les portes) restent régulières là où les routes la traversent
+  for (const o of isWall ? S.walls : [...S.roads, ...S.walls]) {
+    if (o.id === r.id) continue;
+    for (let i = 0; i < o.pts.length - 1; i++) {
+      const c = o.pts[i], d = o.pts[i+1], f = [d[0]-c[0], d[1]-c[1]];
+      const den = e[0]*f[1] - e[1]*f[0];
+      if (Math.abs(den) < 1e-9) continue;
+      const g = [c[0]-a[0], c[1]-a[1]];
+      const t = (g[0]*f[1] - g[1]*f[0]) / den, v = (g[0]*e[1] - g[1]*e[0]) / den;
+      const tol = .05 / L, tolO = .05 / (segLen(c, d) || 1);
+      if (t < -tol || t > 1 + tol || v < -tolO || v > 1 + tolO) continue;
+      const sin = Math.abs(den) / (L * (segLen(c, d) || 1));
+      const ext = (o.w / 2) / Math.max(sin, .2), s = t * L;
+      cuts.push([s - ext, s + ext]);
+    }
+  }
+  cuts.sort((x, y) => x[0] - y[0]);
+  const spans = [];
+  let from = 0, fromJunction = false;
+  for (const [c0, c1] of cuts) {
+    if (c0 > from) spans.push([from, Math.min(c0, L), fromJunction, true]);
+    if (c1 > from) { from = c1; fromJunction = true; }
+  }
+  if (from < L) spans.push([from, L, fromJunction, false]);
+  const parts = [];
+  for (const [p, q, startJ, endJ] of spans) {
+    const n = Math.floor((q - p) / CELL + 1e-6);
+    if (n < 1) continue;
+    // cases collées au carrefour de départ ; si la portion part d'un bout de route
+    // libre, on les colle au carrefour d'arrivée ; sans carrefour, on centre
+    const off = startJ ? p : endJ ? q - n*CELL : p + (q - p - n*CELL) / 2;
+    parts.push({ off, n });
+  }
+  return { a, b, L, u, parts };
+}
+function computeOcc() {
+  for (const c of Z.cells) c.occ = null;
+  for (const h of S.houses) {
+    const C = corners(h), bb = bbox(C);
+    for (const c of Z.cells) if (bbHit(bb, c.bb) && inPoly(c.c, C)) c.occ = h.id;
+  }
+}
+function cellAt(p) {
+  const list = Z.hash && Z.hash.get(Math.floor(p[0] / CELL) + ',' + Math.floor(p[1] / CELL));
+  if (list) for (const c of list) if (p[0] >= c.bb[0] && p[0] <= c.bb[2] && p[1] >= c.bb[1] && p[1] <= c.bb[3] && inPoly(p, c.poly)) return c;
+  return null;
+}
+/* Placement libre sur le quadrillage. Un bâtiment de f × d cases se pose sur la
+   grille de la case visée, à n'importe quelle colonne et n'importe quelle rangée
+   (pas forcément en bordure de route), et peut déborder sur les cases d'une autre
+   route tant qu'elles sont alignées (îlot entre deux routes parallèles, portions
+   voisines d'une même route). Chaque case couverte doit exister et être libre. */
+function footprint(geo, i0, j0, f, d) {
+  const s0 = geo.off + i0*CELL, t0 = geo.t0 + j0*CELL;
+  const [x, y] = geo.P(s0 + f*CELL / 2, t0 + d*CELL / 2);
+  return { x:round2(x), y:round2(y), a:round2(geo.ang), w:f*CELL, l:d*CELL, f, d };
+}
+function fitsAt(geo, i0, j0, f, d, ignoreId) {
+  if (j0 < 0) return false;
+  for (let i = i0; i < i0 + f; i++) for (let j = j0; j < j0 + d; j++) {
+    const q = geo.P(geo.off + (i + .5)*CELL, geo.t0 + (j + .5)*CELL);
+    const c = cellAt(q);
+    if (!c || segLen(c.c, q) > .5 || (c.occ !== null && c.occ !== ignoreId)) return false;
+  }
+  const C = shrunk(footprint(geo, i0, j0, f, d));
+  for (const o of S.houses) if (o.id !== ignoreId && polysOverlap(C, corners(o))) return false;
+  return true;
+}
+// position la plus proche du curseur où le bâtiment tient ; si `turn`, essaie aussi pivoté
+function placeAt(p, f, d, ignoreId, turn) {
+  const cell = cellAt(p);
+  if (!cell) return null;
+  const geo = cell.geo;
+  // coordonnées du curseur dans la grille de cette case, en cases
+  const rel = [p[0] - geo.a[0], p[1] - geo.a[1]];
+  const cs = (rel[0]*geo.u[0] + rel[1]*geo.u[1] - geo.off) / CELL, ct = (rel[0]*geo.n[0] + rel[1]*geo.n[1] - geo.t0) / CELL;
+  const tryDims = (F, D) => {
+    const cands = [];
+    for (let i0 = cell.i - F + 1; i0 <= cell.i; i0++)
+      for (let j0 = Math.max(0, cell.j - D + 1); j0 <= cell.j; j0++)
+        cands.push([i0, j0, Math.hypot(i0 + F/2 - cs, j0 + D/2 - ct)]);
+    cands.sort((x, y) => x[2] - y[2]);
+    for (const [i0, j0] of cands) if (fitsAt(geo, i0, j0, F, D, ignoreId)) return { ...footprint(geo, i0, j0, F, D), ok:true };
+    return null;
+  };
+  const hit = tryDims(f, d) || (turn && f !== d ? tryDims(d, f) : null);
+  if (hit) return hit;
+  const i0 = cell.i - Math.floor((f-1)/2), j0 = Math.max(0, cell.j - Math.floor((d-1)/2));
+  return { ...footprint(geo, i0, j0, f, d), ok:false };
+}
+function roadSegOk(a, b, w) {
+  if (!inTerrain(a) || !inTerrain(b)) return false;
+  const P = segRect(a, b, w);
+  // la rivière se franchit par un pont ; le lac, non
+  if (!S.houses.every(h => !polysOverlap(P, shrunk(h))) || hitsAny(P, Z.water.lake)) return false;
+  return crossesWallAtGates(a, b);
+}
+// une route ne franchit une muraille que par une porte
+function crossesWallAtGates(a, b) {
+  for (const wl of S.walls) for (let i = 0; i < wl.pts.length - 1; i++) {
+    const c = segCross(a, b, wl.pts[i], wl.pts[i+1]);
+    if (c && !S.gates.some(g => segLen([g.x, g.y], c) < 1)) return false;
+  }
+  return true;
+}
+
+/* ---------- état ---------- */
+function sample() {
+  // point à `len` m de `p` dans la direction `deg` (0° = est, sens horaire à l'écran)
+  const go = (p, deg, len) => [round2(p[0] + Math.cos(deg * Math.PI / 180) * len), round2(p[1] + Math.sin(deg * Math.PI / 180) * len)];
+  // un îlot : rue principale, deux chemins perpendiculaires de 9 cases (72 m d'axe à axe)
+  // et un chemin parallèle qui ferme l'îlot. Entre la rue et ce chemin : 8 cases,
+  // soit deux zones de 4 cases dos à dos, sans vide.
+  const A = [100, 100], ang = 10, perp = ang + 90, depth = (2 * DEPTH + 1) * CELL;
+  // point du repère de l'îlot : s le long de la rue, t vers l'intérieur
+  const F = (s, t) => go(go(A, ang, s), perp, t);
+  // 2e chemin 13 cases plus loin que le 1er (bord à bord), sur une accroche
+  const c1 = go(A, ang, 28), c2 = go(A, ang, 28 + CELL / 2 + 13 * CELL + CELL / 2);
+  const e1 = go(c1, perp, depth), e2 = go(c2, perp, depth);
+  // enceinte d'une case de large, posée bord à bord avec les zones (24 × 19 cases d'axe à axe) :
+  // tours aux angles, portes où la rue la traverse
+  const corner = [F(-12, -40), F(180, -40), F(180, 112), F(-12, 112)];
+  S = {
+    nextId: 100, houses: [],
+    roads: [
+      // la rue pavée file vers l'est et franchit la rivière par un pont
+      { id:1, kind:'pave',    w:CELL, pts:[F(-40, 0), F(296, 0)] },
+      { id:2, kind:'gravier', w:CELL, pts:[c1, e1] },
+      { id:3, kind:'gravier', w:CELL, pts:[c2, e2] },
+      { id:4, kind:'terre',   w:CELL, pts:[e1, e2] },
+    ],
+    walls: [{ id:10, w:WALL_W, pts:[...corner, corner[0]] }],
+    towers: corner.map((p, i) => ({ id:20 + i, x:p[0], y:p[1] })),
+    // portes sur les accroches de muraille où passe la rue (5e case de chaque côté)
+    gates: [F(-12, 0), F(180, 0)].map((p, i) => ({ id:30 + i, x:p[0], y:p[1], a:ang, wall:10 })),
+    // rivière nord-sud à l'est de l'enceinte, lac au sud-ouest, loin l'un de l'autre
+    river: makeRiver({ vertical:true, base:366, a1:12, f1:2.4 * Math.PI / TH, p1:.6, a2:4, f2:9 * Math.PI / TH, p2:2.1 }),
+    lake: makeLake(44, 256, 26, .8, 2.3),
+    landSeed: 20260928,
+  };
+  computeZones();
+  // quelques bâtiments, en laissant des cases libres pour essayer
+  const pattern = [[1,2],[2,2],[1,1],[3,1],[1,2],[2,3]];
+  let p = 0;
+  for (const geo of Z.geos.values()) {
+    if (geo.road !== 1 && geo.road !== 4) continue;
+    for (let i = 0; i < geo.cols;) {
+      const [f, d] = pattern[p % pattern.length];
+      if (fitsAt(geo, i, 0, f, d)) {
+        S.houses.push({ id:S.nextId++, ...footprint(geo, i, 0, f, d), type:typeName(f, d) });
+        computeOcc(); p++; i += f + (p % 3 === 0 ? 2 : 0);
+      } else i++;
+    }
+  }
+}
+let S;
+// les plans enregistrés avant les fortifications n'ont pas ces listes
+const OLD_KINDS = { sentier:'terre', chemin:'gravier', rue:'pave' }; // anciens types de route
+const normalize = o => {
+  for (const k of ['houses', 'roads', 'walls', 'towers', 'gates']) if (!Array.isArray(o[k])) o[k] = [];
+  for (const r of o.roads) if (OLD_KINDS[r.kind]) r.kind = OLD_KINDS[r.kind];
+  for (const w of o.walls) w.w = WALL_W; // murailles : une case de large, comme les routes
+  if (!o.landSeed) o.landSeed = 20260928; // graine du paysage (herbe, arbres, buissons)
+  if (o.river === undefined) o.river = null;
+  if (o.lake === undefined) o.lake = null;
+  return o;
+};
+try {
+  const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+  if (o && Array.isArray(o.houses) && Array.isArray(o.roads)) { S = normalize(o); computeZones(); fixGates(); }
+} catch (e) {}
+if (!S) sample();
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+let tool = 'select', preset = PRESETS[1], custom = null, swapped = false, roadKind = ROADS[1];
+let snapLen = true;
+let sel = null, hover = null, cursor = null, draft = null, drag = null, pinch = null, spaceDown = false;
+const undoStack = [], pointers = new Map();
+
+/* ---------- vue ---------- */
+const cv = document.getElementById('plan'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
+let W = 0, H = 0, dpr = 1, Col = {}, fitted = false;
+const view = { s:4, ox:0, oy:0 };
+const toS = (x, y) => [x*view.s + view.ox, y*view.s + view.oy];
+const toW = (px, py) => [(px - view.ox) / view.s, (py - view.oy) / view.s];
+function fit() {
+  const s = Math.max(.5, Math.min((W - 90) / TW, (H - 70) / TH));
+  view.s = s; view.ox = (W - TW*s) / 2 + 10; view.oy = (H - TH*s) / 2 + 6;
+  requestDraw();
+}
+function zoomAt(px, py, f) {
+  const ns = Math.min(60, Math.max(.5, view.s * f)), k = ns / view.s;
+  view.ox = px - (px - view.ox) * k; view.oy = py - (py - view.oy) * k; view.s = ns;
+  requestDraw();
+}
+function resize() {
+  const r = wrap.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  if (!fitted && W > 0) { fitted = true; fit(); }
+  requestDraw();
+}
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','accent','bad','shadow'])
+    Col[k] = cs.getPropertyValue('--' + k).trim();
+  makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
+  groundImg = null; // le sol sera repeint avec les nouvelles couleurs
+}
+
+/* ---------- dessin ---------- */
+let queued = false;
+function requestDraw() { if (!queued) { queued = true; requestAnimationFrame(draw); } }
+function polyPath(pts) {
+  ctx.beginPath();
+  pts.forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+}
+function strokeLine(pts, lw, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'square'; ctx.lineJoin = 'miter'; ctx.miterLimit = 3;
+  polyPath(pts); ctx.stroke();
+}
+function haloText(t, x, y, color, halo) {
+  ctx.lineWidth = 3; ctx.strokeStyle = halo; ctx.lineJoin = 'round'; ctx.strokeText(t, x, y);
+  ctx.fillStyle = color; ctx.fillText(t, x, y);
+}
+const fmt = (v, d = 1) => v.toLocaleString('fr-FR', { maximumFractionDigits:d });
+
+function drawZones(highlight) {
+  const s = view.s, inset = Math.min(.6, 1.2 / s * 1.5);
+  ctx.fillStyle = Col['zone-fill']; ctx.strokeStyle = Col['zone-line']; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const c of Z.cells) {
+    if (c.occ !== null) continue;
+    const g = c.geo, s0 = g.off + c.i*CELL + inset, t0 = g.t0 + c.j*CELL + inset, e = CELL - 2*inset;
+    const q = [g.P(s0, t0), g.P(s0+e, t0), g.P(s0+e, t0+e), g.P(s0, t0+e)].map(p => toS(p[0], p[1]));
+    ctx.moveTo(...q[0]); ctx.lineTo(...q[1]); ctx.lineTo(...q[2]); ctx.lineTo(...q[3]); ctx.closePath();
+  }
+  ctx.fill(); ctx.stroke();
+}
+function drawHouse(h, mode) {
+  const s = view.s, C = corners(h);
+  if (mode === 'normal' || mode === 'selected' || mode === 'hover') {
+    ctx.fillStyle = Col.shadow; ctx.beginPath();
+    C.forEach((p, i) => { const X = (p[0] + .8) * s + view.ox, Y = (p[1] + .8) * s + view.oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+    ctx.closePath(); ctx.fill();
+  }
+  polyPath(C); ctx.closePath();
+  if (mode === 'ghost' || mode === 'bad') {
+    ctx.globalAlpha = .45; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+  } else {
+    ctx.fillStyle = Col.house; ctx.fill();
+    ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1.2; ctx.stroke();
+  }
+  if (Math.min(h.w, h.l) * s > 9) {
+    const { w, l } = h;
+    let r1, r2;
+    if (l >= w) { r1 = [0, -(l - w) / 2]; r2 = [0, (l - w) / 2]; }
+    else        { r1 = [-(w - l) / 2, 0]; r2 = [(w - l) / 2, 0]; }
+    const k = [[-w/2,-l/2],[w/2,-l/2],[w/2,l/2],[-w/2,l/2]];
+    const near = c => (l >= w ? (c[1] < 0 ? r1 : r2) : (c[0] < 0 ? r1 : r2));
+    const R1 = toS(...local(h, ...r1)), R2 = toS(...local(h, ...r2));
+    ctx.strokeStyle = Col['roof-line']; ctx.lineWidth = 1; ctx.beginPath();
+    ctx.moveTo(...R1); ctx.lineTo(...R2);
+    for (const c of k) { const P = toS(...local(h, ...c)), N = near(c) === r1 ? R1 : R2; ctx.moveTo(...P); ctx.lineTo(...N); }
+    ctx.stroke();
+  }
+  if (mode === 'selected' || mode === 'hover') {
+    polyPath(C); ctx.closePath();
+    ctx.strokeStyle = Col.accent; ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
+  }
+  if (mode === 'selected' || mode === 'ghost' || mode === 'bad') {
+    const top = Math.min(...C.map(p => p[1])), [X] = toS(h.x, h.y);
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    haloText(`${h.f} × ${h.d} cases · ${h.w} × ${h.l} m`, X, top * s + view.oy - 6, mode === 'bad' ? Col.bad : Col.ink, Col.sheet);
+  }
+}
+/* Revêtements dessinés en motifs : une tuile de 64 px représente 2 × 2 m au sol,
+   recalée à chaque dessin sur le zoom et le déplacement de la vue. */
+const PAT = {}, TILE = 64, TILE_M = 2;
+function makePatterns() {
+  let seed = 7;
+  const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const tile = (base, paint) => {
+    const c = document.createElement('canvas'); c.width = c.height = TILE;
+    const g = c.getContext('2d'); g.fillStyle = base; g.fillRect(0, 0, TILE, TILE); paint(g);
+    return ctx.createPattern(c, 'repeat');
+  };
+  const dots = (g, n, r0, r1, a0, a1, cols) => {
+    for (let i = 0; i < n; i++) {
+      g.fillStyle = cols[i % cols.length]; g.globalAlpha = a0 + rnd() * (a1 - a0);
+      g.beginPath(); g.arc(rnd() * TILE, rnd() * TILE, r0 + rnd() * (r1 - r0), 0, Math.PI * 2); g.fill();
+    }
+    g.globalAlpha = 1;
+  };
+  // terre battue : taches irrégulières
+  PAT.terre = tile(Col.earth, g => dots(g, 60, 1, 3.2, .12, .3, [Col['earth-edge'], Col.sheet]));
+  // gravier : semis serré de petits cailloux
+  PAT.gravier = tile(Col.gravel, g => dots(g, 280, .6, 1.6, .35, .75, [Col['gravel-edge'], Col.sheet, Col['gravel-edge']]));
+  // brins d'herbe : tuile transparente posée sur le sol
+  PAT.herbe = (() => {
+    const c = document.createElement('canvas'); c.width = c.height = TILE;
+    const g = c.getContext('2d');
+    g.strokeStyle = Col['grass-dark']; g.lineWidth = 1; g.lineCap = 'round';
+    for (let i = 0; i < 26; i++) {
+      const x = rnd() * TILE, y = rnd() * TILE, h = 2 + rnd() * 3, lean = (rnd() - .5) * 2.5;
+      g.globalAlpha = .25 + rnd() * .3;
+      g.beginPath(); g.moveTo(x, y); g.lineTo(x + lean, y - h); g.stroke();
+    }
+    return ctx.createPattern(c, 'repeat');
+  })();
+  // pavés : rangs décalés de 0,5 m, joints sombres
+  PAT.pave = tile(Col['paving-edge'], g => {
+    const h = TILE / 4;
+    for (let r = 0; r < 4; r++) for (let x = r % 2 ? -h / 2 : 0; x < TILE; x += h) {
+      g.fillStyle = Col.paving; g.globalAlpha = .85 + rnd() * .15;
+      g.beginPath();
+      if (g.roundRect) g.roundRect(x + 1.3, r * h + 1.3, h - 2.6, h - 2.6, 2.5); else g.rect(x + 1.3, r * h + 1.3, h - 2.6, h - 2.6);
+      g.fill();
+    }
+    g.globalAlpha = 1;
+  });
+}
+const EDGE = { terre:'earth-edge', gravier:'gravel-edge', pave:'paving-edge' };
+function roadCols(r) { const k = roadType(r).id; return [PAT[k] || Col.verge, Col[EDGE[k]]]; }
+function alignPatterns() {
+  const m = new DOMMatrix().translate(view.ox, view.oy).scale(view.s * TILE_M / TILE);
+  for (const p of Object.values(PAT)) if (p && p.setTransform) p.setTransform(m);
+}
+const roadType = r => ROADS.find(k => k.id === r.kind) || ROADS[1];
+function drawRoads() {
+  // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
+  const rank = r => ROADS.indexOf(roadType(r));
+  const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
+  alignPatterns();
+  // emprise d'une case de large : bas-côté, puis chaussée au centre
+  for (const r of S.roads) strokeLine(r.pts, r.w * s, Col.verge);
+  for (const r of bySurf) strokeLine(r.pts, roadType(r).surf * s + 2.5, roadCols(r)[1]);
+  for (const r of bySurf) strokeLine(r.pts, roadType(r).surf * s, roadCols(r)[0]);
+  for (const r of S.roads) {
+    const isSel = sel && sel.type === 'road' && sel.id === r.id, isHov = hover && hover.type === 'road' && hover.id === r.id;
+    if (!isSel && !isHov) continue;
+    ctx.setLineDash([6, 5]); strokeLine(r.pts, isSel ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
+  }
+}
+const isOn = (type, id, st) => st && st.type === type && st.id === id;
+function drawWater() {
+  const s = view.s, [tx, ty] = toS(0, 0);
+  ctx.save();
+  ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip(); // la rivière sort par les bords
+  const shape = (pts, close) => { polyPath(pts); if (close) ctx.closePath(); };
+  ctx.fillStyle = Col.water; ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = 1.5; ctx.lineJoin = 'round';
+  if (S.river) {
+    const { L, R } = riverBanks(S.river);
+    shape([...L, ...R.slice().reverse()], true); ctx.fill();
+    for (const bank of [L, R]) { shape(bank, false); ctx.stroke(); }
+    // fil du courant
+    if (s > 1.5) {
+      ctx.setLineDash([6, 10]); ctx.globalAlpha = .45; ctx.lineWidth = 1;
+      shape(S.river.pts, false); ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1; ctx.lineWidth = 1.5;
+    }
+  }
+  if (S.lake) { shape(S.lake.pts, true); ctx.fill(); ctx.stroke(); }
+  ctx.restore();
+}
+// pont : parapets de part et d'autre de la chaussée, sur toute la traversée de la rivière
+function drawBridges() {
+  if (!S.river) return;
+  const s = view.s, rv = S.river.pts;
+  for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
+    const a = r.pts[k], b = r.pts[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]];
+    for (let i = 0; i < rv.length - 1; i++) {
+      const p = segCross(a, b, rv[i], rv[i+1]);
+      if (!p) continue;
+      const rw = S.river.w0 + (S.river.w1 - S.river.w0) * i / (rv.length - 1);
+      const d = [rv[i+1][0] - rv[i][0], rv[i+1][1] - rv[i][1]], dl = Math.hypot(...d) || 1;
+      const sin = Math.max(.3, Math.abs(u[0] * d[1] - u[1] * d[0]) / dl);
+      const half = rw / 2 / sin + 2, off = roadType(r).surf / 2 + .5;
+      ctx.strokeStyle = Col.bridge; ctx.lineWidth = Math.max(1.5, .9 * s); ctx.lineCap = 'butt';
+      ctx.beginPath();
+      for (const side of [1, -1]) {
+        const q0 = [p[0] - u[0] * half + n[0] * off * side, p[1] - u[1] * half + n[1] * off * side];
+        const q1 = [p[0] + u[0] * half + n[0] * off * side, p[1] + u[1] * half + n[1] * off * side];
+        ctx.moveTo(...toS(...q0)); ctx.lineTo(...toS(...q1));
+      }
+      ctx.stroke();
+    }
+  }
+}
+// arbres (houppier rond, ombre portée, reflet) et buissons (trois touffes)
+function drawFlora() {
+  const s = view.s, [wx0, wy0] = toW(-20, -20), [wx1, wy1] = toW(W + 20, H + 20);
+  for (const f of flora) {
+    if (f.x < wx0 || f.x > wx1 || f.y < wy0 || f.y > wy1) continue;
+    const [X, Y] = toS(f.x, f.y), r = Math.max(1, f.r * s);
+    if (f.kind === 'tree') {
+      ctx.fillStyle = Col.shadow;
+      ctx.beginPath(); ctx.ellipse(X + r * .45, Y + r * .5, r, r * .8, 0, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = f.v < .5 ? Col.tree : Col['tree-dark'];
+      ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
+      if (r > 4) {
+        ctx.strokeStyle = Col['tree-dark']; ctx.lineWidth = 1; ctx.stroke();
+        ctx.fillStyle = Col.bush; ctx.globalAlpha = .55;
+        ctx.beginPath(); ctx.arc(X - r * .3, Y - r * .3, r * .45, 0, Math.PI * 2); ctx.fill();
+        ctx.globalAlpha = 1;
+      }
+    } else {
+      ctx.fillStyle = Col.bush;
+      for (const [dx, dy] of [[-.55, .2], [.5, .25], [0, -.35]]) {
+        ctx.beginPath(); ctx.arc(X + dx * r, Y + dy * r, r * .7, 0, Math.PI * 2); ctx.fill();
+      }
+      if (r > 3) {
+        ctx.strokeStyle = Col['tree-dark']; ctx.lineWidth = .8; ctx.globalAlpha = .6;
+        ctx.beginPath(); ctx.arc(X, Y, r * 1.05, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+      }
+    }
+  }
+}
+function drawWalls() {
+  const s = view.s;
+  // emprise d'une case comme une route : lice (bande dégagée), puis maçonnerie de 6 m au centre
+  for (const w of S.walls) strokeLine(w.pts, WALL_W * s, Col.verge);
+  for (const w of S.walls) strokeLine(w.pts, WALL_SURF * s + 2, Col['wall-edge']);
+  for (const w of S.walls) strokeLine(w.pts, WALL_SURF * s, Col.wall);
+  // chemin de ronde crénelé, visible dès qu'on zoome un peu
+  if (s > 2) {
+    ctx.setLineDash([1.2 * s, 1.2 * s]);
+    for (const w of S.walls) strokeLine(w.pts, Math.max(1, WALL_SURF * s * .3), Col['wall-edge']);
+    ctx.setLineDash([]);
+  }
+  for (const w of S.walls) {
+    if (!isOn('wall', w.id, sel) && !isOn('wall', w.id, hover)) continue;
+    ctx.setLineDash([6, 5]); strokeLine(w.pts, isOn('wall', w.id, sel) ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
+  }
+}
+function drawTower(t, mode) {
+  const s = view.s, [X, Y] = toS(t.x, t.y), r = TOWER_R * s;
+  const ghost = mode === 'ghost' || mode === 'bad';
+  ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
+  if (ghost) { ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1; }
+  else { ctx.fillStyle = Col.wall; ctx.fill(); }
+  ctx.strokeStyle = ghost ? (mode === 'bad' ? Col.bad : Col.accent) : mode === 'normal' ? Col['wall-edge'] : Col.accent;
+  ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
+  if (!ghost && r > 6) { ctx.beginPath(); ctx.arc(X, Y, r * .55, 0, Math.PI * 2); ctx.strokeStyle = Col['wall-edge']; ctx.lineWidth = 1; ctx.stroke(); }
+}
+function drawGate(g, mode) {
+  const ghost = mode === 'ghost' || mode === 'bad';
+  const r = roadThroughGate(g), surf = WALL_SURF;
+  polyPath(gatePoly(g)); ctx.closePath();
+  if (ghost) { ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1; }
+  else { ctx.fillStyle = Col.wall; ctx.fill(); }
+  ctx.strokeStyle = ghost ? (mode === 'bad' ? Col.bad : Col.accent) : mode === 'normal' ? Col['wall-edge'] : Col.accent;
+  ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
+  if (ghost) return;
+  // passage voûté dans l'axe de la route, herse au milieu
+  polyPath(corners({ x:g.x, y:g.y, a:g.a, w:GATE_L + .2, l:surf })); ctx.closePath();
+  ctx.fillStyle = r ? roadCols(r)[0] : Col.verge; ctx.fill();
+  ctx.setLineDash([2, 2]); ctx.strokeStyle = Col['wall-edge']; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(...toS(...local({ ...g, w:0, l:0 }, 0, -surf / 2))); ctx.lineTo(...toS(...local({ ...g, w:0, l:0 }, 0, surf / 2))); ctx.stroke();
+  ctx.setLineDash([]);
+}
+// points où l'outil actif peut se poser (tours, portes)
+function drawSpots(list) {
+  ctx.fillStyle = Col.accent; ctx.globalAlpha = .75;
+  for (const p of list) { const [X, Y] = toS(p[0], p[1]); ctx.fillRect(X - 3.5, Y - 3.5, 7, 7); }
+  ctx.globalAlpha = 1;
+}
+function hint(text) {
+  if (!cursor) return;
+  const [X, Y] = toS(...cursor);
+  ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  haloText(text, X + 12, Y - 8, Col.bad, Col.sheet);
+}
+function drawFrame() {
+  const s = view.s, [tx, ty] = toS(0, 0);
+  // herbe : nappes claires et foncées, puis brins d'herbe quand on zoome
+  ctx.imageSmoothingEnabled = true;
+  ctx.drawImage(groundImage(), tx, ty, TW*s, TH*s);
+  alignPatterns();
+  if (s > 3 && PAT.herbe) { ctx.fillStyle = PAT.herbe; ctx.fillRect(tx, ty, TW*s, TH*s); }
+  ctx.strokeStyle = Col.ink; ctx.lineWidth = 1.5; ctx.strokeRect(tx, ty, TW*s, TH*s);
+  // graduations en mètres sur le cadre seulement
+  const step = [8, 16, 40, 80].find(v => v * s >= 38) || 80;
+  ctx.font = '400 10px "IBM Plex Mono", monospace'; ctx.strokeStyle = Col.ink; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (let x = 0; x <= TW; x += step) { const X = Math.round(x*s + view.ox) + .5; ctx.moveTo(X, ty); ctx.lineTo(X, ty + 5); }
+  for (let y = 0; y <= TH; y += step) { const Y = Math.round(y*s + view.oy) + .5; ctx.moveTo(tx, Y); ctx.lineTo(tx + 5, Y); }
+  ctx.stroke();
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  const yl = Math.max(ty - 5, 14);
+  for (let x = 0; x <= TW; x += step) { const X = x*s + view.ox; if (X > 30 && X < W - 10) haloText(String(x), X, yl, Col['ink-soft'], Col.sheet); }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const xl = Math.max(tx - 6, 28);
+  for (let y = 0; y <= TH; y += step) { const Y = y*s + view.oy; if (Y > 22 && Y < H - 10) haloText(String(y), xl, Y, Col['ink-soft'], Col.sheet); }
+}
+function drawScale() {
+  const s = view.s, m = [8, 16, 40, 80, 160].find(v => v * s >= 80) || 160, L = m * s, x = 16, y = H - 22;
+  ctx.fillStyle = Col.ink; ctx.fillRect(x, y, L / 2, 6);
+  ctx.fillStyle = Col.sheet; ctx.fillRect(x + L / 2, y, L / 2, 6);
+  ctx.strokeStyle = Col.ink; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, L, 6);
+  ctx.font = '400 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'bottom';
+  ctx.textAlign = 'left'; haloText('0', x, y - 2, Col.ink, Col.sheet);
+  ctx.textAlign = 'center'; haloText(fmt(m / 2), x + L / 2, y - 2, Col.ink, Col.sheet);
+  haloText(`${m} m`, x + L, y - 2, Col.ink, Col.sheet);
+  const nx = W - 26, ny = 38;
+  ctx.beginPath(); ctx.moveTo(nx, ny - 16); ctx.lineTo(nx + 7, ny + 6); ctx.lineTo(nx, ny + 1); ctx.lineTo(nx - 7, ny + 6); ctx.closePath();
+  ctx.fillStyle = Col.ink; ctx.fill();
+  ctx.font = '600 12px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('N', nx, ny - 18);
+}
+
+/* ---------- tracé de route ---------- */
+function snapToRoads(x, y, list = S.roads) {
+  const tol = 12 / view.s;
+  let best = null, bd = tol;
+  for (const r of list) for (const q of r.pts) {
+    const d = Math.hypot(q[0]-x, q[1]-y); if (d < bd) { bd = d; best = { pt:[q[0], q[1]], kind:'node' }; }
+  }
+  if (best) return best;
+  for (const r of list) for (let i = 0; i < r.pts.length - 1; i++) {
+    const t = ptSeg([x, y], r.pts[i], r.pts[i+1]);
+    if (t.d < bd) { bd = t.d; best = { pt:[round2(t.q[0]), round2(t.q[1])], kind:'edge' }; }
+  }
+  return best;
+}
+/* Point suivant d'un tracé. Routes et murailles suivent le même principe : une case
+   de large, départ sur une accroche (milieu de case ou bout), pas de 10°, tronçons d'un
+   nombre entier de cases, branches calées pour remplir l'espace jusqu'à la parallèle.
+   Différences : une muraille peut aussi partir librement (hors de toute muraille) et
+   se referme en recliquant sur son premier point. */
+function tracePoint(isWall) {
+  if (!cursor) return null;
+  const list = isWall ? S.walls : S.roads;
+  const hit = snapToRoads(cursor[0], cursor[1], list);
+  const free = () => ({ pt:[Math.round(cursor[0]*2)/2, Math.round(cursor[1]*2)/2], kind:'free' });
+  if (!draft) {
+    const a = nearestAnchor(cursor, isWall ? Z.wallAnchors : Z.anchors);
+    if (a) return { pt:a.pt.slice(), kind:'anchor', parent:{ w:a.w, dir:a.dir } };
+    // première route du plan : départ libre ; sinon une route part toujours d'une route
+    return isWall || !S.roads.length ? free() : { pt:cursor.slice(), kind:'none' };
+  }
+  const first = draft.pts[0], last = draft.pts[draft.pts.length - 1];
+  if (isWall && draft.pts.length >= 3 && segLen(cursor, first) * view.s < 14) return { pt:first.slice(), kind:'node', close:true };
+  let ang = Math.atan2(cursor[1] - last[1], cursor[0] - last[0]), L = segLen(last, cursor);
+  ang = Math.round(ang / ANG_STEP) * ANG_STEP;
+  const dir = [Math.cos(ang), Math.sin(ang)];
+  // raccord à un tracé existant sans quitter les pas de 10° :
+  // on prolonge la direction arrondie jusqu'au tracé visé
+  const j = hit && segLen(last, hit.pt) > .3 ? junctionOnRay(last, dir, cursor, list) : null;
+  if (j) return { pt:j, kind:'edge' };
+  let cells = null, gap = false;
+  if (snapLen) {
+    const par = draft.pts.length === 1 ? draft.parent : null;
+    const sin = par ? Math.abs(dir[0] * par.dir[1] - dir[1] * par.dir[0]) : 0;
+    if (par && sin > .3) {
+      // branche : la route parallèle qu'on posera au bout sera à un nombre entier
+      // de cases de la route de départ, bord à bord (toutes les routes font une case)
+      const base = par.w / 2 + draft.w / 2;
+      cells = Math.max(1, Math.round((L * sin - base) / CELL));
+      L = (base + cells * CELL) / sin; gap = true;
+    } else {
+      // tronçon d'axe à axe = nombre entier de cases, comme la largeur des routes
+      const k = Math.max(1, Math.round(L / CELL));
+      L = k * CELL; cells = k;
+    }
+  }
+  return { pt:[round2(last[0] + dir[0] * L), round2(last[1] + dir[1] * L)], kind:'free', cells, gap };
+}
+function wallSegOk(a, b) {
+  if (!inTerrain(a) || !inTerrain(b)) return false;
+  const P = segRect(a, b, WALL_W);
+  return S.houses.every(h => !polysOverlap(P, shrunk(h))) && !hitsAny(P, Z.water.lake);
+}
+const linePoint = () => tracePoint(tool === 'wall');
+function nearestAnchor(p, list = Z.anchors) {
+  const tol = Math.max(18 / view.s, CELL * .6);
+  let best = null, bd = tol;
+  for (const a of list) { const d = segLen(a.pt, p); if (d < bd) { bd = d; best = a; } }
+  return best;
+}
+// intersection de la demi-droite (o, dir) avec le tronçon de route le plus proche du curseur
+function junctionOnRay(o, dir, near, list = S.roads) {
+  const tol = 14 / view.s;
+  let best = null, bd = Infinity;
+  for (const r of list) for (let i = 0; i < r.pts.length - 1; i++) {
+    const a = r.pts[i], b = r.pts[i+1], e = [b[0]-a[0], b[1]-a[1]];
+    const den = dir[0]*e[1] - dir[1]*e[0];
+    if (Math.abs(den) < 1e-9) continue;
+    const w = [a[0]-o[0], a[1]-o[1]];
+    const t = (w[0]*e[1] - w[1]*e[0]) / den, u = (w[0]*dir[1] - w[1]*dir[0]) / den;
+    if (t <= .3 || u < -1e-6 || u > 1 + 1e-6) continue;
+    const p = [o[0] + dir[0]*t, o[1] + dir[1]*t], d = segLen(p, near);
+    if (d < tol && d < bd) { bd = d; best = [round2(p[0]), round2(p[1])]; }
+  }
+  return best;
+}
+function drawDraft() {
+  if (tool !== 'road' && tool !== 'wall') return;
+  const isWall = tool === 'wall', sp = linePoint();
+  if (draft) {
+    const w = (isWall ? WALL_W : draft.w) * view.s, last = draft.pts[draft.pts.length - 1];
+    const ok = !sp || (isWall ? wallSegOk(last, sp.pt) : roadSegOk(last, sp.pt, draft.w));
+    ctx.globalAlpha = .55;
+    strokeLine(draft.pts, w, Col.accent);
+    if (sp) strokeLine([last, sp.pt], w, ok ? Col.accent : Col.bad);
+    ctx.globalAlpha = 1;
+    for (const q of draft.pts) { const [X, Y] = toS(...q); ctx.fillStyle = Col.ink; ctx.fillRect(X - 3, Y - 3, 6, 6); }
+    if (sp) {
+      const d = segLen(last, sp.pt);
+      let deg = Math.round(-Math.atan2(sp.pt[1] - last[1], sp.pt[0] - last[0]) * 180 / Math.PI);
+      if (deg < 0) deg += 360;
+      const [X, Y] = toS(...sp.pt);
+      ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      const info = sp.close ? 'fermer l\'enceinte' : sp.gap
+        ? `${sp.cells} cases d'écart${sp.cells === 2 * DEPTH ? ' (2 zones pleines)' : sp.cells === DEPTH ? ' (1 zone pleine)' : ''}`
+        : sp.kind === 'edge' ? 'raccord' : sp.cells ? `${sp.cells} cases` : `${Math.floor(d / CELL + 1e-6)} cases`;
+      haloText(`${fmt(d)} m · ${deg}° · ${info}`, X + 10, Y - 8, ok ? Col.ink : Col.bad, Col.sheet);
+    }
+  }
+  if (!draft) {
+    // accroches visibles tant qu'aucun tracé n'est commencé
+    ctx.fillStyle = Col.accent; ctx.globalAlpha = .7;
+    for (const a of isWall ? Z.wallAnchors : Z.anchors) {
+      const [X, Y] = toS(...a.pt);
+      ctx.beginPath(); ctx.arc(X, Y, a.kind === 'end' ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+  if (sp && sp.kind === 'none') {
+    const [X, Y] = toS(...sp.pt);
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    haloText('Partez d\'un point sur une route existante', X + 12, Y - 8, Col.bad, Col.sheet);
+  } else if (sp) {
+    const [X, Y] = toS(...sp.pt);
+    ctx.beginPath(); ctx.arc(X, Y, sp.kind === 'free' ? 3 : 7, 0, Math.PI * 2);
+    ctx.strokeStyle = Col.accent; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+function draw() {
+  queued = false;
+  if (!W) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
+  drawFrame();
+  drawWater();
+  drawZones();
+  drawRoads();
+  drawBridges();
+  drawWalls();
+  drawFlora();
+  const modeOf = (type, id) => isOn(type, id, sel) ? 'selected' : isOn(type, id, hover) ? 'hover' : 'normal';
+  for (const g of S.gates) drawGate(g, modeOf('gate', g.id));
+  for (const h of S.houses) drawHouse(h, modeOf('house', h.id));
+  for (const t of S.towers) drawTower(t, modeOf('tower', t.id));
+  if (tool === 'tower') {
+    drawSpots(Z.wallNodes.filter(q => !S.towers.some(t => segLen([t.x, t.y], q) < .6)));
+    const t = towerSpot();
+    if (t && t.none) hint(S.walls.length ? 'Une tour se pose sur un point orange de la muraille' : 'Tracez d\'abord une fortification');
+    else if (t) { drawTower(t, t.ok ? 'ghost' : 'bad'); if (!t.ok) hint(t.why); }
+  }
+  if (tool === 'gate') {
+    drawSpots(gateAnchors().map(a => a.pt).filter(p => !S.gates.some(g => segLen([g.x, g.y], p) < GATE_L - .1)));
+    const g = gateSpot();
+    if (g && g.none) hint(S.walls.length ? 'Une porte se pose sur un point orange de muraille' : 'Tracez d\'abord une fortification');
+    else if (g) { drawGate(g, g.ok ? 'ghost' : 'bad'); if (!g.ok) hint(g.why); }
+  }
+  const g = ghost();
+  if (g) drawHouse(g, g.ok ? 'ghost' : 'bad');
+  else if (tool === 'house' && cursor && inTerrain(cursor) && !(drag && drag.kind === 'pan')) {
+    const [X, Y] = toS(...cursor);
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    haloText('Hors zone : approchez d\'une route', X + 12, Y - 8, Col.bad, Col.sheet);
+  }
+  if (drag && drag.kind === 'house' && drag.preview) drawHouse(drag.preview, drag.preview.ok ? 'ghost' : 'bad');
+  drawDraft();
+  drawScale();
+  updateStatus();
+}
+
+/* ---------- actions ---------- */
+function commit() { undoStack.push(JSON.stringify(S)); if (undoStack.length > 150) undoStack.shift(); }
+function changed(roadsChanged) {
+  if (roadsChanged) computeZones(); else computeOcc();
+  computeFlora(); // les arbres cèdent la place aux nouvelles constructions
+  save(); renderSel(); requestDraw();
+}
+function undo() {
+  if (!undoStack.length) { flash('Rien à annuler'); return; }
+  S = JSON.parse(undoStack.pop());
+  if (sel && !findSel()) sel = null;
+  draft = null; changed(true);
+}
+const COLL = { house:'houses', road:'roads', wall:'walls', tower:'towers', gate:'gates' };
+const findById = (t, id) => (S[COLL[t]] || []).find(o => o.id === id) || null;
+const findSel = () => sel ? findById(sel.type, sel.id) : null;
+let toastT;
+function flash(msg, bad) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.style.opacity = 1;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = 0; }, 2200);
+}
+function dims() {
+  const b = custom || preset;
+  return swapped ? { f:b.d, d:b.f } : { f:b.f, d:b.d };
+}
+function ghost() {
+  if (tool !== 'house' || !cursor || drag && drag.kind === 'pan') return null;
+  const { f, d } = dims();
+  return placeAt(cursor, f, d, undefined, true);
+}
+function placeHouse() {
+  const g = ghost();
+  if (!g) { flash('Posez le bâtiment sur les cases vertes, le long d\'une route', true); return; }
+  if (!g.ok) { flash('Pas assez de cases libres ici', true); return; }
+  commit();
+  const { ok, ...h } = g;
+  S.houses.push({ id:S.nextId++, ...h, type:typeName(h.f, h.d) });
+  changed(false);
+}
+/* ---------- fortifications ---------- */
+function towerSpot() {
+  if (tool !== 'tower' || !cursor) return null;
+  const tol = Math.max(16 / view.s, 5);
+  let best = null, bd = tol;
+  for (const q of Z.wallNodes) { const d = segLen(q, cursor); if (d < bd) { bd = d; best = q; } }
+  if (!best) return { x:cursor[0], y:cursor[1], none:true };
+  const t = { x:best[0], y:best[1] };
+  let why = null;
+  if (S.towers.some(o => segLen([o.x, o.y], best) < .6)) why = 'Il y a déjà une tour ici';
+  else if (S.houses.some(h => polysOverlap(towerPoly(t), shrunk(h)))) why = 'Un bâtiment gêne la tour';
+  return { ...t, ok:!why, why };
+}
+/* Emplacements de porte : uniquement les points d'accroche de muraille (milieu de
+   chaque case le long d'une muraille), comme les départs de route. La porte perce la
+   muraille : son passage est perpendiculaire au mur. */
+// (déclarations de fonction : utilisées dès le chargement du plan, via fixGates)
+function gateAnchors() { return Z.wallAnchors.filter(a => a.kind === 'anchor'); }
+function gateFromAnchor(a) { return { x:a.pt[0], y:a.pt[1], a:round2(Math.atan2(a.dir[1], a.dir[0]) * 180 / Math.PI + 90), wall:a.line }; }
+function gateSpot() {
+  if (tool !== 'gate' || !cursor) return null;
+  const tol = Math.max(16 / view.s, CELL * .6);
+  let best = null, bd = tol;
+  for (const a of gateAnchors()) { const d = segLen(a.pt, cursor); if (d < bd) { bd = d; best = gateFromAnchor(a); } }
+  if (!best) return { x:cursor[0], y:cursor[1], none:true };
+  let why = null;
+  if (S.gates.some(o => segLen([o.x, o.y], [best.x, best.y]) < GATE_L - .1)) why = 'Il y a déjà une porte ici';
+  else if (S.houses.some(h => polysOverlap(gatePoly(best), shrunk(h)))) why = 'Un bâtiment gêne la porte';
+  return { ...best, ok:!why, why };
+}
+// route qui passe par une porte (pour dessiner le revêtement dans le passage)
+function roadThroughGate(g) {
+  for (const r of S.roads) for (let i = 0; i < r.pts.length - 1; i++) if (ptSeg([g.x, g.y], r.pts[i], r.pts[i+1]).d < 1) return r;
+  return null;
+}
+// les anciennes portes (posées sur une route) sont recalées sur l'accroche de muraille la plus proche
+function fixGates() {
+  let moved = false;
+  S.gates = S.gates.filter(g => {
+    if (g.wall && S.walls.some(w => w.id === g.wall)) return true;
+    let best = null, bd = CELL;
+    for (const a of gateAnchors()) { const d = segLen(a.pt, [g.x, g.y]); if (d < bd) { bd = d; best = a; } }
+    moved = true;
+    if (!best) return false;
+    Object.assign(g, gateFromAnchor(best)); delete g.road;
+    return true;
+  });
+  if (moved) computeZones();
+}
+function placeTower() {
+  const t = towerSpot(); if (!t) return;
+  if (t.none) { flash('Une tour se place sur un angle, un bout ou un croisement de fortification', true); return; }
+  if (!t.ok) { flash(t.why, true); return; }
+  commit(); S.towers.push({ id:S.nextId++, x:t.x, y:t.y }); changed(true);
+}
+function placeGate() {
+  const g = gateSpot(); if (!g) return;
+  if (g.none) { flash('Une porte se place sur un point orange de muraille', true); return; }
+  if (!g.ok) { flash(g.why, true); return; }
+  commit(); S.gates.push({ id:S.nextId++, x:g.x, y:g.y, a:g.a, wall:g.wall }); changed(true);
+}
+function hitTower(x, y) { return S.towers.find(t => segLen([t.x, t.y], [x, y]) < TOWER_R + 2 / view.s) || null; }
+function hitGate(x, y) { return S.gates.find(g => inPoly([x, y], gatePoly(g))) || null; }
+function hitWall(x, y) {
+  for (const w of S.walls) for (let i = 0; i < w.pts.length - 1; i++)
+    if (ptSeg([x, y], w.pts[i], w.pts[i+1]).d < WALL_W / 2 + 5 / view.s) return w;
+  return null;
+}
+// objet sous le curseur, du plus petit au plus grand
+function hitAny(x, y) {
+  for (const [type, fn] of [['tower', hitTower], ['gate', hitGate], ['house', hitHouse], ['wall', hitWall], ['road', hitRoad]]) {
+    const o = fn(x, y); if (o) return { type, id:o.id };
+  }
+  return null;
+}
+
+function addRoadPoint() {
+  const sp = linePoint(); if (!sp) return;
+  if (!inTerrain(sp.pt)) { flash('Hors du terrain', true); return; }
+  if (tool === 'wall') {
+    if (!draft) { draft = { type:'wall', pts:[sp.pt], w:WALL_W, parent:sp.parent || null }; requestDraw(); return; }
+    const last = draft.pts[draft.pts.length - 1];
+    if (segLen(last, sp.pt) < .3) return;
+    if (!wallSegOk(last, sp.pt)) { flash('La muraille traverse un bâtiment', true); return; }
+    draft.pts.push(sp.pt);
+    if (sp.close) finishDraft();
+    else requestDraw();
+    return;
+  }
+  if (!draft) {
+    if (sp.kind === 'none') { flash('Une nouvelle route doit partir d\'une route existante : cliquez sur un point orange', true); return; }
+    if (!roadSegOk(sp.pt, sp.pt, roadKind.w)) { flash('Une route ne peut pas partir d\'un bâtiment', true); return; }
+    draft = { type:'road', pts:[sp.pt], w:roadKind.w, kind:roadKind.id, parent:sp.parent || null };
+  } else {
+    const last = draft.pts[draft.pts.length - 1];
+    if (segLen(last, sp.pt) < .3) return;
+    if (!roadSegOk(last, sp.pt, draft.w)) {
+      flash(crossesWallAtGates(last, sp.pt) ? 'La route traverse un bâtiment ou le lac' : 'Une route ne franchit une muraille que par une porte', true);
+      return;
+    }
+    draft.pts.push(sp.pt);
+  }
+  requestDraw();
+}
+function finishDraft() {
+  if (!draft) return;
+  if (draft.type === 'wall') {
+    if (draft.pts.length < 2) { flash('Une muraille a besoin d\'au moins deux points', true); return; }
+    commit();
+    const w = { id:S.nextId++, w:WALL_W, pts:draft.pts };
+    S.walls.push(w);
+    draft = null; changed(true);
+    flash(`Muraille de ${fmt(roadLen(w))} m ajoutée. Posez des tours sur ses angles`);
+    return;
+  }
+  if (draft.pts.length >= 2) {
+    commit();
+    const r = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:draft.pts };
+    S.roads.push(r);
+    draft = null; changed(true);
+    flash(`${{ terre:'Route en terre', gravier:'Route en gravier', pave:'Route pavée' }[r.kind]} de ${fmt(roadLen(r))} m ajoutée`);
+    return;
+  }
+  flash('Une route a besoin d\'au moins deux points', true);
+}
+function removeLastPoint() {
+  if (!draft) return;
+  draft.pts.pop();
+  if (!draft.pts.length) { draft = null; flash('Tracé annulé'); }
+  requestDraw();
+}
+function swap() {
+  if (tool === 'house' || !sel || sel.type !== 'house') { swapped = !swapped; renderTool(); requestDraw(); return; }
+  const h = findSel();
+  const p = placeAt([h.x, h.y], h.d, h.f, h.id);
+  if (!p || !p.ok) { flash('Pas assez de cases libres pour pivoter ici', true); return; }
+  commit(); const { ok, ...g } = p; Object.assign(h, g, { type:typeName(g.f, g.d) }); changed(false);
+}
+function deleteSel() {
+  const o = findSel(); if (!o) return;
+  commit();
+  const key = COLL[sel.type];
+  S[key] = S[key].filter(x => x.id !== o.id); // les bâtiments restent en place
+  // une porte n'existe que sur sa route ; une tour que sur un point de muraille
+  // une porte n'existe que dans sa muraille
+  if (sel.type === 'wall') S.gates = S.gates.filter(g => g.wall !== o.id);
+  if (sel.type === 'wall') {
+    computeZones();
+    S.towers = S.towers.filter(t => Z.wallNodes.some(q => segLen(q, [t.x, t.y]) < .6));
+  }
+  sel = null; changed(true);
+}
+function hitHouse(x, y) {
+  for (let i = S.houses.length - 1; i >= 0; i--) if (inPoly([x, y], corners(S.houses[i]))) return S.houses[i];
+  return null;
+}
+function hitRoad(x, y) {
+  let best = null, bd = Infinity;
+  for (const r of S.roads) for (let i = 0; i < r.pts.length - 1; i++) {
+    const d = ptSeg([x, y], r.pts[i], r.pts[i+1]).d - r.w / 2;
+    if (d < 5 / view.s && d < bd) { bd = d; best = r; }
+  }
+  return best;
+}
+
+/* ---------- pointeur ---------- */
+const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+function pinchState() {
+  const [a, b] = [...pointers.values()];
+  return { d:Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, cx:(a[0] + b[0]) / 2, cy:(a[1] + b[1]) / 2 };
+}
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const [px, py] = pos(e);
+  pointers.set(e.pointerId, [px, py]);
+  if (pointers.size === 2) { drag = null; pinch = pinchState(); return; }
+  if (pointers.size > 2) return;
+  cursor = toW(px, py);
+  const base = { sx:px, sy:py, ox:view.ox, oy:view.oy };
+  if (e.button === 2 && (tool === 'road' || tool === 'wall') && draft) { removeLastPoint(); return; }
+  if (e.button === 1 || e.button === 2 || spaceDown) { drag = { kind:'pan', ...base }; return; }
+  if (e.button !== 0) return;
+  if (tool === 'select') {
+    const hit = hitAny(...cursor);
+    if (hit) {
+      sel = hit;
+      if (hit.type === 'house') drag = { kind:'house', id:hit.id, ...base };
+      renderSel(); requestDraw(); return;
+    }
+  }
+  drag = { kind:'tap', ...base };
+});
+cv.addEventListener('pointermove', e => {
+  const [px, py] = pos(e);
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, [px, py]);
+  if (pinch) {
+    if (pointers.size < 2) return;
+    const n = pinchState();
+    zoomAt(n.cx, n.cy, n.d / pinch.d);
+    view.ox += n.cx - pinch.cx; view.oy += n.cy - pinch.cy;
+    pinch = n; return;
+  }
+  cursor = toW(px, py);
+  if (!drag) {
+    if (tool === 'select') {
+      hover = hitAny(...cursor);
+      cv.style.cursor = hover ? (hover.type === 'house' ? 'grab' : 'pointer') : 'default';
+    } else { hover = null; cv.style.cursor = 'crosshair'; }
+    requestDraw(); return;
+  }
+  if (drag.kind === 'tap' && Math.hypot(px - drag.sx, py - drag.sy) > 5) drag.kind = 'pan';
+  if (drag.kind === 'pan') {
+    view.ox = drag.ox + px - drag.sx; view.oy = drag.oy + py - drag.sy; cv.style.cursor = 'grabbing';
+  } else if (drag.kind === 'house' && Math.hypot(px - drag.sx, py - drag.sy) > 5) {
+    const h = findById('house', drag.id);
+    drag.preview = placeAt(cursor, h.f, h.d, h.id, true);
+    cv.style.cursor = 'grabbing';
+  }
+  requestDraw();
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pinch) { if (pointers.size < 2) pinch = null; drag = null; return; }
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'tap') {
+    if (tool === 'house') placeHouse();
+    else if (tool === 'road' || tool === 'wall') addRoadPoint();
+    else if (tool === 'tower') placeTower();
+    else if (tool === 'gate') placeGate();
+    else { sel = null; renderSel(); }
+  } else if (d.kind === 'house' && d.preview) {
+    if (d.preview.ok) {
+      const h = findById('house', d.id); commit();
+      const { ok, ...g } = d.preview; Object.assign(h, g); changed(false);
+    } else flash('Pas assez de cases libres ici, le bâtiment reste en place', true);
+  }
+  if (e.pointerType !== 'mouse') cursor = null;
+  requestDraw();
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !drag) { cursor = null; hover = null; requestDraw(); } });
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const [px, py] = pos(e);
+  zoomAt(px, py, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015)));
+}, { passive:false });
+
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if (e.key === ' ') { spaceDown = true; e.preventDefault(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  switch (e.key) {
+    case '1': setTool('select'); break;
+    case '2': setTool('house'); break;
+    case '3': setTool('road'); break;
+    case '4': setTool('wall'); break;
+    case '5': setTool('tower'); break;
+    case '6': setTool('gate'); break;
+    case 'r': case 'R': swap(); break;
+    case 'Delete': case 'Backspace': e.preventDefault(); deleteSel(); break;
+    case 'Enter': finishDraft(); break;
+    case 'Escape':
+      if (draft) { draft = null; requestDraw(); }
+      else if (sel) { sel = null; renderSel(); requestDraw(); }
+      break;
+  }
+});
+addEventListener('keyup', e => {
+  if (e.key === ' ') spaceDown = false;
+});
+
+/* ---------- panneau ---------- */
+const $ = id => document.getElementById(id);
+function setTool(t) {
+  if (draft && t !== tool) { draft = null; flash('Tracé non validé abandonné'); }
+  tool = t; hover = null; renderTool(); requestDraw();
+}
+function renderTool() {
+  for (const b of document.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', b.dataset.tool === tool);
+  for (const k of ['house', 'road', 'wall', 'tower', 'gate']) $(k + '-opts').hidden = tool !== k;
+  for (const b of $('presets').children) b.setAttribute('aria-pressed', !custom && b.dataset.id === preset.id);
+  $('use-custom').setAttribute('aria-pressed', !!custom);
+  $('swap').setAttribute('aria-pressed', swapped);
+  for (const b of $('road-kinds').children) b.setAttribute('aria-pressed', b.dataset.id === roadKind.id);
+  cv.style.cursor = tool === 'select' ? 'default' : 'crosshair';
+}
+const mini = (f, d) => `<span class="mini" style="grid-template-columns:repeat(${f},9px)">${'<i></i>'.repeat(f * d)}</span>`;
+$('presets').innerHTML = PRESETS.map(p => `
+  <button class="preset" data-id="${p.id}" id="preset-${p.id}">
+    ${mini(p.f, p.d)}<b>${p.name}</b><span>${p.f} × ${p.d} · ${p.f*CELL} × ${p.d*CELL} m</span>
+  </button>`).join('');
+$('road-kinds').innerHTML = ROADS.map(r => `<button data-id="${r.id}" id="kind-${r.id}">${r.name}<kbd>${{ terre:'battue', gravier:'empierré', pave:'pierre' }[r.id]}</kbd></button>`).join('');
+$('presets').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  preset = PRESETS.find(p => p.id === b.dataset.id); custom = null; swapped = false;
+  if (tool !== 'house') setTool('house'); else renderTool();
+});
+$('use-custom').addEventListener('click', () => {
+  const f = Math.round(+$('cf').value), d = Math.round(+$('cd').value);
+  if (!(f >= 1 && f <= 4 && d >= 1 && d <= 4)) { flash('Façade et profondeur entre 1 et 4 cases', true); return; }
+  custom = { f, d }; swapped = false; setTool('house');
+});
+$('swap').addEventListener('click', () => { swapped = !swapped; renderTool(); requestDraw(); });
+$('road-kinds').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  roadKind = ROADS.find(r => r.id === b.dataset.id);
+  if (draft && draft.type === 'road') { draft.w = roadKind.w; draft.kind = roadKind.id; }
+  if (tool !== 'road') setTool('road'); else { renderTool(); requestDraw(); }
+});
+document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+$('snap-len').addEventListener('change', e => { snapLen = e.target.checked; requestDraw(); });
+$('finish-road').addEventListener('click', finishDraft);
+$('undo-point').addEventListener('click', removeLastPoint);
+$('cancel-road').addEventListener('click', () => { draft = null; requestDraw(); });
+$('finish-wall').addEventListener('click', finishDraft);
+$('undo-wall-point').addEventListener('click', removeLastPoint);
+$('cancel-wall').addEventListener('click', () => { draft = null; requestDraw(); });
+/* Tirage au hasard d'une rivière ou d'un lac, en évitant ce qui est déjà construit.
+   Rivière : ne recouvre ni bâtiment, ni tour, ni porte (elle peut croiser routes et
+   murailles : pont, grille d'eau). Lac : ne touche rien et reste à 12 m de la rivière. */
+const builtPolys = () => [
+  ...S.houses.map(h => shrunk(h)), ...S.towers.map(towerPoly), ...S.gates.map(gatePoly),
+].map(P => ({ P, bb:bbox(P) }));
+const linePolys = list => list.flatMap(o => o.pts.slice(1).map((q, i) => segRect(o.pts[i], q, o.w || WALL_W))).map(P => ({ P, bb:bbox(P) }));
+function tryWater(make, ok) {
+  for (let n = 0; n < 80; n++) { const w = make(); if (ok(w)) return w; }
+  return null;
+}
+$('new-river').addEventListener('click', () => {
+  const built = builtPolys();
+  const rv = tryWater(() => {
+    const vertical = Math.random() < .5, span = vertical ? TW : TH, len = vertical ? TH : TW;
+    const a1 = 8 + Math.random() * 18, a2 = 3 + Math.random() * 6, m = a1 + a2 + 20;
+    return makeRiver({ vertical, base:m + Math.random() * (span - 2 * m),
+      a1, f1:(1 + Math.random() * 1.6) * 2 * Math.PI / len, p1:Math.random() * 6.28,
+      a2, f2:(3 + Math.random() * 3) * 2 * Math.PI / len, p2:Math.random() * 6.28 });
+  }, rv => {
+    const keep = S.river; S.river = rv; const { river } = waterPolys(); S.river = keep;
+    if (river.some(q => built.some(b => bbHit(q.bb, b.bb) && polysOverlap(q.P, b.P)))) return false;
+    // le lac garde ses distances
+    return !S.lake || S.lake.pts.every(p => rv.pts.every((c, i) => i === 0 || ptSeg(p, rv.pts[i-1], c).d > rv.w1 / 2 + 12));
+  });
+  if (!rv) { flash('Pas de place pour une rivière sans toucher vos bâtiments', true); return; }
+  commit(); S.river = rv; changed(true); flash('Nouvelle rivière tracée');
+});
+$('new-lake').addEventListener('click', () => {
+  const blockers = [...builtPolys(), ...linePolys(S.roads), ...linePolys(S.walls)];
+  const lk = tryWater(() => {
+    const R = 18 + Math.random() * 20, m = R * 1.3 + 8;
+    return makeLake(round2(m + Math.random() * (TW - 2 * m)), round2(m + Math.random() * (TH - 2 * m)), R, Math.random() * 6.28, Math.random() * 6.28);
+  }, lk => {
+    const P = lk.pts.map((p, i) => [lk.c, p, lk.pts[(i + 1) % lk.pts.length]]);
+    if (P.some(t => blockers.some(b => bbHit(bbox(t), b.bb) && polysOverlap(t, b.P)))) return false;
+    const rv = S.river;
+    return !rv || lk.pts.every(p => rv.pts.every((c, i) => i === 0 || ptSeg(p, rv.pts[i-1], c).d > rv.w1 / 2 + 12));
+  });
+  if (!lk) { flash('Pas de place libre pour un lac', true); return; }
+  commit(); S.lake = lk; changed(true); flash('Nouveau lac placé');
+});
+$('new-land').addEventListener('click', () => {
+  commit(); S.landSeed = 1 + Math.floor(Math.random() * 2147483000); changed(false);
+  flash('Nouvelle végétation. Ctrl+Z pour revenir à la précédente');
+});
+$('del-river').addEventListener('click', () => { if (!S.river) return; commit(); S.river = null; changed(true); });
+$('del-lake').addEventListener('click', () => { if (!S.lake) return; commit(); S.lake = null; changed(true); });
+$('load-sample').addEventListener('click', () => {
+  commit(); sample(); sel = null; draft = null; changed(true);
+  flash('Exemple chargé. Ctrl+Z pour retrouver votre plan');
+});
+$('undo').addEventListener('click', undo);
+$('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
+$('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
+$('zfit').addEventListener('click', fit);
+let clearArmed = null;
+$('clear').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!clearArmed) {
+    b.textContent = 'Confirmer : tout effacer';
+    clearArmed = setTimeout(() => { b.textContent = 'Vider le plan'; clearArmed = null; }, 3000);
+    return;
+  }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = 'Vider le plan';
+  commit(); S = normalize({ nextId:S.nextId }); sel = null; draft = null; changed(true);
+  flash('Plan vidé. Ctrl+Z pour revenir en arrière');
+});
+$('json').addEventListener('click', () => { $('json-text').value = JSON.stringify(S, null, 1); $('json-dlg').hidden = false; });
+$('json-close').addEventListener('click', () => { $('json-dlg').hidden = true; });
+$('json-copy').addEventListener('click', () => {
+  const t = $('json-text');
+  navigator.clipboard.writeText(t.value).then(() => flash('Plan copié'), () => { t.select(); flash('Sélectionné : faites Ctrl+C'); });
+});
+$('json-import').addEventListener('click', () => {
+  try {
+    const o = JSON.parse($('json-text').value);
+    if (!o || !Array.isArray(o.houses) || !Array.isArray(o.roads)) throw 0;
+    commit();
+    normalize(o);
+    const ids = ['houses', 'roads', 'walls', 'towers', 'gates'].flatMap(k => o[k].map(x => x.id));
+    S = { nextId:o.nextId || 1 + Math.max(0, ...ids), houses:o.houses, roads:o.roads, walls:o.walls, towers:o.towers, gates:o.gates, river:o.river, lake:o.lake, landSeed:o.landSeed };
+    sel = null; draft = null; computeZones(); fixGates(); changed(true); $('json-dlg').hidden = true; flash('Plan importé');
+  } catch (err) { flash('Ce texte n\'est pas un plan valide (il faut des listes "houses" et "roads")', true); }
+});
+
+function renderSel() {
+  const o = findSel(), body = $('sel-body');
+  if (!o) { body.innerHTML = '<p class="muted">Cliquez un bâtiment pour le déplacer, le pivoter ou le supprimer. Cliquez une route pour changer son type. Cliquez une muraille, une tour ou une porte pour la supprimer.</p>'; return; }
+  const del = '<button id="sdel" class="danger">Supprimer</button>';
+  if (sel.type === 'wall') {
+    const n = S.towers.filter(t => o.pts.some(q => segLen(q, [t.x, t.y]) < .6)).length;
+    body.innerHTML = `
+      <dl class="kv"><dt>Muraille</dt><dd>${fmt(roadLen(o))} m · emprise 1 case (${WALL_W} m), maçonnerie ${WALL_SURF} m</dd>
+      <dt>Tronçons</dt><dd>${o.pts.length - 1}${segLen(o.pts[0], o.pts[o.pts.length - 1]) < .01 ? ' · enceinte fermée' : ''}</dd>
+      <dt>Tours</dt><dd>${n}</dd></dl>
+      <div class="row">${del}</div>
+      <p class="muted" style="margin-top:8px">Supprimer la muraille retire les tours qui ne sont plus sur une fortification.</p>`;
+  } else if (sel.type === 'tower') {
+    body.innerHTML = `
+      <dl class="kv"><dt>Tour</dt><dd>${TOWER_R * 2} m de diamètre</dd>
+      <dt>Position</dt><dd>${fmt(o.x)} ; ${fmt(o.y)} m</dd></dl>
+      <div class="row">${del}</div>`;
+  } else if (sel.type === 'gate') {
+    const r = roadThroughGate(o);
+    body.innerHTML = `
+      <dl class="kv"><dt>Porte</dt><dd>passage de ${WALL_SURF} m à travers la muraille</dd>
+      <dt>Route</dt><dd>${r ? roadType(r).name : 'aucune (une route peut partir d\'ici)'}</dd></dl>
+      <div class="row">${del}</div>`;
+  } else if (sel.type === 'house') {
+    body.innerHTML = `
+      <dl class="kv"><dt>Type</dt><dd>${o.type}</dd>
+      <dt>Cases</dt><dd>${o.f} × ${o.d} (façade × profondeur)</dd>
+      <dt>Emprise</dt><dd>${o.w} × ${o.l} m · ${o.w * o.l} m²</dd>
+      <dt>Orientation</dt><dd>${fmt(((-o.a % 360) + 360) % 360, 0)}°</dd></dl>
+      <div class="row">
+        <button id="srot">Pivoter</button>
+        <button id="sdel" class="danger" style="margin-left:auto">Supprimer</button>
+      </div>`;
+    $('srot').addEventListener('click', swap);
+  } else {
+    body.innerHTML = `
+      <dl class="kv"><dt>Longueur</dt><dd>${fmt(roadLen(o))} m</dd>
+      <dt>Revêtement</dt><dd>${roadType(o).name}</dd>
+      <dt>Largeur</dt><dd>${fmt(roadType(o).surf)} m de chaussée · emprise 1 case (${o.w} m)</dd>
+      <dt>Tronçons</dt><dd>${o.pts.length - 1}</dd></dl>
+      <div class="row">
+        <label for="skind">Revêtement<select id="skind">${ROADS.map(r => `<option value="${r.id}"${r.id === o.kind ? ' selected' : ''}>${r.name}</option>`).join('')}</select></label>
+        <button id="sdel" class="danger" style="margin-left:auto;align-self:flex-end">Supprimer</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Supprimer la route laisse les bâtiments en place ; seules ses cases libres disparaissent.</p>`;
+    $('skind').addEventListener('change', e => {
+      const k = ROADS.find(r => r.id === e.target.value);
+      // l'emprise reste d'une case : changer de type ne déplace ni cases ni bâtiments
+      commit(); o.w = k.w; o.kind = k.id; changed(true);
+    });
+  }
+  $('sdel').addEventListener('click', deleteSel);
+}
+function updateStatus() {
+  const built = S.houses.reduce((s, h) => s + h.w * h.l, 0);
+  const free = Z.cells.filter(c => c.occ === null).length;
+  const len = S.roads.reduce((s, r) => s + roadLen(r), 0);
+  const c = cursor && inTerrain(cursor) ? `x <b>${fmt(cursor[0])}</b> · y <b>${fmt(cursor[1])}</b> m` : 'hors terrain';
+  $('status').innerHTML =
+    `<span>${c}</span><span><b>${S.houses.length}</b> bâtiments · <b>${fmt(built, 0)}</b> m²</span>` +
+    `<span><b>${free}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
+    `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
+    `<span>1 case = 8 × 8 m</span>`;
+}
+
+/* ---------- démarrage ---------- */
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); requestDraw(); });
+new MutationObserver(() => { readColors(); requestDraw(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+new ResizeObserver(resize).observe(wrap);
+if (document.fonts) document.fonts.ready.then(requestDraw);
+computeFlora();
+renderTool(); renderSel(); resize();
+})();
+</script>

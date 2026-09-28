@@ -1,0 +1,996 @@
+<title>Plan de village</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root{
+  --desk:#d6ddd9; --sheet:#f5f7f2; --ground:#edf1e2; --panel:#e9eee9;
+  --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
+  --grid1:rgba(30,58,76,.07); --grid5:rgba(30,58,76,.15); --grid10:rgba(30,58,76,.30);
+  --house:#c9ae7e; --house-edge:#4e3b21; --roof-line:rgba(78,59,33,.45);
+  --path:#dfcfa8; --path-edge:#a68d5f; --road:#cfc8b8; --road-edge:#857c6a;
+  --accent:#d2602a; --bad:#c23b30; --ok:#2e8a57; --shadow:rgba(40,48,36,.20);
+  --btn:#fbfcfa; --btn-on:#1e3a4c; --btn-on-ink:#f5f7f2;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+    --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+    --grid1:rgba(211,226,235,.05); --grid5:rgba(211,226,235,.11); --grid10:rgba(211,226,235,.24);
+    --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
+    --path:#51462f; --path-edge:#8c7853; --road:#4a4a46; --road-edge:#8a877c;
+    --accent:#f08a4c; --bad:#ef5a4c; --ok:#4cc184; --shadow:rgba(0,0,0,.45);
+    --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+  --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+  --grid1:rgba(211,226,235,.05); --grid5:rgba(211,226,235,.11); --grid10:rgba(211,226,235,.24);
+  --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
+  --path:#51462f; --path-edge:#8c7853; --road:#4a4a46; --road-edge:#8a877c;
+  --accent:#f08a4c; --bad:#ef5a4c; --ok:#4cc184; --shadow:rgba(0,0,0,.45);
+  --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{
+  margin:0; box-sizing:border-box; padding-inline:16px; padding-block:12px;
+  background:var(--desk); color:var(--ink);
+  font:14px/1.45 "Barlow",system-ui,sans-serif;
+}
+*,*::before,*::after{box-sizing:inherit}
+.app{display:grid; grid-template-columns:292px minmax(0,1fr); gap:12px; height:100%}
+.panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:4px;
+  overflow:auto; padding:14px 14px 18px; display:flex; flex-direction:column; gap:16px;
+}
+.panel h1{font:700 22px/1.1 "Barlow Condensed",sans-serif; letter-spacing:.02em; margin:0; text-wrap:balance}
+.panel .sub{margin:2px 0 0; color:var(--ink-soft); font-size:13px}
+.panel h2{
+  font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--ink-soft); margin:0 0 8px;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+button,select,input{font:inherit; color:inherit}
+button{
+  background:var(--btn); border:1px solid var(--line); border-radius:3px; padding:6px 10px; cursor:pointer;
+}
+button:hover{border-color:var(--ink-soft)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+button[aria-pressed="true"]{background:var(--btn-on); color:var(--btn-on-ink); border-color:var(--btn-on)}
+button.danger{color:var(--bad)}
+.seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px}
+.seg button{display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 4px}
+.seg kbd{font:400 10px "IBM Plex Mono",monospace; opacity:.6}
+.presets{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.preset{display:grid; grid-template-columns:auto 1fr; gap:2px 8px; align-items:center; text-align:left; padding:7px 8px}
+.preset .mini{grid-row:span 2; border:1.5px solid currentColor; background:var(--house); opacity:.9}
+.preset b{font-weight:600; font-size:13px; line-height:1.1}
+.preset span{font:400 11px "IBM Plex Mono",monospace; opacity:.75}
+.row{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.row label{display:flex; flex-direction:column; font-size:12px; color:var(--ink-soft); gap:2px}
+.row input[type=number]{width:74px; padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.row select{padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.angle{min-width:56px; text-align:center}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0 0 8px; font-size:13px}
+.kv dt{color:var(--ink-soft)}
+.kv dd{margin:0; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-soft); font-size:13px; margin:0}
+.check{display:flex; gap:8px; align-items:center; font-size:13px}
+details summary{cursor:pointer; font:600 12px "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+details ul{margin:8px 0 0; padding-left:18px; font-size:13px}
+details kbd{font:400 11px "IBM Plex Mono",monospace; border:1px solid var(--line); border-radius:3px; padding:0 4px}
+
+.sheet{
+  position:relative; background:var(--sheet); border:1px solid var(--line); border-radius:4px;
+  overflow:hidden; min-height:0; display:flex; flex-direction:column;
+}
+.canvas-wrap{position:relative; flex:1; min-height:0}
+canvas{position:absolute; inset:0; touch-action:none; display:block}
+.zoom{position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:4px}
+.zoom button{width:32px; height:32px; padding:0; font:500 16px "IBM Plex Mono",monospace}
+.status{
+  display:flex; flex-wrap:wrap; gap:4px 18px; padding:7px 12px; border-top:1px solid var(--line);
+  font:400 12px "IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+}
+.status b{color:var(--ink); font-weight:500}
+.toast{
+  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+  background:var(--ink); color:var(--sheet); padding:6px 12px; border-radius:3px; font-size:13px;
+  pointer-events:none; transition:opacity .25s; max-width:calc(100% - 32px); text-align:center;
+}
+.toast.bad{background:var(--bad); color:#fff}
+.overlay{position:absolute; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:center; padding:16px}
+.dialog{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:14px; width:min(560px,100%); display:flex; flex-direction:column; gap:10px}
+.dialog textarea{width:100%; height:220px; font:12px "IBM Plex Mono",monospace; background:var(--btn); color:var(--ink); border:1px solid var(--line); border-radius:3px; padding:8px; resize:vertical}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr; grid-template-rows:minmax(340px,1fr) auto; height:auto; min-height:100%}
+  .sheet{order:1; height:62vh}
+  .panel{order:2}
+}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+</style>
+
+<div class="app">
+  <aside class="panel" aria-label="Outils du plan">
+    <header>
+      <h1>Plan de village</h1>
+      <p class="sub">Terrain de 160 × 120 m · carreau de 5 m</p>
+    </header>
+
+    <section>
+      <h2>Outil</h2>
+      <div class="seg" role="group" aria-label="Outil actif">
+        <button id="tool-select" data-tool="select">Sélection<kbd>1</kbd></button>
+        <button id="tool-house" data-tool="house">Maison<kbd>2</kbd></button>
+        <button id="tool-path" data-tool="path">Chemin<kbd>3</kbd></button>
+      </div>
+    </section>
+
+    <section id="house-opts" hidden>
+      <h2>Gabarit</h2>
+      <div class="presets" id="presets"></div>
+      <div class="row" style="margin-top:10px">
+        <label for="cw">Largeur (m)<input id="cw" type="number" min="5" max="40" step="5" value="10"></label>
+        <label for="cl">Longueur (m)<input id="cl" type="number" min="5" max="40" step="5" value="20"></label>
+        <button id="use-custom" style="align-self:flex-end">Sur mesure</button>
+      </div>
+      <h2 style="margin-top:14px">Orientation</h2>
+      <div class="row">
+        <button id="rot-90">Pivoter d'un quart de tour</button>
+        <span class="angle mono" id="place-angle">0°</span>
+      </div>
+      <p class="muted" style="margin-top:8px">Cliquez sur le plan pour poser. Le gabarit devient rouge s'il chevauche une maison, un chemin ou sort du terrain.</p>
+    </section>
+
+    <section id="path-opts" hidden>
+      <h2>Type de voie</h2>
+      <div class="seg" id="path-kinds"></div>
+      <div class="row" style="margin-top:10px">
+        <button id="finish-path">Terminer le tracé</button>
+        <button id="cancel-path">Annuler</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Cliquez point par point : chaque segment est horizontal ou vertical, les virages sont à angle droit. Recliquez sur le dernier point ou appuyez sur Entrée pour terminer. Les points s'accrochent aux chemins existants pour faire des carrefours.</p>
+    </section>
+
+    <section id="sel-info">
+      <h2>Sélection</h2>
+      <div id="sel-body"><p class="muted">Cliquez une maison ou un chemin pour le modifier, le déplacer ou le supprimer.</p></div>
+    </section>
+
+    <section>
+      <h2>Plan</h2>
+      <label class="check" for="snap"><input id="snap" type="checkbox" checked> Aligner sur la grille de 5 m</label>
+      <div class="row" style="margin-top:10px">
+        <button id="undo">Annuler l'action</button>
+        <button id="json">Exporter / importer</button>
+        <button id="clear" class="danger">Vider le plan</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>Raccourcis</summary>
+      <ul>
+        <li><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd> changer d'outil</li>
+        <li><kbd>R</kbd> pivoter d'un quart de tour</li>
+        <li><kbd>Suppr</kbd> supprimer la sélection</li>
+        <li><kbd>Entrée</kbd> terminer un chemin, <kbd>Échap</kbd> annuler</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> annuler</li>
+        <li>Molette : zoom. Glisser dans le vide ou <kbd>Espace</kbd>+glisser : déplacer la vue</li>
+      </ul>
+    </details>
+  </aside>
+
+  <main class="sheet">
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="plan" aria-label="Plan du village avec grille métrique"></canvas>
+      <div class="zoom">
+        <button id="zin" aria-label="Zoomer">+</button>
+        <button id="zout" aria-label="Dézoomer">−</button>
+        <button id="zfit" aria-label="Voir tout le terrain" style="font-size:12px">⤢</button>
+      </div>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="json-dlg" hidden>
+        <div class="dialog" role="dialog" aria-label="Exporter ou importer le plan">
+          <h2 style="margin:0">Plan au format JSON</h2>
+          <p class="muted">Copiez ce texte pour garder le plan, ou collez un plan exporté puis importez-le.</p>
+          <textarea id="json-text" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="json-copy">Copier</button>
+            <button id="json-import">Importer ce texte</button>
+            <button id="json-close" style="margin-left:auto">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+
+<script>
+(() => {
+const TW = 160, TH = 120;
+const KEY = 'planVillage.v4';
+const G = 5; // côté d'un carreau, en mètres
+const PRESETS = [
+  { id:'cabane',  name:'Cabane',        w:5,  l:5  },
+  { id:'maison',  name:'Maison',        w:5,  l:10 },
+  { id:'grande',  name:'Grande maison', w:10, l:10 },
+  { id:'longere', name:'Longère',       w:5,  l:20 },
+  { id:'grange',  name:'Grange',        w:10, l:15 },
+  { id:'halle',   name:'Halle',         w:15, l:20 },
+];
+const PATHS = [
+  { id:'sentier', name:'Sentier', w:1.5 },
+  { id:'chemin',  name:'Chemin',  w:3 },
+  { id:'rue',     name:'Rue',     w:5 },
+];
+
+const sample = () => ({
+  nextId: 100,
+  houses: [
+    { id:1,  x:17.5,  y:55,   w:5,  l:10, a:0,  type:'Maison' },
+    { id:2,  x:30,    y:55,   w:10, l:10, a:0,  type:'Grande maison' },
+    { id:3,  x:55,    y:57.5, w:5,  l:20, a:90, type:'Longère' },
+    { id:4,  x:72.5,  y:55,   w:5,  l:10, a:0,  type:'Maison' },
+    { id:5,  x:95,    y:52.5, w:10, l:15, a:0,  type:'Grange' },
+    { id:6,  x:115,   y:57.5, w:5,  l:10, a:90, type:'Maison' },
+    { id:7,  x:22.5,  y:70,   w:5,  l:10, a:0,  type:'Maison' },
+    { id:8,  x:55,    y:70,   w:10, l:10, a:0,  type:'Grande maison' },
+    { id:9,  x:62.5,  y:67.5, w:5,  l:5,  a:0,  type:'Cabane' },
+    { id:10, x:95,    y:67.5, w:5,  l:20, a:90, type:'Longère' },
+    { id:11, x:127.5, y:75,   w:15, l:20, a:0,  type:'Halle' },
+    { id:12, x:72.5,  y:30,   w:5,  l:10, a:0,  type:'Maison' },
+    { id:13, x:95,    y:35,   w:10, l:10, a:0,  type:'Grande maison' },
+    { id:14, x:140,   y:37.5, w:5,  l:20, a:90, type:'Longère' },
+  ],
+  paths: [
+    { id:20, kind:'rue',     w:5,   pts:[[2.5,62.5],[157.5,62.5]] },
+    { id:21, kind:'chemin',  w:3,   pts:[[82.5,62.5],[82.5,22.5],[102.5,22.5],[102.5,2.5]] },
+    { id:22, kind:'sentier', w:1.5, pts:[[42.5,62.5],[42.5,112.5]] },
+    { id:23, kind:'sentier', w:1.5, pts:[[42.5,92.5],[72.5,92.5]] },
+  ],
+});
+
+function load() {
+  try {
+    const o = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (o && Array.isArray(o.houses) && Array.isArray(o.paths)) return o;
+  } catch (e) {}
+  return sample();
+}
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+
+let S = load();
+let tool = 'select', preset = PRESETS[1], custom = null, placeA = 0, pathKind = PATHS[1], snapOn = true;
+let sel = null, hover = null, cursor = null, draft = null, drag = null, pinch = null, spaceDown = false;
+const undoStack = [];
+const pointers = new Map();
+
+/* ---------- géométrie ---------- */
+function corners(h) {
+  const a = h.a * Math.PI / 180, c = Math.cos(a), s = Math.sin(a), hw = h.w / 2, hl = h.l / 2;
+  return [[-hw,-hl],[hw,-hl],[hw,hl],[-hw,hl]].map(([u,v]) => [h.x + u*c - v*s, h.y + u*s + v*c]);
+}
+function local(h, u, v) {
+  const a = h.a * Math.PI / 180, c = Math.cos(a), s = Math.sin(a);
+  return [h.x + u*c - v*s, h.y + u*s + v*c];
+}
+function polysOverlap(A, B) {
+  for (const P of [A, B]) for (let i = 0; i < P.length; i++) {
+    const p = P[i], q = P[(i+1) % P.length], nx = q[1]-p[1], ny = p[0]-q[0];
+    let a0 = Infinity, a1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+    for (const v of A) { const d = v[0]*nx + v[1]*ny; a0 = Math.min(a0,d); a1 = Math.max(a1,d); }
+    for (const v of B) { const d = v[0]*nx + v[1]*ny; b0 = Math.min(b0,d); b1 = Math.max(b1,d); }
+    if (a1 <= b0 + 1e-6 || b1 <= a0 + 1e-6) return false;
+  }
+  return true;
+}
+function ptSeg(p, a, b) {
+  const dx = b[0]-a[0], dy = b[1]-a[1], L = dx*dx + dy*dy;
+  let t = L ? ((p[0]-a[0])*dx + (p[1]-a[1])*dy) / L : 0;
+  t = Math.max(0, Math.min(1, t));
+  return { d: Math.hypot(p[0]-a[0]-t*dx, p[1]-a[1]-t*dy), q: [a[0]+t*dx, a[1]+t*dy] };
+}
+function segInter(a, b, c, d) {
+  const o = (p, q, r) => (q[0]-p[0])*(r[1]-p[1]) - (q[1]-p[1])*(r[0]-p[0]);
+  return o(c,d,a)*o(c,d,b) < 0 && o(a,b,c)*o(a,b,d) < 0;
+}
+function segDist(p1, p2, q1, q2) {
+  if (segInter(p1,p2,q1,q2)) return 0;
+  return Math.min(ptSeg(p1,q1,q2).d, ptSeg(p2,q1,q2).d, ptSeg(q1,p1,p2).d, ptSeg(q2,p1,p2).d);
+}
+function inPoly(p, P) {
+  let r = false;
+  for (let i = 0, j = P.length-1; i < P.length; j = i++) {
+    const [xi,yi] = P[i], [xj,yj] = P[j];
+    if ((yi > p[1]) !== (yj > p[1]) && p[0] < (xj-xi)*(p[1]-yi)/(yj-yi) + xi) r = !r;
+  }
+  return r;
+}
+// emprise d'un segment droit à bouts carrés : un rectangle élargi de w/2 de chaque côté
+function segRect(a, b, w) {
+  const r = w / 2;
+  const x0 = Math.min(a[0], b[0]) - r, x1 = Math.max(a[0], b[0]) + r;
+  const y0 = Math.min(a[1], b[1]) - r, y1 = Math.max(a[1], b[1]) + r;
+  return [[x0,y0],[x1,y0],[x1,y1],[x0,y1]];
+}
+function houseHitsPath(C, path) {
+  const n = path.pts.length;
+  for (let k = 0; k < Math.max(1, n - 1); k++)
+    if (polysOverlap(C, segRect(path.pts[k], path.pts[k+1] || path.pts[k], path.w))) return true;
+  return false;
+}
+const inTerrain = p => p[0] >= -1e-6 && p[1] >= -1e-6 && p[0] <= TW + 1e-6 && p[1] <= TH + 1e-6;
+function houseCheck(h, ignoreId) {
+  const C = corners(h);
+  if (!C.every(inTerrain)) return 'Hors du terrain';
+  for (const o of S.houses) if (o.id !== ignoreId && polysOverlap(C, corners(o))) return 'Chevauche une autre maison';
+  for (const p of S.paths) if (houseHitsPath(C, p)) return 'Empiète sur un chemin';
+  return null;
+}
+function segOk(a, b, w) {
+  const t = { pts:[a, b], w };
+  return S.houses.every(h => !houseHitsPath(corners(h), t));
+}
+function pathOk(p) {
+  if (!p.pts.every(inTerrain)) return false;
+  for (let i = 0; i < p.pts.length - 1; i++) if (!segOk(p.pts[i], p.pts[i+1], p.w)) return false;
+  return true;
+}
+const pathLen = p => p.pts.reduce((s, q, i) => i ? s + Math.hypot(q[0]-p.pts[i-1][0], q[1]-p.pts[i-1][1]) : 0, 0);
+const round2 = v => Math.round(v * 100) / 100;
+// milieu du carreau : les chemins passent au centre des cases
+const cellMid = v => Math.floor(v / G) * G + G / 2;
+// taille de bâtiment arrondie à un nombre entier de carreaux quand la grille est active
+const cellSize = v => snapOn ? Math.round(v / G) * G : v;
+
+function snapHouse(x, y, w, l, a) {
+  if (!snapOn) return [round2(x), round2(y)];
+  const r = ((a % 180) + 180) % 180;
+  const ex = (r === 0 ? w : l) / 2, ey = (r === 0 ? l : w) / 2;
+  return [Math.round((x - ex) / G) * G + ex, Math.round((y - ey) / G) * G + ey];
+}
+// point suivant d'un chemin : aligné sur le précédent (horizontal ou vertical),
+// accroché aux carrefours possibles sur cette ligne
+function orthoPoint(last, x, y, exPath) {
+  const horiz = Math.abs(x - last[0]) >= Math.abs(y - last[1]);
+  const fixed = horiz ? last[1] : last[0], free = horiz ? x : y;
+  const tol = 12 / view.s;
+  let best = null, bd = tol;
+  const consider = v => { const d = Math.abs(v - free); if (d < bd) { bd = d; best = v; } };
+  for (const p of S.paths) {
+    if (p.id === exPath) continue;
+    for (let i = 0; i < p.pts.length; i++) {
+      const q = p.pts[i];
+      if (Math.abs((horiz ? q[1] : q[0]) - fixed) < 1e-6) consider(horiz ? q[0] : q[1]);
+      const b = p.pts[i+1]; if (!b) continue;
+      // segment perpendiculaire qui croise la ligne
+      const lo = Math.min(horiz ? q[1] : q[0], horiz ? b[1] : b[0]), hi = Math.max(horiz ? q[1] : q[0], horiz ? b[1] : b[0]);
+      const same = horiz ? q[0] === b[0] : q[1] === b[1];
+      if (same && fixed >= lo && fixed <= hi) consider(horiz ? q[0] : q[1]);
+    }
+  }
+  const snapped = best !== null;
+  const v = snapped ? best : snapOn ? cellMid(free) : round2(free);
+  return { pt: horiz ? [v, fixed] : [fixed, v], kind: snapped ? 'edge' : 'grid' };
+}
+function draftPoint() {
+  if (!cursor) return null;
+  if (!draft) return snapPoint(cursor[0], cursor[1]);
+  return orthoPoint(draft.pts[draft.pts.length - 1], cursor[0], cursor[1]);
+}
+function snapPoint(x, y, exPath, exIdx) {
+  const tol = 12 / view.s;
+  let best = null, bd = tol;
+  for (const p of S.paths) p.pts.forEach((q, i) => {
+    if (p.id === exPath && i === exIdx) return;
+    const d = Math.hypot(q[0]-x, q[1]-y);
+    if (d < bd) { bd = d; best = { pt:[q[0], q[1]], kind:'node' }; }
+  });
+  if (best) return best;
+  for (const p of S.paths) {
+    if (p.id === exPath) continue;
+    for (let i = 0; i < p.pts.length - 1; i++) {
+      const r = ptSeg([x, y], p.pts[i], p.pts[i+1]);
+      if (r.d < bd) { bd = r.d; best = { pt:[round2(r.q[0]), round2(r.q[1])], kind:'edge' }; }
+    }
+  }
+  if (best) return best;
+  if (snapOn) return { pt:[cellMid(x), cellMid(y)], kind:'grid' };
+  return { pt:[round2(x), round2(y)], kind:'free' };
+}
+
+/* ---------- vue ---------- */
+const cv = document.getElementById('plan'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
+let W = 0, H = 0, dpr = 1, Col = {}, fitted = false;
+const view = { s:5, ox:0, oy:0 };
+const toS = (x, y) => [x*view.s + view.ox, y*view.s + view.oy];
+const toW = (px, py) => [(px - view.ox) / view.s, (py - view.oy) / view.s];
+
+function fit() {
+  const s = Math.max(1.2, Math.min((W - 90) / TW, (H - 70) / TH));
+  view.s = s; view.ox = (W - TW*s) / 2 + 10; view.oy = (H - TH*s) / 2 + 6;
+  requestDraw();
+}
+function zoomAt(px, py, f) {
+  const ns = Math.min(90, Math.max(1.2, view.s * f)), k = ns / view.s;
+  view.ox = px - (px - view.ox) * k; view.oy = py - (py - view.oy) * k; view.s = ns;
+  requestDraw();
+}
+function resize() {
+  const r = wrap.getBoundingClientRect();
+  dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  if (!fitted && W > 0) { fitted = true; fit(); }
+  requestDraw();
+}
+function readColors() {
+  const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+  for (const k of ['sheet','ground','ink','ink-soft','grid1','grid5','grid10','house','house-edge','roof-line','path','path-edge','road','road-edge','accent','bad','ok','shadow'])
+    Col[k] = g('--' + k);
+}
+
+/* ---------- dessin ---------- */
+let queued = false;
+function requestDraw() { if (!queued) { queued = true; requestAnimationFrame(draw); } }
+
+function polyPath(pts) {
+  ctx.beginPath();
+  pts.forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+}
+function strokeLine(pts, lw, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'square'; ctx.lineJoin = 'miter';
+  polyPath(pts); ctx.stroke();
+}
+function haloText(t, x, y, color, halo) {
+  ctx.lineWidth = 3; ctx.strokeStyle = halo; ctx.lineJoin = 'round'; ctx.strokeText(t, x, y);
+  ctx.fillStyle = color; ctx.fillText(t, x, y);
+}
+const fmt = (v, d = 1) => v.toLocaleString('fr-FR', { maximumFractionDigits:d });
+
+function drawHouse(h, mode) {
+  const s = view.s, C = corners(h);
+  if (mode === 'normal' || mode === 'selected' || mode === 'hover') {
+    ctx.fillStyle = Col.shadow;
+    ctx.beginPath();
+    C.forEach((p, i) => { const X = (p[0] + .6) * s + view.ox, Y = (p[1] + .6) * s + view.oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+    ctx.closePath(); ctx.fill();
+  }
+  polyPath(C); ctx.closePath();
+  if (mode === 'ghost' || mode === 'bad') {
+    ctx.globalAlpha = .45; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.setLineDash([5, 4]); ctx.strokeStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
+  } else {
+    ctx.fillStyle = Col.house; ctx.fill();
+    ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1.2; ctx.stroke();
+  }
+  // toit en croupe : faîtage sur le grand axe
+  if (Math.min(h.w, h.l) * s > 9) {
+    const { w, l } = h;
+    let r1, r2;
+    if (l >= w) { r1 = [0, -(l - w) / 2]; r2 = [0, (l - w) / 2]; }
+    else        { r1 = [-(w - l) / 2, 0]; r2 = [(w - l) / 2, 0]; }
+    const k = [[-w/2,-l/2],[w/2,-l/2],[w/2,l/2],[-w/2,l/2]];
+    const near = c => (l >= w ? (c[1] < 0 ? r1 : r2) : (c[0] < 0 ? r1 : r2));
+    ctx.strokeStyle = Col['roof-line']; ctx.lineWidth = 1;
+    ctx.beginPath();
+    const R1 = toS(...local(h, ...r1)), R2 = toS(...local(h, ...r2));
+    ctx.moveTo(...R1); ctx.lineTo(...R2);
+    for (const c of k) { const P = toS(...local(h, ...c)), N = near(c) === r1 ? R1 : R2; ctx.moveTo(...P); ctx.lineTo(...N); }
+    ctx.stroke();
+  }
+  if (mode === 'selected' || mode === 'hover') {
+    polyPath(C); ctx.closePath();
+    ctx.strokeStyle = Col.accent; ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
+  }
+  if (mode !== 'normal' || s >= 16) {
+    const [X, Y] = toS(h.x, h.y);
+    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    const top = Math.min(...C.map(p => p[1]));
+    const label = `${fmt(h.w)} × ${fmt(h.l)} m`;
+    if (mode === 'normal') haloText(label, X, Y, Col['house-edge'], Col.house);
+    else haloText(`${label} · ${fmt(h.w * h.l)} m²`, X, top * s + view.oy - 10, mode === 'bad' ? Col.bad : Col.ink, Col.sheet);
+  }
+}
+
+function drawPaths() {
+  const s = view.s;
+  const col = p => p.kind === 'rue' ? [Col.road, Col['road-edge']] : [Col.path, Col['path-edge']];
+  // carrefours : toutes les bordures d'abord, puis les revêtements du plus étroit au plus large.
+  // La voie la plus large recouvre le bout des voies qui la rejoignent, et chaque voie
+  // qui arrive ouvre la bordure de celle qu'elle croise.
+  const byWidth = S.paths.slice().sort((a, b) => a.w - b.w);
+  for (const p of byWidth) strokeLine(p.pts, p.w * s + 2.5, col(p)[1]);
+  for (const p of byWidth) strokeLine(p.pts, p.w * s, col(p)[0]);
+  const bad = drag && drag.valid === false && (drag.kind === 'path' || drag.kind === 'vertex') ? drag.id : null;
+  for (const p of S.paths) {
+    const isSel = sel && sel.type === 'path' && sel.id === p.id, isHov = hover && hover.type === 'path' && hover.id === p.id;
+    if (!isSel && !isHov && p.id !== bad) continue;
+    ctx.setLineDash([6, 5]);
+    strokeLine(p.pts, isSel ? 2 : 1.5, p.id === bad ? Col.bad : Col.accent);
+    ctx.setLineDash([]);
+    if (isSel) for (const q of [p.pts[0], p.pts[p.pts.length - 1]]) {
+      const [X, Y] = toS(q[0], q[1]);
+      ctx.beginPath(); ctx.arc(X, Y, 5, 0, Math.PI * 2);
+      ctx.fillStyle = Col.sheet; ctx.fill(); ctx.strokeStyle = Col.accent; ctx.lineWidth = 2; ctx.stroke();
+    }
+  }
+}
+
+function drawGrid() {
+  const s = view.s, [tx, ty] = toS(0, 0), tw = TW * s, th = TH * s;
+  ctx.fillStyle = Col.ground; ctx.fillRect(tx, ty, tw, th);
+  ctx.save(); ctx.beginPath(); ctx.rect(tx, ty, tw, th); ctx.clip();
+  const [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
+  const lines = (step, color) => {
+    ctx.strokeStyle = color; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = Math.max(0, Math.ceil(wx0 / step) * step); x <= Math.min(TW, wx1); x += step) {
+      const X = Math.round(x * s + view.ox) + .5; ctx.moveTo(X, ty); ctx.lineTo(X, ty + th);
+    }
+    for (let y = Math.max(0, Math.ceil(wy0 / step) * step); y <= Math.min(TH, wy1); y += step) {
+      const Y = Math.round(y * s + view.oy) + .5; ctx.moveTo(tx, Y); ctx.lineTo(tx + tw, Y);
+    }
+    ctx.stroke();
+  };
+  lines(G, Col.grid5);
+
+  lines(G * 5, Col.grid10);
+  ctx.restore();
+  ctx.strokeStyle = Col.ink; ctx.lineWidth = 1.5; ctx.strokeRect(tx, ty, tw, th);
+
+  // graduations en mètres
+  const step = [5, 10, 25, 50, 100].find(v => v * s >= 38) || 100;
+  ctx.font = '400 10px "IBM Plex Mono", monospace';
+  ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  const yl = Math.max(ty - 5, 14);
+  for (let x = 0; x <= TW; x += step) {
+    const X = x * s + view.ox; if (X < 30 || X > W - 10) continue;
+    haloText(x + (x === TW ? ' m' : ''), X, yl, Col['ink-soft'], Col.sheet);
+  }
+  ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+  const xl = Math.max(tx - 6, 28);
+  for (let y = 0; y <= TH; y += step) {
+    const Y = y * s + view.oy; if (Y < 22 || Y > H - 10) continue;
+    haloText(String(y), xl, Y, Col['ink-soft'], Col.sheet);
+  }
+}
+
+function drawScale() {
+  const s = view.s, m = [1, 2, 5, 10, 20, 50, 100].find(v => v * s >= 80) || 100, L = m * s;
+  const x = 16, y = H - 22;
+  ctx.fillStyle = Col.ink; ctx.fillRect(x, y, L / 2, 6);
+  ctx.fillStyle = Col.sheet; ctx.fillRect(x + L / 2, y, L / 2, 6);
+  ctx.strokeStyle = Col.ink; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, L, 6);
+  ctx.font = '400 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'bottom';
+  ctx.textAlign = 'left'; haloText('0', x, y - 2, Col.ink, Col.sheet);
+  ctx.textAlign = 'center'; haloText(fmt(m / 2), x + L / 2, y - 2, Col.ink, Col.sheet);
+  haloText(`${m} m`, x + L, y - 2, Col.ink, Col.sheet);
+  // nord
+  const nx = W - 26, ny = 38;
+  ctx.beginPath(); ctx.moveTo(nx, ny - 16); ctx.lineTo(nx + 7, ny + 6); ctx.lineTo(nx, ny + 1); ctx.lineTo(nx - 7, ny + 6); ctx.closePath();
+  ctx.fillStyle = Col.ink; ctx.fill();
+  ctx.font = '600 12px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.fillText('N', nx, ny - 18);
+}
+
+function drawDraft() {
+  if (tool !== 'path') return;
+  const sp = draftPoint();
+  if (draft) {
+    const w = draft.w * view.s;
+    const pts = sp ? [...draft.pts, sp.pt] : draft.pts;
+    const last = draft.pts[draft.pts.length - 1];
+    const ok = !sp || (inTerrain(sp.pt) && segOk(last, sp.pt, draft.w));
+    ctx.globalAlpha = .55; strokeLine(draft.pts, w, Col.accent);
+    if (sp) strokeLine([last, sp.pt], w, ok ? Col.accent : Col.bad);
+    ctx.globalAlpha = 1;
+    ctx.setLineDash([4, 4]); strokeLine(pts, 1.2, Col.ink); ctx.setLineDash([]);
+    for (const q of draft.pts) { const [X, Y] = toS(...q); ctx.fillStyle = Col.ink; ctx.fillRect(X - 3, Y - 3, 6, 6); }
+    if (sp) {
+      const d = Math.hypot(sp.pt[0] - last[0], sp.pt[1] - last[1]);
+      const [X, Y] = toS(...sp.pt);
+      ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      haloText(`${fmt(d)} m`, X + 10, Y - 8, ok ? Col.ink : Col.bad, Col.sheet);
+    }
+  }
+  if (sp) {
+    const [X, Y] = toS(...sp.pt);
+    ctx.beginPath(); ctx.arc(X, Y, sp.kind === 'grid' || sp.kind === 'free' ? 3 : 7, 0, Math.PI * 2);
+    ctx.strokeStyle = Col.accent; ctx.lineWidth = 2; ctx.stroke();
+  }
+}
+
+function draw() {
+  queued = false;
+  if (!W) return;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
+  drawGrid();
+  drawPaths();
+  for (const h of S.houses) {
+    const isSel = sel && sel.type === 'house' && sel.id === h.id;
+    const isHov = hover && hover.type === 'house' && hover.id === h.id;
+    let mode = isSel ? 'selected' : isHov ? 'hover' : 'normal';
+    if (drag && drag.kind === 'house' && drag.id === h.id && drag.valid === false) mode = 'bad';
+    drawHouse(h, mode);
+  }
+  const g = ghost();
+  if (g) drawHouse(g, houseCheck(g) ? 'bad' : 'ghost');
+  drawDraft();
+  drawScale();
+  updateStatus();
+}
+
+/* ---------- actions ---------- */
+function commit() { undoStack.push(JSON.stringify(S)); if (undoStack.length > 150) undoStack.shift(); }
+function changed() { save(); renderSel(); requestDraw(); }
+function undo() {
+  if (!undoStack.length) { flash('Rien à annuler'); return; }
+  S = JSON.parse(undoStack.pop());
+  if (sel && !findSel()) sel = null;
+  draft = null; changed();
+}
+function findSel() {
+  if (!sel) return null;
+  return (sel.type === 'house' ? S.houses : S.paths).find(o => o.id === sel.id) || null;
+}
+let toastT;
+function flash(msg, bad) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.style.opacity = 1;
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = 0; }, 2200);
+}
+function dims() { return custom || preset; }
+function ghost() {
+  if (tool !== 'house' || !cursor || drag && drag.kind === 'pan') return null;
+  const d = dims(), [x, y] = snapHouse(cursor[0], cursor[1], d.w, d.l, placeA);
+  return { id:-1, x, y, w:d.w, l:d.l, a:placeA, type:custom ? 'Sur mesure' : preset.name };
+}
+function placeHouse() {
+  const g = ghost(); if (!g) return;
+  const why = houseCheck(g);
+  if (why) { flash(why, true); return; }
+  commit(); g.id = S.nextId++; S.houses.push(g); changed();
+}
+function addPathPoint() {
+  if (!cursor) return;
+  const sp = draftPoint().pt;
+  if (!inTerrain(sp)) { flash('Hors du terrain', true); return; }
+  if (!draft) {
+    if (!segOk(sp, sp, pathKind.w)) { flash('Un chemin ne peut pas partir d\'une maison', true); return; }
+    draft = { pts:[sp], w:pathKind.w, kind:pathKind.id };
+  } else {
+    const last = draft.pts[draft.pts.length - 1];
+    if (Math.hypot(sp[0] - last[0], sp[1] - last[1]) < .3) { finishDraft(); return; }
+    if (!segOk(last, sp, draft.w)) { flash('Le chemin traverse une maison', true); return; }
+    draft.pts.push(sp);
+  }
+  requestDraw();
+}
+function finishDraft() {
+  if (!draft) return;
+  if (draft.pts.length >= 2) {
+    commit();
+    const p = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:draft.pts };
+    S.paths.push(p);
+    flash(`${PATHS.find(k => k.id === p.kind).name} de ${fmt(pathLen(p))} m ajouté`);
+  }
+  draft = null; changed();
+}
+function rotate() {
+  if (tool === 'house') { placeA = (placeA + 90) % 180; renderTool(); requestDraw(); return; }
+  const h = sel && sel.type === 'house' && findSel();
+  if (!h) return;
+  const old = h.a; commit(); h.a = (h.a + 90) % 180;
+  const why = houseCheck(h, h.id);
+  if (why) { h.a = old; undoStack.pop(); flash(`Rotation impossible : ${why.toLowerCase()}`, true); return; }
+  changed();
+}
+function deleteSel() {
+  const o = findSel(); if (!o) return;
+  commit();
+  if (sel.type === 'house') S.houses = S.houses.filter(h => h.id !== o.id);
+  else S.paths = S.paths.filter(p => p.id !== o.id);
+  sel = null; changed();
+}
+function hitHouse(x, y) {
+  for (let i = S.houses.length - 1; i >= 0; i--) if (inPoly([x, y], corners(S.houses[i]))) return S.houses[i];
+  return null;
+}
+function hitPath(x, y) {
+  let best = null, bd = Infinity;
+  for (const p of S.paths) for (let i = 0; i < p.pts.length - 1; i++) {
+    const d = ptSeg([x, y], p.pts[i], p.pts[i+1]).d - p.w / 2;
+    if (d < 5 / view.s && d < bd) { bd = d; best = p; }
+  }
+  return best;
+}
+// seules les extrémités se déplacent (le long de leur segment), pour garder les angles droits
+function hitVertex(p, x, y) {
+  const n = p.pts.length - 1;
+  for (const i of [0, n]) if (Math.hypot(p.pts[i][0] - x, p.pts[i][1] - y) * view.s < 9) return i;
+  return -1;
+}
+
+/* ---------- pointeur ---------- */
+const pos = e => { const r = cv.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+function pinchState() {
+  const [a, b] = [...pointers.values()];
+  return { d:Math.hypot(a[0] - b[0], a[1] - b[1]) || 1, cx:(a[0] + b[0]) / 2, cy:(a[1] + b[1]) / 2 };
+}
+function cancelDrag() {
+  if (!drag) return;
+  if (drag.kind === 'house') { const h = findById('house', drag.id); if (h) [h.x, h.y] = drag.orig; undoStack.pop(); }
+  if (drag.kind === 'path') { const p = findById('path', drag.id); if (p) p.pts = drag.orig; undoStack.pop(); }
+  if (drag.kind === 'vertex') { const p = findById('path', drag.id); if (p) p.pts[drag.idx] = drag.orig; undoStack.pop(); }
+  drag = null;
+}
+const findById = (t, id) => (t === 'house' ? S.houses : S.paths).find(o => o.id === id);
+
+cv.addEventListener('contextmenu', e => e.preventDefault());
+cv.addEventListener('pointerdown', e => {
+  cv.setPointerCapture(e.pointerId);
+  const [px, py] = pos(e);
+  pointers.set(e.pointerId, [px, py]);
+  if (pointers.size === 2) { cancelDrag(); pinch = pinchState(); return; }
+  if (pointers.size > 2) return;
+  cursor = toW(px, py);
+  const base = { sx:px, sy:py, ox:view.ox, oy:view.oy };
+  if (e.button === 1 || e.button === 2 || spaceDown) { drag = { kind:'pan', ...base }; return; }
+  if (e.button !== 0) return;
+  const [wx, wy] = cursor;
+  if (tool === 'select') {
+    const sp = sel && sel.type === 'path' && findSel();
+    const vi = sp ? hitVertex(sp, wx, wy) : -1;
+    if (vi >= 0) { commit(); drag = { kind:'vertex', id:sp.id, idx:vi, orig:sp.pts[vi].slice(), moved:false }; return; }
+    const h = hitHouse(wx, wy);
+    if (h) { sel = { type:'house', id:h.id }; commit(); drag = { kind:'house', id:h.id, sw:[wx, wy], orig:[h.x, h.y], moved:false }; renderSel(); requestDraw(); return; }
+    const p = hitPath(wx, wy);
+    if (p) { sel = { type:'path', id:p.id }; commit(); drag = { kind:'path', id:p.id, sw:[wx, wy], orig:p.pts.map(q => q.slice()), moved:false }; renderSel(); requestDraw(); return; }
+  }
+  drag = { kind:'tap', ...base };
+});
+cv.addEventListener('pointermove', e => {
+  const [px, py] = pos(e);
+  if (pointers.has(e.pointerId)) pointers.set(e.pointerId, [px, py]);
+  if (pinch) {
+    if (pointers.size < 2) return;
+    const n = pinchState();
+    zoomAt(n.cx, n.cy, n.d / pinch.d);
+    view.ox += n.cx - pinch.cx; view.oy += n.cy - pinch.cy;
+    pinch = n; return;
+  }
+  cursor = toW(px, py);
+  const [wx, wy] = cursor;
+  if (!drag) {
+    let hv = null;
+    if (tool === 'select') {
+      const h = hitHouse(wx, wy), p = h ? null : hitPath(wx, wy);
+      hv = h ? { type:'house', id:h.id } : p ? { type:'path', id:p.id } : null;
+      const sp = sel && sel.type === 'path' && findSel();
+      cv.style.cursor = sp && hitVertex(sp, wx, wy) >= 0 ? 'move' : hv ? 'grab' : 'default';
+    } else cv.style.cursor = 'crosshair';
+    hover = hv;
+    requestDraw(); return;
+  }
+  if (drag.kind === 'tap' && Math.hypot(px - drag.sx, py - drag.sy) > 5) drag.kind = 'pan';
+  if (drag.kind === 'pan') {
+    view.ox = drag.ox + px - drag.sx; view.oy = drag.oy + py - drag.sy;
+    cv.style.cursor = 'grabbing';
+  } else if (drag.kind === 'house') {
+    const h = findById('house', drag.id);
+    [h.x, h.y] = snapHouse(drag.orig[0] + wx - drag.sw[0], drag.orig[1] + wy - drag.sw[1], h.w, h.l, h.a);
+    drag.moved = h.x !== drag.orig[0] || h.y !== drag.orig[1];
+    drag.valid = !houseCheck(h, h.id);
+    cv.style.cursor = 'grabbing';
+  } else if (drag.kind === 'path') {
+    const p = findById('path', drag.id);
+    let dx = wx - drag.sw[0], dy = wy - drag.sw[1];
+    dx = snapOn ? Math.round(dx / G) * G : round2(dx); dy = snapOn ? Math.round(dy / G) * G : round2(dy);
+    p.pts = drag.orig.map(q => [q[0] + dx, q[1] + dy]);
+    drag.moved = dx !== 0 || dy !== 0;
+    drag.valid = pathOk(p);
+    cv.style.cursor = 'grabbing';
+  } else if (drag.kind === 'vertex') {
+    const p = findById('path', drag.id);
+    const nb = p.pts[drag.idx === 0 ? 1 : drag.idx - 1];
+    p.pts[drag.idx] = orthoPoint(nb, wx, wy, p.id).pt;
+    drag.moved = true;
+    drag.valid = pathOk(p);
+  }
+  requestDraw();
+});
+function endPointer(e) {
+  pointers.delete(e.pointerId);
+  if (pinch) { if (pointers.size < 2) pinch = null; drag = null; return; }
+  if (!drag) return;
+  const d = drag; drag = null;
+  if (d.kind === 'tap') {
+    if (tool === 'house') placeHouse();
+    else if (tool === 'path') addPathPoint();
+    else { sel = null; renderSel(); }
+  } else if (d.kind === 'house' || d.kind === 'path' || d.kind === 'vertex') {
+    if (!d.moved) undoStack.pop();
+    else if (d.valid === false) {
+      drag = d; cancelDrag();
+      flash(d.kind === 'house' ? 'Emplacement impossible, la maison revient à sa place' : 'Le chemin traverserait une maison', true);
+    } else save();
+    renderSel();
+  }
+  if (e.pointerType !== 'mouse') cursor = null;
+  requestDraw();
+}
+cv.addEventListener('pointerup', endPointer);
+cv.addEventListener('pointercancel', endPointer);
+cv.addEventListener('pointerleave', e => { if (e.pointerType === 'mouse' && !drag) { cursor = null; hover = null; requestDraw(); } });
+cv.addEventListener('wheel', e => {
+  e.preventDefault();
+  const [px, py] = pos(e);
+  zoomAt(px, py, Math.exp(-e.deltaY * (e.deltaMode ? 0.05 : 0.0015)));
+}, { passive:false });
+
+addEventListener('keydown', e => {
+  if (e.target.closest && e.target.closest('input,textarea,select')) return;
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') { e.preventDefault(); undo(); return; }
+  if (e.key === ' ') { spaceDown = true; e.preventDefault(); return; }
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+  switch (e.key) {
+    case '1': setTool('select'); break;
+    case '2': setTool('house'); break;
+    case '3': setTool('path'); break;
+    case 'r': case 'R': rotate(); break;
+    case 'Delete': case 'Backspace': e.preventDefault(); deleteSel(); break;
+    case 'Enter': finishDraft(); break;
+    case 'Escape':
+      if (draft) { draft = null; requestDraw(); }
+      else if (sel) { sel = null; renderSel(); requestDraw(); }
+      break;
+  }
+});
+addEventListener('keyup', e => { if (e.key === ' ') spaceDown = false; });
+
+/* ---------- panneau ---------- */
+const $ = id => document.getElementById(id);
+function setTool(t) {
+  if (tool === 'path' && t !== 'path') finishDraft();
+  tool = t; hover = null;
+  renderTool(); requestDraw();
+}
+function renderTool() {
+  for (const b of document.querySelectorAll('[data-tool]')) b.setAttribute('aria-pressed', b.dataset.tool === tool);
+  $('house-opts').hidden = tool !== 'house';
+  $('path-opts').hidden = tool !== 'path';
+  $('place-angle').textContent = placeA + '°';
+  for (const b of $('presets').children) b.setAttribute('aria-pressed', !custom && b.dataset.id === preset.id);
+  $('use-custom').setAttribute('aria-pressed', !!custom);
+  for (const b of $('path-kinds').children) b.setAttribute('aria-pressed', b.dataset.id === pathKind.id);
+  cv.style.cursor = tool === 'select' ? 'default' : 'crosshair';
+}
+$('presets').innerHTML = PRESETS.map(p => `
+  <button class="preset" data-id="${p.id}" id="preset-${p.id}">
+    <i class="mini" style="width:${p.w * 2.4}px;height:${p.l * 2.4}px"></i>
+    <b>${p.name}</b><span>${p.w} × ${p.l} m · ${p.w * p.l} m²</span>
+  </button>`).join('');
+$('path-kinds').innerHTML = PATHS.map(p => `<button data-id="${p.id}" id="kind-${p.id}">${p.name}<kbd>${fmt(p.w)} m</kbd></button>`).join('');
+$('presets').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  preset = PRESETS.find(p => p.id === b.dataset.id); custom = null;
+  if (tool !== 'house') setTool('house'); else renderTool();
+});
+$('use-custom').addEventListener('click', () => {
+  const w = cellSize(+$('cw').value), l = cellSize(+$('cl').value);
+  if (!(w >= 1 && w <= 40 && l >= 1 && l <= 40)) { flash(snapOn ? 'Largeur et longueur entre 5 et 40 m' : 'Largeur et longueur entre 1 et 40 m', true); return; }
+  custom = { w, l }; setTool('house');
+});
+$('path-kinds').addEventListener('click', e => {
+  const b = e.target.closest('[data-id]'); if (!b) return;
+  pathKind = PATHS.find(p => p.id === b.dataset.id);
+  if (draft) { draft.w = pathKind.w; draft.kind = pathKind.id; }
+  if (tool !== 'path') setTool('path'); else { renderTool(); requestDraw(); }
+});
+document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
+$('rot-90').addEventListener('click', rotate);
+$('finish-path').addEventListener('click', finishDraft);
+$('cancel-path').addEventListener('click', () => { draft = null; requestDraw(); });
+$('snap').addEventListener('change', e => { snapOn = e.target.checked; requestDraw(); });
+$('undo').addEventListener('click', undo);
+$('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
+$('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
+$('zfit').addEventListener('click', fit);
+let clearArmed = null;
+$('clear').addEventListener('click', e => {
+  const b = e.currentTarget;
+  if (!clearArmed) {
+    b.textContent = 'Confirmer : tout effacer';
+    clearArmed = setTimeout(() => { b.textContent = 'Vider le plan'; clearArmed = null; }, 3000);
+    return;
+  }
+  clearTimeout(clearArmed); clearArmed = null; b.textContent = 'Vider le plan';
+  commit(); S = { nextId:S.nextId, houses:[], paths:[] }; sel = null; draft = null; changed();
+  flash('Plan vidé. Ctrl+Z pour revenir en arrière');
+});
+$('json').addEventListener('click', () => { $('json-text').value = JSON.stringify(S, null, 1); $('json-dlg').hidden = false; });
+$('json-close').addEventListener('click', () => { $('json-dlg').hidden = true; });
+$('json-copy').addEventListener('click', () => {
+  const t = $('json-text');
+  navigator.clipboard.writeText(t.value).then(() => flash('Plan copié'), () => { t.select(); flash('Sélectionné : faites Ctrl+C'); });
+});
+$('json-import').addEventListener('click', () => {
+  try {
+    const o = JSON.parse($('json-text').value);
+    if (!o || !Array.isArray(o.houses) || !Array.isArray(o.paths)) throw 0;
+    commit();
+    S = { nextId:o.nextId || 1 + Math.max(0, ...o.houses.map(h => h.id), ...o.paths.map(p => p.id)), houses:o.houses.map(h => ({ ...h, a: Math.round((h.a || 0) / 90) % 2 ? 90 : 0 })), paths:o.paths };
+    sel = null; draft = null; changed(); $('json-dlg').hidden = true; flash('Plan importé');
+  } catch (err) { flash('Ce texte n\'est pas un plan valide (il faut des listes "houses" et "paths")', true); }
+});
+
+function renderSel() {
+  const o = findSel(), body = $('sel-body');
+  if (!o) { body.innerHTML = '<p class="muted">Cliquez une maison ou un chemin pour le modifier, le déplacer ou le supprimer.</p>'; return; }
+  if (sel.type === 'house') {
+    body.innerHTML = `
+      <dl class="kv"><dt>Type</dt><dd>${o.type || 'Maison'}</dd>
+      <dt>Surface</dt><dd>${fmt(o.w * o.l)} m²</dd>
+      <dt>Centre</dt><dd>${fmt(o.x)} ; ${fmt(o.y)} m</dd></dl>
+      <div class="row">
+        <label for="sw">Largeur (m)<input id="sw" type="number" min="5" max="40" step="5" value="${o.w}"></label>
+        <label for="sl">Longueur (m)<input id="sl" type="number" min="5" max="40" step="5" value="${o.l}"></label>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="srot">Pivoter d'un quart de tour</button>
+        <button id="sdel" class="danger" style="margin-left:auto">Supprimer</button>
+      </div>`;
+    const apply = () => {
+      const w = cellSize(+$('sw').value), l = cellSize(+$('sl').value);
+      if (!(w >= 1 && w <= 40 && l >= 1 && l <= 40)) { flash(snapOn ? 'Largeur et longueur entre 5 et 40 m' : 'Largeur et longueur entre 1 et 40 m', true); renderSel(); return; }
+      const old = { w:o.w, l:o.l }; commit(); o.w = w; o.l = l; o.type = 'Sur mesure';
+      const why = houseCheck(o, o.id);
+      if (why) { Object.assign(o, old); undoStack.pop(); flash(why, true); renderSel(); return; }
+      changed();
+    };
+    $('sw').addEventListener('change', apply); $('sl').addEventListener('change', apply);
+    $('srot').addEventListener('click', rotate);
+  } else {
+    body.innerHTML = `
+      <dl class="kv"><dt>Longueur</dt><dd>${fmt(pathLen(o))} m</dd>
+      <dt>Largeur</dt><dd>${fmt(o.w)} m</dd>
+      <dt>Points</dt><dd>${o.pts.length}</dd></dl>
+      <div class="row">
+        <label for="skind">Type<select id="skind">${PATHS.map(p => `<option value="${p.id}"${p.id === o.kind ? ' selected' : ''}>${p.name} (${fmt(p.w)} m)</option>`).join('')}</select></label>
+        <button id="sdel" class="danger" style="margin-left:auto;align-self:flex-end">Supprimer</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Glissez une extrémité (point rond) pour allonger ou raccourcir le chemin, ou le chemin entier pour le déplacer.</p>`;
+    $('skind').addEventListener('change', e => {
+      const k = PATHS.find(p => p.id === e.target.value), old = { w:o.w, kind:o.kind };
+      commit(); o.w = k.w; o.kind = k.id;
+      if (!pathOk(o)) { Object.assign(o, old); undoStack.pop(); flash('Trop large : il toucherait une maison', true); renderSel(); return; }
+      changed();
+    });
+  }
+  $('sdel').addEventListener('click', deleteSel);
+}
+
+function updateStatus() {
+  const built = S.houses.reduce((s, h) => s + h.w * h.l, 0);
+  const len = S.paths.reduce((s, p) => s + pathLen(p), 0);
+  const c = cursor && inTerrain(cursor) ? `x <b>${fmt(cursor[0])}</b> · y <b>${fmt(cursor[1])}</b> m` : 'hors terrain';
+  $('status').innerHTML =
+    `<span>${c}</span><span><b>${S.houses.length}</b> maisons · <b>${fmt(built, 0)}</b> m² bâtis</span>` +
+    `<span><b>${fmt(len, 0)}</b> m de voies</span><span>1 carreau = 5 m · ${fmt(view.s)} px/m</span>`;
+}
+
+/* ---------- démarrage ---------- */
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); requestDraw(); });
+new MutationObserver(() => { readColors(); requestDraw(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
+new ResizeObserver(resize).observe(wrap);
+if (document.fonts) document.fonts.ready.then(requestDraw);
+renderTool(); renderSel(); resize();
+})();
+</script>
