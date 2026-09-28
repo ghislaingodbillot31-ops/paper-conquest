@@ -235,6 +235,7 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
       <div class="row">
         <button id="undo">Annuler l'action</button>
         <button id="json">Exporter / importer</button>
+        <button id="load-map">Carte seule</button>
         <button id="load-town">Plan de test : village</button>
         <button id="load-sample">Campagne et village</button>
         <button id="load-old" hidden>Reprendre mon plan précédent</button>
@@ -284,6 +285,7 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/clipper-lib@6.4.2/clipper.js"></script>
 <script>
 (() => {
 const TW = 2000, TH = 1500;
@@ -294,7 +296,7 @@ const WALL_W = CELL, WALL_SURF = 6, TOWER_R = 6, GATE_L = CELL;
 const ANG_STEP = Math.PI / 18; // routes orientées uniquement par pas de 10°
 // v5 : la page s'ouvre sur la campagne européenne (le plan v4 reste dans le navigateur)
 // v7 : la page s'ouvre sur le plan de test (simple village) ; le plan v5 reste repris par bouton
-const KEY = 'planVillageZonage.v8', OLD_KEY = 'planVillageZonage.v7'; // v8 : village du jeu de base (catalogue)
+const KEY = 'planVillageZonage.v10', OLD_KEY = 'planVillageZonage.v9'; // v10 : routes naturelles, cadastre découpé par routes et eau
 /* Bâtiments du jeu de base (façade × profondeur, en cases de 8 m).
    cap : habitants au plus ; turn : peut pivoter (façade ↔ profondeur) ; unique : un seul
    par village ; yard : arrière-cour au choix ; radius : rayon d'action (m). */
@@ -700,107 +702,257 @@ function floraCandidates() {
    Chaque parcelle a une clé stable « i,j,k » (maille i,j, lanière k) : c'est elle qu'on
    possède et qu'on achète. */
 const PARCEL = 120; // maille cadastrale (m) : grandes parcelles
+const CADASTRE_VERSION = 'ilots-rect-v1'; // découpage par les routes et l'eau
 const CROPS = [['meadow', .34], ['wheat', .24], ['plough', .18], ['fallow', .12], ['alfalfa', .12]];
 let parcels = [], parcelIndex = new Map(), parcelByKey = new Map(), hedges = [], forestTrees = [], tracks = [];
-function computeParcels() {
-  const rnd = seeded(S.landSeed * 13 + 5), nz = landNoise();
-  const nx = Math.ceil(TW / PARCEL), ny = Math.ceil(TH / PARCEL), J = .5 * PARCEL;
-  const V = [];
-  // les sommets du bord de la carte restent sur le bord : le cadastre couvre tout le terrain
-  for (let j = 0; j <= ny; j++) for (let i = 0; i <= nx; i++) {
-    const jx = (rnd() - .5) * J, jy = (rnd() - .5) * J;
-    V.push([i === 0 ? 0 : i === nx ? TW : i * PARCEL + jx, j === 0 ? 0 : j * PARCEL + jy]);
+/* Géométrie des polygones (découpe du cadastre) : bibliothèque Clipper, en coordonnées
+   entières (centimètres). */
+const CS = 100;
+const toC = P => P.map(p => ({ X:Math.round(p[0] * CS), Y:Math.round(p[1] * CS) }));
+const fromC = P => P.map(p => [p.X / CS, p.Y / CS]);
+function clipRun(subjects, clips, type, open) {
+  const c = new ClipperLib.Clipper();
+  for (const s of subjects) c.AddPath(s, ClipperLib.PolyType.ptSubject, !open);
+  c.AddPaths(clips, ClipperLib.PolyType.ptClip, true);
+  if (open) {
+    const tree = new ClipperLib.PolyTree();
+    c.Execute(type, tree, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
+    return ClipperLib.Clipper.OpenPathsFromPolyTree(tree);
   }
-  const at = (i, j) => V[j * (nx + 1) + i];
-  const water = [...Z.water.river, ...Z.water.lake];
-  const homes = bourgPts();
+  const out = new ClipperLib.Paths();
+  c.Execute(type, out, ClipperLib.PolyFillType.pftNonZero, ClipperLib.PolyFillType.pftNonZero);
+  return out;
+}
+// centre de gravité d'un polygone quelconque
+function polyCentroid(P) {
+  let a = 0, x = 0, y = 0;
+  for (let k = 0; k < P.length; k++) {
+    const u = P[k], v = P[(k + 1) % P.length], cr = u[0] * v[1] - v[0] * u[1];
+    a += cr; x += (u[0] + v[0]) * cr; y += (u[1] + v[1]) * cr;
+  }
+  if (Math.abs(a) < 1e-9) return [P.reduce((s, p) => s + p[0], 0) / P.length, P.reduce((s, p) => s + p[1], 0) / P.length];
+  return [x / (3 * a), y / (3 * a)];
+}
+const WATER_MARGIN = 2; // m laissés libres au bord des rivières et des lacs
+/* Obstacles du cadastre : les routes (bande de la largeur de la route, virages arrondis),
+   les rivières et les lacs. Aucune parcelle ne les chevauche ni ne passe de l'autre côté. */
+function cadastreBarriers() {
+  const paths = [];
+  for (const r of S.roads) {
+    const co = new ClipperLib.ClipperOffset(2, .5 * CS), out = new ClipperLib.Paths(); // arrondis à 50 cm près
+    co.AddPath(toC(smoothPts(r)), ClipperLib.JoinType.jtRound, ClipperLib.EndType.etOpenSquare); // bouts couverts
+    co.Execute(out, r.w / 2 * CS);
+    paths.push(...out);
+  }
+  // l'eau, avec une marge de WATER_MARGIN (2 m) sur ses bords : ni parcelle ni chemin
+  const water = [...Z.water.river, ...Z.water.lake].map(w => toC(w.P));
+  for (const p of water) if (!ClipperLib.Clipper.Orientation(p)) p.reverse();
+  const co = new ClipperLib.ClipperOffset(2, .5 * CS), wide = new ClipperLib.Paths();
+  co.AddPaths(clipRun(water, [], ClipperLib.ClipType.ctUnion, false), ClipperLib.JoinType.jtRound, ClipperLib.EndType.etClosedPolygon);
+  co.Execute(wide, WATER_MARGIN * CS);
+  paths.push(...wide);
+  // même sens de rotation pour tous : sinon une route et une rivière qui se croisent
+  // (pont) s'annulent au lieu de s'additionner
+  for (const p of paths) if (!ClipperLib.Clipper.Orientation(p)) p.reverse();
+  const union = clipRun(paths, [], ClipperLib.ClipType.ctUnion, false);
+  return union.map(p => ({ C:p, bb:bbox(fromC(p)) }));
+}
+let cadastreKey = null;
+/* Cadastre par îlots, en parcelles rectangulaires.
+   1. Les routes, rivières et lacs découpent la carte en îlots.
+   2. Chaque îlot reçoit sa propre trame, orientée sur la route (ou la rivière) qui le borde le
+      plus : des rangées parallèles à la route, qui partent de son bord, puis des colonnes
+      perpendiculaires. Les champs sont des lanières perpendiculaires à la route.
+   3. Chaque rectangle est limité à l'îlot : les parcelles commencent et finissent au bord des
+      routes et des rivières, et les limites d'un îlot ne se prolongent pas dans le voisin.
+   4. Chemins d'exploitation le long d'une ligne de rangée sur deux et d'une colonne sur quatre,
+      dans l'îlot ; une parcelle encore enclavée reçoit un chemin sur un de ses côtés. */
+const SMALL_PARCEL = 2000; // m² : en dessous, la parcelle est fusionnée avec une voisine
+function noHoles(paths, top) {
+  const holes = paths.filter(c => ClipperLib.Clipper.Area(c) < 0);
+  if (!holes.length) return paths;
+  const slits = holes.map(hc => { const h = fromC(hc), hb = bbox(h), x = (hb[0] + hb[2]) / 2; return toC([[x - .2, top], [x + .2, top], [x + .2, hb[3]], [x - .2, hb[3]]]); });
+  return clipRun(paths.filter(c => ClipperLib.Clipper.Area(c) > 0), [...holes.map(h => h.slice().reverse()), ...slits], ClipperLib.ClipType.ctDifference, false);
+}
+// direction dominante des bords d'un îlot (hors bords de la carte) : pic d'un histogramme
+// d'angles par pas de 5°, pondéré par la longueur ; roadV = position de ces bords en travers
+function blockFrame(P) {
+  const bins = new Array(36).fill(0);
+  const onEdge = (a, b) => (a[0] < .5 && b[0] < .5) || (a[0] > TW - .5 && b[0] > TW - .5) || (a[1] < .5 && b[1] < .5) || (a[1] > TH - .5 && b[1] > TH - .5);
+  const dirOf = (a, b) => { const d = Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI; return ((d % 180) + 180) % 180; };
+  P.forEach((a, k) => {
+    const b = P[(k + 1) % P.length], L = segLen(a, b);
+    if (L < .5 || onEdge(a, b)) return;
+    const i = Math.floor(dirOf(a, b) / 5) % 36;
+    bins[i] += L; bins[(i + 1) % 36] += L * .5; bins[(i + 35) % 36] += L * .5;
+  });
+  let best = 0; bins.forEach((w, i) => { if (w > bins[best]) best = i; });
+  const peak = best * 5 + 2.5, a0 = peak * Math.PI / 180, n0 = [-Math.sin(a0), Math.cos(a0)];
+  let sx = 0, sy = 0, vs = 0, vw = 0;
+  P.forEach((a, k) => {
+    const b = P[(k + 1) % P.length], L = segLen(a, b);
+    if (L < .5 || onEdge(a, b)) return;
+    const d = dirOf(a, b); let diff = Math.abs(d - peak); diff = Math.min(diff, 180 - diff);
+    if (diff > 7.5) return;
+    const g = 2 * d * Math.PI / 180; sx += Math.cos(g) * L; sy += Math.sin(g) * L;
+    vs += ((a[0] + b[0]) / 2 * n0[0] + (a[1] + b[1]) / 2 * n0[1]) * L; vw += L;
+  });
+  const ang = vw ? Math.atan2(sy, sx) / 2 : 0, u = [Math.cos(ang), Math.sin(ang)], v = [-u[1], u[0]];
+  // roadV exprimé sur v (proche de n0, au signe près)
+  const sgn = v[0] * n0[0] + v[1] * n0[1] < 0 ? -1 : 1;
+  return { u, v, roadV: vw ? sgn * vs / vw : null };
+}
+function computeParcels() {
+  // le cadastre ne dépend que de la graine du paysage, des routes, de l'eau et du bourg :
+  // inutile de le refaire quand on pose un bâtiment
+  const key = JSON.stringify([S.landSeed, S.roads.map(r => r.pts), S.rivers.map(r => r.pts.length + ':' + r.pts[0]), S.lakes.map(l => l.c), bourgPts()]);
+  if (key === cadastreKey && parcels.length) { ensureDomain(); return; }
+  cadastreKey = key;
+  const nz = landNoise(), homes = bourgPts();
   const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
   // grands massifs forestiers : bruit très large (~320 m), tiré de la même graine
   const big = valueNoise(S.landSeed + 99), bigForest = (x, y) => big(x / 320, y / 320) * .75 + big(x / 110 + 7, y / 110 + 3) * .25;
   parcels = []; parcelIndex = new Map(); parcelByKey = new Map(); hedges = []; forestTrees = []; tracks = [];
-  const add = (i, j, list) => { parcelIndex.set(i + ',' + j, list); for (const p of list) { parcels.push(p); parcelByKey.set(p.key, p); } };
-  /* Chemins d'exploitation le long des limites de mailles : une ligne est-ouest sur deux
-     (chaque rangée de mailles en borde une), plus des chemins nord-sud toutes les 4 mailles
-     pour relier le réseau. Pas de chemin dans l'eau ni dans le bourg. */
-  const edgeOf = (dir, i, j) => dir === 'h' ? [at(i, j), at(i + 1, j)] : [at(i, j), at(i, j + 1)];
-  const inWater = p => water.some(w => p[0] >= w.bb[0] && p[0] <= w.bb[2] && p[1] >= w.bb[1] && p[1] <= w.bb[3] && inPoly(p, w.P));
-  const trackOk = ([a, b]) => {
-    if (a[1] > TH + 1 || b[1] > TH + 1) return false;                       // hors carte
-    const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
-    if (inWater(a) || inWater(b) || inWater(m)) return false;
-    return !homes.some(h => ptSeg(h, a, b).d < 70);                          // le bourg a ses rues
+  // 1. îlots
+  const blocks = noHoles(clipRun([toC([[0, 0], [TW, 0], [TW, TH], [0, TH]])], cadastreBarriers().map(b => b.C), ClipperLib.ClipType.ctDifference, false), -10)
+    .filter(c => ClipperLib.Clipper.Area(c) > 0).map(fromC).filter(Q => parcelArea({ P:Q }) >= 150);
+  const inside = (Q, B) => clipRun([toC(Q)], [toC(B)], ClipperLib.ClipType.ctIntersection, false)
+    .filter(c => ClipperLib.Clipper.Area(c) > 0).map(fromC).filter(R => R.length >= 3 && parcelArea({ P:R }) >= 150);
+  const lineIn = (a, b, B) => {
+    const out = [];
+    for (const pc of clipRun([toC([a, b])], [toC(B)], ClipperLib.ClipType.ctIntersection, true).map(fromC))
+      for (let k = 0; k < pc.length - 1; k++) if (segLen(pc[k], pc[k + 1]) > 6) out.push([pc[k], pc[k + 1]]);
+    return out;
   };
-  const trackSet = new Set();
-  const addTrack = (dir, i, j) => {
-    const k = dir + i + ',' + j;
+  const cells = [], trackSet = new Set();
+  const sideKey = (cell, side) => { const { bi, row, col } = cell; return side === 'a' ? `h${bi},${row},${col}` : side === 'b' ? `h${bi},${row + 1},${col}` : side === 'l' ? `v${bi},${row},${col}` : `v${bi},${row},${col + 1}`; };
+  const addTrack = (cell, side) => {
+    // côtés du rectangle : 'a' / 'b' = lignes de rangée (côté route / côté opposé), 'l' / 'r' = colonnes
+    const k = sideKey(cell, side), q = cell.q;
     if (trackSet.has(k)) return true;
-    const e = edgeOf(dir, i, j);
-    if (!trackOk(e)) return false;
-    trackSet.add(k); tracks.push(e); return true;
+    const [a, b] = side === 'a' ? [q[0], q[1]] : side === 'b' ? [q[3], q[2]] : side === 'l' ? [q[0], q[3]] : [q[1], q[2]];
+    if (homes.some(h => ptSeg(h, a, b).d < 70)) return false;               // le bourg a ses rues
+    const segs = lineIn(a, b, cell.B);
+    if (!segs.length) return false;
+    tracks.push(...segs); trackSet.add(k); return true;
   };
-  for (let j = 1; j < ny; j++) if (j % 2 === 1 || j === ny - 1) for (let i = 0; i < nx; i++) addTrack('h', i, j);
-  for (let i = 2; i < nx; i += 4) for (let j = 0; j < ny; j++) addTrack('v', i, j);
-  const hasTrack = (dir, i, j) => trackSet.has(dir + i + ',' + j);
-  for (let j = 0; j < ny; j++) for (let i = 0; i < nx; i++) {
-    // tirages propres à chaque maille : une parcelle garde sa culture et ses haies même
-    // quand on construit ailleurs sur la carte
-    const rq = seeded(S.landSeed * 31 + i * 7919 + j * 104729);
+  // 2 et 3. trame propre à chaque îlot
+  blocks.forEach((B, bi) => {
+    const { u, v, roadV } = blockFrame(B), rnd = seeded(S.landSeed * 31 + bi * 7919);
+    const U = p => p[0] * u[0] + p[1] * u[1], V = p => p[0] * v[0] + p[1] * v[1];
+    let u0 = Infinity, u1 = -Infinity, v0 = Infinity, v1 = -Infinity;
+    for (const p of B) { u0 = Math.min(u0, U(p)); u1 = Math.max(u1, U(p)); v0 = Math.min(v0, V(p)); v1 = Math.max(v1, V(p)); }
+    // les rangées partent du côté de la route dominante
+    const dir = roadV !== null && roadV - v0 > v1 - roadV ? -1 : 1, rowsV = [dir < 0 ? v1 : v0];
+    while (dir < 0 ? rowsV[rowsV.length - 1] > v0 : rowsV[rowsV.length - 1] < v1) rowsV.push(rowsV[rowsV.length - 1] + dir * PARCEL * (.85 + rnd() * .3));
+    const colsU = [u0 - rnd() * PARCEL * .5];
+    while (colsU[colsU.length - 1] < u1) colsU.push(colsU[colsU.length - 1] + PARCEL * (.85 + rnd() * .3));
+    const Wp = (a, b) => [u[0] * a + v[0] * b, u[1] * a + v[1] * b], bbB = bbox(B);
+    for (let row = 0; row < rowsV.length - 1; row++) for (let col = 0; col < colsU.length - 1; col++) {
+      const va = rowsV[row], vb = rowsV[row + 1], ua = colsU[col], ub = colsU[col + 1];
+      // q[0]-q[1] : bord de rangée côté route ; q[3]-q[2] : bord opposé
+      const q = [Wp(ua, va), Wp(ub, va), Wp(ub, vb), Wp(ua, vb)];
+      if (bbHit(bbox(q), bbB)) cells.push({ bi, row, col, q, B, v });
+    }
+  });
+  // chemins : une ligne de rangée sur deux, une colonne sur quatre
+  for (const cell of cells) {
+    if (cell.row % 2 === 1) addTrack(cell, 'b');
+    if (cell.col % 4 === 2) addTrack(cell, 'l');
+  }
+  for (const cell of cells) {
+    const { q, B, bi, row, col, v } = cell;
+    const rq = seeded(S.landSeed * 31 + bi * 7919 + row * 104729 + col * 1543);
     const crop = () => { let r = rq(); for (const [c, w] of CROPS) { if ((r -= w) < 0) return c; } return 'meadow'; };
-    const q = [at(i, j), at(i + 1, j), at(i + 1, j + 1), at(i, j + 1)];
-    const c = [(q[0][0] + q[1][0] + q[2][0] + q[3][0]) / 4, (q[0][1] + q[1][1] + q[2][1] + q[3][1]) / 4];
+    const c = [(q[0][0] + q[2][0]) / 2, (q[0][1] + q[2][1]) / 2];
     const draws = [rq(), rq(), rq(), rq(), rq()];
-    const whole = kind => add(i, j, [{ key:`${i},${j},0`, i, j, P:q, bb:bbox(q), crop:kind }]);
-    if (homes.some(h => segLen(h, c) < 95)) { whole('village'); continue; }
-    if (water.some(w => c[0] >= w.bb[0] && c[0] <= w.bb[2] && c[1] >= w.bb[1] && c[1] <= w.bb[3] && inPoly(c, w.P))) { whole('water'); continue; }
-    if (bigForest(c[0], c[1]) > .6) {
-      // grand massif : parcelle d'un seul tenant, couverte d'arbres serrés, sans haie
-      whole('forest');
+    let raw;
+    if (homes.some(h => segLen(h, c) < 95)) raw = [{ P:q, crop:'village' }];
+    else if (bigForest(c[0], c[1]) > .6) {
+      raw = [{ P:q, crop:'forest' }];
+      // grand massif : couvert d'arbres serrés (limités à l'îlot)
       const bb = bbox(q);
       for (let y = bb[1]; y < bb[3]; y += 5.5) for (let x = bb[0]; x < bb[2]; x += 5.5) {
         const t = [x + rq() * 4, y + rq() * 4];
-        if (rq() < .85 && inPoly(t, q)) forestTrees.push({ x:round2(t[0]), y:round2(t[1]), r:2.2 + rq() * 2.2, kind:'tree', v:rq() });
+        if (rq() < .85 && inPoly(t, q) && inPoly(t, B)) forestTrees.push({ x:round2(t[0]), y:round2(t[1]), r:2.2 + rq() * 2.2, kind:'tree', v:rq() });
       }
-      continue;
+    } else if (nz(c[0], c[1]) > .56) raw = [{ P:q, crop:'forest' }];      // petit bois
+    else {
+      // champs et prés : lanières perpendiculaires à la route ; chacune touche les deux
+      // lignes de rangée, donc le chemin ou la route qui en longe une les dessert toutes
+      const n = draws[0] < .45 ? 1 : 2 + Math.floor(draws[1] * 3), cuts = [0];
+      for (let k = 1; k < n; k++) cuts.push(k / n + (draws[2 + (k % 3)] - .5) * .3 / n);
+      cuts.push(1);
+      raw = [];
+      for (let k = 0; k < n; k++) raw.push({ P:[lerp(q[0], q[1], cuts[k]), lerp(q[0], q[1], cuts[k + 1]), lerp(q[3], q[2], cuts[k + 1]), lerp(q[3], q[2], cuts[k])], crop:crop() });
     }
-    if (nz(c[0], c[1]) > .56) { whole('forest'); continue; }                 // petit bois
-    // champs et prés : lanières découpées le long des deux plus grands côtés opposés
-    // découpe de haut en bas : chaque lanière touche le bord nord ET le bord sud de la maille,
-    // donc le chemin qui longe l'un des deux dessert toutes les lanières
-    const [A0, A1, B0, B1] = [q[0], q[1], q[3], q[2]];
-    const n = draws[0] < .45 ? 1 : 2 + Math.floor(draws[1] * 3);
-    const cuts = [0];
-    for (let k = 1; k < n; k++) cuts.push(k / n + (draws[2 + (k % 3)] - .5) * .3 / n);
-    cuts.push(1);
-    const list = [];
-    for (let k = 0; k < n; k++) {
-      const P = [lerp(A0, A1, cuts[k]), lerp(A0, A1, cuts[k + 1]), lerp(B0, B1, cuts[k + 1]), lerp(B0, B1, cuts[k])];
-      list.push({ key:`${i},${j},${k}`, i, j, P, bb:bbox(P), crop:crop() });
+    cell.parcels = [];
+    for (const r of raw) for (const P of inside(r.P, B)) {
+      const cc = polyCentroid(P), n = cell.parcels.length;
+      const p = { key:`${bi}.${row}.${col},0,${n}`, i:Math.floor(cc[0] / PARCEL), j:Math.floor(cc[1] / PARCEL), P, bb:bbox(P), crop:r.crop, axis:v, cell };
+      parcels.push(p); parcelByKey.set(p.key, p); cell.parcels.push(p);
+      for (let gx = Math.floor(p.bb[0] / PARCEL); gx <= Math.floor(p.bb[2] / PARCEL); gx++)
+        for (let gy = Math.floor(p.bb[1] / PARCEL); gy <= Math.floor(p.bb[3] / PARCEL); gy++) {
+          const k = gx + ',' + gy; if (!parcelIndex.has(k)) parcelIndex.set(k, []); parcelIndex.get(k).push(p);
+        }
     }
-    add(i, j, list);
-    // haies sur une partie des bords de la maille : buissons serrés, quelques arbres
-    const edgeKeys = [['h', i, j], ['v', i + 1, j], ['h', i, j + 1], ['v', i, j]];
+    // haies sur une partie des bords du rectangle des champs (pas sur un chemin, dans l'îlot)
+    if (!cell.parcels.length || raw[0].crop === 'village' || raw[0].crop === 'forest') continue;
+    const sides = ['a', 'r', 'b', 'l'], ends = [[q[0], q[1]], [q[1], q[2]], [q[3], q[2]], [q[0], q[3]]];
     for (let e = 0; e < 4; e++) {
-      if (rq() > .55 || hasTrack(...edgeKeys[e])) continue; // pas de haie sur un chemin
-      const a = q[e], b = q[(e + 1) % 4], L = segLen(a, b);
+      if (rq() > .55 || trackSet.has(sideKey(cell, sides[e]))) continue;
+      const [a, b] = ends[e], L = segLen(a, b);
       for (let s = 3; s < L - 3; s += 5 + rq() * 3) {
         const p = lerp(a, b, s / L), tree = rq() < .18;
-        hedges.push({ x:round2(p[0]), y:round2(p[1]), r:tree ? 2 + rq() * 1.4 : .9 + rq() * .8, kind:tree ? 'tree' : 'bush', v:rq() });
+        if (inPoly(p, B)) hedges.push({ x:round2(p[0]), y:round2(p[1]), r:tree ? 2 + rq() * 1.4 : .9 + rq() * .8, kind:tree ? 'tree' : 'bush', v:rq() });
       }
     }
   }
-  /* Accès : une parcelle est desservie si un de ses côtés longe un chemin, ou si une route
-     la touche. Sinon on ouvre un chemin sur un de ses côtés (nord ou sud pour une lanière). */
-  const roadRects = S.roads.flatMap(r => r.pts.slice(1).map((b, k) => segRect(r.pts[k], b, r.w))).map(P => ({ P, bb:bbox(P) }));
-  const sides = p => p.key.split(',')[2] !== '0' || (parcelIndex.get(p.i + ',' + p.j) || []).length > 1
-    ? [['h', p.i, p.j], ['h', p.i, p.j + 1]]                                   // lanière
-    : [['h', p.i, p.j], ['v', p.i + 1, p.j], ['h', p.i, p.j + 1], ['v', p.i, p.j]];
-  for (const p of parcels) {
-    p.access = sides(p).some(s => hasTrack(...s)) || hitsAny(p.P, roadRects);
-    if (!p.access && p.crop !== 'water' && p.crop !== 'village') p.access = sides(p).some(s => addTrack(...s));
+  // pas de triangle ni de miette : un morceau à trois côtés (coin de rectangle coupé en biais
+  // par une route ou une rivière) ou de moins de SMALL_PARCEL m² est rattaché à une parcelle
+  // voisine du même îlot (de préférence du même rectangle, puis de même nature)
+  const shares = (A, Bp) => A.some((a, k) => { const b = A[(k + 1) % A.length], m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+    return segLen(a, b) > 2 && Bp.some((c, h) => ptSeg(m, c, Bp[(h + 1) % Bp.length]).d < .6); });
+  const tiny = p => p.P.length === 3 || (p.crop !== 'village' && parcelArea(p) < SMALL_PARCEL);
+  for (let pass = 0; pass < 4; pass++) for (const t of parcels.filter(p => tiny(p) && !p.gone)) {
+    const bi = t.key.split('.')[0];
+    const nb = parcels.filter(o => o !== t && !o.gone && o.key.split('.')[0] === bi && bbHit([t.bb[0] - 1, t.bb[1] - 1, t.bb[2] + 1, t.bb[3] + 1], o.bb) && shares(t.P, o.P))
+      .sort((x, y) => (y.cell === t.cell) - (x.cell === t.cell) || (y.crop === t.crop) - (x.crop === t.crop) || parcelArea(x) - parcelArea(y));
+    for (const o of nb) {
+      const un = clipRun([toC(o.P), toC(t.P)], [], ClipperLib.ClipType.ctUnion, false).filter(c => ClipperLib.Clipper.Area(c) > 0).map(fromC);
+      if (un.length !== 1) continue;
+      if (ClipperLib.Clipper.CleanPolygon(toC(un[0]), .05 * CS).length === 3 && nb.length > 1 && o !== nb[nb.length - 1]) continue;
+      o.P = ClipperLib.Clipper.CleanPolygon ? fromC(ClipperLib.Clipper.CleanPolygon(toC(un[0]), .05 * CS)) : un[0];
+      o.bb = bbox(o.P); t.gone = true; break;
+    }
   }
-  // les clés de parcelles dépendent de la taille de maille : si elle a changé depuis
-  // l'enregistrement du plan, le domaine repart des parcelles du bourg
-  if (S.parcelMesh !== PARCEL) { S.owned = []; S.parcelMesh = PARCEL; }
+  if (parcels.some(p => p.gone)) {
+    for (const p of parcels.filter(p => p.gone)) { parcelByKey.delete(p.key); p.cell.parcels = p.cell.parcels.filter(o => o !== p); }
+    parcels = parcels.filter(p => !p.gone);
+    parcelIndex = new Map();
+    for (const p of parcels) for (let gx = Math.floor(p.bb[0] / PARCEL); gx <= Math.floor(p.bb[2] / PARCEL); gx++)
+      for (let gy = Math.floor(p.bb[1] / PARCEL); gy <= Math.floor(p.bb[3] / PARCEL); gy++) {
+        const k = gx + ',' + gy; if (!parcelIndex.has(k)) parcelIndex.set(k, []); parcelIndex.get(k).push(p);
+      }
+  }
+  /* Accès : une parcelle est desservie si elle borde une route ou un chemin. Sinon on ouvre un
+     chemin sur un côté de son rectangle (d'abord les lignes de rangée). */
+  const roadSegs = S.roads.flatMap(r => { const R = smoothPts(r), m = r.w / 2 + 1.5; return R.slice(1).map((b, k) => [R[k], b, m, [Math.min(R[k][0], b[0]) - m, Math.min(R[k][1], b[1]) - m, Math.max(R[k][0], b[0]) + m, Math.max(R[k][1], b[1]) + m]]); });
+  const bordersRoad = p => roadSegs.some(([a, b, m, bb]) => bbHit(bb, p.bb) && p.P.some(v => ptSeg(v, a, b).d < m));
+  const bordersTrack = p => tracks.some(([a, b]) => p.P.some(v => ptSeg(v, a, b).d < 1.5) || [a, b].some(e => p.P.some((u, k) => ptSeg(e, u, p.P[(k + 1) % p.P.length]).d < 1.5)));
+  for (const p of parcels) {
+    p.access = bordersRoad(p) || bordersTrack(p);
+    if (p.access || p.crop === 'village') continue;
+    const sides = p.cell.parcels.length > 1 ? ['a', 'b'] : ['a', 'b', 'l', 'r'];
+    for (const s of sides) { if (addTrack(p.cell, s) && bordersTrack(p)) { p.access = true; break; } }
+  }
+  for (const p of parcels) delete p.cell;
+  ensureDomain();
+}
+function ensureDomain() {
+  // les clés de parcelles dépendent du découpage : s'il a changé depuis l'enregistrement
+  // du plan, le domaine repart des parcelles du bourg
+  if (S.parcelMesh !== CADASTRE_VERSION) { S.owned = []; S.parcelMesh = CADASTRE_VERSION; }
   // premier calcul d'un plan : la capitale reçoit les parcelles du bourg
   if (!S.owned.length || S.owned.some(k => k.split(',').length !== 3)) S.owned = parcels.filter(p => p.crop === 'village').map(p => p.key);
 }
@@ -809,7 +961,16 @@ function computeParcels() {
    La capitale possède des parcelles (S.owned, clés « i,j,k »). Une parcelle s'achète en Or
    si elle touche une parcelle déjà possédée. On ne construit que sur ses parcelles. */
 const isOwnedParcel = p => !!p && S.owned.includes(p.key);
-const ownedAt = pt => isOwnedParcel(parcelAt(pt[0], pt[1]));
+function ownedAt(pt) {
+  const p = parcelAt(pt[0], pt[1]);
+  if (p) return isOwnedParcel(p);
+  // entre deux parcelles (route, chemin, rive) : possédé si une parcelle voisine l'est
+  for (const d of [3, 6, 9]) for (let a = 0; a < 8; a++) {
+    const q = parcelAt(pt[0] + Math.cos(a * Math.PI / 4) * d, pt[1] + Math.sin(a * Math.PI / 4) * d);
+    if (q && isOwnedParcel(q)) return true;
+  }
+  return false;
+}
 // tous les points d'un tracé (échantillonnés tous les 4 m) sont-ils sur nos parcelles ?
 function pathOwned(a, b) {
   const n = Math.max(1, Math.ceil(segLen(a, b) / 4));
@@ -819,7 +980,7 @@ function pathOwned(a, b) {
 const NOT_OWNED = 'Parcelle non acquise : achetez-la d\'abord (outil Terres ou clic sur la parcelle)';
 // deux parcelles se touchent si un sommet de l'une est posé sur un bord de l'autre
 function touches(A, B) {
-  const onEdges = (v, P) => P.some((a, k) => ptSeg(v, a, P[(k + 1) % P.length]).d < .5);
+  const onEdges = (v, P) => P.some((a, k) => ptSeg(v, a, P[(k + 1) % P.length]).d < CELL + 1); // bord à bord, ou séparées par une route
   return A.P.some(v => onEdges(v, B.P)) || B.P.some(v => onEdges(v, A.P));
 }
 function canBuyParcel(p) {
@@ -843,7 +1004,7 @@ const parcelArea = p => { let a = 0; for (let k = 0; k < p.P.length; k++) { cons
 // prix : surface × tarif de la nature, plus cher en s'éloignant du village
 function parcelPrice(p) {
   const hub = bourgHub();
-  const c = [(p.P[0][0] + p.P[2][0]) / 2, (p.P[0][1] + p.P[2][1]) / 2];
+  const c = polyCentroid(p.P);
   const base = parcelArea(p) / 100 * PARCEL_KIND[p.crop].rate;
   return Math.max(10, Math.round(base * (1 + segLen(c, hub) / 800) / 5) * 5);
 }
@@ -924,7 +1085,18 @@ function computeFlora() {
   S.houses.forEach(h => add(corners(h)));
   tracks.forEach(([a, b]) => add(segRect(a, b, TRACK_W + 1))); // chemins dégagés
   deposits.forEach(d => d.P.forEach((p, k) => add([[d.x, d.y], p, d.P[(k + 1) % d.P.length]]))); // roche nue
-  const water = [...Z.water.river, ...Z.water.lake];
+  obstacles.push(...Z.water.river, ...Z.water.lake);
+  // index par seaux de 32 m : chaque arbre n'est testé que contre les obstacles voisins
+  const G = 32, grid = new Map();
+  for (const o of obstacles) for (let gx = Math.floor(o.bb[0] / G); gx <= Math.floor(o.bb[2] / G); gx++)
+    for (let gy = Math.floor(o.bb[1] / G); gy <= Math.floor(o.bb[3] / G); gy++) {
+      const k = gx + ',' + gy; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(o);
+    }
+  const blocked = (P, bb) => {
+    for (let gx = Math.floor(bb[0] / G); gx <= Math.floor(bb[2] / G); gx++) for (let gy = Math.floor(bb[1] / G); gy <= Math.floor(bb[3] / G); gy++)
+      for (const o of grid.get(gx + ',' + gy) || []) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return true;
+    return false;
+  };
   // pas d'arbre ni de buisson au milieu d'un champ : seules les haies bordent les parcelles
   const cands = floraCandidates().filter(f => { const p = parcelAt(f.x, f.y); return !p || p.crop === 'forest' || p.crop === 'village'; })
     .concat(hedges, forestTrees, (S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', v:g.v })));
@@ -935,9 +1107,7 @@ function computeFlora() {
     if (cut.has(treeKey(f))) return false;
     const P = corners({ x:f.x, y:f.y, a:0, w:f.r * 1.6, l:f.r * 1.6 }), bb = bbox(P);
     if (!P.every(inTerrain)) return false;
-    for (const o of obstacles) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return false;
-    for (const o of water) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return false;
-    return true;
+    return !blocked(P, bb);
   }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
   floraVersion++; // les habitants au travail repartiront des nouveaux arbres
   for (const p of parcels) { p.trees0 = 0; p.trees = 0; }
@@ -1212,10 +1382,46 @@ function roadIssue(a, b, w) {
   const P = segRect(a, b, w);
   // la rivière se franchit par un pont ; le lac, non
   if (!S.houses.every(h => !polysOverlap(P, shrunk(h)))) return 'La route traverse un bâtiment';
-  if (hitsAny(P, Z.water.lake)) return 'Une route ne passe pas sur le lac';
+  if (hitsAny(segRect(a, b, w + 2 * WATER_MARGIN), Z.water.lake)) return 'Une route passe à 2 m au moins du lac';
+  const rv = riverMarginIssue(a, b, w);
+  if (rv) return rv;
   if (!crossesWallAtGates(a, b)) return 'Une route ne franchit une muraille que par une porte';
   const g = maxGrade(a, b);
   if (g > ROAD_MAX_SLOPE) return `Pente trop forte : ${Math.round(g * 100)} % (${Math.round(ROAD_MAX_SLOPE * 100)} % au plus)`;
+  return null;
+}
+// marge de 2 m au bord de l'eau : une route ne longe pas une rivière de plus près ; elle ne
+// s'en approche que pour la franchir par un pont, assez franchement (30° au moins)
+function riverMarginIssue(a, b, w) {
+  const L = segLen(a, b), n = Math.max(1, Math.ceil(L)), lim = w / 2 + WATER_MARGIN;
+  const bb = [Math.min(a[0], b[0]) - 40, Math.min(a[1], b[1]) - 40, Math.max(a[0], b[0]) + 40, Math.max(a[1], b[1]) + 40];
+  for (const rv of S.rivers) {
+    const P = rv.pts, segs = [];
+    for (let i = 0; i < P.length - 1; i++) if (bbHit(bb, bbox([P[i], P[i + 1]]))) segs.push(i);
+    if (!segs.length) continue;
+    const hwAt = i => (rv.w0 + (rv.w1 - rv.w0) * i / (P.length - 1)) / 2;
+    const near = q => segs.some(i => ptSeg(q, P[i], P[i + 1]).d - hwAt(i) < lim);
+    // passages du tronçon dans la bande de la rivière
+    let run = null;
+    const runs = [];
+    for (let k = 0; k <= n; k++) {
+      const t = k / n, q = [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t];
+      if (near(q)) { if (!run) run = [t, t]; else run[1] = t; } else if (run) { runs.push(run); run = null; }
+    }
+    if (run) runs.push(run);
+    for (const [t0, t1] of runs) {
+      const p0 = [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0], p1 = [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1];
+      const i = segs.find(i => segCross(p0, p1, P[i], P[i + 1]));
+      // bout de route au bord de l'eau (sans la traverser) : c'est un raccord du tronçon voisin
+      if (i === undefined) {
+        if ((t0 === 0 || t1 === 1) && (t1 - t0) * L < lim + 20) continue;
+        return 'Gardez 2 m entre la route et la rivière (sauf pour la franchir)';
+      }
+      const d = [P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]], dl = Math.hypot(...d) || 1;
+      const sin = Math.abs(((b[0] - a[0]) * d[1] - (b[1] - a[1]) * d[0]) / (L * dl));
+      if (sin < .5) return 'Le pont doit franchir la rivière plus franchement (30° au moins)';
+    }
+  }
   return null;
 }
 // plus forte pente d'un tronçon, mesurée case par case (8 m), pont sur la rivière exclu
@@ -1309,6 +1515,16 @@ function sample() {
    au carrefour C, et un simple village de 10 maisons au plus, sans fortification.
    Les maisons sont posées comme dans l'éditeur (cases libres, façade sur la route), au
    plus près du carrefour, avec un jardin entre deux maisons. */
+/* Plan de test « carte seule » : le paysage et les routes de la région, sans village ni
+   bâtiment, pour travailler l'algorithme sur la carte. Le domaine de départ de la capitale
+   reste les parcelles autour du carrefour. */
+function sampleMap() {
+  sampleTown();
+  S.houses = []; S.walls = []; S.towers = []; S.gates = [];
+  S.bourg = [[920, 752]]; // repère du bourg : le carrefour (domaine de départ autour)
+  S.nextId = 200;
+  computeZones();
+}
 function sampleTown() {
   sample(); // paysage de la campagne (rivières, lacs, graine de végétation)
   // relief choisi parmi 600 graines : toutes les routes de ce plan restent sous la
@@ -1326,14 +1542,37 @@ function sampleTown() {
     pts.push([Math.max(0, Math.min(TW, e[0])), Math.max(0, Math.min(TH, e[1]))]);
     return pts;
   };
+  /* Routes plus naturelles : une route part du carrefour tout droit sur 3 cases, puis avance
+     par tronçons de 3 à 6 cases dont la direction dérive doucement (±10° à chaque tronçon,
+     jamais plus de 30° de son cap général, toujours par pas de 10°), jusqu'au bord de la carte. */
+  const wander = (start, base, seed) => {
+    const rw = seeded(seed), pts = [start];
+    let p = go(start, base, 3 * CELL), off = 0;
+    pts.push(p);
+    for (let k = 0; k < 60; k++) {
+      off += [-10, 0, 0, 10][Math.floor(rw() * 4)];
+      off = Math.max(-30, Math.min(30, off * .8 === 0 ? off : Math.round(off * .8 / 10) * 10)); // rappel vers le cap
+      const deg = base + off, len = (3 + Math.floor(rw() * 4)) * CELL, q = go(p, deg, len);
+      if (q[0] <= 0 || q[0] >= TW || q[1] <= 0 || q[1] >= TH) {
+        // dernier tronçon : prolongé tout droit jusqu'au bord
+        const d = [Math.cos(deg * Math.PI / 180), Math.sin(deg * Math.PI / 180)];
+        const tx = d[0] > 1e-9 ? (TW - p[0]) / d[0] : d[0] < -1e-9 ? -p[0] / d[0] : Infinity;
+        const ty = d[1] > 1e-9 ? (TH - p[1]) / d[1] : d[1] < -1e-9 ? -p[1] / d[1] : Infinity;
+        const e = go(p, deg, Math.min(tx, ty));
+        pts.push([Math.max(0, Math.min(TW, e[0])), Math.max(0, Math.min(TH, e[1]))]);
+        break;
+      }
+      pts.push(q); p = q;
+    }
+    return pts;
+  };
   const C = [920, 752]; // carrefour du village (la grande rivière passe à l'est)
-  const west = walk(C, [[180, 40], [190, 30], [180, 20]], 170);
-  const east = walk(C, [[0, 35], [-10, 30], [0, 20]], 10);
+  const west = wander(C, 180, S.landSeed + 1), east = wander(C, 0, S.landSeed + 2);
   S.roads = [
     { id:1, kind:'pave',    w:CELL, pts:[...west.slice().reverse(), ...east.slice(1)] },   // grande route
-    { id:2, kind:'gravier', w:CELL, pts:walk(C, [[270, 30], [260, 30]], 270) },            // route du nord
-    { id:3, kind:'terre',   w:CELL, pts:walk(C, [[90, 25], [100, 30], [80, 25]], 90) },    // route du sud
-    { id:4, kind:'terre',   w:CELL, pts:[west[2], go(west[2], 80, 40 * CELL)] },          // chemin du lac
+    { id:2, kind:'gravier', w:CELL, pts:wander(C, 270, S.landSeed + 3) },                  // route du nord
+    { id:3, kind:'terre',   w:CELL, pts:wander(C, 90, S.landSeed + 4) },                   // route du sud
+    { id:4, kind:'terre',   w:CELL, pts:[west[4], go(west[4], 80, 12 * CELL), go(go(west[4], 80, 12 * CELL), 90, 14 * CELL)] }, // chemin du lac
   ];
   S.houses = []; S.walls = []; S.towers = []; S.gates = [];
   S.nextId = 200;
@@ -1384,7 +1623,7 @@ try {
   const o = JSON.parse(localStorage.getItem(KEY) || 'null');
   if (o && Array.isArray(o.houses) && Array.isArray(o.roads)) { S = normalize(o); computeZones(); fixGates(); }
 } catch (e) {}
-if (!S) sampleTown(); // première ouverture : le plan de test standard (village au milieu)
+if (!S) sampleMap(); // première ouverture : la carte seule (sans village ni bâtiment)
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 let tool = 'select', preset = PRESETS[0], custom = null, swapped = false, roadKind = ROADS[1], yardKind = 'potager';
@@ -1794,19 +2033,63 @@ function alignPatterns() {
   for (const p of Object.values(PAT)) if (p && p.setTransform) p.setTransform(m);
 }
 const roadType = r => ROADS.find(k => k.id === r.kind) || ROADS[1];
+/* Tracé lissé d'une route : la ligne brisée est adoucie (découpe des coins de Chaikin,
+   4 passes) entre deux points fixes. Restent fixes les bouts de route et les sommets de
+   croisement ou de raccord, pour que les routes continuent de se rejoindre exactement.
+   Le même tracé sert au dessin, aux ponts et au découpage du cadastre. */
+function isJunction(r, v) {
+  return S.roads.some(o => o !== r && o.pts.slice(1).some((b, k) => ptSeg(v, o.pts[k], b).d < 1));
+}
+const smoothCache = new Map();
+function chaikin(run) {
+  let P = run;
+  for (let it = 0; it < 4; it++) {
+    if (P.length < 3) break;
+    const Q = [P[0]];
+    for (let k = 0; k < P.length - 1; k++) {
+      const a = P[k], b = P[k + 1];
+      if (k > 0) Q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25]);
+      if (k < P.length - 2) Q.push([a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]);
+    }
+    Q.push(P[P.length - 1]); P = Q;
+  }
+  return P;
+}
+function smoothPts(r) {
+  const key = r.id + ':' + JSON.stringify(r.pts) + ':' + S.roads.length;
+  const hit = smoothCache.get(r.id);
+  if (hit && hit.key === key) return hit.P;
+  const P = r.pts, out = [P[0]];
+  let run = [P[0]];
+  for (let k = 1; k < P.length; k++) {
+    run.push(P[k]);
+    if (k === P.length - 1 || isJunction(r, P[k])) { out.push(...chaikin(run).slice(1)); run = [P[k]]; }
+  }
+  smoothCache.set(r.id, { key, P:out });
+  return out;
+}
+function roadPath(r) {
+  const path = new Path2D();
+  smoothPts(r).forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? path.lineTo(X, Y) : path.moveTo(X, Y); });
+  return path;
+}
+function strokeRoad(r, lw, color) {
+  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'square'; ctx.lineJoin = 'round';
+  ctx.stroke(roadPath(r));
+}
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
   const rank = r => ROADS.indexOf(roadType(r));
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
   alignPatterns();
-  // emprise d'une case de large : bas-côté, puis chaussée au centre
-  for (const r of S.roads) strokeLine(r.pts, r.w * s, Col.verge);
-  for (const r of bySurf) strokeLine(r.pts, roadType(r).surf * s + 2.5, roadCols(r)[1]);
-  for (const r of bySurf) strokeLine(r.pts, roadType(r).surf * s, roadCols(r)[0]);
+  // emprise d'une case de large : bas-côté, puis chaussée au centre (virages arrondis)
+  for (const r of S.roads) strokeRoad(r, r.w * s, Col.verge);
+  for (const r of bySurf) strokeRoad(r, roadType(r).surf * s + 2.5, roadCols(r)[1]);
+  for (const r of bySurf) strokeRoad(r, roadType(r).surf * s, roadCols(r)[0]);
   for (const r of S.roads) {
     const isSel = sel && sel.type === 'road' && sel.id === r.id, isHov = hover && hover.type === 'road' && hover.id === r.id;
     if (!isSel && !isHov) continue;
-    ctx.setLineDash([6, 5]); strokeLine(r.pts, isSel ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
+    ctx.setLineDash([6, 5]); strokeLine(smoothPts(r), isSel ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
   }
 }
 const isOn = (type, id, st) => st && st.type === type && st.id === id;
@@ -1971,7 +2254,7 @@ function jobOf(h) {
 // bœufs d'un poteau d'attache ou d'un comptoir de bétail à moins de 200 m : charrois plus rapides
 const hasOxen = h => S.houses.some(o => (o.kind === 'poteau' || o.kind === 'comptoir_betail') && segLen([o.x, o.y], [h.x, h.y]) <= 200);
 const invTotal = h => Object.values(h.inv || {}).reduce((s, n) => s + n, 0);
-const parcelCentre = p => [(p.P[0][0] + p.P[1][0] + p.P[2][0] + p.P[3][0]) / 4, (p.P[0][1] + p.P[1][1] + p.P[2][1] + p.P[3][1]) / 4];
+const parcelCentre = p => polyCentroid(p.P);
 // lieux de travail : parcelles transformées à portée (+ le parc d'un comptoir de bétail pour les pâturages)
 function jobSites(h, job) {
   const pts = parcels.filter(p => S.fields[p.key] === job.on).map(p => ({ c:parcelCentre(p), area:parcelArea(p) }));
@@ -2253,23 +2536,28 @@ function drawParcels() {
   for (const [c, path] of Object.entries(byCrop)) { ctx.fillStyle = Col[CROP_COL[c]]; ctx.fill(path); }
   // champs : sillons dans le sens de la lanière ; pâturages : clôture et moutons
   for (const p of farmed) {
-    const [a, b, c, d] = p.P, kind = S.fields[p.key];
+    const kind = S.fields[p.key];
     if (kind === 'champ' && s > .8) {
-      const n = Math.max(2, Math.round(segLen(a, b) / 3));
+      // sillons dans le sens des lanières (nord → sud de la maille), limités à la parcelle
+      const L = Math.hypot(...p.axis) || 1, ax = [p.axis[0] / L, p.axis[1] / L], pr = [-ax[1], ax[0]];
+      const c0 = polyCentroid(p.P), R = Math.hypot(p.bb[2] - p.bb[0], p.bb[3] - p.bb[1]);
+      ctx.save(); ctx.clip(polyPath2D(p.P));
       ctx.strokeStyle = Col['earth-edge']; ctx.globalAlpha = .35; ctx.lineWidth = 1; ctx.beginPath();
-      for (let k = 1; k < n; k++) {
-        const u = k / n, p0 = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], p1 = [d[0] + (c[0] - d[0]) * u, d[1] + (c[1] - d[1]) * u];
-        ctx.moveTo(...toS(...p0)); ctx.lineTo(...toS(...p1));
+      for (let o = -R; o <= R; o += 3) {
+        const m = [c0[0] + pr[0] * o, c0[1] + pr[1] * o];
+        ctx.moveTo(...toS(m[0] - ax[0] * R, m[1] - ax[1] * R)); ctx.lineTo(...toS(m[0] + ax[0] * R, m[1] + ax[1] * R));
       }
-      ctx.stroke(); ctx.globalAlpha = 1;
+      ctx.stroke(); ctx.restore();
     } else if (kind === 'paturage') {
       ctx.setLineDash([4, 3]); ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1.2; ctx.stroke(polyPath2D(p.P)); ctx.setLineDash([]);
       if (s > .8) {
+        // moutons placés au hasard (tirage fixe) à l'intérieur de la parcelle
         const rnd = seeded(p.key.split(',').reduce((h, v) => h * 31 + Number(v) + 7, 17)), n = 3 + Math.round(parcelArea(p) / 2500);
-        for (let k = 0; k < n; k++) {
-          const u = .15 + rnd() * .7, v = .15 + rnd() * .7;
-          const top = [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u], bot = [d[0] + (c[0] - d[0]) * u, d[1] + (c[1] - d[1]) * u];
-          const [X, Y] = toS(top[0] + (bot[0] - top[0]) * v, top[1] + (bot[1] - top[1]) * v);
+        for (let k = 0, tries = 0; k < n && tries < n * 20; tries++) {
+          const q = [p.bb[0] + rnd() * (p.bb[2] - p.bb[0]), p.bb[1] + rnd() * (p.bb[3] - p.bb[1])];
+          if (!inPoly(q, p.P)) continue;
+          k++;
+          const [X, Y] = toS(...q);
           ctx.beginPath(); ctx.ellipse(X, Y, Math.max(1.5, .9 * s), Math.max(1.1, .65 * s), 0, 0, Math.PI * 2);
           ctx.fillStyle = Col.sheep; ctx.fill(); ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = .8; ctx.stroke();
         }
@@ -2344,9 +2632,9 @@ function drawWater() {
 // pont : parapets de part et d'autre de la chaussée, sur toute la traversée de la rivière
 function drawBridges() {
   const s = view.s;
-  for (const river of S.rivers) for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
+  for (const river of S.rivers) for (const r of S.roads) { const RP = smoothPts(r); for (let k = 0; k < RP.length - 1; k++) {
     const rv = river.pts;
-    const a = r.pts[k], b = r.pts[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]];
+    const a = RP[k], b = RP[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]];
     for (let i = 0; i < rv.length - 1; i++) {
       const p = segCross(a, b, rv[i], rv[i+1]);
       if (!p) continue;
@@ -2363,7 +2651,7 @@ function drawBridges() {
       }
       ctx.stroke();
     }
-  }
+  } }
 }
 // arbres (houppier rond, ombre portée, reflet) et buissons (trois touffes)
 function drawFlora() {
@@ -3241,6 +3529,11 @@ $('load-sample').addEventListener('click', () => {
   commit(); sample(); sel = null; draft = null; changed(true);
   fitContent();
   flash('Campagne et village chargés. Ctrl+Z pour retrouver votre plan');
+});
+$('load-map').addEventListener('click', () => {
+  commit(); sampleMap(); sel = null; draft = null; changed(true);
+  fitContent();
+  flash('Carte seule chargée (sans village ni bâtiment). Ctrl+Z pour retrouver votre plan');
 });
 $('load-town').addEventListener('click', () => {
   commit(); sampleTown(); sel = null; draft = null; changed(true);
