@@ -122,6 +122,15 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
     </header>
 
     <section>
+      <h2>Atelier des bâtiments</h2>
+      <div class="row">
+        <label for="atelier-kind">Bâtiment<select id="atelier-kind"></select></label>
+        <button id="atelier-toggle">Voir la carte</button>
+      </div>
+      <p class="muted" style="margin-top:8px">L'atelier montre un seul bâtiment sur un carré de terrain, sans la carte, pour le travailler en détail. Molette : zoom ; glisser : déplacer ; ⤢ : recadrer.</p>
+    </section>
+
+    <section>
       <h2>Outil</h2>
       <div class="seg" role="group" aria-label="Outil actif">
         <button id="tool-select" data-tool="select">Sélection<kbd>1</kbd></button>
@@ -312,7 +321,7 @@ const PRESETS = [
     use:"Maison de 2 × 2 cases avec jardin latéral et arrière-cour (jardin, verger ou élevage) : 6 habitants au plus" },
   /* ressources : posés sur les cases à bâtir comme les autres, mais il leur faut ce
      qu'ils exploitent à portée (forêt) ; radius = zone de travail */
-  { id:'camp_bucherons', zone:true, cat:'res', name:'Camp de bûcherons', f:2, d:2, turn:true, radius:70, need:'forest',
+  { id:'camp_bucherons', zone:true, cat:'res', name:'Camp de bûcherons', f:2, d:2, turn:true, ownShadow:true, radius:70, need:'forest',
     use:"Abat les arbres pour produire du bois d'œuvre" },
   { id:'loge_bucheron', zone:true,  cat:'res', name:'Loge de bûcheron',  f:1, d:2, turn:true, radius:60, need:'forest',
     use:'Produit du bois de chauffage' },
@@ -328,6 +337,10 @@ const PRESETS = [
     use:'Extrait la pierre dans sa zone de travail' },
   { id:'fosse_miniere', zone:true, cat:'res', name:'Fosse minière',     f:2, d:2, turn:true, radius:40,
     use:"Extrait le minerai de fer et l'argile ; améliorable en mine profonde" },
+  // (ownShadow : le dessin fait lui-même ses ombres — pas d'ombre rectangulaire sous la cour)
+  { id:'scierie', cat:'res', name:'Scierie', f:3, d:4, turn:true, ownShadow:true,
+    job:{ type:'fetch', from:['camp_bucherons', 'loge_bucheron'], mat:'bois', reach:500, work:4, product:'planches' },
+    use:'Scie en planches les grumes des bûcherons (camp ou loge à moins de 500 m)' },
 ];
 /* Zone de travail : un cercle que le joueur pose après avoir construit le bâtiment
    (sélection → « Définir la zone de travail »). Rayon réglable jusqu'au maximum du
@@ -346,7 +359,7 @@ function needIssue(b, h) {
   return null;
 }
 const FOOD_LIST = ['légumes', 'œufs', 'pommes', 'pain'];
-const NONFOOD_LIST = ['bois', 'laine', 'peaux', 'pièces en bois', 'arcs et flèches', 'vêtements', 'chaussures', 'bière', 'outils et armes', 'armures'];
+const NONFOOD_LIST = ['bois', 'planches', 'laine', 'peaux', 'pièces en bois', 'arcs et flèches', 'vêtements', 'chaussures', 'bière', 'outils et armes', 'armures'];
 /* Extensions d'arrière-cour : une par cour (maison avec arrière-cour, maison avec cour et
    jardin). Production passive, ou atelier qui va chercher sa matière chez un producteur. */
 const EXT = {
@@ -2121,10 +2134,48 @@ function fitContent() {
   fit([Math.max(0, bb[0] - m), Math.max(0, bb[1] - m), Math.min(TW, bb[2] + m), Math.min(TH, bb[3] + m)]);
 }
 // zoom arrière limité : au plus loin, toute la carte tient dans la fenêtre (avec sa marge)
-const minScale = () => Math.max(.05, Math.min((W - 90) / TW, (H - 70) / TH));
+const minScale = () => atelier.on ? Math.min((W - 60), (H - 60)) / atelierSide() * .5 : Math.max(.05, Math.min((W - 90) / TW, (H - 70) / TH));
 // la carte ne peut pas sortir de la fenêtre : si elle est plus petite que la fenêtre, elle
 // reste centrée ; sinon ses bords ne s'écartent pas des bords de la fenêtre (marge de 40 px)
+/* ---------- atelier des bâtiments ----------
+   Vue à part (demande du 30/09) : un simple carré de terrain avec UN bâtiment posé au milieu,
+   sans la carte, pour travailler chaque bâtiment en détail. Mode gardé dans ce navigateur. */
+const ATELIER_KEY = 'planVillageZonage.atelier';
+const ATELIER_CUR = 'camp_bucherons';          // bâtiment en cours de travail : l'atelier s'ouvre dessus une fois
+let atelier = { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR };
+try { Object.assign(atelier, JSON.parse(localStorage.getItem(ATELIER_KEY) || '{}')); } catch (e) {}
+if (atelier.cur !== ATELIER_CUR) Object.assign(atelier, { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR });
+const saveAtelier = () => { try { localStorage.setItem(ATELIER_KEY, JSON.stringify(atelier)); } catch (e) {} };
+function atelierHouse() {
+  const b = PRESETS.find(p => p.id === atelier.kind) || PRESETS.find(p => p.id === 'scierie');
+  return { id:-1, x:0, y:0, a:0, w:b.f * CELL, l:b.d * CELL, f:b.f, d:b.d, kind:b.id, type:b.name, front:1,
+    ...(b.yard ? { yard:yardKind } : {}) };
+}
+const atelierSide = () => { const h = atelierHouse(); return Math.max(h.w, h.l) + 16; }; // carré : le bâtiment + 8 m autour
+function fitAtelier() {
+  const side = atelierSide();
+  view.s = Math.min((W - 60) / side, (H - 60) / side); view.ox = W / 2; view.oy = H / 2;
+  requestDraw();
+}
+function drawAtelier() {
+  const s = view.s, half = atelierSide() / 2, look = biomeLook();
+  const [X0, Y0] = toS(-half, -half), Z = half * 2 * s;
+  ctx.fillStyle = 'rgba(40,34,24,.25)'; ctx.fillRect(X0 + 6, Y0 + 8, Z, Z);                 // ombre du carré
+  ctx.fillStyle = look.ground; ctx.fillRect(X0, Y0, Z, Z);                                  // terrain
+  alignPatterns();
+  if (s > 3 && PAT.herbe) { ctx.fillStyle = PAT.herbe; ctx.fillRect(X0, Y0, Z, Z); }       // brins d'herbe
+  ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1.5; ctx.strokeRect(X0, Y0, Z, Z);
+  const h = atelierHouse();
+  drawHouse(h, 'normal');
+  ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  haloText(`${h.type} · ${h.f} × ${h.d} cases (${h.w} × ${h.l} m) · rue en haut`, W / 2, Y0 - 8, Col.ink, Col.sheet);
+}
 function clampView() {
+  if (atelier.on) { // atelier : le carré ne sort pas de la fenêtre
+    const half = atelierSide() / 2 * view.s;
+    view.ox = Math.min(W - 40 + half, Math.max(40 - half, view.ox)); view.oy = Math.min(H - 40 + half, Math.max(40 - half, view.oy));
+    return;
+  }
   const M = 40, mw = TW * view.s, mh = TH * view.s;
   view.ox = mw + 2 * M <= W ? (W - mw) / 2 : Math.min(M, Math.max(W - M - mw, view.ox));
   view.oy = mh + 2 * M <= H ? (H - mh) / 2 : Math.min(M, Math.max(H - M - mh, view.oy));
@@ -2139,7 +2190,7 @@ function resize() {
   const r = wrap.getBoundingClientRect();
   dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
-  if (!fitted && W > 0) { fitted = true; fitContent(); }
+  if (!fitted && W > 0) { fitted = true; if (atelier.on) fitAtelier(); else fitContent(); }
   else if (W > 0) { view.s = Math.max(view.s, minScale()); clampView(); } // fenêtre redimensionnée
   requestDraw();
 }
@@ -2184,7 +2235,7 @@ function drawZones(highlight) {
 }
 function drawHouse(h, mode) {
   const s = view.s, C = corners(h);
-  if (mode === 'normal' || mode === 'selected' || mode === 'hover') {
+  if ((mode === 'normal' || mode === 'selected' || mode === 'hover') && !(buildingOf(h) || {}).ownShadow) {
     ctx.fillStyle = Col.shadow; ctx.beginPath();
     C.forEach((p, i) => { const X = (p[0] + .8) * s + view.ox, Y = (p[1] + .8) * s + view.oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
     ctx.closePath(); ctx.fill();
@@ -2209,7 +2260,7 @@ function drawHouse(h, mode) {
     ctx.globalAlpha = .08; ctx.fillStyle = Col.water; ctx.fill(); ctx.globalAlpha = 1;
   }
   // bâtiment posé dont la zone de travail reste à définir : pastille « ! »
-  if (bk && bk.zone && !h.zone && (mode === 'normal' || mode === 'selected' || mode === 'hover') && s > .6) {
+  if (bk && bk.zone && !h.zone && h.id !== -1 && (mode === 'normal' || mode === 'selected' || mode === 'hover') && s > .6) {
     const [X, Y] = toS(h.x, h.y), r = Math.max(6, 2.5 * s);
     ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fillStyle = Col.bad; ctx.fill();
     ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(r * 1.4)}px "Barlow Condensed", sans-serif`;
@@ -2282,7 +2333,382 @@ const crossLT = (h, u, t, size) => {
   ctx.moveTo(...LP(h, u - size * .6, t - size * .3)); ctx.lineTo(...LP(h, u + size * .6, t - size * .3));
   ctx.stroke();
 };
+/* ---------- éléments détaillés (scierie et bâtiments suivants) ----------
+   Style de la carte de référence : aplats peints, contour sombre, ombre portée au sud-est,
+   lumière venant du nord-ouest ; les petits détails n'apparaissent qu'en zoomant. */
+const WOOD = {
+  yard:'#c9b68b', speck:'#b5a076', dust:'#e4d5a8', dustHi:'#efe4c2',
+  bark:'#6f5134', barkHi:'#8e6b46', barkLo:'#4c3721', grain:'#d9b680', ring:'#b18a58',
+  plank:'#d8c08c', plankLine:'#b59b69', sticker:'#6b5236',
+  roofHi:'#a08a69', roof:'#86705a', roofLo:'#6f5c46', roofLine:'rgba(58,44,30,.45)',
+  edge:'#3b2e22', fence:'#6b5236', rail:'#4b4a44', cart:'#9b7a52', shadow:'rgba(40,34,24,.33)',
+  wattleHi:'#977650', beam:'#b8935f', spoil:'#ad946a', pitLo:'#33281c', pitHi:'#58452f', stone:'#8d877b', stoneLo:'#6c675d',
+};
+// chaume : paille neuve (dorée) ou vieille paille grisée
+const STRAW = { hi:'#cdb07a', lo:'#a2854f', ridge:'#8a6a3d', line:'rgba(88,64,34,.38)' };
+const OLD_STRAW = { hi:'#b9a57f', lo:'#8e7b58', ridge:'#72603f', line:'rgba(70,56,36,.4)' };
+// rectangle aux coins arrondis et au bord légèrement irrégulier (coordonnées locales u, t)
+function softRect(u0, t0, u1, t1, r, jit, rnd) {
+  const C = [[u1 - r, t0 + r, -90], [u1 - r, t1 - r, 0], [u0 + r, t1 - r, 90], [u0 + r, t0 + r, 180]], P = [];
+  for (const [cu, ct, a0] of C) for (let k = 0; k <= 4; k++) { const a = (a0 + k * 22.5) * Math.PI / 180; P.push([cu + Math.cos(a) * r, ct + Math.sin(a) * r]); }
+  const out = [];
+  P.forEach((p, i) => { const q = P[(i + 1) % P.length], n = Math.max(1, Math.ceil(Math.hypot(q[0] - p[0], q[1] - p[1]) / .7));
+    for (let k = 0; k < n; k++) out.push([p[0] + (q[0] - p[0]) * k / n + (rnd() - .5) * jit, p[1] + (q[1] - p[1]) * k / n + (rnd() - .5) * jit]); });
+  return out;
+}
+// toit de chaume à deux pans : bord épais et arrondi, rangs de paille ondulés, brins, mousse
+// sur le pan à l'ombre, faîtage de paille liée ; ombre portée au sud-est
+function thatchLT(h, u0, t0, u1, t1, along, P) {
+  const ridgeT = along === 't', s = view.s, rnd = seeded(Math.round(u0 * 17 + t0 * 29 + h.x * 3 + h.y));
+  const out = lpts(h, softRect(u0, t0, u1, t1, Math.min(1.1, (u1 - u0) / 5), .14, rnd));
+  pathS(shiftS(out, 1.5, 1.9)); ctx.fillStyle = WOOD.shadow; ctx.fill();                        // ombre portée
+  const cu = (u0 + u1) / 2, ct = (t0 + t1) / 2, cS = LP(h, cu, ct);
+  const pans = ridgeT ? [[[u0 - 1, t0 - 1], [cu, t0 - 1], [cu, t1 + 1], [u0 - 1, t1 + 1]], [[cu, t0 - 1], [u1 + 1, t0 - 1], [u1 + 1, t1 + 1], [cu, t1 + 1]]]
+                      : [[[u0 - 1, t0 - 1], [u1 + 1, t0 - 1], [u1 + 1, ct], [u0 - 1, ct]], [[u0 - 1, ct], [u1 + 1, ct], [u1 + 1, t1 + 1], [u0 - 1, t1 + 1]]];
+  const lit = pan => { const m = LP(h, (pan[0][0] + pan[2][0]) / 2, (pan[0][1] + pan[2][1]) / 2); return (cS[0] - m[0]) + (cS[1] - m[1]) > 0; };
+  ctx.save(); pathS(out); ctx.clip();
+  pans.forEach(pan => { pathS(lpts(h, pan)); ctx.fillStyle = lit(pan) ? P.hi : P.lo; ctx.fill(); });
+  // distance au faîtage → les rangs de paille lui sont parallèles, ondulés
+  const half = ridgeT ? (u1 - u0) / 2 : (t1 - t0) / 2, len0 = ridgeT ? t0 : u0, len1 = ridgeT ? t1 : u1;
+  const at = (d, x) => ridgeT ? [cu + d, x] : [x, ct + d];                                      // d : écart au faîtage, x : le long
+  if (s > 1.2) {
+    ctx.strokeStyle = P.line; ctx.lineWidth = 1; ctx.beginPath();
+    for (const e of [-1, 1]) for (let d = 1.1; d < half; d += 1.1) {
+      for (let x = len0 - .5, k = 0; x <= len1 + .5; x += .5, k++) { const p = LP(h, ...at(e * (d + Math.sin(x * 2.1 + d * 3) * .08), x)); k ? ctx.lineTo(...p) : ctx.moveTo(...p); }
+    }
+    ctx.stroke();
+  }
+  if (s > 2.4) { // brins de paille, dans le sens de la pente
+    for (const [col, off] of [['rgba(255,243,205,.5)', 0], ['rgba(60,42,20,.35)', .17]]) {
+      ctx.strokeStyle = col; ctx.lineWidth = 1; ctx.beginPath();
+      for (const e of [-1, 1]) for (let d = .55 + off; d < half; d += .5) for (let x = len0 + rnd() * .3; x < len1; x += .34 + rnd() * .12) {
+        const a = at(e * d, x), b = at(e * (d + .32), x + (rnd() - .5) * .08);
+        ctx.moveTo(...LP(h, ...a)); ctx.lineTo(...LP(h, ...b));
+      }
+      ctx.stroke();
+    }
+  }
+  if (s > 1.5) { // mousse et paille tassée, surtout sur le pan à l'ombre
+    for (let k = 0; k < Math.round((len1 - len0) / 4); k++) {
+      const e = pans.findIndex(p => !lit(p)) ? 1 : -1, d = .8 + rnd() * (half - 1.6), x = len0 + 1 + rnd() * (len1 - len0 - 2), r = .5 + rnd() * .8, blob = [];
+      for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, k2 = .7 + rnd() * .5; blob.push(at(e * d + Math.cos(a) * r * .6 * k2, x + Math.sin(a) * r * 1.6 * k2)); }
+      pathS(lpts(h, blob)); ctx.fillStyle = rnd() < .6 ? 'rgba(92,110,58,.2)' : 'rgba(55,40,22,.13)'; ctx.fill();
+    }
+  }
+  // bord du chaume : bande plus sombre qui marque l'épaisseur de la couverture
+  pathS(out); ctx.strokeStyle = 'rgba(50,36,20,.35)'; ctx.lineWidth = Math.max(1, .5 * s); ctx.stroke();
+  ctx.restore();
+  // faîtage de paille liée, avec ses liens en losanges
+  const rw = .5, rp = lpts(h, softRect(...(ridgeT ? [cu - rw, t0 + .25, cu + rw, t1 - .25] : [u0 + .25, ct - rw, u1 - .25, ct + rw]), rw * .9, .05, rnd));
+  pathS(shiftS(rp, .15, .2)); ctx.fillStyle = 'rgba(40,30,18,.3)'; ctx.fill();
+  pathS(rp); ctx.fillStyle = P.ridge; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.08); ctx.stroke();
+  if (s > 2) {
+    ctx.strokeStyle = 'rgba(40,28,14,.5)'; ctx.lineWidth = 1; ctx.beginPath();
+    for (let x = len0 + .7, k = 0; x < len1 - .9; x += .7, k++) { ctx.moveTo(...LP(h, ...at(-rw * .8, x))); ctx.lineTo(...LP(h, ...at(rw * .8, x + .7))); ctx.moveTo(...LP(h, ...at(rw * .8, x))); ctx.lineTo(...LP(h, ...at(-rw * .8, x + .7))); }
+    ctx.stroke();
+  }
+  pathS(out); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.18); ctx.stroke();
+}
+// cheminée de pierres sèches (carrée, vue de dessus), conduit noir de suie
+function chimneyLT(h, cu, ct, a) {
+  const s = view.s, P = lpts(h, [[cu - a, ct - a], [cu + a, ct - a], [cu + a, ct + a], [cu - a, ct + a]]);
+  pathS(shiftS(P, .5, .6)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = WOOD.stone; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.08); ctx.stroke();
+  if (s > 3) { ctx.strokeStyle = WOOD.stoneLo; ctx.lineWidth = 1; ctx.beginPath(); for (const [p, q] of [[[cu - a, ct], [cu - a * .45, ct]], [[cu + a * .45, ct + .1], [cu + a, ct + .1]], [[cu - .1, ct - a], [cu - .1, ct - a * .45]], [[cu + .1, ct + a * .45], [cu + .1, ct + a]]]) { ctx.moveTo(...LP(h, ...p)); ctx.lineTo(...LP(h, ...q)); } ctx.stroke(); }
+  const b = a * .45; pathS(lpts(h, [[cu - b, ct - b], [cu + b, ct - b], [cu + b, ct + b], [cu - b, ct + b]])); ctx.fillStyle = '#1f1a15'; ctx.fill();
+}
+// clôture tressée (plessis) : branchages entrelacés entre des pieux, ouverte sur [gap0, gap1]
+function wattleLT(h, u0, t0, u1, t1, gap0, gap1) {
+  const s = view.s, rnd = seeded(Math.round(h.x * 3 + h.y * 5) + 7);
+  const runs = [[[u0, t0], [gap0, t0]], [[gap1, t0], [u1, t0]], [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]]];
+  const lines = runs.map(([a, b]) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(L / .6)), P = [];
+    for (let i = 0; i <= n; i++) { const j = i && i < n ? (rnd() - .5) * .14 : 0; P.push([a[0] + (b[0] - a[0]) * i / n + j, a[1] + (b[1] - a[1]) * i / n + j]); } return P; });
+  ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+  ctx.strokeStyle = WOOD.shadow; ctx.lineWidth = Math.max(1, .3 * s); ctx.beginPath();
+  for (const P of lines) shiftS(lpts(h, P), .2, .25).forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.stroke();
+  ctx.strokeStyle = WOOD.fence; ctx.lineWidth = Math.max(1, .3 * s); ctx.beginPath();
+  for (const P of lines) lpts(h, P).forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.stroke();
+  if (s > 2) { // brins entrelacés : reflets courts qui passent d'un côté puis de l'autre
+    ctx.strokeStyle = WOOD.wattleHi; ctx.lineWidth = 1; ctx.beginPath();
+    for (const [a, b] of runs) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), du = (b[0] - a[0]) / L, dt = (b[1] - a[1]) / L;
+      for (let d = .15, k = 0; d < L - .3; d += .45, k++) { const o = (k % 2 ? .07 : -.07); ctx.moveTo(...LP(h, a[0] + du * d - dt * o, a[1] + dt * d + du * o)); ctx.lineTo(...LP(h, a[0] + du * (d + .3) + dt * o, a[1] + dt * (d + .3) - du * o)); } }
+    ctx.stroke();
+  }
+  ctx.lineCap = 'butt';
+  if (s > 1.5) { // pieux
+    ctx.fillStyle = WOOD.edge;
+    for (const [a, b] of runs) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d <= L + .01; d += 1.5) { const u = a[0] + (b[0] - a[0]) * d / L, t = a[1] + (b[1] - a[1]) * d / L, e = .11; pathS(lpts(h, [[u - e, t - e], [u + e, t - e], [u + e, t + e], [u - e, t + e]])); ctx.fill(); } }
+  }
+  for (const u of [gap0, gap1]) { const e = .22; pathS(lpts(h, [[u - e, t0 - e], [u + e, t0 - e], [u + e, t0 + e], [u - e, t0 + e]])); ctx.fillStyle = WOOD.edge; ctx.fill(); } // poteaux du portail
+}
+// fosse de sciage de long : trou bordé de déblais, deux traverses, grume à moitié sciée,
+// scie de long à cadre plantée dans le trait, échelle, sciure au fond
+function sawPitLT(h, u0, t0, u1, t1) {
+  const s = view.s, rnd = seeded(Math.round(h.x + h.y * 7) + 3), cu = (u0 + u1) / 2;
+  pathS(lpts(h, softRect(u0 - .8, t0 - .8, u1 + .8, t1 + .8, .7, .25, rnd))); ctx.fillStyle = WOOD.spoil; ctx.fill(); // déblais
+  const pit = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  ctx.save(); pathS(pit); ctx.clip();
+  ctx.fillStyle = WOOD.pitLo; ctx.fill();
+  pathS(shiftS(pit, .55, .7)); ctx.fillStyle = WOOD.pitHi; ctx.fill();                          // fond éclairé, bords nord-ouest dans l'ombre
+  if (s > 2) { ctx.fillStyle = 'rgba(228,213,168,.55)'; for (let k = 0; k < 40; k++) { const [X, Y] = LP(h, u0 + .3 + rnd() * (u1 - u0 - .6), t0 + .3 + rnd() * (t1 - t0 - .6)); ctx.fillRect(X, Y, Math.max(1, .1 * s), Math.max(1, .1 * s)); } }
+  if (s > 1.5) { ctx.strokeStyle = '#7a5d3b'; ctx.lineWidth = lw(.08); ctx.beginPath();          // échelle
+    for (const u of [u1 - .9, u1 - .35]) { ctx.moveTo(...LP(h, u, t1 - .1)); ctx.lineTo(...LP(h, u, t1 - 1.9)); }
+    for (let t = t1 - .4; t > t1 - 1.9; t -= .38) { ctx.moveTo(...LP(h, u1 - .9, t)); ctx.lineTo(...LP(h, u1 - .35, t)); } ctx.stroke(); }
+  ctx.restore();
+  pathS(pit); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.1); ctx.stroke();
+  for (const t of [t0 + 1.3, t1 - 2.6]) beamLT(h, u0 - .7, t, u1 + .7, t + .45);                 // traverses
+  const r = .55, tc = t0 + (t1 - t0) * .45;
+  logLT(h, cu, t1 + .7, cu, t0 - .9, r);                                                          // grume
+  // partie déjà sciée : trait de scie ouvert, plus clair ; puis ligne tracée au cordeau
+  pathS(lpts(h, [[cu - .07, t0 - .9], [cu + .07, t0 - .9], [cu + .07, tc], [cu - .07, tc]])); ctx.fillStyle = '#2b2118'; ctx.fill();
+  if (s > 2) { ctx.strokeStyle = 'rgba(30,24,18,.7)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]); ctx.beginPath(); ctx.moveTo(...LP(h, cu, tc)); ctx.lineTo(...LP(h, cu, t1 + .6)); ctx.stroke(); ctx.setLineDash([]); }
+  // scie de long à cadre : montants dans l'axe, poignée (renard) en travers au-dessus
+  ctx.strokeStyle = '#4a3a2a'; ctx.lineWidth = lw(.14); ctx.beginPath();
+  ctx.moveTo(...LP(h, cu, tc - .7)); ctx.lineTo(...LP(h, cu, tc + .7));
+  ctx.moveTo(...LP(h, cu - .75, tc - .7)); ctx.lineTo(...LP(h, cu + .75, tc - .7)); ctx.stroke();
+  if (s > 2.5) { ctx.strokeStyle = '#9aa0a3'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, cu + .05, tc - .6)); ctx.lineTo(...LP(h, cu + .05, tc + .6)); ctx.stroke(); } // lame
+}
+// pièce de bois équarrie (vue de dessus), traces d'herminette
+function beamLT(h, u0, t0, u1, t1) {
+  const s = view.s, P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  pathS(shiftS(P, .25, .3)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = WOOD.beam; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.07); ctx.stroke();
+  if (s > 2.5) { const along = (u1 - u0) >= (t1 - t0); ctx.strokeStyle = 'rgba(110,78,42,.45)'; ctx.lineWidth = 1; ctx.beginPath();
+    if (along) for (let u = u0 + .3; u < u1 - .2; u += .45) { ctx.moveTo(...LP(h, u, t0 + .05)); ctx.lineTo(...LP(h, u + .18, t1 - .05)); }
+    else for (let t = t0 + .3; t < t1 - .2; t += .45) { ctx.moveTo(...LP(h, u0 + .05, t)); ctx.lineTo(...LP(h, u1 - .05, t + .18)); }
+    ctx.stroke(); }
+}
+// stère de bois fendu, rangé le long de t : bûches couchées en travers (écorce ou face fendue),
+// pieux de maintien aux deux bouts
+function cordwoodLT(h, u0, t0, u1, t1) {
+  const s = view.s, rnd = seeded(Math.round(u0 * 13 + t0 * 7 + h.x)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  pathS(shiftS(P, .45, .6)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = WOOD.barkLo; ctx.fill();
+  const cols = [WOOD.bark, WOOD.barkHi, WOOD.grain, WOOD.bark, '#c9a472'];
+  for (let t = t0 + .05; t < t1 - .1;) {
+    const w = .16 + rnd() * .12, j = (rnd() - .5) * .25;
+    pathS(lpts(h, [[u0 + .05 + j * .4, t], [u1 - .05 + j, t], [u1 - .05 + j, t + w], [u0 + .05 + j * .4, t + w]]));
+    ctx.fillStyle = cols[Math.floor(rnd() * cols.length)]; ctx.fill();
+    if (s > 3) { ctx.strokeStyle = 'rgba(40,28,16,.45)'; ctx.lineWidth = 1; ctx.stroke(); }
+    t += w + .03;
+  }
+  pathS(P); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.08); ctx.stroke();
+  ctx.fillStyle = WOOD.edge; for (const t of [t0 - .15, t1 + .15]) for (const u of [u0 + .1, u1 - .1]) { const e = .12; pathS(lpts(h, [[u - e, t - e], [u + e, t - e], [u + e, t + e], [u - e, t + e]])); ctx.fill(); }
+}
+// scie à cadre (arc de bois tendu par une corde) posée dans le trait de la bûche
+function bucksawLT(h, cu, ct) {
+  if (view.s < 2) return;
+  ctx.strokeStyle = '#5a4430'; ctx.lineWidth = lw(.08); ctx.beginPath();
+  ctx.moveTo(...LP(h, cu - .05, ct - .7)); ctx.lineTo(...LP(h, cu - .05, ct + .7));             // traverse du cadre
+  ctx.moveTo(...LP(h, cu - .35, ct - .7)); ctx.lineTo(...LP(h, cu + .25, ct - .7));             // montants vus de dessus
+  ctx.moveTo(...LP(h, cu - .35, ct + .7)); ctx.lineTo(...LP(h, cu + .25, ct + .7)); ctx.stroke();
+  ctx.strokeStyle = '#a3a8aa'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, cu + .2, ct - .7)); ctx.lineTo(...LP(h, cu + .2, ct + .7)); ctx.stroke(); // lame
+}
+// foyer : cercle de pierres, cendres, braises et bouts de bois calcinés
+function firePitLT(h, cu, ct, r) {
+  const s = view.s, rnd = seeded(Math.round(cu * 31 + ct * 17 + h.y));
+  const ash = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ash.push([cu + Math.cos(a) * r, ct + Math.sin(a) * r]); }
+  pathS(lpts(h, ash)); ctx.fillStyle = '#8f887c'; ctx.fill();
+  const ember = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, k = .35 + rnd() * .2; ember.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * k]); }
+  pathS(lpts(h, ember)); ctx.fillStyle = '#c8682a'; ctx.fill();
+  if (s > 2) { ctx.fillStyle = '#f0b44c'; for (let k = 0; k < 5; k++) { const [X, Y] = LP(h, cu + (rnd() - .5) * r * .6, ct + (rnd() - .5) * r * .6); ctx.fillRect(X, Y, Math.max(1, .1 * s), Math.max(1, .1 * s)); } }
+  ctx.strokeStyle = '#2a211a'; ctx.lineWidth = lw(.09); ctx.beginPath();                        // tisons
+  for (const a of [.4, 1.5, 2.6]) { ctx.moveTo(...LP(h, cu + Math.cos(a) * r * .9, ct + Math.sin(a) * r * .9)); ctx.lineTo(...LP(h, cu - Math.cos(a) * r * .15, ct - Math.sin(a) * r * .15)); }
+  ctx.stroke();
+  for (let i = 0; i < 10; i++) {                                                                  // pierres
+    const a = i / 10 * Math.PI * 2 + rnd() * .2, R = r + .12, su = cu + Math.cos(a) * R, st = ct + Math.sin(a) * R, e = .15 + rnd() * .08, st2 = [];
+    for (let k = 0; k < 6; k++) { const b = k / 6 * Math.PI * 2 + a, q = .75 + rnd() * .35; st2.push([su + Math.cos(b) * e * q, st + Math.sin(b) * e * q]); }
+    const P = lpts(h, st2); pathS(shiftS(P, .08, .1)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+    pathS(P); ctx.fillStyle = i % 3 ? WOOD.stone : '#a19b8f'; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.04); ctx.stroke();
+  }
+}
+// fagot : botte de branches fines serrée par deux liens de paille, orientée d'un angle a
+function fagotLT(h, cu, ct, len, a) {
+  const s = view.s, rnd = seeded(Math.round(cu * 19 + ct * 23)), du = Math.cos(a), dt = Math.sin(a), nu = -dt, nt = du;
+  const at = (x, y) => [cu + du * x + nu * y, ct + dt * x + nt * y];
+  const body = lpts(h, [at(-len / 2, -.28), at(-len * .2, -.22), at(len * .2, -.22), at(len / 2, -.3), at(len / 2, .3), at(len * .2, .22), at(-len * .2, .22), at(-len / 2, .28)]);
+  pathS(shiftS(body, .2, .25)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(body); ctx.fillStyle = '#5e4630'; ctx.fill();
+  if (s > 1.8) { ctx.lineWidth = 1; for (const col of ['#8a6a45', '#a5845a']) { ctx.strokeStyle = col; ctx.beginPath();
+    for (let k = 0; k < 5; k++) { const y = (rnd() - .5) * .36; ctx.moveTo(...LP(h, ...at(-len / 2 - rnd() * .15, y * 1.1))); ctx.lineTo(...LP(h, ...at(len / 2 + rnd() * .15, y * 1.2))); } ctx.stroke(); } }
+  pathS(body); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke();
+  for (const x of [-len * .22, len * .22]) { pathS(lpts(h, [at(x - .07, -.25), at(x + .07, -.25), at(x + .07, .25), at(x - .07, .25)])); ctx.fillStyle = '#d6bd7e'; ctx.fill(); } // liens
+}
+// tas de branchages ébranchés : rameaux sombres entremêlés, quelques feuilles
+function branchesLT(h, cu, ct, r) {
+  const s = view.s, rnd = seeded(Math.round(cu * 41 + ct * 3 + h.x)), blob = [];
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, k = .75 + rnd() * .4; blob.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * .8 * k]); }
+  const P = lpts(h, blob); pathS(shiftS(P, .35, .45)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = '#6a6440'; ctx.fill();
+  ctx.lineWidth = Math.max(1, .05 * s); ctx.lineCap = 'round';
+  for (const col of ['#4a3826', '#7b5d3c']) { ctx.strokeStyle = col; ctx.beginPath();
+    for (let k = 0; k < 12; k++) { const a = rnd() * Math.PI, x = cu + (rnd() - .5) * r * .9, y = ct + (rnd() - .5) * r * .7, l = .25 + rnd() * r * .35; ctx.moveTo(...LP(h, x - Math.cos(a) * l, y - Math.sin(a) * l)); ctx.lineTo(...LP(h, x + Math.cos(a) * l, y + Math.sin(a) * l)); }
+    ctx.stroke(); }
+  ctx.lineCap = 'butt';
+  if (s > 2.5) { for (let k = 0; k < 18; k++) { const [X, Y] = LP(h, cu + (rnd() - .5) * r * 1.5, ct + (rnd() - .5) * r * 1.2); ctx.fillStyle = rnd() < .5 ? '#7f8a4a' : '#9a8f4e'; ctx.fillRect(X, Y, Math.max(1, .18 * s), Math.max(1, .12 * s)); } }
+  pathS(P); ctx.strokeStyle = 'rgba(40,30,18,.5)'; ctx.lineWidth = 1; ctx.stroke();
+}
+// hache posée au sol : manche de bois, fer sombre
+function axeLT(h, cu, ct, a) {
+  if (view.s < 1.8) return;
+  const du = Math.cos(a), dt = Math.sin(a), at = (x, y) => [cu + du * x - dt * y, ct + dt * x + du * y];
+  ctx.strokeStyle = '#8a6a45'; ctx.lineWidth = lw(.09); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(...LP(h, ...at(-.45, 0))); ctx.lineTo(...LP(h, ...at(.45, 0))); ctx.stroke(); ctx.lineCap = 'butt';
+  pathS(lpts(h, [at(.3, -.06), at(.46, -.06), at(.5, .22), at(.26, .22)])); ctx.fillStyle = '#5d6264'; ctx.fill(); ctx.strokeStyle = '#2a2a28'; ctx.lineWidth = 1; ctx.stroke();
+}
+// pile de poutres équarries sur deux cales, le long de u
+function beamStackLT(h, u0, t0, u1, n, wd) {
+  for (const u of [u0 + .8, u1 - .8]) { pathS(lpts(h, [[u - .15, t0 - .3], [u + .15, t0 - .3], [u + .15, t0 + n * (wd + .08) + .2], [u - .15, t0 + n * (wd + .08) + .2]])); ctx.fillStyle = WOOD.sticker; ctx.fill(); }
+  for (let k = 0; k < n; k++) { const t = t0 + k * (wd + .08), j = (k * 5 % 3) * .15; beamLT(h, u0 + j, t, u1 - j * .7, t + wd); }
+}
+const shiftS = (P, dx, dy) => P.map(([X, Y]) => [X + dx * view.s, Y + dy * view.s]); // décalage en mètres (écran)
+const pathS = P => { ctx.beginPath(); P.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); };
+const lpts = (h, pts) => pts.map(([u, t]) => LP(h, u, t));
+const lw = k => Math.max(.6, Math.min(2, view.s * k)); // épaisseur de trait qui suit un peu le zoom
+// toit à deux pans (faîtage dans l'axe le plus long, ou imposé) : pan éclairé au nord-ouest,
+// pan à l'ombre, rangs de bardeaux parallèles au faîtage, débord et ombre portée
+function gableLT(h, u0, t0, u1, t1, along) {
+  const ridgeT = along ? along === 't' : (t1 - t0) >= (u1 - u0), s = view.s;
+  const all = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  pathS(shiftS(all, 1.4, 1.8)); ctx.fillStyle = WOOD.shadow; ctx.fill();                       // ombre portée
+  const cu = (u0 + u1) / 2, ct = (t0 + t1) / 2;
+  const pans = ridgeT ? [[[u0, t0], [cu, t0], [cu, t1], [u0, t1]], [[cu, t0], [u1, t0], [u1, t1], [cu, t1]]]
+                      : [[[u0, t0], [u1, t0], [u1, ct], [u0, ct]], [[u0, ct], [u1, ct], [u1, t1], [u0, t1]]];
+  // quel pan regarde le nord-ouest ? (normale du pan, dans le monde)
+  const toward = p => { const a = LP(h, ...p), c = LP(h, cu, ct); return (a[0] - c[0]) * -1 + (a[1] - c[1]) * -1; };
+  pans.forEach((pan, k) => {
+    const mid = [pan.reduce((s2, p) => s2 + p[0], 0) / 4, pan.reduce((s2, p) => s2 + p[1], 0) / 4];
+    pathS(lpts(h, pan)); ctx.fillStyle = toward(mid) > 0 ? WOOD.roofHi : WOOD.roofLo; ctx.fill();
+    if (s > 1.2) { // rangs de bardeaux
+      ctx.strokeStyle = WOOD.roofLine; ctx.lineWidth = 1; ctx.beginPath();
+      if (ridgeT) { const [a, b] = [pan[0][0], pan[1][0]]; for (let u = Math.min(a, b) + .8; u < Math.max(a, b); u += .8) { ctx.moveTo(...LP(h, u, t0)); ctx.lineTo(...LP(h, u, t1)); } }
+      else { const [a, b] = [pan[0][1], pan[2][1]]; for (let t = Math.min(a, b) + .8; t < Math.max(a, b); t += .8) { ctx.moveTo(...LP(h, u0, t)); ctx.lineTo(...LP(h, u1, t)); } }
+      ctx.stroke();
+      if (s > 3) { // joints décalés des bardeaux
+        ctx.beginPath();
+        if (ridgeT) for (let u = Math.min(pan[0][0], pan[1][0]); u < Math.max(pan[0][0], pan[1][0]); u += .8) for (let t = t0 + ((u * 1.25) % 1 + 1) % 1 * .9; t < t1; t += 1.8) { ctx.moveTo(...LP(h, u, t)); ctx.lineTo(...LP(h, u + .8, t)); }
+        else for (let t = Math.min(pan[0][1], pan[2][1]); t < Math.max(pan[0][1], pan[2][1]); t += .8) for (let u = u0 + ((t * 1.25) % 1 + 1) % 1 * .9; u < u1; u += 1.8) { ctx.moveTo(...LP(h, u, t)); ctx.lineTo(...LP(h, u, t + .8)); }
+        ctx.stroke();
+      }
+    }
+  });
+  if (s > 1.5) { // nuances : certains rangs de bardeaux plus sombres ou plus clairs (bois patiné)
+    const rnd = seeded(Math.round((u0 + t0) * 31 + h.x));
+    const across = ridgeT ? [u0, u1] : [t0, t1];
+    for (let v = across[0]; v < across[1] - .4; v += .8) {
+      const k = rnd(); if (k > .35) continue;
+      ctx.fillStyle = k < .18 ? 'rgba(40,30,20,.09)' : 'rgba(255,245,220,.08)';
+      const along = ridgeT ? [t0, t1] : [u0, u1], a = along[0] + rnd() * (along[1] - along[0]) * .6, b = Math.min(along[1], a + 2 + rnd() * 6);
+      pathS(lpts(h, ridgeT ? [[v, a], [v + .8, a], [v + .8, b], [v, b]] : [[a, v], [b, v], [b, v + .8], [a, v + .8]])); ctx.fill();
+    }
+  }
+  // faîtière : une bande claire sur le faîtage
+  const rc = .35, ridge = ridgeT ? [[cu - rc, t0], [cu + rc, t0], [cu + rc, t1], [cu - rc, t1]] : [[u0, ct - rc], [u1, ct - rc], [u1, ct + rc], [u0, ct + rc]];
+  pathS(lpts(h, ridge)); ctx.fillStyle = '#b09a78'; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.1); ctx.stroke();
+  // égout : un fin liseré sombre le long du bord du toit
+  if (s > 2) { const e = .35; pathS(lpts(h, [[u0 + e, t0 + e], [u1 - e, t0 + e], [u1 - e, t1 - e], [u0 + e, t1 - e]])); ctx.strokeStyle = 'rgba(40,30,20,.35)'; ctx.lineWidth = 1; ctx.stroke(); }
+  pathS(all); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.2); ctx.stroke();
+}
+// chevalet de sciage (deux tréteaux en X) avec une grume posée en travers
+function trestleLT(h, cu, ct, len) {
+  ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.12); ctx.beginPath();
+  for (const e of [-1, 1]) { const u = cu + e * len * .32; for (const d of [-1, 1]) { ctx.moveTo(...LP(h, u - .5, ct + d * .7)); ctx.lineTo(...LP(h, u + .5, ct - d * .7)); } }
+  ctx.stroke();
+  logLT(h, cu - len / 2, ct, cu + len / 2, ct, .32);
+}
+// chutes de sciage éparpillées : petites planches claires, orientées au hasard
+function offcutsLT(h, cu, ct, rad, n, seed) {
+  const rnd = seeded(seed);
+  for (let k = 0; k < n; k++) {
+    const u = cu + (rnd() - .5) * 2 * rad, t = ct + (rnd() - .5) * 2 * rad, a = rnd() * Math.PI, L = .6 + rnd() * 1.2, w = .18;
+    const du = Math.cos(a) * L / 2, dt = Math.sin(a) * L / 2, nu = -Math.sin(a) * w, nt = Math.cos(a) * w;
+    pathS(lpts(h, [[u - du + nu, t - dt + nt], [u + du + nu, t + dt + nt], [u + du - nu, t + dt - nt], [u - du - nu, t - dt - nt]]));
+    ctx.fillStyle = k % 3 ? WOOD.plank : WOOD.grain; ctx.fill(); ctx.strokeStyle = WOOD.plankLine; ctx.lineWidth = 1; ctx.stroke();
+  }
+}
+// grume (cylindre couché) de A à B, rayon r : écorce, reflet, fibres
+function logLT(h, ua, ta, ub, tb, r) {
+  const L = Math.hypot(ub - ua, tb - ta) || 1, nu = -(tb - ta) / L * r, nt = (ub - ua) / L * r, s = view.s;
+  pathS(shiftS(lpts(h, [[ua + nu, ta + nt], [ub + nu, tb + nt], [ub - nu, tb - nt], [ua - nu, ta - nt]]), .35, .45)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(lpts(h, [[ua + nu, ta + nt], [ub + nu, tb + nt], [ub - nu, tb - nt], [ua - nu, ta - nt]]));
+  ctx.fillStyle = WOOD.bark; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.08); ctx.stroke();
+  if (r * s > 2) {
+    pathS(lpts(h, [[ua + nu * .9, ta + nt * .9], [ub + nu * .9, tb + nt * .9], [ub + nu * .35, tb + nt * .35], [ua + nu * .35, ta + nt * .35]]));
+    ctx.fillStyle = WOOD.barkHi; ctx.fill();                                                    // reflet
+    ctx.strokeStyle = WOOD.barkLo; ctx.lineWidth = 1; ctx.beginPath();                          // fibres de l'écorce
+    for (const k of [-.45, .1]) { ctx.moveTo(...LP(h, ua + nu * k + (ub - ua) * .08, ta + nt * k + (tb - ta) * .08)); ctx.lineTo(...LP(h, ua + nu * k + (ub - ua) * .7, ta + nt * k + (tb - ta) * .7)); }
+    ctx.stroke();
+  }
+}
+// tas de grumes : rangées couchées le long de u, bouts sciés côté u1 ; chaque rangée du dessus
+// en compte une de moins et se cale entre deux grumes de la rangée du dessous
+function logPileLT(h, u0, u1, t0, n, r) {
+  for (let row = 0; row < n; row++) for (let k = 0; k < n - row; k++) {
+    const t = t0 + r + k * 2 * r + row * r, j = (k * 7 + row * 3) % 5 * .12;
+    logLT(h, u0 + j + row * .2, t, u1 - j * .6 - row * .15, t, r * (.92 + ((k + row) % 3) * .05));
+  }
+}
+// pile de planches en séchage : planches visibles, liteaux sombres en travers
+function planksLT(h, u0, t0, u1, t1) {
+  const s = view.s, P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  pathS(shiftS(P, .5, .7)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = WOOD.plank; ctx.fill();
+  if (s > 2) { ctx.strokeStyle = WOOD.plankLine; ctx.lineWidth = 1; ctx.beginPath(); for (let u = u0 + .3; u < u1; u += .3) { ctx.moveTo(...LP(h, u, t0)); ctx.lineTo(...LP(h, u, t1)); } ctx.stroke(); }
+  for (let t = t0 + .5; t < t1; t += 1.6) { pathS(lpts(h, [[u0 - .1, t], [u1 + .1, t], [u1 + .1, t + .18], [u0 - .1, t + .18]])); ctx.fillStyle = WOOD.sticker; ctx.fill(); }
+  pathS(P); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.1); ctx.stroke();
+}
+// tas de sciure : monticule clair, bord irrégulier, crête plus claire
+function sawdustLT(h, cu, ct, ru, rt) {
+  const pts = [], hi = [];
+  for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, k = 1 + .12 * Math.sin(a * 3 + 1) + .06 * Math.sin(a * 7); pts.push([cu + Math.cos(a) * ru * k, ct + Math.sin(a) * rt * k]); hi.push([cu - ru * .15 + Math.cos(a) * ru * .45 * k, ct - rt * .15 + Math.sin(a) * rt * .45 * k]); }
+  pathS(shiftS(lpts(h, pts), .4, .5)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(lpts(h, pts)); ctx.fillStyle = WOOD.dust; ctx.fill(); ctx.strokeStyle = WOOD.ring; ctx.lineWidth = lw(.08); ctx.stroke();
+  pathS(lpts(h, hi)); ctx.fillStyle = WOOD.dustHi; ctx.fill();
+}
+// charrette (plateau de planches, deux roues, brancards) chargée de deux grumes, dans l'axe t
+function cartLT(h, cu, t0) {
+  const s = view.s;
+  for (const e of [-1, 1]) { const [X, Y] = LP(h, cu + e * 1.05, t0 + 2); ctx.beginPath(); ctx.ellipse(X, Y, Math.max(1, .2 * s), Math.max(1.5, .75 * s), Math.atan2(...(() => { const a = LP(h, 0, 0), b = LP(h, 0, 1); return [b[1] - a[1], b[0] - a[0]]; })()) - Math.PI / 2, 0, Math.PI * 2); ctx.fillStyle = WOOD.edge; ctx.fill(); }
+  ctx.strokeStyle = WOOD.fence; ctx.lineWidth = lw(.14); ctx.beginPath();
+  for (const e of [-.5, .5]) { ctx.moveTo(...LP(h, cu + e, t0 + .4)); ctx.lineTo(...LP(h, cu + e * .7, t0 - 1.8)); }  // brancards
+  ctx.stroke();
+  const P = lpts(h, [[cu - .9, t0 + .4], [cu + .9, t0 + .4], [cu + .9, t0 + 3.6], [cu - .9, t0 + 3.6]]);
+  pathS(shiftS(P, .4, .5)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = WOOD.cart; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.1); ctx.stroke();
+  if (s > 2.5) { ctx.strokeStyle = WOOD.plankLine; ctx.lineWidth = 1; ctx.beginPath(); for (let u = cu - .9 + .45; u < cu + .9; u += .45) { ctx.moveTo(...LP(h, u, t0 + .4)); ctx.lineTo(...LP(h, u, t0 + 3.6)); } ctx.stroke(); }
+  logLT(h, cu - .38, t0 + .2, cu - .38, t0 + 3.9, .34); logLT(h, cu + .38, t0 + .1, cu + .38, t0 + 3.8, .32);
+}
+// clôture de perches : lisses et poteaux, ouverte sur [gap0, gap1] côté rue
+function railFenceLT(h, u0, t0, u1, t1, gap0, gap1) {
+  const s = view.s, runs = [[[u0, t0], [gap0, t0]], [[gap1, t0], [u1, t0]], [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]]];
+  ctx.strokeStyle = WOOD.fence; ctx.lineWidth = lw(.12); ctx.beginPath();
+  for (const [a, b] of runs) { ctx.moveTo(...LP(h, ...a)); ctx.lineTo(...LP(h, ...b)); }
+  ctx.stroke();
+  if (s > 1.5) for (const [a, b] of runs) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d <= L + .01; d += 2.4) { const p = [a[0] + (b[0] - a[0]) * d / L, a[1] + (b[1] - a[1]) * d / L]; const [X, Y] = LP(h, ...p); ctx.beginPath(); ctx.arc(X, Y, Math.max(.7, .16 * s), 0, Math.PI * 2); ctx.fillStyle = WOOD.edge; ctx.fill(); } }
+}
 const BUILD_DRAW = {
+  /* Scierie (3 × 4 cases, 24 × 32 m) : cour de terre battue close d'une clôture de perches,
+     portail côté rue ; grande halle de sciage (toit à deux pans en bardeaux) d'où sort le
+     chemin de roulement du chariot, une grume dessus ; parc à grumes en tas ; piles de
+     planches qui sèchent sur liteaux ; tas de sciure ; charrette chargée ; loge du scieur. */
+  scierie: h => {
+    const w2 = h.w / 2, L = h.l, s = view.s;
+    const yard = lpts(h, [[-w2 + .3, .3], [w2 - .3, .3], [w2 - .3, L - .3], [-w2 + .3, L - .3]]);
+    pathS(yard); ctx.fillStyle = WOOD.yard; ctx.fill();                                          // cour
+    if (s > 1.5) { const rnd = seeded(Math.round(h.x * 7 + h.y * 13)); ctx.fillStyle = WOOD.speck; for (let k = 0; k < 90; k++) { const [X, Y] = LP(h, -w2 + 1 + rnd() * (h.w - 2), 1 + rnd() * (L - 2)); ctx.beginPath(); ctx.arc(X, Y, Math.max(.5, .12 * s), 0, Math.PI * 2); ctx.fill(); } }
+    wattleLT(h, -w2 + .4, .4, w2 - .4, L - .4, -3.2, 3.2);
+    planksLT(h, -11.1, 2, -9.3, 9);                                                               // planches refendues qui sèchent
+    for (const [u, j] of [[-8.7, .2], [-8.1, 0], [-7.5, .4]]) beamLT(h, u, 2.4 + j, u + .5, 8.8 - j * .5); // poutres équarries
+    beamStackLT(h, 5.6, 19.2, 11, 4, .5);
+    logPileLT(h, 5.2, 11, 2.2, 3, .42); logPileLT(h, 3.9, 11, 6.6, 4, .38); logPileLT(h, 6.1, 11, 12.1, 2, .5); // parc à grumes (longueurs variées)
+    sawPitLT(h, -6.2, 3.4, -3.2, 10.6);                                                           // fosse de sciage de long
+    sawdustLT(h, -1.5, 9.3, .9, 1.2);                                                             // sciure remontée de la fosse
+    trestleLT(h, 4.6, 16.6, 3.2);                                                                 // chevalet à équarrir
+    if (s > 1.5) { offcutsLT(h, 4.4, 16.8, 1.6, 9, 11); offcutsLT(h, -1.4, 6, 1.1, 4, 23); }      // copeaux et chutes
+    thatchLT(h, -10.8, 12, 1.4, 30.2, 't', OLD_STRAW);                                             // halle de sciage
+    thatchLT(h, 4.2, 25, 10.9, 30.8, 'u', STRAW);                                                  // loge du scieur
+    chimneyLT(h, 9.3, 26.6, .55);                                                                  // cheminée de pierre
+    cartLT(h, 1.2, 3.4);                                                                          // charrette à l'entrée
+  },
   maison: h => roofBlock(h, -h.w / 2 + .6, .6, h.w / 2 - .6, h.l - .6, Col.house),
   maison_cour: h => {
     const w2 = h.w / 2, yard = yardOf(h), Y0 = h._yardFrom || CELL; // Y0 : début de la cour
@@ -2363,12 +2789,29 @@ const BUILD_DRAW = {
     fenceLT(h, -w2 + hw, .3, w2 - .3, hw);
     roofBlock(h, -w2 + .6, .6, -w2 + hw - .6, hw - .6, Col.house);
   },
+  /* Camp de bûcherons (2 × 2 cases, 16 × 16 m) : clairière de terre battue sans clôture, en
+     lisière de forêt ; hutte de chaume au fond, grumes ébranchées sur rondins de glissement,
+     stère de bois fendu, chevalet avec scie, fagots liés, branchages, feu de camp, hache,
+     ornières de débardage qui partent vers la forêt. */
   camp_bucherons: h => {
-    const w2 = h.w / 2;
-    rectLT(h, -w2 + .5, .5, w2 - .5, h.l - .5); ctx.fillStyle = Col.earth; ctx.fill();
-    roofBlock(h, -w2 + 1, h.l - 6, -w2 + 7, h.l - 1, Col.house);                       // abri
-    for (let k = 0; k < 3; k++) { rectLT(h, -w2 + 2, 2 + k * 3, w2 - 3, 4 + k * 3); ctx.fillStyle = Col['earth-edge']; ctx.fill(); } // grumes
-    for (const [u, t] of [[w2 - 3, h.l - 3], [w2 - 5, h.l - 6], [2, h.l - 3]]) dotLT(h, u, t, .8, Col.tree, Col['tree-dark']); // souches
+    const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 11) + 1);
+    const clear = lpts(h, softRect(-w2 + .5, .5, w2 - .5, L - .5, 2.6, .7, rnd));
+    pathS(clear); ctx.fillStyle = WOOD.yard; ctx.fill();                                          // clairière
+    if (s > 1.5) { ctx.fillStyle = WOOD.speck; for (let k = 0; k < 50; k++) { const [X, Y] = LP(h, -w2 + 1.5 + rnd() * (h.w - 3), 1.5 + rnd() * (L - 3)); ctx.fillRect(X, Y, Math.max(1, .14 * s), Math.max(1, .14 * s)); } }
+    if (s > 1.2) { ctx.strokeStyle = 'rgba(96,74,46,.35)'; ctx.lineWidth = Math.max(1, .3 * s); ctx.lineCap = 'round'; ctx.beginPath();   // ornières de débardage
+      for (const e of [-.55, .55]) { ctx.moveTo(...LP(h, 1 + e, L - .3)); ctx.bezierCurveTo(...LP(h, 1.2 + e, 12), ...LP(h, .4 + e, 8), ...LP(h, .1 + e, 4.6)); }
+      ctx.stroke(); ctx.lineCap = 'butt'; }
+    for (const u of [-5.8, -1.8]) beamLT(h, u, .9, u + .45, 4.9);                                 // rondins de glissement
+    logPileLT(h, -7.2, 1.6, 1.2, 3, .48);                                                        // grumes ébranchées
+    cordwoodLT(h, 5, 1.2, 7.2, 8.6);                                                             // stère de bois fendu
+    trestleLT(h, 2.6, 6.8, 2.8);                                                                 // chevalet et bûche à scier
+    bucksawLT(h, 2.9, 6.8);
+    if (s > 1.5) offcutsLT(h, 2.6, 7.9, 1.2, 6, 5);                                             // copeaux
+    firePitLT(h, -4.3, 7.1, .75);                                                                // feu de camp
+    for (const [u, t, a] of [[3.8, 12.4, .3], [6, 13.3, -.2], [4.6, 14.6, .15]]) fagotLT(h, u, t, 2.4, a); // fagots
+    branchesLT(h, 5.8, 10.8, 1.6);                                                               // tas de branchages
+    thatchLT(h, -7.2, 9.4, -1.6, 15.2, 'u', STRAW);                                               // hutte
+    axeLT(h, -2.4, 5.6, -.6);                                                                    // hache posée
   },
   loge_bucheron: h => {
     roofBlock(h, -h.w / 2 + .8, .8, h.w / 2 - .8, CELL - .5, Col.house);
@@ -2771,9 +3214,9 @@ const FOOD = ['légumes', 'œufs', 'pommes', 'pain'];
 const GOODS = ['pièces en bois', 'arcs et flèches', 'vêtements', 'chaussures', 'bière', 'outils et armes', 'armures'];
 const RAW = ['bois', 'laine', 'peaux'];                 // matières premières : on en laisse aux artisans
 const RAW_KEEP = 4;
-const VALUE = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'laine':3, 'peaux':3, 'pièces en bois':5,
+const VALUE = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'planches':4, 'laine':3, 'peaux':3, 'pièces en bois':5,
   'arcs et flèches':8, 'vêtements':8, 'chaussures':6, 'bière':4, 'outils et armes':10, 'armures':14 };
-const CARRY = { 'grain':'stall-b', 'laine':'sheep', 'farine':'sheep', 'pain':'earth-edge', 'bois':'earth-edge', 'légumes':'f-alfalfa',
+const CARRY = { 'grain':'stall-b', 'laine':'sheep', 'farine':'sheep', 'pain':'earth-edge', 'bois':'earth-edge', 'planches':'f-fallow', 'légumes':'f-alfalfa',
   'œufs':'sheep', 'pommes':'stall-a', 'peaux':'ore-clay', 'marchandises':'stall-a', 'Or':'stall-b' };
 // ce que produit un bâtiment (pour le trouver comme source) et son identifiant de producteur
 const producerId = h => (buildingOf(h) || {}).yard ? yardOf(h) : h.kind;
@@ -3537,6 +3980,7 @@ function draw() {
   if (!W) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
+  if (atelier.on) { drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
   drawFrame();
   drawContours();
   drawWater();
@@ -3867,6 +4311,7 @@ function endPointer(e) {
   if (pinch) { if (pointers.size < 2) pinch = null; drag = null; return; }
   if (!drag) return;
   const d = drag; drag = null;
+  if (atelier.on) { requestDraw(); return; } // atelier : on regarde seulement (pas de construction)
   if (d.kind === 'tap') {
     if (tool === 'house') placeHouse();
     else if (tool === 'road' || tool === 'wall') addRoadPoint();
@@ -4064,8 +4509,18 @@ $('new-region').addEventListener('click', () => newRegion($('biome').value, 1 + 
 $('undo').addEventListener('click', undo);
 $('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
 $('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
-$('zfit').addEventListener('click', () => fit());
-$('zhome').addEventListener('click', fitContent);
+$('zfit').addEventListener('click', () => atelier.on ? fitAtelier() : fit());
+$('zhome').addEventListener('click', () => atelier.on ? fitAtelier() : fitContent());
+// atelier : liste des bâtiments qui ont un dessin, bouton carte / atelier
+$('atelier-kind').innerHTML = PRESETS.filter(p => BUILD_DRAW[p.id]).map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+$('atelier-kind').value = atelier.kind;
+const syncAtelier = () => { $('atelier-toggle').textContent = atelier.on ? 'Voir la carte' : 'Voir l\'atelier'; $('atelier-kind').disabled = !atelier.on; };
+syncAtelier();
+$('atelier-kind').addEventListener('change', e => { atelier.kind = e.target.value; saveAtelier(); fitAtelier(); });
+$('atelier-toggle').addEventListener('click', () => {
+  atelier.on = !atelier.on; saveAtelier(); syncAtelier();
+  if (atelier.on) fitAtelier(); else fit();
+});
 $('zgrid').addEventListener('click', () => { setOpt('grid', !opts.grid); flash(opts.grid ? 'Quadrillage affiché' : 'Quadrillage masqué'); });
 syncGridButton();
 let clearArmed = null;
