@@ -72,15 +72,9 @@ button.danger{color:var(--bad)}
 .preset b{font-weight:600; font-size:13px; line-height:1.1}
 .presets .group{grid-column:1 / -1; margin:6px 0 0; font:600 11px "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
 .preset span{font:400 11px "IBM Plex Mono",monospace; opacity:.75}
-body.atelier .panel > section:not(#atelier-sec){display:none}
-.gallery{display:none; grid-template-columns:1fr 1fr; gap:6px; margin-top:10px}
-body.atelier .gallery{display:grid}
-.gallery .group{grid-column:1 / -1; margin:8px 0 0; font:600 11px "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
-.gcard{display:flex; flex-direction:column; gap:3px; padding:5px; text-align:left; min-width:0}
-.gcard canvas{width:100%; aspect-ratio:1; border-radius:2px; display:block; background:#ddd28c}
-.gcard b{font-weight:600; font-size:12.5px; line-height:1.15}
-.gcard span{font:400 10.5px "IBM Plex Mono",monospace; opacity:.75}
-.gcard .new{color:var(--accent); opacity:1; font-weight:600}
+.gallery{display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:10px}
+.gallery .group{grid-column:1 / -1; margin:6px 0 0; font:600 11px "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+.gcard{padding:5px 7px; text-align:left; font-size:12.5px; line-height:1.15; min-width:0}
 .row{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
 .row label{display:flex; flex-direction:column; font-size:12px; color:var(--ink-soft); gap:2px}
 .row input[type=number]{width:74px; padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
@@ -134,10 +128,9 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
       <h2>Atelier des bâtiments</h2>
       <div class="row">
         <button id="atelier-toggle">Voir la carte</button>
-        <span class="muted" id="atelier-count"></span>
       </div>
       <div class="gallery" id="gallery"></div>
-      <p class="muted" style="margin-top:8px">Cliquez un bâtiment pour l'afficher en grand. Molette : zoom ; glisser : déplacer ; ⤢ : recadrer.</p>
+      <p class="muted" style="margin-top:8px">L'atelier montre un seul bâtiment sur un carré de terrain, sans la carte. Cliquez un nom pour l'afficher. Molette : zoom ; glisser : déplacer ; ⤢ : recadrer.</p>
     </section>
 
     <section>
@@ -2180,28 +2173,6 @@ function drawAtelier() {
   ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   haloText(`${h.type} · ${h.f} × ${h.d} cases (${h.w} × ${h.l} m) · rue en haut`, W / 2, Y0 - 8, Col.ink, Col.sheet);
 }
-// vignettes de la galerie : chaque bâtiment est dessiné dans un coin de la grande toile,
-// puis recopié dans sa petite toile (le code de dessin écrit toujours dans ctx)
-let thumbsDone = false;
-function renderThumbs() {
-  thumbsDone = true;
-  const cards = document.querySelectorAll('.gcard canvas'), keep = { s:view.s, ox:view.ox, oy:view.oy }, kind = atelier.kind;
-  const T = Math.round(128 * (window.devicePixelRatio || 1));
-  if (!cards.length || T > cv.width || T > cv.height) return;
-  for (const c of cards) {
-    c.width = c.height = T;
-    atelier.kind = c.parentNode.dataset.kind;
-    try {
-      const h = atelierHouse(), side = Math.max(h.w, h.l) + 5;
-      ctx.setTransform(1, 0, 0, 1, 0, 0);
-      view.s = T / side; view.ox = T / 2; view.oy = T / 2;
-      ctx.fillStyle = biomeLook().ground; ctx.fillRect(0, 0, T, T);
-      drawHouse(h, 'normal');
-      c.getContext('2d').drawImage(cv, 0, 0, T, T, 0, 0, T, T);
-    } catch (e) { console.warn('vignette', atelier.kind, e); }
-  }
-  Object.assign(view, keep); atelier.kind = kind;
-}
 function clampView() {
   if (atelier.on) { // atelier : le carré ne sort pas de la fenêtre
     const half = atelierSide() / 2 * view.s;
@@ -4010,7 +3981,6 @@ function drawDraft() {
 function draw() {
   queued = false;
   if (!W) return;
-  if (atelier.on && !thumbsDone) renderThumbs();
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
   if (atelier.on) { drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
@@ -4544,23 +4514,20 @@ $('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
 $('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
 $('zfit').addEventListener('click', () => atelier.on ? fitAtelier() : fit());
 $('zhome').addEventListener('click', () => atelier.on ? fitAtelier() : fitContent());
-// atelier : galerie de tous les bâtiments (vignette dessinée par le vrai code), bouton carte / atelier
-const REDONE = new Set(['scierie', 'camp_bucherons']);   // bâtiments déjà refaits en détail (style féodal)
+// atelier : liste complète des bâtiments (un clic l'affiche seul sur son carré), bouton carte / atelier
 const GALLERY_GROUPS = [['', 'Village'], ['res', 'Ressources'], ['logi', 'Logistique'], ['com', 'Commerce'], ['agri', 'Agriculture']];
 const drawable = PRESETS.filter(p => BUILD_DRAW[p.id]);
 $('gallery').innerHTML = GALLERY_GROUPS.map(([cat, name]) => {
   const list = drawable.filter(p => (p.cat || '') === cat);
-  return list.length ? `<p class="group">${name}</p>` + list.map(p => `<button class="gcard" data-kind="${p.id}" aria-pressed="false"><canvas></canvas><b>${p.name}</b><span>${p.f} × ${p.d} cases · ${REDONE.has(p.id) ? '<span class="new">refait</span>' : 'à refaire'}</span></button>`).join('') : '';
+  return list.length ? `<p class="group">${name}</p>` + list.map(p => `<button class="gcard" data-kind="${p.id}" aria-pressed="false">${p.name}</button>`).join('') : '';
 }).join('');
-$('atelier-count').textContent = `${REDONE.size} / ${drawable.length} refaits`;
 const syncAtelier = () => {
   $('atelier-toggle').textContent = atelier.on ? 'Voir la carte' : 'Voir l\'atelier';
-  if (document.body) document.body.classList.toggle('atelier', atelier.on);
   for (const b of document.querySelectorAll('.gcard')) b.setAttribute('aria-pressed', String(b.dataset.kind === atelier.kind));
 };
 syncAtelier();
 for (const b of document.querySelectorAll('.gcard')) b.addEventListener('click', () => {
-  atelier.kind = b.dataset.kind; saveAtelier(); syncAtelier(); fitAtelier();
+  atelier.kind = b.dataset.kind; atelier.on = true; saveAtelier(); syncAtelier(); fitAtelier();
 });
 $('atelier-toggle').addEventListener('click', () => {
   atelier.on = !atelier.on; saveAtelier(); syncAtelier();
