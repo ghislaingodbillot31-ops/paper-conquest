@@ -10,7 +10,7 @@
   --house:#8b8869; --house-edge:#585840; --roof-line:rgba(88,88,64,.5);
   --earth:#c9bd98; --earth-edge:#8e8455; --gravel:#d3cbb0; --gravel-edge:#8e8455; --paving:#cfc6a7; --paving-edge:#8e8455;
   --wall:#a39b8b; --wall-edge:#3f3a32;
-  --water:#adc6cb; --water-edge:#5f6559; --bridge:#585840;
+  --water:#7ca2ab; --water-edge:#3f4a48; --bridge:#585840;
   --grass:#dcd08a; --grass-dark:#d2c57c; --tree:#647851; --tree-dark:#56694a; --bush:#7e8a5e;
   --contour:#5b4a2c;
   --f-meadow:#abb686; --f-wheat:#d8cc98; --f-plough:#c0a47f; --f-fallow:#cbc8a3; --f-alfalfa:#9dac7b; --f-forest:#7d8a60; --parcel-edge:#77745a; --veil:rgba(58,52,38,.26); --stall-a:#b0654b; --stall-b:#c7a25a; --tavern:#b88a5c; --church:#a98c64; --ore-iron:#9a6a55; --ore-clay:#c49a6a; --f-field:#cdb873; --f-pasture:#9fb277; --sheep:#f4f0e6;
@@ -184,9 +184,16 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
       <h2>Région</h2>
       <div class="row">
         <label for="biome">Biome<select id="biome"></select></label>
+        <label for="river-mode">Cours d'eau<select id="river-mode">
+          <option value="auto">Selon le biome</option>
+          <option value="petite">Petite rivière</option>
+          <option value="riviere">Rivière</option>
+          <option value="fleuve">Fleuve</option>
+          <option value="aucun">Aucun</option>
+        </select></label>
         <button id="new-region">Nouvelle région</button>
       </div>
-      <p class="muted" style="margin-top:8px">Une grande route en serpentin traverse la région d'ouest en est. Le biome règle l'eau (rivière, affluents, lacs ou mares) et la densité des bois. « Nouvelle région » tire une autre carte du même biome ; changer de biome refait la carte.</p>
+      <p class="muted" style="margin-top:8px">Une grande route en serpentin traverse la région d'ouest en est. Le biome règle les lacs, la végétation et, par défaut, le cours d'eau ; le menu « Cours d'eau » peut l'imposer : petite rivière (3 à 8 m, très sinueuse), rivière (10 à 24 m) ou fleuve (34 à 56 m, grandes boucles). « Nouvelle région » tire une autre carte ; changer de biome ou de cours d'eau refait la même région.</p>
     </section>
 
     <section>
@@ -473,6 +480,8 @@ function segCross(a, b, c, d) {
    les passages droits (−20 %), avec en plus une lente respiration tirée de son tracé.
    Les écarts sont lissés pour que les berges restent douces. Demi-largeurs en mètres. */
 const riverHWCache = new WeakMap();
+// demi-largeur maximale d'une île : une part de la demi-largeur normale de la rivière à cet endroit
+const isleWide = (rv, is) => (rv.w0 + (rv.w1 - rv.w0) * is.i / Math.max(1, rv.pts.length - 1)) / 2 * is.wid;
 function riverHW(rv) {
   const P = rv.pts, n = P.length, hit = riverHWCache.get(rv), cf = (rv.confl || []).join();
   if (hit && hit.n === n && hit.p0 === P[0] && hit.w0 === rv.w0 && hit.w1 === rv.w1 && hit.cf === cf) return hit.hw;
@@ -487,8 +496,10 @@ function riverHW(rv) {
   let hw = new Float32Array(n);
   for (let i = 0; i < n; i++) {
     const t = i / (n - 1), base = (rv.w0 + (rv.w1 - rv.w0) * t) / 2;
-    const breathe = .14 * Math.sin(2 * Math.PI * i * 4 / 420 + p1) + .08 * Math.sin(2 * Math.PI * i * 4 / 170 + p2);
-    hw[i] = base * (.8 + .8 * bend[i] + breathe);
+    // variation de taille accentuée : lente respiration ±40 % (bassins et étranglements),
+    // virages jusqu'à +100 %
+    const breathe = .28 * Math.sin(2 * Math.PI * i * 4 / 420 + p1) + .14 * Math.sin(2 * Math.PI * i * 4 / 170 + p2);
+    hw[i] = base * Math.max(.45, .75 + 1 * bend[i] + breathe);
     // en aval d'une confluence, la rivière principale a reçu l'eau de l'affluent : +25 %
     for (const c of rv.confl || []) if (i > c) { const x = Math.min(1, (i - c) / 30); hw[i] *= 1 + .25 * x * x * (3 - 2 * x); }
   }
@@ -499,13 +510,103 @@ function riverHW(rv) {
     const x = (i - (n - 26)) / 25; hw[i] *= 1 + 1.4 * x * x * x;
     if (rv.mouth) hw[i] = Math.min(hw[i], rv.mouth * .9);
   }
-  for (let pass = 0; pass < 3; pass++) { // lissage : moyenne glissante sur ±6 points (±24 m)
+  // lissage : moyenne glissante dont la fenêtre suit la largeur (±24 m pour une rivière,
+  // ±70 m pour un fleuve) — un fleuve ne change pas de largeur sur quelques mètres
+  const win = Math.max(6, Math.round((rv.w0 + rv.w1) / 2 * .7 / 4));
+  for (let pass = 0; pass < 3; pass++) {
     const o = new Float32Array(n);
-    for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - 6); k <= Math.min(n - 1, i + 6); k++) { s += hw[k]; c++; } o[i] = s / c; }
+    for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - win); k <= Math.min(n - 1, i + win); k++) { s += hw[k]; c++; } o[i] = s / c; }
     hw = o;
   }
-  riverHWCache.set(rv, { n, p0:P[0], w0:rv.w0, w1:rv.w1, cf, hw });
+  // îles : la rivière s'ouvre en deux bras autour de l'île (jusqu'à 2 fois sa largeur au
+  // milieu de l'île), puis se reforme — élargissement en cloche, sans marche
+  // (les berges s'écartent en suivant la forme de l'île, et un peu au-delà de ses pointes :
+  // chacun des deux bras garde au moins la largeur de la rivière, sans étranglement)
+  const hw0 = hw.slice();
+  for (const is of rv.isles || []) {
+    const wide = isleWide(rv, is), L = is.half * .9, span = Math.ceil(L * 1.6);
+    for (let k = Math.max(0, is.i - span); k <= Math.min(n - 1, is.i + span); k++) {
+      const t = Math.abs(k - is.i) / L, u = Math.max(0, 1 - (t / 1.6) ** 2), g = u * u * (3 - 2 * u); // départ et fin en douceur (pente nulle)
+      // (autour de l'île, on part d'au moins la largeur normale, même si la rivière est
+      // étroite à cet endroit : chaque bras garde la largeur d'une rivière)
+      const normal = (rv.w0 + (rv.w1 - rv.w0) * k / (n - 1)) / 2, own = hw0[k] + (Math.max(hw0[k], normal) - hw0[k]) * g;
+      hw[k] = Math.max(hw[k], own * (1 + .25 * g) + wide * 1.25 * g);
+    }
+  }
+  // berges sans renflement brusque : la demi-largeur ne varie pas plus que 1,3 m (ou 8 % de la
+  // largeur, pour un fleuve) tous les 4 m, dans les deux sens
+  // dans un virage, la demi-largeur ne dépasse pas 85 % du rayon de courbure : sinon la berge
+  // intérieure se replie sur elle-même et fait un coin
+  for (let i = 0; i < n; i++) {
+    const a = P[Math.max(0, i - 8)], b = P[i], c = P[Math.min(n - 1, i + 8)];
+    let tq = Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0]);
+    tq = Math.abs(Math.atan2(Math.sin(tq), Math.cos(tq)));
+    if (tq > .02) hw[i] = Math.min(hw[i], Math.max(rv.w0 * .3, .7 * (segLen(a, b) + segLen(b, c)) / 2 / tq));
+  }
+  for (let i = 1; i < n; i++) hw[i] = Math.min(hw[i], hw[i - 1] + 1.9);
+  for (let i = n - 2; i >= 0; i--) hw[i] = Math.min(hw[i], hw[i + 1] + 1.9);
+  // arrondi final : la limite de pente laisse des rampes droites avec un coin à chaque bout ;
+  // trois moyennes glissantes (±20 m pour une rivière, ±50 m pour un fleuve) les arrondissent
+  const win2 = Math.max(5, Math.round((rv.w0 + rv.w1) / 2 * .5 / 4));
+  for (let pass = 0; pass < 3; pass++) {
+    const o = new Float32Array(n);
+    for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - win2); k <= Math.min(n - 1, i + win2); k++) { s += hw[k]; c++; } o[i] = s / c; }
+    hw = o;
+  }
+  riverHWCache.set(rv, { n, p0:P[0], w0:rv.w0, w1:rv.w1, cf:cf + JSON.stringify(rv.isles || []), hw });
   return hw;
+}
+/* Îles de rivière : une lentille de terre allongée dans l'axe du courant, au milieu de la
+   partie élargie ; ses bords sont légèrement irréguliers. Polygones gardés en mémoire. */
+const riverIsleCache = new WeakMap();
+function riverIsles(rv) {
+  if (!rv.isles || !rv.isles.length) return [];
+  const HW = riverHW(rv), hit = riverIsleCache.get(rv);
+  if (hit && hit.hw === HW) return hit.polys;
+  const P = rv.pts, n = P.length, polys = [];
+  for (const is of rv.isles) {
+    const rnd = seeded(is.i * 97 + 13), wide = isleWide(rv, is);
+    const ph = [rnd() * 6.28, rnd() * 6.28], N = 28; // bords ondulés doucement (pas de dents)
+    // contour de l'île ; « len » raccourcit l'île, « k » l'amincit : le cœur herbeux est la même
+    // lentille, plus courte et plus mince, construite le long de la rivière — il suit donc la
+    // courbe de l'île et ne déborde jamais dans l'eau (une réduction vers le centre, elle,
+    // sortait de l'île dans les îles courbes)
+    const lens = (len, k) => {
+      const L = [], R = [];
+      for (let s = 0; s <= N; s++) {
+        const t = -1 + 2 * s / N, fi = is.i + t * len * is.half * .9, i0 = Math.max(0, Math.min(n - 2, Math.floor(fi))), f = fi - i0;
+        const p = [P[i0][0] + (P[i0 + 1][0] - P[i0][0]) * f, P[i0][1] + (P[i0 + 1][1] - P[i0][1]) * f];
+        const a = P[Math.max(0, i0 - 2)], b = P[Math.min(n - 1, i0 + 3)], dl = segLen(a, b) || 1, nx = -(b[1] - a[1]) / dl, ny = (b[0] - a[0]) / dl;
+        const tt = t * len, w = wide * k * Math.pow(Math.max(0, 1 - Math.abs(tt) ** 1.8), .6) * Math.pow(Math.max(0, 1 - Math.abs(t) ** 4), .5);
+        const wl = w * (1 + .07 * Math.sin(tt * 5 + ph[0])), wr = w * (1 + .07 * Math.sin(tt * 4 + ph[1]));
+        L.push([p[0] + nx * wl, p[1] + ny * wl]); R.push([p[0] - nx * wr, p[1] - ny * wr]);
+      }
+      return [...L, ...R.reverse()];
+    };
+    const poly = lens(1, 1), inner = lens(.82, .7);
+    polys.push({ P:poly, inner, bb:bbox(poly), c:P[is.i] });
+  }
+  riverIsleCache.set(rv, { hw:HW, polys });
+  return polys;
+}
+// place les îles d'une rivière neuve : au large des bords de carte, loin des ponts, dans les
+// passages assez droits, bien espacées ; leur nombre et leur taille dépendent du cours d'eau
+function placeIsles(rv, rnd) {
+  const cls = RIVER_CLASS[rv.cls] || RIVER_CLASS.riviere, P = rv.pts, n = P.length, isles = [];
+  const count = countIn(rnd, cls.isles), roads = S.roads.map(r => r.pts); // (tracé logique : appelé avant le dessin)
+  for (let k = 0; k < count; k++) for (let t = 0; t < 40; t++) {
+    const len = between(rnd, cls.isleLen), half = Math.round(len / 8), i = 20 + half + Math.floor(rnd() * (n - 40 - 2 * half));
+    if (i - half < 20 || i + half > n - 20) continue;
+    const a = P[i - half], b = P[i], c = P[i + half];
+    let turn = Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0]);
+    if (Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) > (rv.cls === 'fleuve' ? .35 : .5)) continue; // trop dans un virage (pointes en crochet)
+    const clear = len / 2 + rv.w1 * 1.5 + 30;
+    if (roads.some(q => q.slice(1).some((e, j) => ptSeg(b, q[j], e).d < clear))) continue; // loin des ponts
+    if (isles.some(o => Math.abs(o.i - i) < o.half + half + 25)) continue;             // bien espacées
+    isles.push({ i, half, grow:.9 + rnd() * .3, wid:.8 + rnd() * .4 }); // île large : 0,8 à 1,2 fois la demi-largeur
+    break;
+  }
+  return isles;
 }
 // disques [x, y, rayon] le long du cours, assez serrés pour que la berge soit lisse
 // (espacement ≤ 40 % du rayon) ; gardés en mémoire tant que la rivière ne change pas
@@ -522,6 +623,48 @@ function riverDiscs(rv) {
   const e = P[P.length - 1]; d.push([e[0], e[1], HW[P.length - 1]]);
   riverDiscCache.set(rv, { hw:HW, d });
   return d;
+}
+// bandes du dégradé de l'eau (part de la largeur) et teintes, du bord clair au milieu foncé
+const WATER_BANDS = [1, .85, .7, .55, .4, .26];
+const WATER_FOAM = '#d3dfdb'; // liseré clair le long des berges
+// contour d'un lac pour le dessin : ses 40 points lissés (Chaikin fermé, 3 passes), sans coin
+const lakeShapeCache = new WeakMap();
+function lakeShape(lk) {
+  let P = lakeShapeCache.get(lk);
+  if (P) return P;
+  P = lk.pts;
+  for (let it = 0; it < 3; it++) {
+    const Q = [];
+    for (let i = 0; i < P.length; i++) { const a = P[i], b = P[(i + 1) % P.length]; Q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); }
+    P = Q;
+  }
+  lakeShapeCache.set(lk, P);
+  return P;
+}
+function waterRamp(base) {
+  const hex = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)), c = hex(base);
+  const mix = (t, to) => '#' + c.map((v, k) => Math.round(v + (to[k] - v) * t).toString(16).padStart(2, '0')).join('');
+  // comme la carte de référence : bord #a9c1c0 → centre #749aa3 (dégradé doux)
+  const light = hex(mix(.3, [255, 255, 255])), deep = hex(mix(.12, [47, 90, 102]));
+  return WATER_BANDS.map((_, i) => { const t = i / (WATER_BANDS.length - 1); return '#' + light.map((v, k) => Math.round(v + (deep[k] - v) * t).toString(16).padStart(2, '0')).join(''); });
+}
+// disques d'une bande intérieure (rayon × k) : on resserre l'espacement pour garder un bord
+// lisse même quand les disques sont petits
+const bandCache = new WeakMap();
+function bandDiscs(rv, k) {
+  const base = riverDiscs(rv);
+  if (k === 1) return base;
+  let m = bandCache.get(rv);
+  if (!m || m.base !== base) { m = { base, bands:{} }; bandCache.set(rv, m); }
+  if (m.bands[k]) return m.bands[k];
+  const out = [];
+  for (let i = 0; i < base.length - 1; i++) {
+    const [x0, y0, r0] = base[i], [x1, y1, r1] = base[i + 1], d = Math.hypot(x1 - x0, y1 - y0);
+    const n = Math.max(1, Math.ceil(d / Math.max(.4, Math.min(r0, r1) * k * .4)));
+    for (let j = 0; j < n; j++) { const t = j / n; out.push([x0 + (x1 - x0) * t, y0 + (y1 - y0) * t, (r0 + (r1 - r0) * t) * k]); }
+  }
+  const e = base[base.length - 1]; out.push([e[0], e[1], e[2] * k]);
+  return m.bands[k] = out;
 }
 // lissage d'une ligne ouverte (bouts conservés) puis points régulièrement espacés
 function chaikinOpen(P, passes) {
@@ -644,7 +787,7 @@ function makeRiverPath(a, b, o) {
   const L = segLen(a, b), n = Math.max(2, Math.round(L / 4)), u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], nv = [-u[1], u[0]], pts = [];
   for (let i = 0; i <= n; i++) {
     const t = i / n, env = Math.sin(Math.PI * t) ** .6;
-    const off = env * (o.amp * Math.sin(2 * Math.PI * o.cycles * t + o.phase) + o.amp * .3 * Math.sin(2 * Math.PI * o.cycles * 3.1 * t + o.phase * 2));
+    const off = env * (o.amp * Math.sin(2 * Math.PI * o.cycles * t + o.phase) + o.amp * (o.harm === undefined ? .3 : o.harm) * Math.sin(2 * Math.PI * o.cycles * 3.1 * t + o.phase * 2));
     pts.push([round2(a[0] + (b[0]-a[0]) * t + nv[0] * off), round2(a[1] + (b[1]-a[1]) * t + nv[1] * off)]);
   }
   return { pts, w0:o.w0, w1:o.w1 };
@@ -797,8 +940,17 @@ function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
   const fk = S.landSeed + ':' + S.biome + ':' + wk;
   if (floraCands && floraSeed === fk) return floraCands;
-  const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora;
-  const tree = (x, y, r, wood) => out.push({ x:round2(x), y:round2(y), r, kind:'tree', v:rnd(), ...(wood ? { wood:1 } : {}) });
+  const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
+  // essence de chaque arbre (tirée selon les parts du biome) et taille propre à l'essence :
+  // conifères plus étroits, acacias larges, palmiers moyens ; toundra : arbres nains
+  const sp = Object.entries(look.species), spTotal = sp.reduce((s, [, w]) => s + w, 0);
+  const pick = () => { let r = rnd() * spTotal; for (const [k, w] of sp) if ((r -= w) < 0) return k; return sp.length ? sp[sp.length - 1][0] : 'f'; };
+  const SIZE = { f:[3.2, 2.6], c:[2.4, 1.6], a:[3.6, 2.4], p:[3, 1.4] };
+  const tree = (x, y, _r, wood, forced) => {
+    if (!sp.length && !forced) return;                       // biome sans arbre (inlandsis)
+    const s = forced || pick(), [r0, dr] = SIZE[s], k = look.small || 1;
+    out.push({ x:round2(x), y:round2(y), r:(r0 + rnd() * dr) * k, kind:'tree', sp:s, v:rnd(), ...(wood ? { wood:1 } : {}) });
+  };
   /* Étendue des forêts sur la trame de 6 m : une case est forêt si le bruit des massifs
      dépasse le seuil du biome. Puis on BOUCHE TOUS LES TROUS : toute poche sans forêt qui
      n'est pas reliée au bord de la carte (clairière enfermée, même grande) devient forêt.
@@ -822,8 +974,10 @@ function floraCandidates() {
     const fn = fz(px, py);
     // prés dégagés : quelques bosquets serrés (cœur des taches sombres), de rares arbres isolés
     const pTree = fn > B.forest - .015 ? .3 : n > B.dense + .06 ? .5 : n > B.mid + .04 ? .03 : B.sparse * .35;
+    const pBush = n > B.dense ? B.bush * .5 : B.bush * .15;
     if (r < pTree) tree(px, py, 3.2 + rnd() * 2.6, false);
-    else if (r < pTree + (n > B.dense ? B.bush * .5 : B.bush * .15)) out.push({ x:round2(px), y:round2(py), r:1.2 + rnd() * .9, kind:'bush', v:rnd() });
+    else if (r < pTree + pBush) out.push({ x:round2(px), y:round2(py), r:1.2 + rnd() * .9, kind:'bush', v:rnd() });
+    else if (r < pTree + pBush + (B.rocks || 0)) out.push({ x:round2(px), y:round2(py), r:1.4 + rnd() * 2, kind:'rock', v:rnd() }); // rochers
   }
   // lisières : autour des lacs, puis le long des rivières (plus espacées)
   const wet = B.sparse > .05 ? .6 : B.dense > .66 ? .25 : .45;
@@ -846,8 +1000,46 @@ function floraCandidates() {
       tree(a[0] - d[1] / dl * o * side, a[1] + d[0] / dl * o * side, 2.8 + rnd() * 2.2);
     }
   }
+  // îles : un bouquet d'arbres au cœur de chaque île (hors de la grève de sable)
+  for (const rv of S.rivers) for (const is of riverIsles(rv)) {
+    // (sur l'île même, à 7 m au moins de son bord : jamais dans l'eau ni sur la grève)
+    const P = is.P, bb = is.bb, deep = q => inPoly(q, P) && P.every((a, k) => ptSeg(q, a, P[(k + 1) % P.length]).d > 7);
+    for (let y = bb[1]; y < bb[3]; y += 6) for (let x = bb[0]; x < bb[2]; x += 6) {
+      const q = [x + rnd() * 4, y + rnd() * 4];
+      if (rnd() < .5 && deep(q)) { const before = out.length; tree(q[0], q[1], 0, false); if (out.length > before) out[before].isle = 1; }
+    }
+  }
+  /* Rochers et cailloux de berge : par petits groupes (1 à 5 pierres, 0,4 à 2 m) le long des
+     lacs, des rivières et autour des îles, certains à moitié dans l'eau ; jamais sur un pont. */
+  const nearRoad = q => S.roads.some(r => r.pts.slice(1).some((e, j) => ptSeg(q, r.pts[j], e).d < 14));
+  const shoreRocks = (a, b, out_) => { // a : point de berge ; b : direction vers la terre (unitaire)
+    if (nearRoad(a)) return;
+    const k = 1 + Math.floor(rnd() * 5);
+    for (let s = 0; s < k; s++) {
+      const off = -1.5 + rnd() * 4, side = (rnd() - .5) * 7, big = s === 0 && rnd() < .5;
+      out_.push({ x:round2(a[0] + b[0] * off - b[1] * side), y:round2(a[1] + b[1] * off + b[0] * side), r:big ? 1.6 + rnd() * 1.4 : .6 + rnd() * .7, kind:'rock', v:rnd(), wet:1 });
+    }
+  };
+  for (const lk of S.lakes) {
+    const P = lk.pts;
+    for (let i = 0; i < P.length; i++) if (rnd() < .5) {
+      const a = P[i], u = [a[0] - lk.c[0], a[1] - lk.c[1]], L = Math.hypot(...u) || 1;
+      shoreRocks(a, [u[0] / L, u[1] / L], out);
+    }
+  }
+  for (const rv of S.rivers) {
+    const { L, R } = riverBanks(rv), step = rv.cls === 'fleuve' ? 5 : 4;
+    for (const bank of [L, R]) for (let i = 0; i < bank.length - 1; i += step) if (rnd() < .24) {
+      const a = bank[i], b = bank[i + 1], d = [b[0] - a[0], b[1] - a[1]], dl = Math.hypot(...d) || 1, side = bank === L ? 1 : -1;
+      shoreRocks(a, [-d[1] / dl * side, d[0] / dl * side], out);
+    }
+    for (const is of riverIsles(rv)) for (let i = 0; i < is.P.length; i += 3) if (rnd() < .3) {
+      const a = is.P[i], u = [a[0] - is.c[0], a[1] - is.c[1]], L2 = Math.hypot(...u) || 1;
+      shoreRocks(a, [-u[0] / L2, -u[1] / L2], out); // vers le centre de l'île = vers la terre
+    }
+  }
   // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
-  const inForest = f => !f.wood && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
+  const inForest = f => !f.wood && !f.wet && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
   floraSeed = fk;
   return floraCands = out.filter(f => !inForest(f));
 }
@@ -855,11 +1047,9 @@ function floraCandidates() {
    à droite, reflets en haut à gauche, ombre portée), puis posés comme des tampons.
    Dégradé de verts (demande du 29/09) : les arbres seuls sont vert clair, la lisière
    un peu plus foncée, et la forêt fonce jusqu'à son cœur — [teinte, reflet, ombre]. */
-const TREE_PAL = [
-  ['#93b25c', '#b6cf80', '#5d7638'],   // 0 · arbres seuls, buissons (vert clair)
-  ['#7c9e50', '#a1bf72', '#4b6530'],   // 1 · premier rang de lisière
-  ['#65874a', '#8aab6a', '#3d552e'],   // 2 · second rang de lisière
-];
+// teintes des arbres du biome : 0 · arbres seuls, buissons (clair) ; 1 · premier rang de
+// lisière ; 2 · second rang de lisière
+const treePal = () => biomeLook().pal;
 const TREE_EDGE = '#223020', TREE_DROP = 'rgba(30,45,25,.3)';
 const SPR = 96, SPR_C = 40, SPR_R = 28, SHAPES = 5; // taille du modèle, centre et rayon du houppier (px)
 let treeSprites = null;
@@ -887,27 +1077,103 @@ function makeSprite(pal, bumps) {
   g.restore();
   return c;
 }
-function makeTreeSprites() {
-  const rnd = seeded(8111);
-  treeSprites = { tree:[], bush:[] };
-  for (const pal of TREE_PAL) {
-    for (let k = 0; k < SHAPES; k++) treeSprites.tree.push(makeSprite(pal, crown(rnd, false)));
-    for (let k = 0; k < 2; k++) treeSprites.bush.push(makeSprite(pal, crown(rnd, true)));
-  }
+const newSprite = () => { const c = document.createElement('canvas'); c.width = c.height = SPR; return [c, c.getContext('2d')]; };
+// conifère vu du dessus : étoile de branches, cœur plus clair (pointe de l'arbre)
+function makeConifer(pal, rnd) {
+  const [c, g] = newSprite(), C = SPR_C, R = SPR_R, n = 11 + Math.floor(rnd() * 4), jit = Array.from({ length:n * 2 }, () => .9 + rnd() * .2);
+  const star = (dx, dy, k, grow) => {
+    g.beginPath();
+    for (let i = 0; i < n * 2; i++) {
+      const a = i / (n * 2) * Math.PI * 2, rr = (i % 2 ? .72 : 1) * jit[i] * R * k + grow;
+      const X = C + dx * R + Math.cos(a) * rr, Y = C + dy * R + Math.sin(a) * rr;
+      i ? g.lineTo(X, Y) : g.moveTo(X, Y);
+    }
+    g.closePath();
+  };
+  star(.3, .38, 1, 0); g.fillStyle = TREE_DROP; g.fill();                    // ombre portée
+  star(0, 0, 1, 1.8); g.fillStyle = TREE_EDGE; g.fill();                      // contour
+  g.save(); star(0, 0, 1, 0); g.clip();
+  g.fillStyle = pal[2]; g.fill();
+  star(-.06, -.08, .8, 0); g.fillStyle = pal[0]; g.fill();                   // étages de branches
+  star(-.1, -.12, .45, 0); g.fillStyle = pal[1]; g.fill();                   // cime éclairée
+  g.globalAlpha = .35; g.strokeStyle = TREE_EDGE; g.lineWidth = 1; g.beginPath();
+  for (let i = 0; i < n; i++) { const a = (i + .5) / n * Math.PI * 2; g.moveTo(C, C); g.lineTo(C + Math.cos(a) * R * .7, C + Math.sin(a) * R * .7); }
+  g.stroke(); g.restore();
+  return c;
 }
-// modèle d'un arbre ou d'un buisson : sa teinte (tone, posée par classifyWoods pour la
-// lisière ; vert clair sinon), puis sa forme tirée de sa valeur v
+// palmier vu du dessus : palmes qui rayonnent autour d'un cœur brun
+function makePalm(pal, rnd) {
+  const [c, g] = newSprite(), C = SPR_C, R = SPR_R, n = 7 + Math.floor(rnd() * 3), a0 = rnd() * 6.28;
+  const fronds = (dx, dy) => {
+    g.beginPath();
+    for (let i = 0; i < n; i++) {
+      const a = a0 + i / n * Math.PI * 2 + (rnd() - .5) * .2, L = R * (.85 + rnd() * .15), w = R * .2;
+      const ex = Math.cos(a), ey = Math.sin(a), nx = -ey, ny = ex, ox = C + dx * R, oy = C + dy * R;
+      g.moveTo(ox, oy);
+      g.quadraticCurveTo(ox + ex * L * .5 + nx * w, oy + ey * L * .5 + ny * w, ox + ex * L, oy + ey * L);
+      g.quadraticCurveTo(ox + ex * L * .5 - nx * w, oy + ey * L * .5 - ny * w, ox, oy);
+    }
+  };
+  fronds(.3, .38); g.fillStyle = TREE_DROP; g.fill();
+  fronds(0, 0); g.fillStyle = pal[0]; g.fill(); g.strokeStyle = TREE_EDGE; g.lineWidth = 1.4; g.stroke();
+  g.globalAlpha = .6; g.strokeStyle = pal[2]; g.lineWidth = 1; g.beginPath();
+  for (let i = 0; i < n; i++) { const a = a0 + i / n * Math.PI * 2; g.moveTo(C, C); g.lineTo(C + Math.cos(a) * R * .8, C + Math.sin(a) * R * .8); }
+  g.stroke(); g.globalAlpha = 1;
+  g.beginPath(); g.arc(C, C, R * .14, 0, Math.PI * 2); g.fillStyle = '#7a5a32'; g.fill(); g.strokeStyle = TREE_EDGE; g.stroke();
+  return c;
+}
+// rocher : bloc anguleux gris, facette éclairée au nord-ouest
+// (galet arrondi gris clair, cerné de sombre, ombre en bas à droite : comme la référence)
+function makeRock(rnd) {
+  const [c, g] = newSprite(), C = SPR_C, R = SPR_R, n = 9 + Math.floor(rnd() * 3), sq = .75 + rnd() * .25;
+  const P = Array.from({ length:n }, (_, i) => { const a = i / n * Math.PI * 2 + (rnd() - .5) * .3, r = R * (.82 + rnd() * .18); return [Math.cos(a) * r, Math.sin(a) * r * sq]; });
+  // contour arrondi : courbes passant par le milieu des côtés
+  const poly = (dx, dy, k) => {
+    g.beginPath();
+    const m = i => { const a = P[i % n], b = P[(i + 1) % n]; return [C + dx + (a[0] + b[0]) / 2 * k, C + dy + (a[1] + b[1]) / 2 * k]; };
+    g.moveTo(...m(0));
+    for (let i = 1; i <= n; i++) g.quadraticCurveTo(C + dx + P[i % n][0] * k, C + dy + P[i % n][1] * k, ...m(i));
+    g.closePath();
+  };
+  poly(R * .22, R * .26, 1); g.fillStyle = 'rgba(40,36,28,.32)'; g.fill();          // ombre portée
+  poly(0, 0, 1); g.fillStyle = '#8f8b82'; g.fill();                                  // côté ombre
+  g.save(); poly(0, 0, 1); g.clip();
+  poly(-R * .1, -R * .12, .88); g.fillStyle = '#b3aca2'; g.fill();                   // pierre
+  poly(-R * .28, -R * .3, .38); g.fillStyle = '#d2ccc0'; g.fill();                   // reflet
+  g.restore();
+  poly(0, 0, 1); g.strokeStyle = '#3f4545'; g.lineWidth = 2; g.stroke();            // contour
+  return c;
+}
+// modèles propres au biome : pour chaque essence et chaque teinte, SHAPES formes ; buissons
+// et rochers ; refaits quand le biome change
+function makeTreeSprites() {
+  const rnd = seeded(8111), look = biomeLook(), pals = look.pal;
+  treeSprites = { biome:S.biome, tree:{}, bush:[], rock:[] };
+  for (const s of ['f', 'c', 'a', 'p']) for (let t = 0; t < 3; t++) {
+    const pal = s === 'a' && !look.species.a ? ACACIA_PAL[t] : pals[t], list = treeSprites.tree[s + t] = [];
+    for (let k = 0; k < SHAPES; k++) list.push(
+      s === 'c' ? makeConifer(s === 'c' && !look.species.c ? CONIFER_PAL[t] : pal, rnd)
+      : s === 'p' ? makePalm(pal, rnd)
+      : makeSprite(pal, s === 'a' ? crown(rnd, false).map(b => ({ ...b, x:b.x * 1.05, y:b.y * .8, r:b.r * .9 })) : crown(rnd, false)));
+  }
+  for (let k = 0; k < 3; k++) treeSprites.bush.push(makeSprite(look.bushPal || pals[0], crown(rnd, true)));
+  for (let k = 0; k < 4; k++) treeSprites.rock.push(makeRock(rnd));
+}
+// modèle d'un arbre, d'un buisson ou d'un rocher : son essence, sa teinte (tone, posée par
+// classifyWoods pour la lisière ; claire sinon), puis sa forme tirée de sa valeur v
 function spriteOf(f) {
-  if (!treeSprites) makeTreeSprites();
-  const p = f.wood ? (f.tone || 1) : 0, n = f.kind === 'bush' ? 2 : SHAPES, k = Math.floor((f.v * 9973 % 1) * n);
-  return (f.kind === 'bush' ? treeSprites.bush : treeSprites.tree)[p * n + k];
+  if (!treeSprites || treeSprites.biome !== S.biome) makeTreeSprites();
+  const pickOf = list => list[Math.floor((f.v * 9973 % 1) * list.length)];
+  if (f.kind === 'rock') return pickOf(treeSprites.rock);
+  if (f.kind === 'bush') return pickOf(treeSprites.bush);
+  return pickOf(treeSprites.tree[(f.sp || 'f') + (f.wood ? (f.tone || 1) : 0)]);
 }
 /* Grandes forêts, façon carte de référence : l'intérieur du bois est un aplat sombre à
    peine texturé (quelques contours de houppiers), posé PAR-DESSUS la lisière : un cordon
    d'arbres bosselés qui dépasse de dessous le massif, tout autour (et autour des clairières). Un arbre est « de lisière » s'il a moins de 18 voisins de bois
    à moins de 2 cases (12 m) du bord du bois ; les autres forment l'intérieur, dont l'aplat
    fonce par paliers en allant vers le cœur (profondeur mesurée en cases de 6 m). */
-const FOREST_STEPS = [[2, '#557a4c'], [4, '#4b6d48'], [7, '#416146'], [11, '#385443'], [16, '#30483f']];
+const FOREST_DEPTHS = [2, 4, 7, 11, 16]; // profondeurs (cases) des paliers de couleur du biome
 const FOREST_LINE = 'rgba(18,32,20,.3)', FOREST_LIGHT = 'rgba(170,205,140,.22)';
 // grille de la trame des arbres (cases de 6 m), en tableau d'entiers : bien plus rapide
 // qu'une table de clés texte (le calcul repasse à chaque arbre abattu)
@@ -957,9 +1223,9 @@ function drawWoods(g, list, s, ox, oy) {
   g.save();
   g.fillStyle = TREE_DROP; g.fill(circles(.3, .38, 1.25, 0, inner));              // ombre du massif
   g.fillStyle = TREE_EDGE; g.fill(circles(0, 0, 1.25, Math.max(.8, s * .4), inner)); // contour du massif
-  for (const [d, col] of FOREST_STEPS) {                                          // aplat qui fonce vers le cœur
-    g.fillStyle = col; g.fill(circles(0, 0, 1.25, 0, f => f.depth >= d));
-  }
+  biomeLook().steps.forEach((col, i) => {                                         // aplat qui fonce vers le cœur
+    const d = FOREST_DEPTHS[i]; g.fillStyle = col; g.fill(circles(0, 0, 1.25, 0, f => f.depth >= d));
+  });
   if (s > .9) {                                                                    // houppiers esquissés
     g.lineWidth = 1; g.strokeStyle = FOREST_LIGHT; g.stroke(circles(-.25, -.3, .55, 0, f => f.inner && f.v < .35));
     g.strokeStyle = FOREST_LINE; g.beginPath();
@@ -969,8 +1235,10 @@ function drawWoods(g, list, s, ox, oy) {
   g.restore();
 }
 // pose un modèle : houppier de rayon r (m) centré en (X, Y) écran, à l'échelle s (px / m)
+// (vue de loin : un arbre garde au moins 2,4 px de rayon, un buisson ou un rocher 1,4 px —
+// sinon ils disparaîtraient et la carte perdrait tous ses détails)
 function stampTree(g, f, X, Y, s) {
-  const k = f.r * s / SPR_R;
+  const k = Math.max(f.r * s, f.kind === 'tree' ? 2.4 : 1.4) / SPR_R;
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
 const WATER_MARGIN = 2; // m laissés libres au bord des rivières et des lacs
@@ -1028,7 +1296,8 @@ function computeFlora() {
     const blocked = obstacleTest(polys);
     staticFlora = floraCandidates().filter(f => {
       const h = f.r * .6;
-      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && !blocked(f);
+      // (les arbres des îles sont au milieu de l'eau de la rivière : on ne les teste pas contre elle)
+      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && (f.isle || f.wet || !blocked(f)); // (cailloux de berge : à moitié dans l'eau, voulu)
     }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
     staticKey = key;
   }
@@ -1036,7 +1305,8 @@ function computeFlora() {
   // le plan) ou s'il est sous un bâtiment — plus à cause des cases
   const underHouse = obstacleTest(S.houses.map(h => { const P = corners(h); return { P, bb:bbox(P) }; }));
   const cut = new Set(S.cut), old = flora;
-  const grown = (S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', v:g.v, planted:1 }));
+  const gsp = Object.keys(biomeLook().species)[0] || 'f'; // replantés : l'essence principale du biome
+  const grown = (S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', sp:gsp, v:g.v, planted:1 }));
   const keep = f => !(cut.size && cut.has(treeKey(f))) && !underHouse(f);
   flora = staticFlora.filter(keep);                       // déjà triée du nord au sud
   if (grown.length) flora = flora.concat(grown.filter(keep)).sort((a, b) => a.y - b.y);
@@ -1071,19 +1341,27 @@ function floraImage() {
 // sol peint une fois (2 m par pixel), redessiné à l'échelle
 let groundImg = null, groundSeed = null;
 function groundImage() {
-  const key = S.landSeed + '#' + reliefKey();
+  const key = S.landSeed + '#' + S.biome + '#' + reliefKey();
   if (groundImg && groundSeed === key) return groundImg;
   groundSeed = key;
   const hg = heightGrid();
   // un pixel par point de la grille d'altitude (HG m)
   const c = document.createElement('canvas'), w = TW / HG, h = TH / HG;
   c.width = w; c.height = h;
-  const g = c.getContext('2d'), img = g.createImageData(w, h), nz = landNoise();
+  const g = c.getContext('2d'), img = g.createImageData(w, h), nz = landNoise(), look = biomeLook();
   const hex = s => { const m = s.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']; return m.slice(0, 3).map(x => parseInt(x, 16)); };
-  const A = hex(Col.grass), B = hex(Col['grass-dark']);
+  const A0 = hex(look.ground), B0 = hex(look.groundDark), Pc = look.patch ? hex(look.patch) : null;
+  // taches du biome (neige, dunes claires) : un bruit à part, au-delà du seuil patchAt
+  const pv = valueNoise(S.landSeed + 777), patchAt = look.patchAt || 2;
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     let t = (nz(x * HG + HG / 2, y * HG + HG / 2) - .38) / .3;
     t = Math.max(0, Math.min(1, t)); t = t * t * (3 - 2 * t);
+    let A = A0, B = B0;
+    if (Pc) {
+      const q = pv(x * HG / 90 + 3, y * HG / 90 + 7) * .7 + pv(x * HG / 30 + 9, y * HG / 30 + 1) * .3;
+      let u = (q - patchAt) / .04; u = Math.max(0, Math.min(1, u));
+      if (u > 0) { A = A.map((v, k) => v + (Pc[k] - v) * u); B = B.map((v, k) => v + (Pc[k] - v) * u); }
+    }
     // ombrage des pentes, lumière venant du nord-ouest (même pas que la grille d'altitude)
     const xi = Math.min(HW - 2, x), yi = Math.min(HH - 2, y);
     const dx = (hg[yi * HW + xi + 1] - hg[yi * HW + xi]) / HG, dy = (hg[(yi + 1) * HW + xi] - hg[yi * HW + xi]) / HG;
@@ -1386,21 +1664,110 @@ function crossesWallAtGates(a, b) {
    Une région = de l'herbe, de la végétation, une grande route en serpentin qui traverse
    la carte d'ouest en est par le milieu, et l'eau propre au biome (rivière, affluents,
    lacs ou mares). Tout est tiré d'une graine : même graine + même biome = même région. */
-const BIOMES = {
-  tempere: { name:'Plaine tempérée', rivers:[1, 1], tribs:[0, 0], lakes:[1, 2], lakeR:[45, 80],
-    river:{ amp:[50, 90], cycles:[1.8, 2.6], w0:10, w1:24 }, flora:{ forest:.62, dense:.6, mid:.53, sparse:.02, bush:.06 } },
-  foret:   { name:'Forêt', rivers:[1, 1], tribs:[0, 0], lakes:[1, 3], lakeR:[28, 55],
-    river:{ amp:[40, 70], cycles:[2.2, 3], w0:6, w1:14 }, flora:{ forest:.49, dense:.5, mid:.44, sparse:.08, bush:.1 } },
-  prairie: { name:'Prairie', rivers:[1, 1], tribs:[0, 0], lakes:[0, 1], lakeR:[40, 70],
-    river:{ amp:[40, 70], cycles:[1.5, 2.2], w0:12, w1:28 }, flora:{ forest:.7, dense:.68, mid:.62, sparse:.006, bush:.05 } },
-  marais:  { name:'Marais', rivers:[1, 1], tribs:[0, 0], lakes:[6, 9], lakeR:[16, 40],
-    river:{ amp:[80, 130], cycles:[3, 4.5], w0:8, w1:18 }, flora:{ forest:.66, dense:.62, mid:.54, sparse:.02, bush:.2 } },
-  lacs:    { name:'Région des lacs', rivers:[0, 1], tribs:[0, 0], lakes:[3, 5], lakeR:[65, 120],
-    river:{ amp:[40, 70], cycles:[1.8, 2.4], w0:8, w1:18 }, flora:{ forest:.62, dense:.58, mid:.5, sparse:.03, bush:.07 } },
-  aride:   { name:'Collines sèches', rivers:[0, 0], tribs:[0, 0], lakes:[0, 1], lakeR:[18, 32],
-    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ forest:.76, dense:.72, mid:.64, sparse:.012, bush:.1 } },
+/* Les 18 biomes (liste de l'utilisateur, 29/09). Chacun règle :
+   - l'eau : nombre de rivières (une au plus), leur largeur et leurs méandres, les lacs ;
+   - la végétation : seuil des grandes forêts (≥ 1 = aucune forêt), bosquets (dense/mid),
+     arbres isolés (sparse), buissons, rochers ;
+   - son aspect (look) : sol clair / foncé, taches (neige, dunes) au-delà d'un seuil de bruit,
+     eau, essences d'arbres (f feuillu, c conifère, a acacia, p palmier, avec leur part),
+     teintes des arbres [seul, lisière 1, lisière 2] et paliers de l'intérieur des forêts.
+   « tempere » est la référence validée (forêt feuillue tempérée). */
+const REF_LOOK = {
+  ground:'#dcd08a', groundDark:'#d2c57c', species:{ f:1 },
+  pal:[['#93b25c', '#b6cf80', '#5d7638'], ['#7c9e50', '#a1bf72', '#4b6530'], ['#65874a', '#8aab6a', '#3d552e']],
+  steps:['#557a4c', '#4b6d48', '#416146', '#385443', '#30483f'],
 };
+const CONIFER_PAL = [['#6f9a6a', '#93bb8a', '#46684a'], ['#56805a', '#79a079', '#365540'], ['#466e50', '#679070', '#2c4838']];
+const CONIFER_STEPS = ['#3f6450', '#375a4a', '#305044', '#29463d', '#223c36'];
+const ACACIA_PAL = [['#a3a750', '#c4c674', '#6d7034'], ['#8e9644', '#b0b666', '#5d6430'], ['#7b853e', '#9ca65c', '#4f572c']];
+const DRY_BUSH = ['#a3a06c', '#c2bf8c', '#6f6c45'];
+const NO_FOREST = { forest:2, dense:2, mid:2 };
+const BIOMES = {
+  polaire:       { name:'Inlandsis et désert polaire', rivers:[0, 0], lakes:[0, 2], lakeR:[40, 90],
+    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:0, bush:0, rocks:.004 },
+    look:{ ground:'#e9eef0', groundDark:'#d9e2e8', patch:'#f8fbfc', patchAt:.55, water:'#9dbfca', species:{} } },
+  toundra:       { name:'Toundra', rivers:[1, 1], lakes:[4, 8], lakeR:[14, 35],
+    river:{ amp:[60, 100], cycles:[2.5, 3.5], w0:5, w1:12 }, flora:{ ...NO_FOREST, dense:.66, mid:.58, sparse:.01, bush:.25, rocks:.003 },
+    look:{ ground:'#c8c6a3', groundDark:'#b8b690', patch:'#eef1ec', patchAt:.66, species:{ c:1 }, small:.6,
+      pal:CONIFER_PAL, steps:CONIFER_STEPS, bushPal:['#8f8a5a', '#aba772', '#5f5c38'] } },
+  taiga:         { name:'Taïga', rivers:[1, 1], lakes:[2, 4], lakeR:[30, 70],
+    river:{ amp:[50, 90], cycles:[2, 3], w0:8, w1:18 }, flora:{ forest:.52, dense:.6, mid:.54, sparse:.03, bush:.05 },
+    look:{ ground:'#c9cba2', groundDark:'#bcbf93', species:{ c:1 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
+  tempere:       { name:'Forêt feuillue caducifoliée tempérée', rivers:[1, 1], lakes:[1, 2], lakeR:[45, 80],
+    river:{ amp:[50, 90], cycles:[1.8, 2.6], w0:10, w1:24 }, flora:{ forest:.62, dense:.6, mid:.53, sparse:.02, bush:.06 }, look:{} },
+  prairie:       { name:'Prairie', rivers:[1, 1], lakes:[0, 1], lakeR:[40, 70],
+    river:{ amp:[40, 70], cycles:[1.5, 2.2], w0:12, w1:28 }, flora:{ forest:.72, dense:.7, mid:.64, sparse:.006, bush:.05 },
+    look:{ ground:'#dbd792', groundDark:'#cfcb85' } },
+  subtropicale:  { name:'Forêt sempervirente subtropicale', rivers:[1, 1], lakes:[1, 2], lakeR:[35, 70],
+    river:{ amp:[50, 90], cycles:[2, 2.8], w0:12, w1:26 }, flora:{ forest:.52, dense:.58, mid:.52, sparse:.03, bush:.06 },
+    look:{ ground:'#d4d08a', groundDark:'#c6c37b',
+      pal:[['#7fa84f', '#a3c771', '#4f7232'], ['#5f8f43', '#83b062', '#3b5f2c'], ['#4f7d3e', '#72a05a', '#314f28']],
+      steps:['#4a7a3f', '#3f6d39', '#356034', '#2c5430', '#24482b'] } },
+  mediterraneenne:{ name:'Forêt sempervirente méditerranéenne', rivers:[1, 1], lakes:[0, 1], lakeR:[25, 45],
+    river:{ amp:[40, 80], cycles:[2, 3], w0:5, w1:12 }, flora:{ forest:.64, dense:.62, mid:.55, sparse:.03, bush:.22 },
+    look:{ ground:'#dfcb8b', groundDark:'#d3bd7b', species:{ f:.7, c:.3 }, bushPal:['#9aa06a', '#b8bd88', '#6a6f46'],
+      pal:[['#9aa25e', '#bcc280', '#666d3a'], ['#7f8a4e', '#a2ab6e', '#525a31'], ['#6d7a45', '#8f9c64', '#46502c']],
+      steps:['#6b7644', '#606b3d', '#566137', '#4c5732', '#434d2d'] } },
+  mousson:       { name:'Forêt de mousson', rivers:[1, 1], lakes:[1, 3], lakeR:[30, 60],
+    river:{ amp:[70, 110], cycles:[2.2, 3.2], w0:12, w1:30 }, flora:{ forest:.55, dense:.6, mid:.53, sparse:.03, bush:.08 },
+    look:{ ground:'#d7c97f', groundDark:'#cabb6f',
+      pal:[['#9fb04f', '#c2cf72', '#667532'], ['#84983f', '#a8ba60', '#556430'], ['#6c8438', '#8fa656', '#46582a']],
+      steps:['#607a3a', '#566f35', '#4c6430', '#43592c', '#3a4e27'] } },
+  desert_aride:  { name:'Désert aride', rivers:[0, 0], lakes:[0, 1], lakeR:[18, 30],
+    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.0015, bush:.02, rocks:.002 },
+    look:{ ground:'#ead5a0', groundDark:'#dec48c', patch:'#f4e4bb', patchAt:.6, water:'#77a9ae', species:{ p:1 }, bushPal:DRY_BUSH } },
+  xerophyte:     { name:'Désert et broussaille xérophytes', rivers:[0, 0], lakes:[0, 0], lakeR:[18, 30],
+    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.004, bush:.18, rocks:.003 },
+    look:{ ground:'#e0c894', groundDark:'#d3b880', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+  steppe_aride:  { name:'Steppe aride', rivers:[0, 1], lakes:[0, 1], lakeR:[18, 35],
+    river:{ amp:[40, 70], cycles:[1.8, 2.6], w0:5, w1:11 }, flora:{ ...NO_FOREST, sparse:.002, bush:.08 },
+    look:{ ground:'#dccf92', groundDark:'#d0c283', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+  semi_aride:    { name:'Désert semi-aride', rivers:[0, 1], lakes:[0, 0], lakeR:[18, 30],
+    river:{ amp:[40, 70], cycles:[2, 3], w0:4, w1:9 }, flora:{ ...NO_FOREST, sparse:.003, bush:.1, rocks:.002 },
+    look:{ ground:'#e3cb96', groundDark:'#d7bc84', patch:'#ecd9ab', patchAt:.66, species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+  savane:        { name:'Savane', rivers:[1, 1], lakes:[0, 2], lakeR:[15, 35],
+    river:{ amp:[50, 90], cycles:[2, 2.8], w0:8, w1:18 }, flora:{ ...NO_FOREST, dense:.6, mid:.55, sparse:.02, bush:.05 },
+    look:{ ground:'#dfc673', groundDark:'#d2b862', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+  savane_claire: { name:'Savane et forêt claire', rivers:[1, 1], lakes:[1, 1], lakeR:[20, 40],
+    river:{ amp:[50, 90], cycles:[2, 2.8], w0:8, w1:20 }, flora:{ forest:.64, dense:.6, mid:.54, sparse:.03, bush:.06 },
+    look:{ ground:'#d9c678', groundDark:'#cbb86a', species:{ a:.5, f:.5 }, pal:ACACIA_PAL,
+      steps:['#6f7a3c', '#657036', '#5b6531', '#525b2c', '#495128'] } },
+  tropicale_cad: { name:'Forêt tropicale caducifoliée', rivers:[1, 1], lakes:[0, 2], lakeR:[25, 50],
+    river:{ amp:[60, 100], cycles:[2, 3], w0:12, w1:26 }, flora:{ forest:.55, dense:.6, mid:.53, sparse:.03, bush:.07 },
+    look:{ ground:'#d4c47b', groundDark:'#c6b56b',
+      pal:[['#a4ad4c', '#c6cd70', '#6b7330'], ['#8a9a42', '#adbd64', '#59652c'], ['#72853b', '#94a85a', '#495828']],
+      steps:['#667c38', '#5b7033', '#51652e', '#475a2a', '#3e4f26'] } },
+  tropicale:     { name:'Forêt sempervirente tropicale', rivers:[1, 1], lakes:[1, 3], lakeR:[25, 55],
+    river:{ amp:[80, 130], cycles:[2.4, 3.4], w0:14, w1:34 }, flora:{ forest:.44, dense:.55, mid:.5, sparse:.05, bush:.08 },
+    look:{ ground:'#cfd08a', groundDark:'#c0c279', species:{ f:.8, p:.2 },
+      pal:[['#5f9a4a', '#82bd6a', '#3a6a2e'], ['#4a8440', '#6aa65c', '#2e5a28'], ['#3b7038', '#5a9254', '#244b23']],
+      steps:['#356a36', '#2e5f31', '#27542c', '#214a28', '#1b3f23'] } },
+  toundra_alpine:{ name:'Toundra alpine', rivers:[1, 1], lakes:[1, 2], lakeR:[15, 30],
+    river:{ amp:[30, 60], cycles:[3, 5], w0:4, w1:9 }, flora:{ ...NO_FOREST, sparse:.004, bush:.12, rocks:.02 },
+    look:{ ground:'#cac7ae', groundDark:'#b9b69d', patch:'#f0f2f0', patchAt:.58, species:{ c:1 }, small:.6,
+      pal:CONIFER_PAL, bushPal:['#8e8d68', '#aaa983', '#606047'] } },
+  montagne:      { name:'Forêt de montagne', rivers:[1, 1], lakes:[1, 2], lakeR:[18, 40],
+    river:{ amp:[40, 80], cycles:[2.8, 4], w0:6, w1:12 }, flora:{ forest:.54, dense:.6, mid:.54, sparse:.03, bush:.06, rocks:.008 },
+    look:{ ground:'#cfcca1', groundDark:'#c0bd91', patch:'#eef0ee', patchAt:.72, species:{ c:.75, f:.25 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
+};
+for (const b of Object.values(BIOMES)) b.tribs = [0, 0]; // une seule rivière, jamais d'affluent
+/* Trois tailles de cours d'eau (demande du 29/09) : largeur à la source → à la sortie de la
+   carte (m), ampleur et nombre des méandres. Le fleuve est large, aux boucles amples et
+   lentes ; la petite rivière est étroite et très sinueuse. */
+const RIVER_CLASS = {
+  // isles : nombre d'îles [min, max] ; isleLen : longueur d'une île (m)
+  petite:  { name:'Petite rivière', w0:3,  w1:8,   amp:[30, 60],   cycles:[3, 4.5],   isles:[0, 1], isleLen:[40, 70] },
+  riviere: { name:'Rivière',        w0:10, w1:24,  amp:[50, 90],   cycles:[1.8, 2.8], isles:[1, 2], isleLen:[80, 160] },
+  fleuve:  { name:'Fleuve',         w0:68, w1:112, amp:[140, 220], cycles:[1, 1.5],   isles:[2, 4], isleLen:[300, 520], harm:.06 }, // grandes boucles lentes, sans petites ondulations
+};
+// cours d'eau par défaut de chaque biome (mode « selon le biome »)
+const BIOME_RIVER = { polaire:null, toundra:'petite', taiga:'riviere', tempere:'riviere', prairie:'riviere',
+  subtropicale:'fleuve', mediterraneenne:'petite', mousson:'fleuve', desert_aride:null, xerophyte:null,
+  steppe_aride:'petite', semi_aride:'petite', savane:'riviere', savane_claire:'riviere', tropicale_cad:'riviere',
+  tropicale:'fleuve', toundra_alpine:'petite', montagne:'petite' };
+const OLD_BIOMES = { foret:'tempere', marais:'tempere', lacs:'tempere', aride:'desert_aride' }; // anciens plans
 const biomeOf = () => BIOMES[S && S.biome] || BIOMES.tempere;
+const biomeLook = () => ({ ...REF_LOOK, ...biomeOf().look });
 const goDeg = (p, deg, len) => [round2(p[0] + Math.cos(deg * Math.PI / 180) * len), round2(p[1] + Math.sin(deg * Math.PI / 180) * len)];
 /* Grande route en serpentin : elle entre par le bord ouest vers le milieu de la hauteur et
    sort à l'est. Tronçons de 3 cases ; le cap suit une onde (amplitude 45 à 65°, longueur
@@ -1427,6 +1794,104 @@ function serpentineRoad(rnd) {
   }
   return pts;
 }
+/* Routes de formes variées (demande du 29/09) : la route entre par un bord et sort par un
+   autre — opposé ou voisin, pas forcément ouest → est — et suit une des formes :
+   - serpentin : ondule régulièrement autour de la ligne directe ;
+   - sinueuse  : dérive lentement, au gré d'un bruit ;
+   - arc       : une seule grande courbe ;
+   - droite    : presque rectiligne, légers écarts ;
+   - coudée    : deux longs tronçons de part et d'autre d'un coude.
+   Toujours des tronçons de 3 cases orientés par pas de 10° (règle du zonage). */
+const ROAD_STYLES = ['serpentin', 'sinueuse', 'arc', 'droite', 'coudee'];
+function edgePoint(edge, t) {
+  return edge === 'O' ? [0, round2(TH * t)] : edge === 'E' ? [TW, round2(TH * t)] : edge === 'N' ? [round2(TW * t), 0] : [round2(TW * t), TH];
+}
+function traceRoad(rnd, start, target, style, firstHeading = null) {
+  const A = 35 + rnd() * 25, lam = 500 + rnd() * 500, ph = rnd() * 6.28, bend = (rnd() < .5 ? -1 : 1) * (30 + rnd() * 25);
+  const drift = valueNoise(Math.floor(rnd() * 1e6)), total = segLen(start, target);
+  const elbow = [start[0] + (target[0] - start[0]) * (.35 + rnd() * .3), start[1] + (target[1] - start[1]) * (.35 + rnd() * .3)];
+  const n0 = [-(target[1] - start[1]) / total, (target[0] - start[0]) / total], eo = (rnd() - .5) * total * .5;
+  const way = style === 'coudee' ? [elbow[0] + n0[0] * eo, elbow[1] + n0[1] * eo] : null;
+  let p = start, walked = 0, last = firstHeading, passed = false, done = false, legs = 2;
+  const pts = [p];
+  const angDiff = (a, b) => ((a - b) % 360 + 540) % 360 - 180;
+  for (let k = 0; k < 600 && !done; k++) {
+    const aim = way && !passed ? way : target;
+    if (way && !passed && segLen(p, way) < 80) passed = true;
+    const base = Math.atan2(aim[1] - p[1], aim[0] - p[0]) * 180 / Math.PI, prog = Math.min(1, walked / total);
+    let off = style === 'serpentin' ? A * Math.sin(2 * Math.PI * walked / lam + ph)
+      : style === 'sinueuse' ? (drift(walked / 180, 3.3) - .5) * 130
+      : style === 'arc' ? bend * (1 - 2 * prog)
+      : style === 'droite' ? (drift(walked / 250, 7.1) - .5) * 24 : 0;
+    // à l'approche du point visé, la route se redresse vers lui (pas de crochet au bout)
+    off = Math.max(-70, Math.min(70, off)) * Math.min(1, segLen(p, aim) / 220);
+    let deg = Math.round((base + off) / 10) * 10;
+    // PAS D'ANGLE : d'un tronçon de 24 m au suivant, la route tourne de 10° au plus ; un grand
+    // virage se fait donc en courbe (90° sur ~200 m), jamais en coude
+    if (last !== null) { const d = angDiff(deg, last); if (Math.abs(d) > 10) deg = last + Math.sign(d) * 10; }
+    // route coudée ou droite : virage encore plus ample (10° tous les 48 m) — le coude
+    // devient une longue courbe
+    if (last !== null && (style === 'coudee' || style === 'droite') && deg !== last && legs < 2) deg = last;
+    legs = deg !== last ? 1 : legs + 1;
+    deg = ((deg % 360) + 360) % 360;
+    const q = goDeg(p, deg, 3 * CELL);
+    walked += 3 * CELL;
+    if (!inTerrain(q)) {
+      // sortie de la carte : la route s'arrête exactement sur le bord, dans son prolongement
+      const d = [Math.cos(deg * Math.PI / 180), Math.sin(deg * Math.PI / 180)];
+      const tx = d[0] > 1e-9 ? (TW - p[0]) / d[0] : d[0] < -1e-9 ? -p[0] / d[0] : Infinity;
+      const ty = d[1] > 1e-9 ? (TH - p[1]) / d[1] : d[1] < -1e-9 ? -p[1] / d[1] : Infinity;
+      const e = goDeg(p, deg, Math.min(tx, ty));
+      pts.push([Math.max(0, Math.min(TW, e[0])), Math.max(0, Math.min(TH, e[1]))]);
+      done = true; break;
+    }
+    if (deg === last && pts.length > 1) pts[pts.length - 1] = q; else pts.push(q);
+    p = q; last = deg;
+  }
+  if (!done) pts.push(target.slice()); // (garde-fou : ne devrait pas arriver)
+  return pts;
+}
+// la grande route traverse vraiment la région : elle passe à moins de 400 m du centre
+// (sinon on retire : pas de route qui ne fait que couper un coin de la carte)
+function mainRoad(rnd) {
+  const edges = ['O', 'E', 'N', 'S'], opp = { O:'E', E:'O', N:'S', S:'N' };
+  let best = null;
+  for (let t = 0; t < 25; t++) {
+    const a = edges[Math.floor(rnd() * 4)];
+    const side = edges.filter(e => e !== a && e !== opp[a]);
+    const b = rnd() < .6 ? opp[a] : side[Math.floor(rnd() * 2)];                  // bord opposé ou voisin
+    const start = edgePoint(a, .2 + rnd() * .6), target = edgePoint(b, .2 + rnd() * .6);
+    const style = ROAD_STYLES[Math.floor(rnd() * ROAD_STYLES.length)];
+    const inward = { O:0, E:180, N:90, S:270 }[a]; // la route entre perpendiculairement au bord
+    const pts = traceRoad(rnd, start, target, style, inward);
+    const dc = Math.min(...pts.slice(1).map((q, i) => ptSeg([TW / 2, TH / 2], pts[i], q).d));
+    // pénalités : route qui longe le bord, qui se recoupe, trop courte
+    const bad = edgeRun(pts) > 40 || selfCross(pts) || roadLen({ pts }) < 1000;
+    const score = dc + (bad ? 5000 : 0);
+    if (!best || score < best.score) best = { pts, style, edges:[a, b], dc, score };
+    if (dc < 400 && !bad) break;
+  }
+  return best;
+}
+// longueur (m) d'une route qui passe à moins de 40 m du bord de la carte, hors de ses 80
+// premiers et derniers mètres (une route doit entrer puis s'écarter du bord, pas le longer)
+function edgeRun(pts) {
+  const P = resample(pts, 4), n = P.length;
+  let run = 0;
+  for (let i = 20; i < n - 20; i++) { const [x, y] = P[i]; if (x < 40 || y < 40 || x > TW - 40 || y > TH - 40) run += 4; }
+  return run;
+}
+// la ligne se recoupe-t-elle ? (et croise-t-elle une autre ligne, hors des `skip` premiers mètres)
+function selfCross(pts) {
+  const Q = resample(pts, 8);
+  for (let i = 0; i < Q.length - 1; i++) for (let j = i + 2; j < Q.length - 1; j++) if (segCross(Q[i], Q[i + 1], Q[j], Q[j + 1])) return true;
+  return false;
+}
+function linesCross(A, B, skip) {
+  const P = resample(A, 8), Q = resample(B, 8).slice(Math.ceil(skip / 8));
+  for (let i = 0; i < P.length - 1; i++) for (let j = 0; j < Q.length - 1; j++) if (segCross(P[i], P[i + 1], Q[j], Q[j + 1])) return true;
+  return false;
+}
 const between = (rnd, [a, b]) => a + rnd() * (b - a);
 const countIn = (rnd, [a, b]) => a + Math.floor(rnd() * (b - a + 1));
 // la route et une rivière : jamais à moins de 2 m l'une de l'autre, sauf au pont (30° au moins)
@@ -1434,32 +1899,131 @@ function riverFitsRoads(rv) {
   const keep = S.rivers; S.rivers = [rv];
   const ok = S.roads.every(r => r.pts.slice(1).every((q, i) => !riverMarginIssue(r.pts[i], q, r.w)));
   S.rivers = keep;
-  return ok;
+  if (!ok) return false;
+  // ponts raisonnables : la route franchit la rivière assez en travers (37° au moins), là où
+  // elle n'est pas élargie par un méandre (au plus 1,4 fois sa largeur normale), et à plus de
+  // 60 m de tout carrefour
+  const HW = riverHW(rv), P = rv.pts, n = P.length;
+  const joints = S.roads.filter(r => r.id !== 1).map(r => r.pts[0]);
+  for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
+    const a = r.pts[k], b = r.pts[k + 1], bb = bbox([a, b]);
+    for (let i = 0; i < n - 1; i++) {
+      const c = P[i], d = P[i + 1];
+      if (Math.max(c[0], d[0]) < bb[0] || Math.min(c[0], d[0]) > bb[2] || Math.max(c[1], d[1]) < bb[1] || Math.min(c[1], d[1]) > bb[3]) continue;
+      const x = segCross(a, b, c, d);
+      if (!x) continue;
+      const L = segLen(a, b) || 1, dl = segLen(c, d) || 1;
+      const sin = Math.abs(((b[0] - a[0]) * (d[1] - c[1]) - (b[1] - a[1]) * (d[0] - c[0])) / (L * dl));
+      const base = (rv.w0 + (rv.w1 - rv.w0) * i / (n - 1)) / 2;
+      if (sin < .6 || HW[i] > base * 1.4) return false;
+      if (joints.some(j => segLen(j, x) < 60)) return false;
+    }
+  }
+  // longueur réelle de route sur l'eau : chaque passage ne dépasse pas la largeur locale de la
+  // rivière divisée par sin 37°, plus 20 m (une route ne file jamais dans le lit d'un fleuve)
+  const G = 64, grid = new Map(); // tronçons de rivière rangés par seaux de 64 m (rapide)
+  for (let i = 0; i < n - 1; i++) {
+    const m = HW[i] + 22, b0 = bbox([P[i], P[i + 1]]);
+    for (let gx = Math.floor((b0[0] - m) / G); gx <= Math.floor((b0[2] + m) / G); gx++) for (let gy = Math.floor((b0[1] - m) / G); gy <= Math.floor((b0[3] + m) / G); gy++) {
+      const key = gx + ',' + gy; if (!grid.has(key)) grid.set(key, []); grid.get(key).push(i);
+    }
+  }
+  // (même règle avec une marge de 20 m autour de l'eau : une route ne s'approche d'une rivière
+  // que pour la franchir ; elle ne la longe jamais à quelques mètres de la berge)
+  // une route et la rivière ne sortent pas de la carte au même endroit : 30 m au moins entre le
+  // bout de la route (sur le bord) et la berge
+  for (const r of S.roads) for (const e of [r.pts[0], r.pts[r.pts.length - 1]]) {
+    if (!(e[0] < 1 || e[1] < 1 || e[0] > TW - 1 || e[1] > TH - 1)) continue;
+    for (let i = 0; i < n - 1; i++) if (ptSeg(e, P[i], P[i + 1]).d < HW[i] + 30) return false;
+  }
+  // Passage dans la bande « eau + marge » : s'il traverse vraiment l'eau, il ne dépasse pas la
+  // longueur d'un pont franc ; s'il ne la traverse pas (la route frôle la rivière), il reste
+  // très court (30 m au plus)
+  for (const [margin, extra] of [[0, 20], [20, 60]]) for (const r of S.roads) {
+    const Q = resample(r.pts, 2);
+    let run = 0, maxHW = 0, crossed = false, prev = null;
+    // « traverse » = passe vraiment d'une rive à l'autre (croise l'axe de la rivière) ; une route
+    // qui entre dans l'eau sans la traverser n'a droit qu'à quelques mètres (6 m dans l'eau,
+    // 30 m dans la marge)
+    const tooLong = () => run && (crossed ? run > 2 * maxHW / .6 + extra : run > (margin ? 30 : 6));
+    for (const q of Q) {
+      let near = false, hwq = 0, cut = false;
+      for (const i of grid.get(Math.floor(q[0] / G) + ',' + Math.floor(q[1] / G)) || []) {
+        const t = ptSeg(q, P[i], P[i + 1]);
+        if (t.d < HW[i] + margin) { near = true; hwq = HW[i] + margin; }
+        if (prev && segCross(prev, q, P[i], P[i + 1])) cut = true;
+      }
+      if (near) { run += 2; maxHW = Math.max(maxHW, hwq); crossed = crossed || cut; }
+      else { if (tooLong()) return false; run = 0; maxHW = 0; crossed = false; }
+      prev = q;
+    }
+    if (tooLong()) return false;
+  }
+  return true;
 }
 function distToRoads(p) {
   let d = Infinity;
   for (const r of S.roads) { const q = r.pts; for (let i = 0; i < q.length - 1; i++) d = Math.min(d, ptSeg(p, q[i], q[i + 1]).d - r.w / 2); }
   return d;
 }
-function generateRegion(biome, seed) {
+// riverMode : 'auto' (selon le biome), 'aucun', 'petite', 'riviere' ou 'fleuve'
+function generateRegion(biome, seed, riverMode = 'auto') {
   const B = BIOMES[biome] || BIOMES.tempere, rnd = seeded(seed * 31 + 7);
-  const road = serpentineRoad(rnd);
+  const mr = mainRoad(rnd), road = mr.pts;
   S = {
     nextId:200, houses:[], walls:[], towers:[], gates:[],
     roads:[{ id:1, kind:'pave', w:CELL, pts:road }],
-    rivers:[], lakes:[], biome, landSeed:seed, reliefSeed:537,
+    rivers:[], lakes:[], biome, riverMode, landSeed:seed, reliefSeed:537, roadStyle:mr.style,
     gold:5000, cut:[], planted:[], grown:[], simTime:0,
   };
+  // une fois sur trois : un chemin empierré se détache de la grande route près du centre de la
+  // carte et part vers un autre bord (fourche)
+  const frk = seeded(seed * 7 + 11);
+  if (frk() < .35 && road.length > 6) {
+    // points de départ possibles : les sommets de la route les plus proches du centre
+    const cand = road.map((q, i) => ({ i, d:segLen(q, [TW / 2, TH / 2]) })).filter(c => c.i > 1 && c.i < road.length - 2).sort((a, b) => a.d - b.d).slice(0, 6);
+    const free = ['O', 'E', 'N', 'S'].filter(e => !mr.edges.includes(e));
+    for (let t = 0; t < 12 && cand.length && free.length; t++) {
+      const vi = cand[Math.floor(frk() * cand.length)].i;
+      const e = free[Math.floor(frk() * free.length)], target = edgePoint(e, .2 + frk() * .6);
+      // la fourche quitte franchement la route (50° à 130° de son axe), jamais presque parallèle
+      const tg = Math.atan2(road[vi + 1][1] - road[vi - 1][1], road[vi + 1][0] - road[vi - 1][0]) * 180 / Math.PI;
+      let h0 = Math.atan2(target[1] - road[vi][1], target[0] - road[vi][0]) * 180 / Math.PI;
+      const rel = ((h0 - tg) % 360 + 540) % 360 - 180, sgn = rel >= 0 ? 1 : -1;
+      if (Math.abs(rel) < 60) h0 = tg + sgn * 60; else if (Math.abs(rel) > 120) h0 = tg + sgn * 120;
+      const pts = traceRoad(frk, road[vi].slice(), target, frk() < .5 ? 'sinueuse' : 'arc', Math.round(h0 / 10) * 10);
+      // angle réel sur ses 40 premiers mètres : 45° au moins avec la grande route
+      const R40 = resample(pts, 4), q40 = R40[Math.min(R40.length - 1, 10)];
+      let a40 = Math.abs(((Math.atan2(q40[1] - pts[0][1], q40[0] - pts[0][0]) * 180 / Math.PI - tg) % 360 + 540) % 360 - 180);
+      a40 = Math.min(a40, 180 - a40);
+      // refusée si elle longe le bord, se recoupe, recoupe la grande route, est trop courte ou trop rasante
+      if (pts.length < 4 || a40 < 45 || roadLen({ pts }) < 250 || edgeRun(pts) > 40 || selfCross(pts) || linesCross(road, pts, 40)) continue;
+      S.roads.push({ id:2, kind:'gravier', w:CELL, pts });
+      break;
+    }
+  }
+  // orientation générale de la route : la rivière la croisera plutôt en travers
+  const dirRoad = [road[road.length - 1][0] - road[0][0], road[road.length - 1][1] - road[0][1]];
+  const riverNS = Math.abs(dirRoad[0]) >= Math.abs(dirRoad[1]);
+  const cls = riverMode === 'auto' ? BIOME_RIVER[biome] : riverMode === 'aucun' ? null : riverMode;
+  const RC = RIVER_CLASS[cls] || RIVER_CLASS.riviere;
   // repère du bourg : la route au milieu de la carte
-  const mid = road.reduce((b, q) => Math.abs(q[0] - TW / 2) < Math.abs(b[0] - TW / 2) ? q : b);
+  const mid = road.reduce((b, q) => segLen(q, [TW / 2, TH / 2]) < segLen(b, [TW / 2, TH / 2]) ? q : b);
   S.bourg = [[Math.round(mid[0]), Math.round(mid[1])]];
   // rivière principale, du nord au sud : elle croise la route par un pont
-  const nR = countIn(rnd, B.rivers);
+  const nAuto = countIn(rnd, B.rivers);
+  const nR = !cls ? 0 : riverMode === 'auto' ? nAuto : 1; // choix forcé : toujours un cours d'eau
   for (let k = 0; k < nR; k++) {
     for (let t = 0; t < 60; t++) {
-      const x1 = TW * (.2 + rnd() * .6), x2 = Math.max(TW * .12, Math.min(TW * .88, x1 + (rnd() - .5) * 700));
-      const rv = makeRiverPath([x1, -12], [x2, TH + 12], { amp:between(rnd, B.river.amp), cycles:between(rnd, B.river.cycles), phase:rnd() * 6.28, w0:B.river.w0, w1:B.river.w1 });
+      // du nord au sud si la route va plutôt d'ouest en est, sinon d'ouest en est
+      const u1 = .2 + rnd() * .6, du = (rnd() - .5) * .35, u2 = Math.max(.12, Math.min(.88, u1 + du));
+      const [ra, rb] = riverNS ? [[TW * u1, -12], [TW * u2, TH + 12]] : [[-12, TH * u1], [TW + 12, TH * u2]];
+      const rv = makeRiverPath(ra, rb, { amp:between(rnd, RC.amp), cycles:between(rnd, RC.cycles), phase:rnd() * 6.28, w0:RC.w0, w1:RC.w1, harm:RC.harm });
+      rv.cls = cls;
       if (!riverFitsRoads(rv) || S.rivers.some(o => riverGap(o, rv.pts.filter((_, i) => i % 5 === 0)) < 150)) continue;
+      rv.isles = placeIsles(rv, seeded(seed * 13 + 5 + k)); // îles (tirage à part : le reste de la région ne change pas)
+      // l'élargissement autour d'une île ne doit pas gêner un pont : on retire les îles fautives
+      while (rv.isles.length && !riverFitsRoads(rv)) rv.isles.pop();
       S.rivers.push(rv); break;
     }
   }
@@ -1492,7 +2056,8 @@ function generateRegion(biome, seed) {
       const c = [m + rnd() * (TW - 2 * m), m + rnd() * (TH - 2 * m)];
       if (distToRoads(c) < R * 1.3 + 25) continue;
       const lk = makeLake(round2(c[0]), round2(c[1]), R, rnd() * 6.28, rnd() * 6.28);
-      if (S.rivers.some(rv => riverGap(rv, lk.pts) < 15 + R * .2)) continue;
+      // loin des berges réelles (largeur locale, élargissements autour des îles compris)
+      if (S.rivers.some(rv => { const HW = riverHW(rv), P = rv.pts; return lk.pts.some(p => { for (let i = 0; i < P.length - 1; i += 2) if (ptSeg(p, P[i], P[Math.min(P.length - 1, i + 2)]).d - HW[i] < 20) return true; return false; }); })) continue;
       if (S.lakes.some(o => segLen(o.c, lk.c) < R * 1.3 + Math.max(...o.pts.map(q => segLen(q, o.c))) + 40)) continue;
       S.lakes.push(lk); break;
     }
@@ -1509,7 +2074,7 @@ const normalize = o => {
   for (const r of o.roads) if (OLD_KINDS[r.kind]) r.kind = OLD_KINDS[r.kind];
   for (const w of o.walls) w.w = WALL_W; // murailles : une case de large, comme les routes
   if (!o.landSeed) o.landSeed = 20260928; // graine du paysage (herbe, arbres, buissons)
-  if (!BIOMES[o.biome]) o.biome = 'tempere';
+  if (!BIOMES[o.biome]) o.biome = OLD_BIOMES[o.biome] || 'tempere';
   if (!Array.isArray(o.cut)) o.cut = [];  // arbres abattus (clés « x,y »), définitivement
   if (!Array.isArray(o.planted)) o.planted = []; // jeunes plants des forestiers
   if (!Array.isArray(o.grown)) o.grown = [];     // plants devenus arbres
@@ -1555,9 +2120,19 @@ function fitContent() {
   const bb = bbox(pts), m = houses.length ? 220 : 80;
   fit([Math.max(0, bb[0] - m), Math.max(0, bb[1] - m), Math.min(TW, bb[2] + m), Math.min(TH, bb[3] + m)]);
 }
+// zoom arrière limité : au plus loin, toute la carte tient dans la fenêtre (avec sa marge)
+const minScale = () => Math.max(.05, Math.min((W - 90) / TW, (H - 70) / TH));
+// la carte ne peut pas sortir de la fenêtre : si elle est plus petite que la fenêtre, elle
+// reste centrée ; sinon ses bords ne s'écartent pas des bords de la fenêtre (marge de 40 px)
+function clampView() {
+  const M = 40, mw = TW * view.s, mh = TH * view.s;
+  view.ox = mw + 2 * M <= W ? (W - mw) / 2 : Math.min(M, Math.max(W - M - mw, view.ox));
+  view.oy = mh + 2 * M <= H ? (H - mh) / 2 : Math.min(M, Math.max(H - M - mh, view.oy));
+}
 function zoomAt(px, py, f) {
-  const ns = Math.min(60, Math.max(.15, view.s * f)), k = ns / view.s;
+  const ns = Math.min(60, Math.max(minScale(), view.s * f)), k = ns / view.s;
   view.ox = px - (px - view.ox) * k; view.oy = py - (py - view.oy) * k; view.s = ns;
+  clampView();
   requestDraw();
 }
 function resize() {
@@ -1565,6 +2140,7 @@ function resize() {
   dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
   cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
   if (!fitted && W > 0) { fitted = true; fitContent(); }
+  else if (W > 0) { view.s = Math.max(view.s, minScale()); clampView(); } // fenêtre redimensionnée
   requestDraw();
 }
 function readColors() {
@@ -1918,7 +2494,7 @@ function makePatterns() {
   PAT.herbe = (() => {
     const c = document.createElement('canvas'); c.width = c.height = TILE;
     const g = c.getContext('2d');
-    g.strokeStyle = Col['grass-dark']; g.lineWidth = 1; g.lineCap = 'round';
+    g.strokeStyle = S ? biomeLook().groundDark : Col['grass-dark']; g.lineWidth = 1; g.lineCap = 'round';
     for (let i = 0; i < 26; i++) {
       const x = rnd() * TILE, y = rnd() * TILE, h = 2 + rnd() * 3, lean = (rnd() - .5) * 2.5;
       g.globalAlpha = .12 + rnd() * .15;
@@ -1962,11 +2538,21 @@ function smoothPts(r) {
   const key = r.id + ':' + JSON.stringify(r.pts) + ':' + S.roads.length;
   const hit = smoothCache.get(r.id);
   if (hit && hit.key === key) return hit.P;
-  const P = r.pts, out = [P[0]];
-  let run = [P[0]];
-  for (let k = 1; k < P.length; k++) {
-    run.push(P[k]);
-    if (k === P.length - 1 || isJunction(r, P[k])) { out.push(...chaikin(run).slice(1)); run = [P[k]]; }
+  /* Tout le tracé est lissé d'un bout à l'autre (seuls ses deux bouts restent fixes) : un
+     embranchement ne casse plus la courbe de la route principale. Un bout posé sur une autre
+     route (départ d'une fourche, raccord) est ensuite recalé sur la courbe lissée de celle-ci,
+     pour que les deux chaussées se rejoignent exactement. */
+  // (le tracé est d'abord redécoupé en pas de 24 m : un long tronçon droit n'étire plus
+  // l'arrondi sur des centaines de mètres, chaque virage s'arrondit sur place)
+  const out = chaikin(resample(r.pts, 24)).slice();
+  for (const end of [0, out.length - 1]) {
+    const v = r.pts[end === 0 ? 0 : r.pts.length - 1];
+    const o = S.roads.find(o => o !== r && o.pts.slice(1).some((b, k) => ptSeg(v, o.pts[k], b).d < 1));
+    if (!o) continue;
+    const C = chaikin(resample(o.pts, 24));
+    let best = null, bd = Infinity;
+    for (let k = 0; k < C.length - 1; k++) { const t = ptSeg(v, C[k], C[k + 1]); if (t.d < bd) { bd = t.d; best = t.q; } }
+    if (best && bd < 12) out[end] = [best[0], best[1]];
   }
   smoothCache.set(r.id, { key, P:out });
   return out;
@@ -1994,15 +2580,55 @@ function strokeRoad(r, lw, color) {
   ctx.stroke(c.path);
   ctx.restore();
 }
+/* Chaussée « imparfaite », comme la carte de référence : dessinée en disques serrés le long
+   du tracé lissé, avec une largeur qui varie (lente ondulation ±15 %, petites irrégularités
+   ±5 %), un axe qui louvoie d'un demi-mètre, et un élargissement aux carrefours. Le tracé
+   logique (zonage, 8 m d'emprise) ne change pas : seule la chaussée dessinée varie. */
+const roadDiscCache = new WeakMap();
+function roadDiscs(r) {
+  const P = smoothPts(r), hit = roadDiscCache.get(r);
+  if (hit && hit.P === P && hit.n === S.roads.length) return hit.d;
+  const rnd = seeded(Math.round(Math.abs(P[0][0] * 17 + P[0][1] * 5)) + r.id * 101), ph = [rnd(), rnd(), rnd(), rnd()].map(v => v * 6.28);
+  const base = roadType(r).surf / 2, d = [];
+  // carrefours : bouts d'autres routes posés sur celle-ci, et ses propres bouts posés sur une autre
+  const joints = [];
+  for (const o of S.roads) if (o !== r) for (const e of [o.pts[0], o.pts[o.pts.length - 1]]) if (r.pts.slice(1).some((b, k) => ptSeg(e, r.pts[k], b).d < 1)) joints.push(e);
+  for (const e of [r.pts[0], r.pts[r.pts.length - 1]]) if (S.roads.some(o => o !== r && o.pts.slice(1).some((b, k) => ptSeg(e, o.pts[k], b).d < 1))) joints.push(e);
+  let walked = 0;
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i], b = P[i + 1], L = segLen(a, b), n = Math.max(1, Math.ceil(L / .8));
+    const nx = -(b[1] - a[1]) / (L || 1), ny = (b[0] - a[0]) / (L || 1);
+    for (let k = 0; k < n; k++) {
+      const t = k / n, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, w = walked + L * t;
+      let hw = base * (1 + .15 * Math.sin(w / 140 * 6.28 + ph[0]) + .07 * Math.sin(w / 23 * 6.28 + ph[1]) + .05 * Math.sin(w / 7 * 6.28 + ph[2]) + .035 * Math.sin(w / 2.9 * 6.28 + ph[3] * 2));
+      for (const j of joints) { const dj = segLen([x, y], j); if (dj < 30) hw *= 1 + .45 * Math.exp(-((dj / 11) ** 2)); }
+      const side = .5 * Math.sin(w / 61 * 6.28 + ph[3]) + .18 * Math.sin(w / 4.3 * 6.28 + ph[1] * 3); // axe qui louvoie, bords inégaux
+      d.push([x + nx * side, y + ny * side, hw]);
+    }
+    walked += L;
+  }
+  const e = P[P.length - 1]; d.push([e[0], e[1], base]);
+  roadDiscCache.set(r, { P, n:S.roads.length, d });
+  return d;
+}
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
   const rank = r => ROADS.indexOf(roadType(r));
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
-  alignPatterns();
-  // emprise d'une case de large : bas-côté, puis chaussée au centre (virages arrondis)
-  for (const r of S.roads) strokeRoad(r, r.w * s, Col.verge);
-  for (const r of bySurf) strokeRoad(r, roadType(r).surf * s + 2.5, roadCols(r)[1]);
-  for (const r of bySurf) strokeRoad(r, roadType(r).surf * s, roadCols(r)[0]);
+  const [wx0, wy0] = toW(-20, -20), [wx1, wy1] = toW(W + 20, H + 20);
+  const discs = (r, grow) => {
+    const path = new Path2D();
+    for (const [x, y, rr] of roadDiscs(r)) {
+      if (x + rr < wx0 || x - rr > wx1 || y + rr < wy0 || y - rr > wy1) continue;
+      const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(rr * s, 1.8) + grow; // (au moins 3,6 px de large, même de loin)
+      path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
+    }
+    return path;
+  };
+  // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
+  // les chaussées se fondent sans trait
+  for (const r of bySurf) { ctx.fillStyle = roadCols(r)[1]; ctx.fill(discs(r, Math.max(.8, Math.min(1.4, s * .4)))); }
+  for (const r of bySurf) { ctx.fillStyle = roadCols(r)[0]; ctx.fill(discs(r, 0)); }
   for (const r of S.roads) {
     const isSel = sel && sel.type === 'road' && sel.id === r.id, isHov = hover && hover.type === 'road' && hover.id === r.id;
     if (!isSel && !isHov) continue;
@@ -2425,20 +3051,44 @@ function drawWater() {
      angles adoucis. Berges d'abord (disques un peu plus grands, couleur de berge), puis
      toute l'eau par-dessus : aucun trait ne traverse une confluence. */
   const [wx0, wy0] = toW(-30, -30), [wx1, wy1] = toW(W + 30, H + 30), edge = 1.5;
-  const discs = grow => {
+  const discs = (grow, k = 1) => {
     const path = new Path2D();
-    for (const rv of S.rivers) for (const [x, y, r] of riverDiscs(rv)) {
+    for (const rv of S.rivers) for (const [x, y, r] of bandDiscs(rv, k)) {
       if (x + r < wx0 || x - r > wx1 || y + r < wy0 || y - r > wy1) continue;
-      const X = x * s + view.ox, Y = y * s + view.oy, R = r * s + grow;
+      const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(r * s, 1.3) + grow; // (petite rivière visible même de loin)
       path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
     }
     return path;
   };
   ctx.fillStyle = Col['water-edge']; ctx.fill(discs(edge));
   ctx.lineWidth = edge * 2;
-  for (const lk of S.lakes) { shape(lk.pts, true); ctx.stroke(); }
-  ctx.fillStyle = Col.water; ctx.fill(discs(0));
-  for (const lk of S.lakes) { shape(lk.pts, true); ctx.fill(); }
+  for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.stroke(); }
+  /* Eau en dégradé : claire au bord (hauts-fonds), de plus en plus foncée vers le milieu
+     (chenal, fond du lac). Six bandes emboîtées : le cours d'eau à 100 %, 85 %, 70 %… de sa
+     largeur, et chaque lac réduit vers son centre, chacune un peu plus foncée. */
+  const water = biomeLook().water || Col.water; // eau propre au biome (glacée, oasis…)
+  // liseré presque blanc juste à l'intérieur de la berge (écume, comme la carte de référence),
+  // puis le dégradé qui part un peu en retrait
+  const foam = Math.max(1.2, Math.min(3, s * .9));
+  ctx.fillStyle = WATER_FOAM; ctx.fill(discs(0));
+  // eau d'une seule teinte (dégradé retiré à la demande de l'utilisateur, 29/09)
+  ctx.fillStyle = water;
+  ctx.fill(discs(-foam));
+  for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.fill(); }
+  for (const lk of S.lakes) { // lacs : le même liseré, tracé à l'intérieur du bord, puis la berge sombre
+    ctx.save(); shape(lakeShape(lk), true); ctx.clip();
+    ctx.strokeStyle = WATER_FOAM; ctx.lineWidth = foam * 2 + edge * 2; ctx.stroke(); ctx.restore();
+    shape(lakeShape(lk), true); ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = edge * 2; ctx.stroke();
+  }
+  // îles : berge sombre, grève de sable, puis le sol du biome au cœur de l'île
+  const look = biomeLook();
+  for (const rv of S.rivers) for (const is of riverIsles(rv)) {
+    if (is.bb[2] < wx0 || is.bb[0] > wx1 || is.bb[3] < wy0 || is.bb[1] > wy1) continue;
+    shape(is.P, true); ctx.lineWidth = edge * 2; ctx.stroke();
+    ctx.fillStyle = '#e4d7a6'; ctx.fill();
+    shape(is.inner, true); // cœur herbeux : toujours à l'intérieur de l'île, même courbe
+    ctx.fillStyle = look.ground; ctx.fill();
+  }
   // fil du courant
   if (s > 1.5) {
     ctx.setLineDash([6, 10]); ctx.globalAlpha = .45; ctx.lineWidth = 1;
@@ -2450,39 +3100,91 @@ function drawWater() {
 // pont : parapets de part et d'autre de la chaussée, sur toute la traversée de la rivière
 // les parapets ne sont recalculés que si routes ou rivières changent (avant : à chaque image,
 // des centaines de milliers de tests de croisement)
-let bridgeCache = { key:null, segs:[] };
-function bridgeSegs() {
-  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined])]);
-  if (bridgeCache.key === key) return bridgeCache.segs;
-  const segs = [];
+/* Ponts en pierre (demande du 30/09) : un tablier droit dans l'axe de la route au point de
+   traversée, un peu plus long que la rivière n'est large à cet endroit (largeur réelle,
+   divisée par le sinus de l'angle de traversée, plus 3,5 m de chaque côté pour poser le pont
+   sur les berges). Calculés une fois, refaits seulement si routes ou rivières changent. */
+let bridgeCache = { key:null, list:[] };
+function bridges() {
+  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined, r.isles])]);
+  if (bridgeCache.key === key) return bridgeCache.list;
+  const list = [];
   for (const river of S.rivers) {
-    const rv = river.pts, rbb = rv.slice(1).map((q, i) => bbox([rv[i], q]));
+    const rv = river.pts, HW = riverHW(river), rbb = rv.slice(1).map((q, i) => bbox([rv[i], q]));
     for (const r of S.roads) { const RP = smoothPts(r); for (let k = 0; k < RP.length - 1; k++) {
-      const a = RP[k], b = RP[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]], sb = bbox([a, b]);
+      const a = RP[k], b = RP[k+1], sb = bbox([a, b]);
       for (let i = 0; i < rv.length - 1; i++) {
         if (!(sb[0] <= rbb[i][2] && rbb[i][0] <= sb[2] && sb[1] <= rbb[i][3] && rbb[i][1] <= sb[3])) continue;
         const p = segCross(a, b, rv[i], rv[i+1]);
         if (!p) continue;
-        const rw = 2 * riverHW(river)[i];
-        const d = [rv[i+1][0] - rv[i][0], rv[i+1][1] - rv[i][1]], dl = Math.hypot(...d) || 1;
-        const sin = Math.max(.3, Math.abs(u[0] * d[1] - u[1] * d[0]) / dl);
-        const half = rw / 2 / sin + 2, off = roadType(r).surf / 2 + .5;
-        for (const side of [1, -1]) segs.push([
-          [p[0] - u[0] * half + n[0] * off * side, p[1] - u[1] * half + n[1] * off * side],
-          [p[0] + u[0] * half + n[0] * off * side, p[1] + u[1] * half + n[1] * off * side]]);
+        // axe du pont : la direction de la route sur ±12 m autour du point de traversée
+        const a2 = RP[Math.max(0, k - 12)], b2 = RP[Math.min(RP.length - 1, k + 13)], L = segLen(a2, b2) || 1;
+        const u = [(b2[0] - a2[0]) / L, (b2[1] - a2[1]) / L], n = [-u[1], u[0]];
+        /* Longueur : on mesure, le long des DEUX bords du pont (et de son axe), jusqu'où l'on
+           est au-dessus de l'eau — en biais, un bord de la route atteint la berge bien plus
+           loin que l'axe. Le pont va jusqu'au point le plus éloigné, + 3,5 m sur la berge. */
+        const w = roadType(r).surf / 2 + 1.2, i0 = Math.max(0, i - 60), i1 = Math.min(rv.length - 2, i + 60);
+        const wet = q => { for (let j = i0; j <= i1; j++) if (ptSeg(q, rv[j], rv[j + 1]).d < HW[j]) return true; return false; };
+        const reach = { '-1':0, '1':0 };
+        for (const t of [-w, 0, w]) for (const e of [-1, 1]) {
+          let l = 0;
+          while (l < 400 && wet([p[0] + u[0] * l * e + n[0] * t, p[1] + u[1] * l * e + n[1] * t])) l += .5;
+          reach[e] = Math.max(reach[e], l);
+        }
+        // chaque bout va jusqu'à sa propre berge (le pont n'est pas forcément centré sur l'axe
+        // de la rivière)
+        const hf = reach[1] + 3.5, hb = reach[-1] + 3.5, sh = (hf - hb) / 2;
+        list.push({ c:[p[0] + u[0] * sh, p[1] + u[1] * sh], u, n, half:(hf + hb) / 2, w });
       }
     } }
   }
-  bridgeCache = { key, segs };
-  return segs;
+  bridgeCache = { key, list };
+  return list;
 }
+// (compatibilité : les deux parapets de chaque pont, en segments)
+const bridgeSegs = () => bridges().flatMap(b => [1, -1].map(sd => [
+  [b.c[0] - b.u[0] * b.half + b.n[0] * b.w * sd, b.c[1] - b.u[1] * b.half + b.n[1] * b.w * sd],
+  [b.c[0] + b.u[0] * b.half + b.n[0] * b.w * sd, b.c[1] + b.u[1] * b.half + b.n[1] * b.w * sd]]));
+const BRIDGE = { deck:'#bdb6a8', course:'rgba(120,112,98,.45)', wall:'#a39c8e', joint:'rgba(63,69,69,.55)', edge:'#3f4545', shadow:'rgba(28,40,44,.32)' };
 function drawBridges() {
-  const segs = bridgeSegs();
-  if (!segs.length) return;
-  ctx.strokeStyle = Col.bridge; ctx.lineWidth = Math.max(1.5, .9 * view.s); ctx.lineCap = 'butt';
-  ctx.beginPath();
-  for (const [q0, q1] of segs) { ctx.moveTo(...toS(...q0)); ctx.lineTo(...toS(...q1)); }
-  ctx.stroke();
+  const list = bridges();
+  if (!list.length) return;
+  const s = view.s, lw = Math.max(1, Math.min(1.6, s * .35));
+  // point du pont : l le long de l'axe (−half … half), t en travers (−w … w)
+  const at = (b, l, t) => toS(b.c[0] + b.u[0] * l + b.n[0] * t, b.c[1] + b.u[1] * l + b.n[1] * t);
+  const quad = (b, l0, t0, l1, t1, dl = 0, dt = 0) => {
+    ctx.beginPath();
+    for (const [l, t] of [[l0, t0], [l1, t0], [l1, t1], [l0, t1]]) { const [X, Y] = at(b, l + dl, t + dt); ctx.lineTo(X, Y); }
+    ctx.closePath();
+  };
+  for (const b of list) {
+    const H = b.half, w = b.w, pw = .8; // pw : épaisseur d'un parapet (m)
+    // ombre portée sur l'eau (vers le sud-est)
+    const sh = [1.6, 2.2], shl = sh[0] * b.u[0] + sh[1] * b.u[1], sht = sh[0] * b.n[0] + sh[1] * b.n[1];
+    quad(b, -H + 3, -w, H - 3, w, shl, sht); ctx.fillStyle = BRIDGE.shadow; ctx.fill();
+    // culées : les bouts du pont s'évasent sur les berges
+    for (const e of [-1, 1]) {
+      ctx.beginPath();
+      for (const [l, t] of [[e * (H - 3), -w], [e * H, -w - 1.6], [e * H, w + 1.6], [e * (H - 3), w]]) { const [X, Y] = at(b, l, t); ctx.lineTo(X, Y); }
+      ctx.closePath(); ctx.fillStyle = BRIDGE.wall; ctx.fill(); ctx.strokeStyle = BRIDGE.edge; ctx.lineWidth = lw; ctx.stroke();
+    }
+    // tablier en pierre, et ses rangs de pavés (visibles en zoomant)
+    quad(b, -H, -w, H, w); ctx.fillStyle = BRIDGE.deck; ctx.fill(); ctx.strokeStyle = BRIDGE.edge; ctx.lineWidth = lw; ctx.stroke();
+    if (s > 2) {
+      ctx.strokeStyle = BRIDGE.course; ctx.lineWidth = 1; ctx.beginPath();
+      for (let l = -H + 1.2; l < H; l += 1.2) { const [X0, Y0] = at(b, l, -w + pw), [X1, Y1] = at(b, l, w - pw); ctx.moveTo(X0, Y0); ctx.lineTo(X1, Y1); }
+      ctx.stroke();
+    }
+    // parapets en blocs, avec leurs joints
+    for (const sd of [-1, 1]) {
+      quad(b, -H, sd * w, H, sd * (w - pw)); ctx.fillStyle = BRIDGE.wall; ctx.fill(); ctx.strokeStyle = BRIDGE.edge; ctx.lineWidth = lw; ctx.stroke();
+      if (s > 1.5) {
+        ctx.strokeStyle = BRIDGE.joint; ctx.lineWidth = 1; ctx.beginPath();
+        for (let l = -H + 1.8; l < H; l += 1.8) { const [X0, Y0] = at(b, l, sd * w), [X1, Y1] = at(b, l, sd * (w - pw)); ctx.moveTo(X0, Y0); ctx.lineTo(X1, Y1); }
+        ctx.stroke();
+      }
+    }
+  }
 }
 /* ---------- végétation en tuiles (anti-lag) ----------
    Des dizaines de milliers d'arbres ne sont plus redessinés à chaque image : la couche
@@ -2491,7 +3193,7 @@ function drawBridges() {
    ou zoomer ne fait que recopier des images ; une tuile n'est repeinte que si un arbre
    change dessous (coupe, pousse, nouveau bâtiment). Trois tuiles au plus sont peintes par
    image ; en attendant, la vue de loin (1 px/m) bouche le trou. */
-const TILE_PX = 512, TILE_LEVELS = [2, 4, 8, 16], TILE_MAX = 160, TILE_BUDGET = 3;
+const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16], TILE_MAX = 160, TILE_BUDGET = 3; // (0,5 et 1 px/m : vue de loin, détaillée elle aussi)
 const tiles = new Map();
 let floraIdx = null, tileClock = 0;
 // index des arbres par seaux de 64 m (chaque seau garde l'ordre nord → sud)
@@ -2528,7 +3230,8 @@ function renderTile(L, i, j) {
 function drawFlora() {
   const s = view.s, eff = s * dpr, [tx, ty] = toS(0, 0);
   ctx.imageSmoothingEnabled = true;
-  if (s < 1.3) { ctx.drawImage(floraImage(), tx, ty, TW * s, TH * s); return; } // de loin : image pré-dessinée
+  // (plus d'image unique floue pour la vue de loin : les tuiles à 0,5 et 1 px/m gardent les
+  // détails — arbres, bosquets, rochers restent visibles)
   const [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
   if (eff > 16) { // très près : peu d'arbres visibles, dessinés directement
     const list = floraNear(wx0 - 40, wy0 - 40, wx1 + 40, wy1 + 40);
@@ -2617,6 +3320,7 @@ function drawFrame() {
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(groundImage(), tx, ty, TW*s, TH*s);
   alignPatterns();
+  if (PAT.biome !== S.biome) { makePatterns(); PAT.biome = S.biome; } // brins aux couleurs du biome
   if (s > 3 && PAT.herbe) { // brins d'herbe : seulement sur la partie visible du terrain
     const x0 = Math.max(tx, 0), y0 = Math.max(ty, 0), x1 = Math.min(tx + TW*s, W), y1 = Math.min(ty + TH*s, H);
     if (x1 > x0 && y1 > y0) { ctx.fillStyle = PAT.herbe; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); }
@@ -2803,8 +3507,13 @@ function drawDraft() {
   }
   if (!draft) {
     // accroches visibles tant qu'aucun tracé n'est commencé
+    // (vue de loin : les points de milieu de case, tous les 8 m, formeraient un trait orange
+    // continu qui cache la carte — on ne montre alors que les bouts et les portes)
     ctx.fillStyle = Col.accent; ctx.globalAlpha = .7;
+    const [ax0, ay0] = toW(0, 0), [ax1, ay1] = toW(W, H);
     for (const a of isWall ? Z.wallAnchors : Z.anchors) {
+      if (a.kind === 'anchor' && view.s < 1.5) continue;
+      if (a.pt[0] < ax0 || a.pt[0] > ax1 || a.pt[1] < ay0 || a.pt[1] > ay1) continue;
       const [X, Y] = toS(...a.pt);
       ctx.beginPath(); ctx.arc(X, Y, a.kind === 'gate' ? 6 : a.kind === 'end' ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
     }
@@ -3130,7 +3839,7 @@ cv.addEventListener('pointermove', e => {
     if (pointers.size < 2) return;
     const n = pinchState();
     zoomAt(n.cx, n.cy, n.d / pinch.d);
-    view.ox += n.cx - pinch.cx; view.oy += n.cy - pinch.cy;
+    view.ox += n.cx - pinch.cx; view.oy += n.cy - pinch.cy; clampView();
     pinch = n; return;
   }
   cursor = toW(px, py);
@@ -3143,7 +3852,7 @@ cv.addEventListener('pointermove', e => {
   }
   if (drag.kind === 'tap' && Math.hypot(px - drag.sx, py - drag.sy) > 5) drag.kind = 'pan';
   if (drag.kind === 'pan') {
-    view.ox = drag.ox + px - drag.sx; view.oy = drag.oy + py - drag.sy; cv.style.cursor = 'grabbing';
+    view.ox = drag.ox + px - drag.sx; view.oy = drag.oy + py - drag.sy; clampView(); cv.style.cursor = 'grabbing';
   } else if (drag.kind === 'house' && Math.hypot(px - drag.sx, py - drag.sy) > 5) {
     const h = findById('house', drag.id);
     drag.preview = placeAt(cursor, h.f, h.d, h.id, !buildingOf(h) || buildingOf(h).turn);
@@ -3342,11 +4051,15 @@ $('load-old').addEventListener('click', () => {
 });
 $('biome').innerHTML = Object.entries(BIOMES).map(([k, b]) => `<option value="${k}">${b.name}</option>`).join('');
 $('biome').value = S.biome;
+$('river-mode').value = S.riverMode || 'auto';
 const newRegion = (biome, seed) => {
-  commit(); generateRegion(biome, seed); sel = null; draft = null; changed(true); fit();
-  flash(`${BIOMES[biome].name} : nouvelle région. Ctrl+Z pour revenir à la précédente`);
+  const mode = $('river-mode').value;
+  commit(); generateRegion(biome, seed, mode); sel = null; draft = null; changed(true); fit();
+  const rv = S.rivers[0], what = rv ? RIVER_CLASS[rv.cls].name.toLowerCase() : 'sans cours d\'eau';
+  flash(`${BIOMES[biome].name} (${what}) : nouvelle région. Ctrl+Z pour revenir à la précédente`);
 };
 $('biome').addEventListener('change', e => newRegion(e.target.value, S.landSeed));
+$('river-mode').addEventListener('change', () => newRegion($('biome').value, S.landSeed)); // même région, autre cours d'eau
 $('new-region').addEventListener('click', () => newRegion($('biome').value, 1 + Math.floor(Math.random() * 2147483000)));
 $('undo').addEventListener('click', undo);
 $('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
