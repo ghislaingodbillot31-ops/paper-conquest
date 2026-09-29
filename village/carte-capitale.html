@@ -1,4 +1,4 @@
-<title>Village par zonage</title>
+<title>Carte de la capitale</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -8,29 +8,23 @@
   --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
   --zone:#3c8a5c; --zone-fill:rgba(255,252,232,.30); --zone-line:rgba(255,253,240,.9); --verge:transparent;
   --house:#8b8869; --house-edge:#585840; --roof-line:rgba(88,88,64,.5);
-  --earth:#d3c9a3; --earth-edge:#c7bc94; --gravel:#d8d3b5; --gravel-edge:#cac4a4; --paving:#ddd8bb; --paving-edge:#ceC8a8;
+  --earth:#c9bd98; --earth-edge:#8e8455; --gravel:#d3cbb0; --gravel-edge:#8e8455; --paving:#cfc6a7; --paving-edge:#8e8455;
   --wall:#a39b8b; --wall-edge:#3f3a32;
   --water:#adc6cb; --water-edge:#5f6559; --bridge:#585840;
-  --grass:#bfc192; --grass-dark:#adb282; --tree:#647851; --tree-dark:#56694a; --bush:#7e8a5e;
+  --grass:#dcd08a; --grass-dark:#d2c57c; --tree:#647851; --tree-dark:#56694a; --bush:#7e8a5e;
   --contour:#5b4a2c;
   --f-meadow:#abb686; --f-wheat:#d8cc98; --f-plough:#c0a47f; --f-fallow:#cbc8a3; --f-alfalfa:#9dac7b; --f-forest:#7d8a60; --parcel-edge:#77745a; --veil:rgba(58,52,38,.26); --stall-a:#b0654b; --stall-b:#c7a25a; --tavern:#b88a5c; --church:#a98c64; --ore-iron:#9a6a55; --ore-clay:#c49a6a; --f-field:#cdb873; --f-pasture:#9fb277; --sheep:#f4f0e6;
   --accent:#d2602a; --bad:#c23b30; --shadow:rgba(40,48,36,.20);
   --btn:#fbfcfa; --btn-on:#1e3a4c; --btn-on-ink:#f5f7f2;
   color-scheme:light;
 }
+/* thème sombre : seulement l'interface — la carte garde ses couleurs de carte peinte */
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
     --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
     --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
-    --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45); --verge:#34402e;
-    --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
-    --earth:#6e5a42; --earth-edge:#a38a68; --gravel:#66625a; --gravel-edge:#a29d90; --paving:#57544f; --paving-edge:#8e8980;
-    --wall:#7a7468; --wall-edge:#d9d2c3;
-    --water:#1f4a5e; --water-edge:#5d9dbd; --bridge:#b89a70;
-    --grass:#343a2c; --grass-dark:#2a3024; --tree:#4b5a3a; --tree-dark:#2c3524; --bush:#5a6746;
-    --contour:#c9b98f;
-    --f-meadow:#39422f; --f-wheat:#575034; --f-plough:#4b3d2e; --f-fallow:#474637; --f-alfalfa:#313d2a; --f-forest:#26301f; --parcel-edge:#7b7a60; --veil:rgba(0,0,0,.42); --stall-a:#8a4f3c; --stall-b:#8f7440; --tavern:#8a6844; --church:#7d6648; --ore-iron:#6e4a3c; --ore-clay:#8a6a44; --f-field:#6a5e34; --f-pasture:#3d4a2e; --sheep:#d9d4c7;
-    --accent:#f08a4c; --bad:#ef5a4c; --shadow:rgba(0,0,0,.45);
+    --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45);
+    --accent:#f08a4c; --bad:#ef5a4c;
     --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
     color-scheme:dark;
   }
@@ -38,15 +32,8 @@
 :root[data-theme="dark"]{
   --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
   --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
-  --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45); --verge:#34402e;
-  --house:#8f7751; --house-edge:#ecdcb9; --roof-line:rgba(240,226,196,.35);
-  --earth:#6e5a42; --earth-edge:#a38a68; --gravel:#66625a; --gravel-edge:#a29d90; --paving:#57544f; --paving-edge:#8e8980;
-  --wall:#7a7468; --wall-edge:#d9d2c3;
-  --water:#1f4a5e; --water-edge:#5d9dbd; --bridge:#b89a70;
-  --grass:#343a2c; --grass-dark:#2a3024; --tree:#4b5a3a; --tree-dark:#2c3524; --bush:#5a6746;
-  --contour:#c9b98f;
-  --f-meadow:#39422f; --f-wheat:#575034; --f-plough:#4b3d2e; --f-fallow:#474637; --f-alfalfa:#313d2a; --f-forest:#26301f; --parcel-edge:#7b7a60; --veil:rgba(0,0,0,.42); --stall-a:#8a4f3c; --stall-b:#8f7440; --tavern:#8a6844; --church:#7d6648; --ore-iron:#6e4a3c; --ore-clay:#8a6a44; --f-field:#6a5e34; --f-pasture:#3d4a2e; --sheep:#d9d4c7;
-  --accent:#f08a4c; --bad:#ef5a4c; --shadow:rgba(0,0,0,.45);
+  --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45);
+  --accent:#f08a4c; --bad:#ef5a4c;
   --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
   color-scheme:dark;
 }
@@ -317,7 +304,7 @@ const PRESETS = [
   { id:'grande_maison', name:'Maison avec cour et jardin', f:3, d:3, cap:6, turn:false, yard:true,
     use:"Maison de 2 × 2 cases avec jardin latéral et arrière-cour (jardin, verger ou élevage) : 6 habitants au plus" },
   /* ressources : posés sur les cases à bâtir comme les autres, mais il leur faut ce
-     qu'ils exploitent à portée (forêt, gisement) ; radius = zone de travail */
+     qu'ils exploitent à portée (forêt) ; radius = zone de travail */
   { id:'camp_bucherons', zone:true, cat:'res', name:'Camp de bûcherons', f:2, d:2, turn:true, radius:70, need:'forest',
     use:"Abat les arbres pour produire du bois d'œuvre" },
   { id:'loge_bucheron', zone:true,  cat:'res', name:'Loge de bûcheron',  f:1, d:2, turn:true, radius:60, need:'forest',
@@ -330,25 +317,20 @@ const PRESETS = [
     use:'Récolte des baies, puis des herbes une fois améliorée' },
   { id:'rucher', zone:true,         cat:'res', name:'Rucher',            f:1, d:1, turn:true, radius:50, limit:2,
     use:'Produit du miel (2 ruchers au plus par région)' },
-  { id:'tailleur_pierre', zone:true, cat:'res', name:'Camp de tailleur de pierre', f:2, d:2, turn:true, radius:40, need:'pierre',
-    use:'Extrait la pierre des gisements' },
-  { id:'fosse_miniere', zone:true, cat:'res', name:'Fosse minière',     f:2, d:2, turn:true, radius:40, need:'minerai',
+  { id:'tailleur_pierre', zone:true, cat:'res', name:'Camp de tailleur de pierre', f:2, d:2, turn:true, radius:40,
+    use:'Extrait la pierre dans sa zone de travail' },
+  { id:'fosse_miniere', zone:true, cat:'res', name:'Fosse minière',     f:2, d:2, turn:true, radius:40,
     use:"Extrait le minerai de fer et l'argile ; améliorable en mine profonde" },
 ];
-// forêt et gisements autour d'un point : ce dont un bâtiment de ressources a besoin
-const DEPOSIT_REACH = 40; // un gisement doit être à moins de 40 m du bâtiment
-const nearDeposit = (x, y, kinds) => deposits.filter(d => kinds.includes(d.kind)).map(d => ({ d, dist:segLen([x, y], [d.x, d.y]) - d.r })).sort((a, b) => a.dist - b.dist)[0] || null;
 /* Zone de travail : un cercle que le joueur pose après avoir construit le bâtiment
    (sélection → « Définir la zone de travail »). Rayon réglable jusqu'au maximum du
    bâtiment ; centre à moins de ZONE_REACH m du bâtiment ; la zone doit
-   contenir ce que le bâtiment exploite (forêt, gisement). */
+   contenir ce que le bâtiment exploite (forêt). */
 const ZONE_REACH = 250, ZONE_MIN_R = 20, MIN_TREES = 10; // une zone de bûcheron/chasse/cueillette : 10 arbres au moins
 function zoneIssue(b, h, z) {
   if (!inTerrain([z.x, z.y])) return 'Hors du terrain';
   if (segLen([z.x, z.y], [h.x, h.y]) > ZONE_REACH) return `Trop loin du bâtiment (${ZONE_REACH} m au plus)`;
   if (b.need === 'forest') { const n = treesInZone(z).length; if (n < MIN_TREES) return `Seulement ${n} arbre${n > 1 ? 's' : ''} dans la zone (${MIN_TREES} au moins)`; }
-  if (b.need === 'pierre' && !deposits.some(d => d.kind === 'pierre' && segLen([d.x, d.y], [z.x, z.y]) < z.r + d.r)) return 'La zone doit couvrir un gisement de pierre';
-  if (b.need === 'minerai' && !deposits.some(d => (d.kind === 'fer' || d.kind === 'argile') && segLen([d.x, d.y], [z.x, z.y]) < z.r + d.r)) return "La zone doit couvrir un gisement de fer ou d'argile";
   return null;
 }
 // raison pour laquelle un bâtiment ne peut pas se poser ici, ou null (limite par région)
@@ -486,12 +468,158 @@ function segCross(a, b, c, d) {
    source (w0) vers l'aval (w1). Lac : nappe arrondie autour d'un centre.
    Pour les tests de chevauchement (SAT, polygones convexes), la rivière est découpée
    en quadrilatères entre deux rives et le lac en triangles en éventail. */
+/* Largeur vivante : la rivière s'élargit de la source (w0) vers l'aval (w1), mais surtout
+   elle GROSSIT DANS LES VIRAGES (jusqu'à +60 % au creux d'un méandre) et SE RESSERRE dans
+   les passages droits (−20 %), avec en plus une lente respiration tirée de son tracé.
+   Les écarts sont lissés pour que les berges restent douces. Demi-largeurs en mètres. */
+const riverHWCache = new WeakMap();
+function riverHW(rv) {
+  const P = rv.pts, n = P.length, hit = riverHWCache.get(rv), cf = (rv.confl || []).join();
+  if (hit && hit.n === n && hit.p0 === P[0] && hit.w0 === rv.w0 && hit.w1 === rv.w1 && hit.cf === cf) return hit.hw;
+  const K = 6, bend = new Float32Array(n), rnd = seeded(Math.round(Math.abs(P[0][0] * 13 + P[0][1] * 7)) + n);
+  for (let i = 0; i < n; i++) {
+    const a = P[Math.max(0, i - K)], b = P[i], c = P[Math.min(n - 1, i + K)];
+    let t = Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0]);
+    t = Math.abs(Math.atan2(Math.sin(t), Math.cos(t)));
+    bend[i] = Math.min(1, t / .7); // 0 : tout droit ; 1 : virage serré
+  }
+  const p1 = rnd() * 6.28, p2 = rnd() * 6.28, L = n * 4;
+  let hw = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const t = i / (n - 1), base = (rv.w0 + (rv.w1 - rv.w0) * t) / 2;
+    const breathe = .14 * Math.sin(2 * Math.PI * i * 4 / 420 + p1) + .08 * Math.sin(2 * Math.PI * i * 4 / 170 + p2);
+    hw[i] = base * (.8 + .8 * bend[i] + breathe);
+    // en aval d'une confluence, la rivière principale a reçu l'eau de l'affluent : +25 %
+    for (const c of rv.confl || []) if (i > c) { const x = Math.min(1, (i - c) / 30); hw[i] *= 1 + .25 * x * x * (3 - 2 * x); }
+  }
+  // embouchure d'un affluent : il s'évase en trompette sur ses 100 derniers mètres (jusqu'à
+  // ×2,4) : les coins de la jonction s'arrondissent et la pointe de terre s'émousse
+  // (jamais plus large que la rivière principale à cet endroit : pas de bosse sur l'autre rive)
+  if (rv.joined) for (let i = Math.max(0, n - 25); i < n; i++) {
+    const x = (i - (n - 26)) / 25; hw[i] *= 1 + 1.4 * x * x * x;
+    if (rv.mouth) hw[i] = Math.min(hw[i], rv.mouth * .9);
+  }
+  for (let pass = 0; pass < 3; pass++) { // lissage : moyenne glissante sur ±6 points (±24 m)
+    const o = new Float32Array(n);
+    for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - 6); k <= Math.min(n - 1, i + 6); k++) { s += hw[k]; c++; } o[i] = s / c; }
+    hw = o;
+  }
+  riverHWCache.set(rv, { n, p0:P[0], w0:rv.w0, w1:rv.w1, cf, hw });
+  return hw;
+}
+// disques [x, y, rayon] le long du cours, assez serrés pour que la berge soit lisse
+// (espacement ≤ 40 % du rayon) ; gardés en mémoire tant que la rivière ne change pas
+const riverDiscCache = new WeakMap();
+function riverDiscs(rv) {
+  const HW = riverHW(rv), hit = riverDiscCache.get(rv);
+  if (hit && hit.hw === HW) return hit.d;
+  const P = rv.pts, d = [];
+  for (let i = 0; i < P.length - 1; i++) {
+    const a = P[i], b = P[i + 1], L = segLen(a, b), r0 = HW[i], r1 = HW[i + 1];
+    const n = Math.max(1, Math.ceil(L / Math.max(.6, Math.min(r0, r1) * .4)));
+    for (let k = 0; k < n; k++) { const t = k / n; d.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, r0 + (r1 - r0) * t]); }
+  }
+  const e = P[P.length - 1]; d.push([e[0], e[1], HW[P.length - 1]]);
+  riverDiscCache.set(rv, { hw:HW, d });
+  return d;
+}
+// lissage d'une ligne ouverte (bouts conservés) puis points régulièrement espacés
+function chaikinOpen(P, passes) {
+  for (let it = 0; it < passes; it++) {
+    const Q = [P[0]];
+    for (let k = 0; k < P.length - 1; k++) {
+      const a = P[k], b = P[k + 1];
+      if (k > 0) Q.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25]);
+      if (k < P.length - 2) Q.push([a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]);
+    }
+    Q.push(P[P.length - 1]); P = Q;
+  }
+  return P;
+}
+function resample(P, step) {
+  const out = [P[0].map(round2)];
+  let carry = 0;
+  for (let k = 0; k < P.length - 1; k++) {
+    const a = P[k], b = P[k + 1], L = segLen(a, b);
+    let s = step - carry;
+    while (s <= L) { out.push([round2(a[0] + (b[0] - a[0]) * s / L), round2(a[1] + (b[1] - a[1]) * s / L)]); s += step; }
+    carry = L - (s - step);
+  }
+  const last = P[P.length - 1];
+  if (segLen(out[out.length - 1], last) > step * .3) out.push(last.map(round2)); else out[out.length - 1] = last.map(round2);
+  return out;
+}
+/* Confluence naturelle. Un affluent rejoint la rivière principale en suivant le courant,
+   à ~35°, par une longue courbe — jamais à angle droit, et sans jamais remonter le courant
+   (pas de « ^ » pointu). On cherche, le long de la rivière principale (jusqu'à 800 m en
+   aval ou 480 m en amont du point prévu), le point de confluence et le point de départ du
+   raccord sur l'affluent (à 150–400 m) qui demandent le moins de virage à l'affluent ; puis
+   on trace une courbe de Bézier qui part dans le prolongement de l'affluent et arrive à 35°
+   dans le sens du courant. Retourne le nouveau tracé, ou null. */
+function joinTributary(P, M, ic0) {
+  const dirM = ic => { const a = M[Math.max(0, ic - 4)], b = M[Math.min(M.length - 1, ic + 4)], l = segLen(a, b) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+  const distMain = P.map(p => { let d = Infinity; for (let i = 0; i < M.length; i += 2) d = Math.min(d, segLen(p, M[i])); return d; });
+  const ang = (a, b) => Math.acos(Math.max(-1, Math.min(1, (a[0] * b[0] + a[1] * b[1]) / ((Math.hypot(...a) * Math.hypot(...b)) || 1)))) * 180 / Math.PI;
+  const th = 45 * Math.PI / 180; // angle d'arrivée : languette de terre moins effilée qu'à 35°
+  const cands = [];
+  for (let ic = Math.max(10, ic0 - 120); ic <= Math.min(M.length - 11, ic0 + 200); ic += 4) {
+    const conf = M[ic], d = dirM(ic);
+    for (let j = 8; j < P.length; j += 2) {
+      const L = segLen(P[j], conf);
+      if (L < 150 || L > 400 || distMain[j] < 50) continue;
+      const side = Math.sign(d[0] * (P[j][1] - conf[1]) - d[1] * (P[j][0] - conf[0])) || 1, n = [-d[1] * side, d[0] * side];
+      const u = [Math.cos(th) * d[0] - Math.sin(th) * n[0], Math.cos(th) * d[1] - Math.sin(th) * n[1]];
+      // courbe de Bézier cubique : elle part DANS LE PROLONGEMENT de l'affluent (pas de coude)
+      // et arrive à 35° dans le sens du courant ; on retient le départ qui tourne le moins
+      const tl = segLen(P[j], P[j - 8]) || 1, tj = [(P[j][0] - P[j - 8][0]) / tl, (P[j][1] - P[j - 8][1]) / tl];
+      const c1 = [P[j][0] + tj[0] * L * .4, P[j][1] + tj[1] * L * .4], c2 = [conf[0] - u[0] * L * .4, conf[1] - u[1] * L * .4];
+      const turn = ang(tj, [c2[0] - c1[0], c2[1] - c1[1]]) + ang([c2[0] - c1[0], c2[1] - c1[1]], u);
+      const score = turn + Math.abs(ic - ic0) * .04 + (P.length - j) * .01;
+      if (score <= 150) cands.push({ score, ic, j, c1, c2, conf });
+    }
+  }
+  // on essaie les meilleurs raccords jusqu'à en trouver un qui ne touche la rivière principale
+  // qu'à sa confluence (un affluent ne traverse jamais la rivière qu'il va rejoindre)
+  cands.sort((x, y) => x.score - y.score);
+  for (const cand of cands.slice(0, 40)) {
+    const { j, c1, c2, conf } = cand, a = P[j], curve = [];
+    const len = segLen(a, c1) + segLen(c1, c2) + segLen(c2, conf), steps = Math.max(8, Math.round(len / 3));
+    for (let k = 1; k <= steps; k++) {
+      const t = k / steps, s = 1 - t, A = s * s * s, B = 3 * s * s * t, C = 3 * s * t * t, D = t * t * t;
+      curve.push([A * a[0] + B * c1[0] + C * c2[0] + D * conf[0], A * a[1] + B * c1[1] + C * c2[1] + D * conf[1]]);
+    }
+    curve[curve.length - 1] = conf.slice();
+    // lissage final (points tous les 20 m, 4 passes) : plus aucun coude serré près du raccord
+    const pts = resample(chaikinOpen(resample(P.slice(0, j + 1).concat(curve), 20), 4), 4);
+    if (!pts.every(p => segLen(p, conf) < 70 || M.every((q, i) => i % 2 || segLen(p, q) > 34))) continue;
+    joinTributary.last = cand.ic; // index de la confluence sur la rivière principale
+    return pts;
+  }
+  return null;
+}
+// plans enregistrés : chaque affluent est raccordé une fois avec la méthode ci-dessus
+function softenConfluences(rivers) {
+  rivers.forEach((tr, k) => {
+    if (tr.joined >= 4 || tr.pts.length < 40) return;
+    const end = tr.pts[tr.pts.length - 1];
+    let main = null, ic = -1;
+    for (const o of rivers) {
+      if (o === tr) continue;
+      for (let i = 0; i < o.pts.length; i++) if (segLen(o.pts[i], end) < 3) { main = o; ic = i; break; }
+      if (main) break;
+    }
+    if (!main) return;
+    const pts = joinTributary(tr.pts, main.pts, ic);
+    if (pts) main.confl = [...(main.confl || []).filter(c => Math.abs(c - ic) > 60), joinTributary.last];
+    rivers[k] = { ...tr, pts:pts || tr.pts, joined:4, mouth:riverHW(main)[pts ? joinTributary.last : ic] };
+  });
+}
 function riverBanks(rv) {
-  const n = rv.pts.length, L = [], R = [];
+  const n = rv.pts.length, L = [], R = [], HW = riverHW(rv);
   for (let i = 0; i < n; i++) {
     const a = rv.pts[Math.max(0, i - 1)], b = rv.pts[Math.min(n - 1, i + 1)];
     const d = segLen(a, b) || 1, nx = -(b[1] - a[1]) / d, ny = (b[0] - a[0]) / d;
-    const hw = (rv.w0 + (rv.w1 - rv.w0) * i / (n - 1)) / 2, p = rv.pts[i];
+    const hw = HW[i], p = rv.pts[i];
     L.push([p[0] + nx * hw, p[1] + ny * hw]); R.push([p[0] - nx * hw, p[1] - ny * hw]);
   }
   return { L, R };
@@ -657,24 +785,196 @@ function contourSegments() {
   return contours = out;
 }
 let floraCands = null, floraSeed = null;
+// étendue des grandes forêts : bruit très lisse (massifs de 300 m, contours de 70 m)
+function forestNoise() {
+  const v = valueNoise(S.landSeed + 4242);
+  return (x, y) => v(x / 300 + 11, y / 300 + 23) * .68 + v(x / 70 + 5, y / 70 + 9) * .32;
+}
+/* Arbres d'automne, façon carte peinte : de gros houppiers (6 à 12 m de large), serrés
+   dans les bois, en bosquets à leur lisière, isolés ailleurs ; plus une lisière d'arbres
+   au bord des lacs et, plus clairsemée, le long des rivières. */
 function floraCandidates() {
-  const fk = S.landSeed + ':' + S.biome;
+  const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
+  const fk = S.landSeed + ':' + S.biome + ':' + wk;
   if (floraCands && floraSeed === fk) return floraCands;
-  const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), out = [], B = biomeOf().flora;
-  for (let y = 2; y < TH; y += 5) for (let x = 2; x < TW; x += 5) {
-    const px = x + rnd() * 4, py = y + rnd() * 4, n = nz(px, py), r = rnd();
-    // bois : denses là où l'herbe est foncée, lisière autour ; ailleurs quelques arbres isolés
-    // (seuils propres au biome)
-    const pTree = n > B.dense ? .75 : n > B.mid ? .25 : B.sparse;
-    if (r < pTree) out.push({ x:round2(px), y:round2(py), r:2.2 + rnd() * 2.2, kind:'tree', v:rnd() });
-    else if (r < pTree + (n > B.mid - .08 ? B.bush * 1.8 : B.bush)) out.push({ x:round2(px), y:round2(py), r:.9 + rnd() * .9, kind:'bush', v:rnd() });
+  const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora;
+  const tree = (x, y, r, wood) => out.push({ x:round2(x), y:round2(y), r, kind:'tree', v:rnd(), ...(wood ? { wood:1 } : {}) });
+  /* Étendue des forêts sur la trame de 6 m : une case est forêt si le bruit des massifs
+     dépasse le seuil du biome. Puis on BOUCHE TOUS LES TROUS : toute poche sans forêt qui
+     n'est pas reliée au bord de la carte (clairière enfermée, même grande) devient forêt.
+     L'eau et les routes qui traversent un bois y ouvrent ensuite leur passage. */
+  const NX = Math.ceil((TW - 3) / 6), NY = Math.ceil((TH - 3) / 6), woodAt = new Uint8Array(NX * NY);
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) woodAt[j * NX + i] = fz(6 + 6 * i, 6 + 6 * j) > B.forest ? 1 : 0;
+  const open = new Uint8Array(NX * NY), stack = [];
+  const push = c => { if (!woodAt[c] && !open[c]) { open[c] = 1; stack.push(c); } };
+  for (let i = 0; i < NX; i++) { push(i); push((NY - 1) * NX + i); }
+  for (let j = 0; j < NY; j++) { push(j * NX); push(j * NX + NX - 1); }
+  while (stack.length) {
+    const c = stack.pop(), i = c % NX, j = (c - i) / NX;
+    if (i > 0) push(c - 1); if (i < NX - 1) push(c + 1); if (j > 0) push(c - NX); if (j < NY - 1) push(c + NX);
   }
+  for (let c = 0; c < woodAt.length; c++) if (!woodAt[c] && !open[c]) woodAt[c] = 1;
+  const woodCellAt = (x, y) => { const i = Math.floor((x - 3) / 6), j = Math.floor((y - 3) / 6); return i >= 0 && j >= 0 && i < NX && j < NY && woodAt[j * NX + i]; };
+  for (let j = 0, y = 3; j < NY; j++, y += 6) for (let i = 0, x = 3; i < NX; i++, x += 6) {
+    // grandes forêts : un arbre par case, presque centré (pas d'écart qui laisserait un trou)
+    if (woodAt[j * NX + i]) { tree(x + 1.5 + rnd() * 3, y + 1.5 + rnd() * 3, 3.2 + rnd() * 2.6, true); continue; }
+    const px = x + rnd() * 5, py = y + rnd() * 5, n = nz(px, py), r = rnd();
+    const fn = fz(px, py);
+    // prés dégagés : quelques bosquets serrés (cœur des taches sombres), de rares arbres isolés
+    const pTree = fn > B.forest - .015 ? .3 : n > B.dense + .06 ? .5 : n > B.mid + .04 ? .03 : B.sparse * .35;
+    if (r < pTree) tree(px, py, 3.2 + rnd() * 2.6, false);
+    else if (r < pTree + (n > B.dense ? B.bush * .5 : B.bush * .15)) out.push({ x:round2(px), y:round2(py), r:1.2 + rnd() * .9, kind:'bush', v:rnd() });
+  }
+  // lisières : autour des lacs, puis le long des rivières (plus espacées)
+  const wet = B.sparse > .05 ? .6 : B.dense > .66 ? .25 : .45;
+  for (const lk of S.lakes) {
+    const P = lk.pts, per = P.reduce((s, p, i) => s + segLen(p, P[(i + 1) % P.length]), 0);
+    for (let d = 0; d < per; d += 8) {
+      if (rnd() > wet) { rnd(); continue; }
+      let k = 0, acc = 0; while (acc + segLen(P[k], P[(k + 1) % P.length]) < d) { acc += segLen(P[k], P[(k + 1) % P.length]); k++; }
+      const a = P[k], b = P[(k + 1) % P.length], q = [a[0] + (b[0] - a[0]) * (d - acc) / (segLen(a, b) || 1), a[1] + (b[1] - a[1]) * (d - acc) / (segLen(a, b) || 1)];
+      const u = [q[0] - lk.c[0], q[1] - lk.c[1]], L = Math.hypot(...u) || 1, o = 6 + rnd() * 9;
+      tree(q[0] + u[0] / L * o, q[1] + u[1] / L * o, 3 + rnd() * 2.4);
+    }
+  }
+  for (const rv of S.rivers) {
+    const { L, R } = riverBanks(rv);
+    for (const bank of [L, R]) for (let i = 0; i < bank.length - 1; i += 3) {
+      if (rnd() > wet * .45) continue;
+      const a = bank[i], b = bank[i + 1], d = [b[0] - a[0], b[1] - a[1]], dl = Math.hypot(...d) || 1;
+      const side = bank === L ? 1 : -1, o = 5 + rnd() * 7;
+      tree(a[0] - d[1] / dl * o * side, a[1] + d[0] / dl * o * side, 2.8 + rnd() * 2.2);
+    }
+  }
+  // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
+  const inForest = f => !f.wood && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
   floraSeed = fk;
-  return floraCands = out;
+  return floraCands = out.filter(f => !inForest(f));
+}
+/* Modèles d'arbres dessinés une fois (houppier bosselé, contour sombre, côté ombre en bas
+   à droite, reflets en haut à gauche, ombre portée), puis posés comme des tampons.
+   Dégradé de verts (demande du 29/09) : les arbres seuls sont vert clair, la lisière
+   un peu plus foncée, et la forêt fonce jusqu'à son cœur — [teinte, reflet, ombre]. */
+const TREE_PAL = [
+  ['#93b25c', '#b6cf80', '#5d7638'],   // 0 · arbres seuls, buissons (vert clair)
+  ['#7c9e50', '#a1bf72', '#4b6530'],   // 1 · premier rang de lisière
+  ['#65874a', '#8aab6a', '#3d552e'],   // 2 · second rang de lisière
+];
+const TREE_EDGE = '#223020', TREE_DROP = 'rgba(30,45,25,.3)';
+const SPR = 96, SPR_C = 40, SPR_R = 28, SHAPES = 5; // taille du modèle, centre et rayon du houppier (px)
+let treeSprites = null;
+function crown(rnd, bush) {
+  const n = bush ? 4 + Math.floor(rnd() * 2) : 7 + Math.floor(rnd() * 4), out = [{ x:0, y:0, r:bush ? .55 : .62 }];
+  for (let k = 0; k < n; k++) {
+    const a = (k + rnd() * .5) / n * Math.PI * 2, rb = bush ? .42 + rnd() * .12 : .3 + rnd() * .14, d = 1 - rb;
+    out.push({ x:Math.cos(a) * d, y:Math.sin(a) * d, r:rb });
+  }
+  return out;
+}
+function makeSprite(pal, bumps) {
+  const c = document.createElement('canvas'); c.width = c.height = SPR;
+  const g = c.getContext('2d'), C = SPR_C, R = SPR_R;
+  const union = (dx, dy, k, grow) => { g.beginPath(); for (const b of bumps) { g.moveTo(C + (b.x + dx) * R + b.r * R * k + grow, C + (b.y + dy) * R); g.arc(C + (b.x + dx) * R, C + (b.y + dy) * R, b.r * R * k + grow, 0, Math.PI * 2); } };
+  union(.34, .42, 1, 0); g.fillStyle = TREE_DROP; g.fill();                   // ombre portée
+  union(0, 0, 1, 1.8); g.fillStyle = TREE_EDGE; g.fill();                     // contour
+  g.save(); union(0, 0, 1, 0); g.clip();
+  g.fillStyle = pal[2]; g.fill();                                             // côté ombre
+  union(-.07, -.09, .93, 0); g.fillStyle = pal[0]; g.fill();                  // teinte
+  g.globalAlpha = .85; g.fillStyle = pal[1];                                  // reflets au nord-ouest
+  for (const b of bumps) if (b.x + b.y < .35) { g.beginPath(); g.arc(C + (b.x - b.r * .3) * R, C + (b.y - b.r * .35) * R, b.r * R * .42, 0, Math.PI * 2); g.fill(); }
+  g.globalAlpha = .4; g.strokeStyle = TREE_EDGE; g.lineWidth = 1.1;           // touffes de feuillage
+  for (const b of bumps.slice(1)) { g.beginPath(); g.arc(C + b.x * R * .55, C + b.y * R * .55, b.r * R * .7, .1, 1.6); g.stroke(); }
+  g.restore();
+  return c;
+}
+function makeTreeSprites() {
+  const rnd = seeded(8111);
+  treeSprites = { tree:[], bush:[] };
+  for (const pal of TREE_PAL) {
+    for (let k = 0; k < SHAPES; k++) treeSprites.tree.push(makeSprite(pal, crown(rnd, false)));
+    for (let k = 0; k < 2; k++) treeSprites.bush.push(makeSprite(pal, crown(rnd, true)));
+  }
+}
+// modèle d'un arbre ou d'un buisson : sa teinte (tone, posée par classifyWoods pour la
+// lisière ; vert clair sinon), puis sa forme tirée de sa valeur v
+function spriteOf(f) {
+  if (!treeSprites) makeTreeSprites();
+  const p = f.wood ? (f.tone || 1) : 0, n = f.kind === 'bush' ? 2 : SHAPES, k = Math.floor((f.v * 9973 % 1) * n);
+  return (f.kind === 'bush' ? treeSprites.bush : treeSprites.tree)[p * n + k];
+}
+/* Grandes forêts, façon carte de référence : l'intérieur du bois est un aplat sombre à
+   peine texturé (quelques contours de houppiers), posé PAR-DESSUS la lisière : un cordon
+   d'arbres bosselés qui dépasse de dessous le massif, tout autour (et autour des clairières). Un arbre est « de lisière » s'il a moins de 18 voisins de bois
+   à moins de 2 cases (12 m) du bord du bois ; les autres forment l'intérieur, dont l'aplat
+   fonce par paliers en allant vers le cœur (profondeur mesurée en cases de 6 m). */
+const FOREST_STEPS = [[2, '#557a4c'], [4, '#4b6d48'], [7, '#416146'], [11, '#385443'], [16, '#30483f']];
+const FOREST_LINE = 'rgba(18,32,20,.3)', FOREST_LIGHT = 'rgba(170,205,140,.22)';
+// grille de la trame des arbres (cases de 6 m), en tableau d'entiers : bien plus rapide
+// qu'une table de clés texte (le calcul repasse à chaque arbre abattu)
+const WG_W = Math.ceil(TW / 6) + 2, WG_H = Math.ceil(TH / 6) + 2;
+const woodDepth = new Int16Array(WG_W * WG_H), woodQueue = new Int32Array(WG_W * WG_H);
+const woodCell = f => (Math.floor((f.y - 3) / 6) + 1) * WG_W + Math.floor((f.x - 3) / 6) + 1;
+function classifyWoods() {
+  const D = woodDepth, INF = 32000, NONE = -1;
+  D.fill(NONE);
+  for (const f of flora) if (f.wood) D[woodCell(f)] = INF;
+  // profondeur : 0 sur les cases de bois qui touchent autre chose, puis +1 case par case
+  let head = 0, tail = 0;
+  const N = [-WG_W - 1, -WG_W, -WG_W + 1, -1, 1, WG_W - 1, WG_W, WG_W + 1];
+  for (let c = WG_W + 1; c < D.length - WG_W - 1; c++) {
+    if (D[c] !== INF) continue;
+    for (const o of N) if (D[c + o] === NONE) { D[c] = 0; woodQueue[tail++] = c; break; }
+  }
+  while (head < tail) {
+    const c = woodQueue[head++], d = D[c] + 1;
+    for (const o of N) if (D[c + o] === INF) { D[c + o] = d; woodQueue[tail++] = c + o; }
+  }
+  for (const f of flora) {
+    if (!f.wood) continue;
+    f.depth = D[woodCell(f)];
+    f.inner = f.depth >= 2;
+    f.tone = f.depth === 0 ? 1 : 2;
+  }
+}
+function drawWoods(g, list, s, ox, oy) {
+  if (!list.length) return;
+  const circles = (dx, dy, k, grow, sel) => {
+    const path = new Path2D();
+    for (const f of list) {
+      if (sel && !sel(f)) continue;
+      // la masse (k ≥ 1) couvre au moins 5,8 m autour de chaque arbre : entre deux cases
+      // voisines de 6 m, même en diagonale, il ne reste jamais de jour
+      const X = (f.x + f.r * dx) * s + ox, Y = (f.y + f.r * dy) * s + oy, R = (k >= 1 ? Math.max(f.r * k, 5.8) : f.r * k) * s + grow;
+      path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
+    }
+    return path;
+  };
+  // 1. la lisière d'abord : de vrais arbres, du nord au sud, qui dépassent SOUS le massif
+  for (const f of list) if (!f.inner) stampTree(g, f, f.x * s + ox, f.y * s + oy, s);
+  // 2. puis le massif par-dessus (les arbres de l'intérieur seulement) : son ombre tombe
+  //    sur la lisière, son contour sombre la recouvre à moitié
+  const inner = f => f.inner;
+  g.save();
+  g.fillStyle = TREE_DROP; g.fill(circles(.3, .38, 1.25, 0, inner));              // ombre du massif
+  g.fillStyle = TREE_EDGE; g.fill(circles(0, 0, 1.25, Math.max(.8, s * .4), inner)); // contour du massif
+  for (const [d, col] of FOREST_STEPS) {                                          // aplat qui fonce vers le cœur
+    g.fillStyle = col; g.fill(circles(0, 0, 1.25, 0, f => f.depth >= d));
+  }
+  if (s > .9) {                                                                    // houppiers esquissés
+    g.lineWidth = 1; g.strokeStyle = FOREST_LIGHT; g.stroke(circles(-.25, -.3, .55, 0, f => f.inner && f.v < .35));
+    g.strokeStyle = FOREST_LINE; g.beginPath();
+    for (const f of list) if (f.inner && f.v > .45) { const X = f.x * s + ox, Y = f.y * s + oy, R = f.r * .8 * s; g.moveTo(X + R * Math.cos(.2), Y + R * Math.sin(.2)); g.arc(X, Y, R, .2, 1.9); }
+    g.stroke();
+  }
+  g.restore();
+}
+// pose un modèle : houppier de rayon r (m) centré en (X, Y) écran, à l'échelle s (px / m)
+function stampTree(g, f, X, Y, s) {
+  const k = f.r * s / SPR_R;
+  g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
 const WATER_MARGIN = 2; // m laissés libres au bord des rivières et des lacs
-/* Repère du bourg, figé : le cœur de la région à la création du plan (les gisements s'en
-   écartent). Construire ensuite ne déplace rien ; seuls les arbres sous un nouveau
+/* Repère du bourg, figé : le cœur de la région à la création du plan. Construire ensuite ne déplace rien ; seuls les arbres sous un nouveau
    bâtiment (ou une route) disparaissent. */
 function bourgPts() {
   if (!Array.isArray(S.bourg) || !S.bourg.length)
@@ -682,104 +982,90 @@ function bourgPts() {
   return S.bourg;
 }
 const bourgHub = () => { const b = bourgPts(); return [b.reduce((s, p) => s + p[0], 0) / b.length, b.reduce((s, p) => s + p[1], 0) / b.length]; };
-/* ---------- gisements ----------
-   Pierre, fer et argile, tirés de la graine du paysage : des affleurements de 10 à 18 m.
-   Jamais dans l'eau ni dans le village ; un gisement de chaque sorte est placé à portée
-   du village (180 à 320 m) pour qu'on puisse l'exploiter tôt. */
-const DEPOSIT_KINDS = { pierre:{ name:'Pierre', n:7 }, fer:{ name:'Fer', n:3 }, argile:{ name:'Argile', n:3 } };
-let deposits = [];
-function computeDeposits() {
-  const rnd = seeded(S.landSeed * 53 + 11), water = [...Z.water.river, ...Z.water.lake];
-  const homes = bourgPts().map(([x, y]) => ({ x, y })), hub = bourgHub();
-  const wet = p => water.some(w => p[0] >= w.bb[0] - 20 && p[0] <= w.bb[2] + 20 && p[1] >= w.bb[1] - 20 && p[1] <= w.bb[3] + 20 && (inPoly(p, w.P) || w.P.some(q => segLen(q, p) < 25)));
-  const ok = p => p[0] > 40 && p[0] < TW - 40 && p[1] > 40 && p[1] < TH - 40 && !wet(p)
-    && !homes.some(h => segLen([h.x, h.y], p) < 120) && !deposits.some(d => segLen([d.x, d.y], p) < 90);
-  deposits = [];
-  for (const [kind, { n }] of Object.entries(DEPOSIT_KINDS)) for (let k = 0; k < n; k++) {
-    for (let tries = 0; tries < 60; tries++) {
-      // le premier de chaque sorte près du village, les autres n'importe où
-      const p = k === 0
-        ? (a => [hub[0] + Math.cos(a) * (180 + rnd() * 140), hub[1] + Math.sin(a) * (180 + rnd() * 140)])(rnd() * Math.PI * 2)
-        : [rnd() * TW, rnd() * TH];
-      if (!ok(p)) continue;
-      const r = 10 + rnd() * 8, ph = rnd() * 6.28, pts = [];
-      for (let i = 0; i < 14; i++) { const t = i / 14 * Math.PI * 2, rr = r * (1 + .22 * Math.sin(3 * t + ph)); pts.push([round2(p[0] + Math.cos(t) * rr), round2(p[1] + Math.sin(t) * rr)]); }
-      deposits.push({ kind, x:round2(p[0]), y:round2(p[1]), r, P:pts, bb:bbox(pts) });
-      break;
-    }
-  }
-}
-const DEPOSIT_COL = { pierre:['wall', 'wall-edge'], fer:['ore-iron', 'wall-edge'], argile:['ore-clay', 'earth-edge'] };
-function drawDeposits() {
-  const s = view.s;
-  for (const d of deposits) {
-    polyPath(d.P); ctx.closePath();
-    const [fill, edge] = DEPOSIT_COL[d.kind];
-    ctx.fillStyle = Col[fill]; ctx.fill(); ctx.strokeStyle = Col[edge]; ctx.lineWidth = 1.2; ctx.stroke();
-    if (s > 1.5) { // blocs de roche
-      ctx.fillStyle = Col[edge]; ctx.globalAlpha = .45;
-      for (let k = 0; k < 6; k++) { const a = k * 1.9, rr = d.r * (.2 + (k % 3) * .22), [X, Y] = toS(d.x + Math.cos(a) * rr, d.y + Math.sin(a) * rr); ctx.beginPath(); ctx.arc(X, Y, Math.max(1, 1.3 * s), 0, Math.PI * 2); ctx.fill(); }
-      ctx.globalAlpha = 1;
-    }
-    if (s > .8) {
-      const [X, Y] = toS(d.x, d.y + d.r + 2);
-      ctx.font = '600 11px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
-      haloText(`Gisement : ${DEPOSIT_KINDS[d.kind].name.toLowerCase()}`, X, Y, Col.ink, Col.sheet);
-    }
-  }
-}
 let flora = [];
 const treeKey = f => f.x + ',' + f.y; // identité stable d'un arbre (sa position)
-function computeFlora() {
-  computeDeposits();
-  const obstacles = [];
-  const add = P => obstacles.push({ P, bb:bbox(P) });
-  // routes : le tracé lissé tel qu'il est dessiné (les courbes débordent un peu du tracé logique)
-  for (const r of S.roads) { const q = smoothPts(r); for (let k = 0; k < q.length - 1; k++) add(segRect(q[k], q[k+1], r.w)); }
-  for (const o of S.walls) for (let k = 0; k < o.pts.length - 1; k++) add(segRect(o.pts[k], o.pts[k+1], o.w));
-  S.towers.forEach(t => add(towerPoly(t)));
-  S.gates.forEach(g => add(gatePoly(g)));
-  S.houses.forEach(h => add(corners(h)));
-  deposits.forEach(d => d.P.forEach((p, k) => add([[d.x, d.y], p, d.P[(k + 1) % d.P.length]]))); // roche nue
-  obstacles.push(...Z.water.river, ...Z.water.lake);
-  // index par seaux de 32 m : chaque arbre n'est testé que contre les obstacles voisins
+// obstacles en seaux de 32 m : chaque arbre n'est testé que contre les obstacles voisins
+function obstacleTest(polys) {
   const G = 32, grid = new Map();
-  for (const o of obstacles) for (let gx = Math.floor(o.bb[0] / G); gx <= Math.floor(o.bb[2] / G); gx++)
+  for (const o of polys) for (let gx = Math.floor(o.bb[0] / G); gx <= Math.floor(o.bb[2] / G); gx++)
     for (let gy = Math.floor(o.bb[1] / G); gy <= Math.floor(o.bb[3] / G); gy++) {
       const k = gx + ',' + gy; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(o);
     }
-  const blocked = (P, bb) => {
-    for (let gx = Math.floor(bb[0] / G); gx <= Math.floor(bb[2] / G); gx++) for (let gy = Math.floor(bb[1] / G); gy <= Math.floor(bb[3] / G); gy++)
-      for (const o of grid.get(gx + ',' + gy) || []) if (bbHit(bb, o.bb) && polysOverlap(P, o.P)) return true;
+  return f => {
+    // emprise du tronc : carré de 1,2 r ; on ne construit le carré que si un seau voisin est occupé
+    const h = f.r * .6, bb = [f.x - h, f.y - h, f.x + h, f.y + h];
+    let P = null;
+    for (let gx = Math.floor(bb[0] / G); gx <= Math.floor(bb[2] / G); gx++) for (let gy = Math.floor(bb[1] / G); gy <= Math.floor(bb[3] / G); gy++) {
+      const list = grid.get(gx + ',' + gy);
+      if (!list) continue;
+      for (const o of list) {
+        if (!bbHit(bb, o.bb)) continue;
+        P = P || [[bb[0], bb[1]], [bb[2], bb[1]], [bb[2], bb[3]], [bb[0], bb[3]]];
+        if (polysOverlap(P, o.P)) return true;
+      }
+    }
     return false;
   };
-  // herbe et végétation seulement : bois, bosquets, arbres isolés et buissons, plus les arbres replantés
-  const cands = floraCandidates().concat((S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', v:g.v })));
+}
+/* Deux étages, pour ne pas tout refaire à chaque bâtiment posé :
+   1. la végétation « fixe » (graine, biome, eau, routes, murailles) — refaite seulement
+      quand l'un d'eux change ;
+   2. puis les bâtiments, les arbres abattus et les arbres replantés, appliqués par-dessus
+      (quelques millisecondes). Seules les tuiles autour des arbres qui changent sont repeintes. */
+let staticFlora = [], staticKey = null;
+function computeFlora() {
+  const key = JSON.stringify([S.landSeed, S.biome, S.roads.map(r => r.pts), S.walls.map(w => w.pts), S.towers.map(t => [t.x, t.y]),
+    S.gates.map(g => [g.x, g.y, g.a]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => l.c)]);
+  const full = key !== staticKey;
+  if (full) {
+    const polys = [], add = P => polys.push({ P, bb:bbox(P) });
+    // routes : le tracé lissé tel qu'il est dessiné (les courbes débordent un peu du tracé logique)
+    for (const r of S.roads) { const q = smoothPts(r); for (let k = 0; k < q.length - 1; k++) add(segRect(q[k], q[k+1], r.w)); }
+    for (const o of S.walls) for (let k = 0; k < o.pts.length - 1; k++) add(segRect(o.pts[k], o.pts[k+1], o.w));
+    S.towers.forEach(t => add(towerPoly(t)));
+    S.gates.forEach(g => add(gatePoly(g)));
+    polys.push(...Z.water.river, ...Z.water.lake);
+    const blocked = obstacleTest(polys);
+    staticFlora = floraCandidates().filter(f => {
+      const h = f.r * .6;
+      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && !blocked(f);
+    }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
+    staticKey = key;
+  }
   // forêts permanentes : un arbre ne disparaît que s'il a été abattu (S.cut, enregistré avec
-  // le plan) ou s'il est sous un bâtiment, une route, une muraille… — plus à cause des cases
-  const cut = new Set(S.cut);
-  flora = cands.filter(f => {
-    if (cut.has(treeKey(f))) return false;
-    const P = corners({ x:f.x, y:f.y, a:0, w:f.r * 1.6, l:f.r * 1.6 }), bb = bbox(P);
-    if (!P.every(inTerrain)) return false;
-    return !blocked(P, bb);
-  }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
+  // le plan) ou s'il est sous un bâtiment — plus à cause des cases
+  const underHouse = obstacleTest(S.houses.map(h => { const P = corners(h); return { P, bb:bbox(P) }; }));
+  const cut = new Set(S.cut), old = flora;
+  const grown = (S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', v:g.v, planted:1 }));
+  const keep = f => !(cut.size && cut.has(treeKey(f))) && !underHouse(f);
+  flora = staticFlora.filter(keep);                       // déjà triée du nord au sud
+  if (grown.length) flora = flora.concat(grown.filter(keep)).sort((a, b) => a.y - b.y);
+  classifyWoods(); // intérieur des bois / lisière
   floraVersion++; // les habitants au travail repartiront des nouveaux arbres
-  floraImg = null; // l'image de la végétation vue de loin sera refaite
+  floraIdx = null;
+  // tuiles : toutes à refaire si le paysage fixe a changé, sinon seulement autour des arbres
+  // qui apparaissent ou disparaissent (le dégradé d'un bois change jusqu'à ~100 m) ; l'image
+  // de loin, elle, est simplement marquée à refaire (au plus toutes les 4 s)
+  if (full) { floraImg = null; tiles.clear(); return; }
+  floraStale = true;
+  // les arbres fixes sont les mêmes objets d'un calcul à l'autre : comparaison directe
+  const was = new Set(old), now = new Set(flora), diff = [];
+  for (const f of flora) if (!was.has(f) && !grown.includes(f)) diff.push(f);
+  for (const f of old) if (!now.has(f) && !f.planted) diff.push(f);
+  if (diff.length > 400) { tiles.clear(); return; }
+  for (const f of diff) invalidateTiles(f.x, f.y, f.wood ? 110 : 12);
 }
 /* Vue de loin : la végétation est peinte une fois dans une image (1 pixel par mètre),
    au lieu de redessiner des dizaines de milliers d'arbres à chaque image. */
-let floraImg = null;
+let floraImg = null, floraStale = false, floraBuilt = 0;
 function floraImage() {
-  if (floraImg) return floraImg;
+  // après une coupe ou une pousse, l'image de loin n'est refaite qu'au plus toutes les 4 s
+  if (floraImg && (!floraStale || performance.now() - floraBuilt < 4000)) return floraImg;
+  floraStale = false; floraBuilt = performance.now();
   const c = document.createElement('canvas'); c.width = TW; c.height = TH;
   const g = c.getContext('2d');
-  g.fillStyle = Col.shadow;
-  for (const f of flora) if (f.kind === 'tree') { g.beginPath(); g.arc(f.x + f.r * .45, f.y + f.r * .5, f.r, 0, Math.PI * 2); g.fill(); }
-  for (const f of flora) {
-    g.fillStyle = f.kind === 'bush' ? Col.bush : f.v < .5 ? Col.tree : Col['tree-dark'];
-    g.beginPath(); g.arc(f.x, f.y, f.kind === 'bush' ? f.r * 1.2 : f.r, 0, Math.PI * 2); g.fill();
-  }
+  drawWoods(g, flora.filter(f => f.wood), 1, 0, 0);
+  for (const f of flora) if (!f.wood) stampTree(g, f, f.x, f.y, 1);
   return floraImg = c;
 }
 // sol peint une fois (2 m par pixel), redessiné à l'échelle
@@ -1050,7 +1336,7 @@ function riverMarginIssue(a, b, w) {
     const P = rv.pts, segs = [];
     for (let i = 0; i < P.length - 1; i++) if (bbHit(bb, bbox([P[i], P[i + 1]]))) segs.push(i);
     if (!segs.length) continue;
-    const hwAt = i => (rv.w0 + (rv.w1 - rv.w0) * i / (P.length - 1)) / 2;
+    const HW = riverHW(rv), hwAt = i => HW[i];
     const near = q => segs.some(i => ptSeg(q, P[i], P[i + 1]).d - hwAt(i) < lim);
     // passages du tronçon dans la bande de la rivière
     let run = null;
@@ -1101,18 +1387,18 @@ function crossesWallAtGates(a, b) {
    la carte d'ouest en est par le milieu, et l'eau propre au biome (rivière, affluents,
    lacs ou mares). Tout est tiré d'une graine : même graine + même biome = même région. */
 const BIOMES = {
-  tempere: { name:'Plaine tempérée', rivers:[1, 1], tribs:[0, 1], lakes:[1, 2], lakeR:[45, 80],
-    river:{ amp:[50, 90], cycles:[1.8, 2.6], w0:10, w1:24 }, flora:{ dense:.6, mid:.53, sparse:.02, bush:.06 } },
-  foret:   { name:'Forêt', rivers:[1, 1], tribs:[0, 1], lakes:[1, 3], lakeR:[28, 55],
-    river:{ amp:[40, 70], cycles:[2.2, 3], w0:6, w1:14 }, flora:{ dense:.5, mid:.44, sparse:.08, bush:.1 } },
+  tempere: { name:'Plaine tempérée', rivers:[1, 1], tribs:[0, 0], lakes:[1, 2], lakeR:[45, 80],
+    river:{ amp:[50, 90], cycles:[1.8, 2.6], w0:10, w1:24 }, flora:{ forest:.62, dense:.6, mid:.53, sparse:.02, bush:.06 } },
+  foret:   { name:'Forêt', rivers:[1, 1], tribs:[0, 0], lakes:[1, 3], lakeR:[28, 55],
+    river:{ amp:[40, 70], cycles:[2.2, 3], w0:6, w1:14 }, flora:{ forest:.49, dense:.5, mid:.44, sparse:.08, bush:.1 } },
   prairie: { name:'Prairie', rivers:[1, 1], tribs:[0, 0], lakes:[0, 1], lakeR:[40, 70],
-    river:{ amp:[40, 70], cycles:[1.5, 2.2], w0:12, w1:28 }, flora:{ dense:.68, mid:.62, sparse:.006, bush:.05 } },
-  marais:  { name:'Marais', rivers:[1, 1], tribs:[1, 2], lakes:[6, 9], lakeR:[16, 40],
-    river:{ amp:[80, 130], cycles:[3, 4.5], w0:8, w1:18 }, flora:{ dense:.62, mid:.54, sparse:.02, bush:.2 } },
+    river:{ amp:[40, 70], cycles:[1.5, 2.2], w0:12, w1:28 }, flora:{ forest:.7, dense:.68, mid:.62, sparse:.006, bush:.05 } },
+  marais:  { name:'Marais', rivers:[1, 1], tribs:[0, 0], lakes:[6, 9], lakeR:[16, 40],
+    river:{ amp:[80, 130], cycles:[3, 4.5], w0:8, w1:18 }, flora:{ forest:.66, dense:.62, mid:.54, sparse:.02, bush:.2 } },
   lacs:    { name:'Région des lacs', rivers:[0, 1], tribs:[0, 0], lakes:[3, 5], lakeR:[65, 120],
-    river:{ amp:[40, 70], cycles:[1.8, 2.4], w0:8, w1:18 }, flora:{ dense:.58, mid:.5, sparse:.03, bush:.07 } },
+    river:{ amp:[40, 70], cycles:[1.8, 2.4], w0:8, w1:18 }, flora:{ forest:.62, dense:.58, mid:.5, sparse:.03, bush:.07 } },
   aride:   { name:'Collines sèches', rivers:[0, 0], tribs:[0, 0], lakes:[0, 1], lakeR:[18, 32],
-    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ dense:.72, mid:.64, sparse:.012, bush:.1 } },
+    river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ forest:.76, dense:.72, mid:.64, sparse:.012, bush:.1 } },
 };
 const biomeOf = () => BIOMES[S && S.biome] || BIOMES.tempere;
 const goDeg = (p, deg, len) => [round2(p[0] + Math.cos(deg * Math.PI / 180) * len), round2(p[1] + Math.sin(deg * Math.PI / 180) * len)];
@@ -1164,7 +1450,7 @@ function generateRegion(biome, seed) {
     rivers:[], lakes:[], biome, landSeed:seed, reliefSeed:537,
     gold:5000, cut:[], planted:[], grown:[], simTime:0,
   };
-  // repère du bourg : la route au milieu de la carte (les gisements s'en écartent)
+  // repère du bourg : la route au milieu de la carte
   const mid = road.reduce((b, q) => Math.abs(q[0] - TW / 2) < Math.abs(b[0] - TW / 2) ? q : b);
   S.bourg = [[Math.round(mid[0]), Math.round(mid[1])]];
   // rivière principale, du nord au sud : elle croise la route par un pont
@@ -1181,13 +1467,20 @@ function generateRegion(biome, seed) {
   const main = S.rivers[0], nT = main ? countIn(rnd, B.tribs) : 0;
   for (let k = 0; k < nT; k++) {
     for (let t = 0; t < 60; t++) {
-      const conf = main.pts[Math.round(main.pts.length * (.2 + rnd() * .6))];
-      const west = rnd() < .5, start = [west ? -12 : TW + 12, Math.max(80, Math.min(TH - 80, conf[1] + (rnd() - .5) * 900))];
+      const ic = Math.round(main.pts.length * (.2 + rnd() * .6)), conf = main.pts[ic];
+      // l'affluent naît en amont (plus au nord que sa confluence) : il descend vers la rivière
+      const west = rnd() < .5, start = [west ? -12 : TW + 12, Math.max(60, conf[1] - 200 - rnd() * 600)];
       if (Math.abs(start[0] - conf[0]) < 400) continue;
-      const tr = makeRiverPath(start, conf, { amp:between(rnd, B.river.amp) * .6, cycles:between(rnd, B.river.cycles), phase:rnd() * 6.28, w0:B.river.w0 * .5, w1:B.river.w1 * .5 });
+      const head = makeRiverPath(start, conf, { amp:between(rnd, B.river.amp) * .6, cycles:between(rnd, B.river.cycles), phase:rnd() * 6.28, w0:B.river.w0 * .6, w1:B.river.w1 * .65 });
+      // confluence douce, en « Y », dans le sens du courant (voir joinTributary)
+      let pts = null;
+      try { pts = joinTributary(head.pts, main.pts, ic); } catch (e) { console.warn('confluence', e); }
+      if (!pts) continue;
+      const at = joinTributary.last, tr = { pts, w0:head.w0, w1:head.w1, joined:4, mouth:riverHW(main)[at] };
       // l'affluent ne touche les autres rivières qu'à sa confluence
       const body = tr.pts.slice(0, Math.floor(tr.pts.length * .85)).filter((_, i) => i % 4 === 0);
       if (!riverFitsRoads(tr) || S.rivers.some(o => riverGap(o, body) < 60)) continue;
+      main.confl = [...(main.confl || []), at]; // la rivière principale s'élargit en aval
       S.rivers.push(tr); break;
     }
   }
@@ -1225,6 +1518,7 @@ const normalize = o => {
   if (!Array.isArray(o.rivers)) o.rivers = o.river ? [o.river] : [];
   if (!Array.isArray(o.lakes)) o.lakes = o.lake ? [o.lake] : [];
   delete o.river; delete o.lake;
+  try { softenConfluences(o.rivers); } catch (e) { console.warn('confluences', e); } // anciens affluents : raccord en « Y »
   return o;
 };
 try {
@@ -1278,7 +1572,7 @@ function readColors() {
   for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','contour','f-meadow','f-wheat','f-plough','f-fallow','f-alfalfa','f-forest','parcel-edge','veil','stall-a','stall-b','tavern','church','ore-iron','ore-clay','f-field','f-pasture','sheep','accent','bad','shadow'])
     Col[k] = cs.getPropertyValue('--' + k).trim();
   makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
-  groundImg = null; floraImg = null; // sol et végétation repeints avec les nouvelles couleurs
+  groundImg = null; floraImg = null; tiles.clear(); // sol et végétation repeints avec les nouvelles couleurs
 }
 
 /* ---------- dessin ---------- */
@@ -1303,8 +1597,9 @@ function drawZones(highlight) {
   const s = view.s, inset = Math.min(.6, 1.2 / s * 1.5);
   ctx.fillStyle = Col['zone-fill']; ctx.strokeStyle = Col['zone-line']; ctx.lineWidth = 1;
   ctx.beginPath();
+  const [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
   for (const c of Z.cells) {
-    if (c.occ !== null) continue;
+    if (c.occ !== null || c.bb[2] < wx0 || c.bb[0] > wx1 || c.bb[3] < wy0 || c.bb[1] > wy1) continue;
     const g = c.geo, s0 = g.off + c.i*CELL + inset, t0 = g.t0 + c.j*CELL + inset, e = CELL - 2*inset;
     const q = [g.P(s0, t0), g.P(s0+e, t0), g.P(s0+e, t0+e), g.P(s0, t0+e)].map(p => toS(p[0], p[1]));
     ctx.moveTo(...q[0]); ctx.lineTo(...q[1]); ctx.lineTo(...q[2]); ctx.lineTo(...q[3]); ctx.closePath();
@@ -1626,7 +1921,7 @@ function makePatterns() {
     g.strokeStyle = Col['grass-dark']; g.lineWidth = 1; g.lineCap = 'round';
     for (let i = 0; i < 26; i++) {
       const x = rnd() * TILE, y = rnd() * TILE, h = 2 + rnd() * 3, lean = (rnd() - .5) * 2.5;
-      g.globalAlpha = .25 + rnd() * .3;
+      g.globalAlpha = .12 + rnd() * .15;
       g.beginPath(); g.moveTo(x, y); g.lineTo(x + lean, y - h); g.stroke();
     }
     return ctx.createPattern(c, 'repeat');
@@ -1681,9 +1976,23 @@ function roadPath(r) {
   smoothPts(r).forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? path.lineTo(X, Y) : path.moveTo(X, Y); });
   return path;
 }
+// tracé d'une route en mètres, gardé tant que la route ne change pas : à chaque image on ne
+// fait que le tracer à l'échelle de la vue (plus de reconstruction point par point)
+const roadWorldPaths = new WeakMap();
 function strokeRoad(r, lw, color) {
-  ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'square'; ctx.lineJoin = 'round';
-  ctx.stroke(roadPath(r));
+  const P = smoothPts(r);
+  let c = roadWorldPaths.get(r);
+  if (!c || c.P !== P) {
+    const path = new Path2D();
+    P.forEach((p, i) => i ? path.lineTo(p[0], p[1]) : path.moveTo(p[0], p[1]));
+    c = { P, path }; roadWorldPaths.set(r, c);
+  }
+  const s = view.s;
+  ctx.save();
+  ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * view.ox, dpr * view.oy);
+  ctx.strokeStyle = color; ctx.lineWidth = lw / s; ctx.lineCap = 'square'; ctx.lineJoin = 'round';
+  ctx.stroke(c.path);
+  ctx.restore();
 }
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
@@ -1732,18 +2041,19 @@ const WORKER_STATE = { idle:'cherche un arbre', go:'en route vers un arbre', cut
    zone (pas d'arbre à moins de 4 m, ni eau, ni route, ni bâtiment), revient, recommence,
    tant que la zone n'est pas assez boisée (1 arbre pour 40 m²). Un plant devient un arbre
    après GROW secondes de simulation (temps accéléré) ; plants et arbres sont enregistrés. */
-const GROW = 90, PLANT_TIME = 2, PLANT_DENSITY = 40;
+const GROW = 90, PLANT_TIME = 2, PLANT_DENSITY = 60;
 function growSaplings() {
   if (!S.planted || !S.planted.length) return false;
   let grew = false;
   S.planted = S.planted.filter(s => {
     if ((S.simTime || 0) - s.b < GROW) return true;
-    const g = { x:s.x, y:s.y, r:2 + Math.random() * 1.8, v:Math.random() };
+    const g = { x:s.x, y:s.y, r:3.2 + Math.random() * 2.2, v:Math.random() };
     (S.grown = S.grown || []).push(g);
     flora.push({ x:g.x, y:g.y, r:g.r, kind:'tree', v:g.v });
+    invalidateTiles(g.x, g.y, 15);
     grew = true; return false;
   });
-  if (grew) { floraImg = null; save(); }
+  if (grew) { floraStale = true; floraIdx = null; save(); }
   return grew;
 }
 function plantSpot(h) {
@@ -1752,7 +2062,7 @@ function plantSpot(h) {
   const water = [...Z.water.river, ...Z.water.lake];
   for (let k = 0; k < 40; k++) {
     const a = Math.random() * Math.PI * 2, d = Math.sqrt(Math.random()) * z.r, p = [round2(z.x + Math.cos(a) * d), round2(z.y + Math.sin(a) * d)];
-    if (!inTerrain(p) || near.some(f => segLen([f.x, f.y], p) < 4) || saplings.some(s => segLen([s.x, s.y], p) < 4)) continue;
+    if (!inTerrain(p) || near.some(f => segLen([f.x, f.y], p) < 7) || saplings.some(s => segLen([s.x, s.y], p) < 7)) continue;
     if (water.some(w => p[0] >= w.bb[0] && p[0] <= w.bb[2] && p[1] >= w.bb[1] && p[1] <= w.bb[3] && inPoly(p, w.P))) continue;
     if (S.houses.some(o => inPoly(p, corners(o))) || S.roads.some(r => r.pts.slice(1).some((q, i) => ptSeg(p, r.pts[i], q).d < r.w / 2 + 1))) continue;
     return p;
@@ -1779,7 +2089,9 @@ const FORESTER_STATE = { idle:'prépare des plants', go:'va planter', cut:'plant
 function cutTree(f) {
   S.cut.push(treeKey(f));
   const i = flora.indexOf(f); if (i >= 0) flora.splice(i, 1);
-  floraImg = null;
+  if (f.wood) classifyWoods(); // une clairière s'ouvre : ses bords deviennent lisière
+  floraStale = true; floraIdx = null;
+  invalidateTiles(f.x, f.y, f.wood ? 110 : 12); // le dégradé du bois change autour de la clairière
 }
 function simTick(dt) {
   let active = false, panelDirty = false;
@@ -2107,15 +2419,26 @@ function drawWater() {
   ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip(); // la rivière sort par les bords
   const shape = (pts, close) => { polyPath(pts); if (close) ctx.closePath(); };
   ctx.fillStyle = Col.water; ctx.strokeStyle = Col['water-edge']; ctx.lineJoin = 'round';
-  // berges d'abord (trait épais), puis toute l'eau par-dessus : aux confluences, l'eau
-  // d'une rivière recouvre la berge de l'autre et les deux se rejoignent sans trait
-  const outlines = [
-    ...S.rivers.map(rv => { const { L, R } = riverBanks(rv); return [...L, ...R.slice().reverse()]; }),
-    ...S.lakes.map(lk => lk.pts),
-  ];
-  ctx.lineWidth = 3;
-  for (const o of outlines) { shape(o, true); ctx.stroke(); }
-  for (const o of outlines) { shape(o, true); ctx.fill(); }
+  /* Rivières dessinées comme une suite serrée de disques le long du cours (rayon = demi-
+     largeur) : les berges restent rondes dans les virages serrés (plus de pointe ni de
+     repli), et deux rivières qui se rejoignent se fondent l'une dans l'autre avec des
+     angles adoucis. Berges d'abord (disques un peu plus grands, couleur de berge), puis
+     toute l'eau par-dessus : aucun trait ne traverse une confluence. */
+  const [wx0, wy0] = toW(-30, -30), [wx1, wy1] = toW(W + 30, H + 30), edge = 1.5;
+  const discs = grow => {
+    const path = new Path2D();
+    for (const rv of S.rivers) for (const [x, y, r] of riverDiscs(rv)) {
+      if (x + r < wx0 || x - r > wx1 || y + r < wy0 || y - r > wy1) continue;
+      const X = x * s + view.ox, Y = y * s + view.oy, R = r * s + grow;
+      path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
+    }
+    return path;
+  };
+  ctx.fillStyle = Col['water-edge']; ctx.fill(discs(edge));
+  ctx.lineWidth = edge * 2;
+  for (const lk of S.lakes) { shape(lk.pts, true); ctx.stroke(); }
+  ctx.fillStyle = Col.water; ctx.fill(discs(0));
+  for (const lk of S.lakes) { shape(lk.pts, true); ctx.fill(); }
   // fil du courant
   if (s > 1.5) {
     ctx.setLineDash([6, 10]); ctx.globalAlpha = .45; ctx.lineWidth = 1;
@@ -2125,63 +2448,113 @@ function drawWater() {
   ctx.restore();
 }
 // pont : parapets de part et d'autre de la chaussée, sur toute la traversée de la rivière
-function drawBridges() {
-  const s = view.s;
-  for (const river of S.rivers) for (const r of S.roads) { const RP = smoothPts(r); for (let k = 0; k < RP.length - 1; k++) {
-    const rv = river.pts;
-    const a = RP[k], b = RP[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]];
-    for (let i = 0; i < rv.length - 1; i++) {
-      const p = segCross(a, b, rv[i], rv[i+1]);
-      if (!p) continue;
-      const rw = river.w0 + (river.w1 - river.w0) * i / (rv.length - 1);
-      const d = [rv[i+1][0] - rv[i][0], rv[i+1][1] - rv[i][1]], dl = Math.hypot(...d) || 1;
-      const sin = Math.max(.3, Math.abs(u[0] * d[1] - u[1] * d[0]) / dl);
-      const half = rw / 2 / sin + 2, off = roadType(r).surf / 2 + .5;
-      ctx.strokeStyle = Col.bridge; ctx.lineWidth = Math.max(1.5, .9 * s); ctx.lineCap = 'butt';
-      ctx.beginPath();
-      for (const side of [1, -1]) {
-        const q0 = [p[0] - u[0] * half + n[0] * off * side, p[1] - u[1] * half + n[1] * off * side];
-        const q1 = [p[0] + u[0] * half + n[0] * off * side, p[1] + u[1] * half + n[1] * off * side];
-        ctx.moveTo(...toS(...q0)); ctx.lineTo(...toS(...q1));
+// les parapets ne sont recalculés que si routes ou rivières changent (avant : à chaque image,
+// des centaines de milliers de tests de croisement)
+let bridgeCache = { key:null, segs:[] };
+function bridgeSegs() {
+  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined])]);
+  if (bridgeCache.key === key) return bridgeCache.segs;
+  const segs = [];
+  for (const river of S.rivers) {
+    const rv = river.pts, rbb = rv.slice(1).map((q, i) => bbox([rv[i], q]));
+    for (const r of S.roads) { const RP = smoothPts(r); for (let k = 0; k < RP.length - 1; k++) {
+      const a = RP[k], b = RP[k+1], L = segLen(a, b) || 1, u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], n = [-u[1], u[0]], sb = bbox([a, b]);
+      for (let i = 0; i < rv.length - 1; i++) {
+        if (!(sb[0] <= rbb[i][2] && rbb[i][0] <= sb[2] && sb[1] <= rbb[i][3] && rbb[i][1] <= sb[3])) continue;
+        const p = segCross(a, b, rv[i], rv[i+1]);
+        if (!p) continue;
+        const rw = 2 * riverHW(river)[i];
+        const d = [rv[i+1][0] - rv[i][0], rv[i+1][1] - rv[i][1]], dl = Math.hypot(...d) || 1;
+        const sin = Math.max(.3, Math.abs(u[0] * d[1] - u[1] * d[0]) / dl);
+        const half = rw / 2 / sin + 2, off = roadType(r).surf / 2 + .5;
+        for (const side of [1, -1]) segs.push([
+          [p[0] - u[0] * half + n[0] * off * side, p[1] - u[1] * half + n[1] * off * side],
+          [p[0] + u[0] * half + n[0] * off * side, p[1] + u[1] * half + n[1] * off * side]]);
       }
-      ctx.stroke();
-    }
-  } }
+    } }
+  }
+  bridgeCache = { key, segs };
+  return segs;
 }
-// arbres (houppier rond, ombre portée, reflet) et buissons (trois touffes)
+function drawBridges() {
+  const segs = bridgeSegs();
+  if (!segs.length) return;
+  ctx.strokeStyle = Col.bridge; ctx.lineWidth = Math.max(1.5, .9 * view.s); ctx.lineCap = 'butt';
+  ctx.beginPath();
+  for (const [q0, q1] of segs) { ctx.moveTo(...toS(...q0)); ctx.lineTo(...toS(...q1)); }
+  ctx.stroke();
+}
+/* ---------- végétation en tuiles (anti-lag) ----------
+   Des dizaines de milliers d'arbres ne sont plus redessinés à chaque image : la couche
+   végétation est peinte par tuiles de 512 px, à la résolution du zoom (2, 4, 8 ou 16 px
+   par mètre), gardées en mémoire (160 au plus, les moins récentes sont libérées). Déplacer
+   ou zoomer ne fait que recopier des images ; une tuile n'est repeinte que si un arbre
+   change dessous (coupe, pousse, nouveau bâtiment). Trois tuiles au plus sont peintes par
+   image ; en attendant, la vue de loin (1 px/m) bouche le trou. */
+const TILE_PX = 512, TILE_LEVELS = [2, 4, 8, 16], TILE_MAX = 160, TILE_BUDGET = 3;
+const tiles = new Map();
+let floraIdx = null, tileClock = 0;
+// index des arbres par seaux de 64 m (chaque seau garde l'ordre nord → sud)
+function floraNear(x0, y0, x1, y1) {
+  if (!floraIdx) {
+    floraIdx = new Map();
+    for (const f of flora) { const k = Math.floor(f.x / 64) + ',' + Math.floor(f.y / 64); if (!floraIdx.has(k)) floraIdx.set(k, []); floraIdx.get(k).push(f); }
+  }
+  const out = [];
+  for (let j = Math.floor(y0 / 64); j <= Math.floor(y1 / 64); j++) for (let i = Math.floor(x0 / 64); i <= Math.floor(x1 / 64); i++)
+    for (const f of floraIdx.get(i + ',' + j) || []) if (f.x >= x0 && f.x <= x1 && f.y >= y0 && f.y <= y1) out.push(f);
+  return out.sort((a, b) => a.y - b.y);
+}
+function invalidateTiles(x, y, r) {
+  for (const [k, tl] of tiles) if (x + r > tl.x0 && x - r < tl.x0 + tl.m && y + r > tl.y0 && y - r < tl.y0 + tl.m) tiles.delete(k);
+}
+function renderTile(L, i, j) {
+  const m = TILE_PX / L, x0 = i * m, y0 = j * m, M = 40; // marge : houppiers et ombres qui débordent
+  const c = document.createElement('canvas'); c.width = c.height = TILE_PX;
+  const g = c.getContext('2d');
+  g.imageSmoothingEnabled = true;
+  const list = floraNear(x0 - M, y0 - M, x0 + m + M, y0 + m + M);
+  drawWoods(g, list.filter(f => f.wood), L, -x0 * L, -y0 * L);
+  for (const f of list) if (!f.wood) stampTree(g, f, (f.x - x0) * L, (f.y - y0) * L, L);
+  const tl = { c, x0, y0, m, used:++tileClock };
+  tiles.set(L + ':' + i + ':' + j, tl);
+  if (tiles.size > TILE_MAX) {                                   // on libère les plus anciennes
+    const old = [...tiles.entries()].sort((a, b) => a[1].used - b[1].used).slice(0, tiles.size - TILE_MAX);
+    for (const [k] of old) tiles.delete(k);
+  }
+  return tl;
+}
+// arbres et buissons : modèles peints posés du nord au sud (les houppiers se recouvrent)
 function drawFlora() {
-  const s = view.s, [wx0, wy0] = toW(-20, -20), [wx1, wy1] = toW(W + 20, H + 20);
-  if (s < 2) { // de loin : image pré-dessinée
-    const [tx, ty] = toS(0, 0);
-    ctx.imageSmoothingEnabled = true;
-    ctx.drawImage(floraImage(), tx, ty, TW * s, TH * s);
+  const s = view.s, eff = s * dpr, [tx, ty] = toS(0, 0);
+  ctx.imageSmoothingEnabled = true;
+  if (s < 1.3) { ctx.drawImage(floraImage(), tx, ty, TW * s, TH * s); return; } // de loin : image pré-dessinée
+  const [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
+  if (eff > 16) { // très près : peu d'arbres visibles, dessinés directement
+    const list = floraNear(wx0 - 40, wy0 - 40, wx1 + 40, wy1 + 40);
+    drawWoods(ctx, list.filter(f => f.wood), s, view.ox, view.oy);
+    for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, s); }
     return;
   }
-  for (const f of flora) {
-    if (f.x < wx0 || f.x > wx1 || f.y < wy0 || f.y > wy1) continue;
-    const [X, Y] = toS(f.x, f.y), r = Math.max(1, f.r * s);
-    if (f.kind === 'tree') {
-      ctx.fillStyle = Col.shadow;
-      ctx.beginPath(); ctx.ellipse(X + r * .45, Y + r * .5, r, r * .8, 0, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = f.v < .5 ? Col.tree : Col['tree-dark'];
-      ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fill();
-      if (r > 4) {
-        ctx.strokeStyle = Col['tree-dark']; ctx.lineWidth = 1; ctx.stroke();
-        ctx.fillStyle = Col.bush; ctx.globalAlpha = .55;
-        ctx.beginPath(); ctx.arc(X - r * .3, Y - r * .3, r * .45, 0, Math.PI * 2); ctx.fill();
-        ctx.globalAlpha = 1;
-      }
-    } else {
-      ctx.fillStyle = Col.bush;
-      for (const [dx, dy] of [[-.55, .2], [.5, .25], [0, -.35]]) {
-        ctx.beginPath(); ctx.arc(X + dx * r, Y + dy * r, r * .7, 0, Math.PI * 2); ctx.fill();
-      }
-      if (r > 3) {
-        ctx.strokeStyle = Col['tree-dark']; ctx.lineWidth = .8; ctx.globalAlpha = .6;
-        ctx.beginPath(); ctx.arc(X, Y, r * 1.05, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
-      }
+  const L = TILE_LEVELS.find(l => l >= eff) || 16, m = TILE_PX / L;
+  // budget de temps : on peint des tuiles pendant 10 ms au plus par image (au moins une),
+  // pour que le zoom et le déplacement restent fluides
+  const t0 = performance.now();
+  let budget = TILE_BUDGET, missing = false;
+  const i0 = Math.max(0, Math.floor(wx0 / m)), i1 = Math.min(Math.ceil(TW / m) - 1, Math.floor(wx1 / m));
+  const j0 = Math.max(0, Math.floor(wy0 / m)), j1 = Math.min(Math.ceil(TH / m) - 1, Math.floor(wy1 / m));
+  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
+    let tl = tiles.get(L + ':' + i + ':' + j);
+    if (!tl && budget > 0 && (budget === TILE_BUDGET || performance.now() - t0 < 10)) { tl = renderTile(L, i, j); budget--; }
+    const X = i * m * s + view.ox, Y = j * m * s + view.oy, Z = m * s;
+    if (tl) { tl.used = ++tileClock; ctx.drawImage(tl.c, X, Y, Z + .6, Z + .6); }
+    else {  // pas encore peinte : la vue de loin en attendant
+      missing = true;
+      const sw = Math.min(m, TW - i * m), sh = Math.min(m, TH - j * m); // sans déborder de l'image
+      ctx.drawImage(floraImage(), i * m, j * m, sw, sh, X, Y, sw * s, sh * s);
     }
   }
+  if (missing) requestDraw(); // les tuiles restantes arrivent aux images suivantes
 }
 function drawWalls() {
   const s = view.s;
@@ -2244,7 +2617,10 @@ function drawFrame() {
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(groundImage(), tx, ty, TW*s, TH*s);
   alignPatterns();
-  if (s > 3 && PAT.herbe) { ctx.fillStyle = PAT.herbe; ctx.fillRect(tx, ty, TW*s, TH*s); }
+  if (s > 3 && PAT.herbe) { // brins d'herbe : seulement sur la partie visible du terrain
+    const x0 = Math.max(tx, 0), y0 = Math.max(ty, 0), x1 = Math.min(tx + TW*s, W), y1 = Math.min(ty + TH*s, H);
+    if (x1 > x0 && y1 > y0) { ctx.fillStyle = PAT.herbe; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); }
+  }
   ctx.strokeStyle = Col.ink; ctx.lineWidth = 1.5; ctx.strokeRect(tx, ty, TW*s, TH*s);
   // graduations en mètres sur le cadre seulement
   const step = [8, 16, 40, 80, 200, 400].find(v => v * s >= 38) || 400;
@@ -2453,7 +2829,6 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
   drawFrame();
-  drawDeposits();
   drawContours();
   drawWater();
   drawZones();
@@ -3097,18 +3472,21 @@ function renderSel() {
 function updateStatus() {
   const built = S.houses.reduce((s, h) => s + h.w * h.l, 0);
   const cap = S.houses.reduce((s, h) => s + ((buildingOf(h) || {}).cap || 0), 0); // logements
-  const free = Z.cells.filter(c => c.occ === null).length;
+  let free = 0; for (const c of Z.cells) if (c.occ === null) free++;
   const len = S.roads.reduce((s, r) => s + roadLen(r), 0);
   const c = cursor && inTerrain(cursor)
     ? `x <b>${fmt(cursor[0])}</b> · y <b>${fmt(cursor[1])}</b> m` + (RELIEF_ON ? ` · altitude <b>${fmt(hAt(...cursor))}</b> m` : '')
     : 'hors terrain';
-  $('status').innerHTML =
+  const html =
     `<span>${c}</span><span>Trésor <b>${fmt(S.gold, 0)}</b> Or</span>` +
     `<span><b>${S.houses.length}</b> bâtiments · logements pour <b>${cap}</b> habitants</span>` +
     `<span><b>${free}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
     `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
     `<span>1 case = 8 × 8 m</span>`;
+  // la barre d'état n'est réécrite que si son texte change (pas de mise en page à chaque image)
+  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; }
 }
+let lastStatus = '';
 
 /* ---------- démarrage ---------- */
 readColors();
