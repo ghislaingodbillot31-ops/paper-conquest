@@ -306,7 +306,7 @@ const KEY = 'planVillageZonage.v11', OLD_KEY = 'planVillageZonage.v10'; // v11 :
 const PRESETS = [
   { id:'maison',      name:'Maison simple',            f:1, d:1, cap:2, turn:true, ownShadow:true,
     use:'Logement : 2 habitants au plus' },
-  { id:'maison_cour', name:'Maison avec arrière-cour', f:1, d:3, cap:4, turn:false, yard:true,
+  { id:'maison_cour', name:'Maison avec arrière-cour', f:1, d:3, cap:4, turn:false, yard:true, ownShadow:true,
     use:"Logement d'une famille (4 habitants au plus), avec arrière-cour : jardin, verger ou élevage" },
   { id:'manoir',      name:'Manoir',                   f:3, d:3, turn:true, unique:true,
     use:"Siège du pouvoir : permet la taxation et l'administration" },
@@ -2144,7 +2144,7 @@ const minScale = () => atelier.on ? Math.min((W - 60), (H - 60)) / atelierSide()
    Vue à part (demande du 30/09) : un simple carré de terrain avec UN bâtiment posé au milieu,
    sans la carte, pour travailler chaque bâtiment en détail. Mode gardé dans ce navigateur. */
 const ATELIER_KEY = 'planVillageZonage.atelier';
-const ATELIER_CUR = 'maison';                  // bâtiment en cours de travail : l'atelier s'ouvre dessus une fois
+const ATELIER_CUR = 'maison_cour';                 // bâtiment en cours de travail : l'atelier s'ouvre dessus une fois
 let atelier = { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR };
 try { Object.assign(atelier, JSON.parse(localStorage.getItem(ATELIER_KEY) || '{}')); } catch (e) {}
 if (atelier.cur !== ATELIER_CUR) Object.assign(atelier, { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR });
@@ -2421,9 +2421,9 @@ function chimneyLT(h, cu, ct, a) {
   const b = a * .45; pathS(lpts(h, [[cu - b, ct - b], [cu + b, ct - b], [cu + b, ct + b], [cu - b, ct + b]])); ctx.fillStyle = '#1f1a15'; ctx.fill();
 }
 // clôture tressée (plessis) : branchages entrelacés entre des pieux, ouverte sur [gap0, gap1]
-function wattleLT(h, u0, t0, u1, t1, gap0, gap1) {
+function wattleLT(h, u0, t0, u1, t1, gap0, gap1, extra = []) { // gap0 null : pas de portail ; extra : segments en plus (refends)
   const s = view.s, rnd = seeded(Math.round(h.x * 3 + h.y * 5) + 7);
-  const runs = [[[u0, t0], [gap0, t0]], [[gap1, t0], [u1, t0]], [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]]];
+  const gate = gap0 != null, runs = [...(gate ? [[[u0, t0], [gap0, t0]], [[gap1, t0], [u1, t0]]] : [[[u0, t0], [u1, t0]]]), [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]], ...extra];
   const lines = runs.map(([a, b]) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(L / .6)), P = [];
     for (let i = 0; i <= n; i++) { const j = i && i < n ? (rnd() - .5) * .14 : 0; P.push([a[0] + (b[0] - a[0]) * i / n + j, a[1] + (b[1] - a[1]) * i / n + j]); } return P; });
   ctx.lineJoin = 'round'; ctx.lineCap = 'round';
@@ -2442,7 +2442,7 @@ function wattleLT(h, u0, t0, u1, t1, gap0, gap1) {
     ctx.fillStyle = WOOD.edge;
     for (const [a, b] of runs) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]); for (let d = 0; d <= L + .01; d += 1.5) { const u = a[0] + (b[0] - a[0]) * d / L, t = a[1] + (b[1] - a[1]) * d / L, e = .11; pathS(lpts(h, [[u - e, t - e], [u + e, t - e], [u + e, t + e], [u - e, t + e]])); ctx.fill(); } }
   }
-  for (const u of [gap0, gap1]) { const e = .22; pathS(lpts(h, [[u - e, t0 - e], [u + e, t0 - e], [u + e, t0 + e], [u - e, t0 + e]])); ctx.fillStyle = WOOD.edge; ctx.fill(); } // poteaux du portail
+  if (gate) for (const u of [gap0, gap1]) { const e = .22; pathS(lpts(h, [[u - e, t0 - e], [u + e, t0 - e], [u + e, t0 + e], [u - e, t0 + e]])); ctx.fillStyle = WOOD.edge; ctx.fill(); } // poteaux du portail
 }
 // fosse de sciage de long : trou bordé de déblais, deux traverses, grume à moitié sciée,
 // scie de long à cadre plantée dans le trait, échelle, sciure au fond
@@ -2567,6 +2567,174 @@ function vegPatchLT(h, u0, t0, u1, t1) {
     if (s > 2.5) { const g = ['#6f8a3e', '#86a04a', '#5d7a38'][k % 3]; for (let u = u0 + .2; u < u1 - .1; u += .28) { const [X, Y] = LP(h, u + (rnd() - .5) * .06, t); const r = Math.max(1, (.1 + rnd() * .06) * s); ctx.fillStyle = g; ctx.fillRect(X - r, Y - r, r * 2, r * 2); } }
   }
   pathS(P); ctx.strokeStyle = '#6b5236'; ctx.lineWidth = lw(.1); ctx.stroke();
+}
+// ovale (vu de dessus) centré en (cu, ct) dans un repère tourné (at), en points écran
+const ovalS = (h, at, cx, cy, rx, ry, n = 10) => { const P = []; for (let i = 0; i < n; i++) { const b = i / n * Math.PI * 2; P.push(at(cx + Math.cos(b) * rx, cy + Math.sin(b) * ry)); } return lpts(h, P); };
+// bête vue de dessus (poule, chèvre…) : corps ovale, tête vers l'angle a, ombre ; deco(at) ajoute cornes, crête
+function beastLT(h, u, t, a, len, wid, body, head, deco) {
+  const du = Math.cos(a), dt = Math.sin(a), at = (x, y) => [u + du * x - dt * y, t + dt * x + du * y];
+  const B = ovalS(h, at, 0, 0, len / 2, wid / 2), H = ovalS(h, at, len / 2 + wid * .22, 0, wid * .3, wid * .24, 8);
+  pathS(shiftS(B, .1, .13)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  for (const [P, c] of [[B, body], [H, head || body]]) { pathS(P); ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.025); ctx.stroke(); }
+  if (deco && view.s > 2.5) deco(at);
+}
+const henLT = (h, u, t, a, col) => beastLT(h, u, t, a, .34, .22, col, col, at => { pathS(lpts(h, [at(.3, -.03), at(.36, -.03), at(.36, .03), at(.3, .03)])); ctx.fillStyle = '#c23b2a'; ctx.fill(); });
+const goatLT = (h, u, t, a, col) => beastLT(h, u, t, a, .95, .4, col, col, at => { ctx.strokeStyle = '#3b3228'; ctx.lineWidth = lw(.04); ctx.beginPath(); for (const e of [-.06, .06]) { ctx.moveTo(...LP(h, ...at(.72, e))); ctx.lineTo(...LP(h, ...at(.58, e * 2.4))); } ctx.stroke(); });
+// arbre fruitier : houppier bosselé, reflet au nord-ouest, fruits rouges
+function fruitTreeLT(h, cu, ct, r) {
+  const s = view.s, rnd = seeded(Math.round(cu * 37 + ct * 11 + h.x + h.y)), c = [], hi = [];
+  for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, k = .86 + rnd() * .16 + .06 * Math.sin(i * 2.7); c.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * k]); hi.push([cu + Math.cos(a) * r * k * .55, ct + Math.sin(a) * r * k * .55]); }
+  const C = lpts(h, c);
+  pathS(shiftS(C, r * .45, r * .55)); ctx.fillStyle = 'rgba(40,44,20,.3)'; ctx.fill();
+  pathS(C); ctx.fillStyle = '#6a8741'; ctx.fill(); ctx.strokeStyle = '#3d5026'; ctx.lineWidth = lw(.06); ctx.stroke();
+  pathS(shiftS(lpts(h, hi), -r * .22, -r * .25)); ctx.fillStyle = '#84a150'; ctx.fill();
+  if (s > 2) { ctx.fillStyle = 'rgba(45,62,28,.35)'; for (let k = 0; k < 14; k++) { const [X, Y] = LP(h, cu + (rnd() - .5) * r * 1.4, ct + (rnd() - .5) * r * 1.4); ctx.fillRect(X, Y, Math.max(1, .2 * s), Math.max(1, .14 * s)); } }
+  if (s > 1.5) { ctx.fillStyle = '#b9402b'; for (let k = 0; k < 8; k++) { const a = rnd() * Math.PI * 2, d = rnd() * r * .8, [X, Y] = LP(h, cu + Math.cos(a) * d, ct + Math.sin(a) * d), e = Math.max(1, .13 * s); ctx.fillRect(X - e / 2, Y - e / 2, e, e); } }
+}
+// tas (fumier, compost, charbon, foin…) : monticule irrégulier, crête plus claire
+function heapLT(h, cu, ct, ru, rt, col, hiCol) {
+  const rnd = seeded(Math.round(cu * 23 + ct * 29 + h.x)), P = [], Q = [];
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, k = .82 + rnd() * .3; P.push([cu + Math.cos(a) * ru * k, ct + Math.sin(a) * rt * k]); Q.push([cu - ru * .15 + Math.cos(a) * ru * .5 * k, ct - rt * .15 + Math.sin(a) * rt * .5 * k]); }
+  pathS(shiftS(lpts(h, P), .3, .4)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(lpts(h, P)); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = 'rgba(40,30,18,.55)'; ctx.lineWidth = lw(.05); ctx.stroke();
+  pathS(lpts(h, Q)); ctx.fillStyle = hiCol; ctx.fill();
+}
+// auge ou cuve de bois (eau, grain, tan…)
+function troughLT(h, u0, t0, u1, t1, fill) {
+  beamLT(h, u0, t0, u1, t1);
+  const e = Math.min(.12, (Math.min(u1 - u0, t1 - t0)) * .22);
+  pathS(lpts(h, [[u0 + e, t0 + e], [u1 - e, t0 + e], [u1 - e, t1 - e], [u0 + e, t1 - e]])); ctx.fillStyle = fill; ctx.fill();
+}
+// tonneau debout : couvercle de douelles, cercles de fer
+function barrelLT(h, cu, ct, r) {
+  const s = view.s, [X, Y] = LP(h, cu, ct), R = Math.max(1.5, r * s);
+  ctx.beginPath(); ctx.arc(X + .25 * s, Y + .3 * s, R, 0, Math.PI * 2); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.fillStyle = '#94693f'; ctx.fill(); ctx.strokeStyle = '#2f2a24'; ctx.lineWidth = Math.max(1, .07 * s); ctx.stroke();
+  if (s > 2.5) { ctx.strokeStyle = 'rgba(50,34,20,.55)'; ctx.lineWidth = 1; ctx.beginPath(); for (const k of [-.5, 0, .5]) { ctx.moveTo(X + k * R, Y - Math.sqrt(1 - k * k) * R * .92); ctx.lineTo(X + k * R, Y + Math.sqrt(1 - k * k) * R * .92); } ctx.stroke();
+    ctx.beginPath(); ctx.arc(X, Y, R * .82, 0, Math.PI * 2); ctx.strokeStyle = '#3a342c'; ctx.stroke(); }
+}
+// enclume sur son billot équarri
+function anvilLT(h, cu, ct) {
+  beamLT(h, cu - .3, ct - .3, cu + .3, ct + .3);
+  const P = lpts(h, [[cu - .32, ct - .11], [cu + .12, ct - .13], [cu + .42, ct], [cu + .12, ct + .13], [cu - .32, ct + .11]]);
+  pathS(shiftS(P, .1, .12)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  pathS(P); ctx.fillStyle = '#4c5053'; ctx.fill(); ctx.strokeStyle = '#1f2123'; ctx.lineWidth = lw(.03); ctx.stroke();
+}
+// four à pain en coupole d'argile, gueule noire tournée vers t0
+function ovenLT(h, cu, ct, r) {
+  heapLT(h, cu, ct, r, r, '#b47c55', '#cf9a6e');
+  if (view.s > 2) { ctx.strokeStyle = 'rgba(90,55,30,.45)'; ctx.lineWidth = 1; ctx.beginPath(); const [X, Y] = LP(h, cu, ct); ctx.arc(X, Y, r * .55 * view.s, 0, Math.PI * 2); ctx.stroke(); }
+  pathS(lpts(h, [[cu - .3, ct - r - .05], [cu + .3, ct - r - .05], [cu + .25, ct - r + .35], [cu - .25, ct - r + .35]])); ctx.fillStyle = '#231c16'; ctx.fill();
+}
+// peau tendue sur un cadre de perches, lacée aux bords
+function hideFrameLT(h, cu, ct, a) {
+  const s = view.s, rnd = seeded(Math.round(cu * 13 + ct * 19)), P = [];
+  for (let i = 0; i < 12; i++) { const b = i / 12 * Math.PI * 2, k = .72 + rnd() * .2; P.push([cu + Math.cos(b) * a * k, ct + Math.sin(b) * a * 1.1 * k]); }
+  if (s > 2) { ctx.strokeStyle = 'rgba(60,44,28,.6)'; ctx.lineWidth = 1; ctx.beginPath(); for (const p of P) { const q = [cu + Math.sign(p[0] - cu) * a, ct + Math.sign(p[1] - ct) * a * 1.15]; ctx.moveTo(...LP(h, ...p)); ctx.lineTo(...LP(h, ...(Math.abs(p[0] - cu) > Math.abs(p[1] - ct) / 1.1 ? [q[0], p[1]] : [p[0], q[1]]))); } ctx.stroke(); }
+  pathS(lpts(h, P)); ctx.fillStyle = '#c49a6a'; ctx.fill(); ctx.strokeStyle = '#7a5836'; ctx.lineWidth = lw(.04); ctx.stroke();
+  ctx.strokeStyle = WOOD.fence; ctx.lineWidth = lw(.1); pathS(lpts(h, [[cu - a, ct - a * 1.15], [cu + a, ct - a * 1.15], [cu + a, ct + a * 1.15], [cu - a, ct + a * 1.15]])); ctx.stroke();
+}
+// corde à linge entre deux piquets, étoffes teintes qui sèchent
+function clothLineLT(h, u0, u1, t, cols) {
+  const s = view.s;
+  ctx.strokeStyle = '#6b5a44'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, u0, t)); ctx.lineTo(...LP(h, u1, t)); ctx.stroke();
+  const n = cols.length, w = (u1 - u0 - .4) / n;
+  cols.forEach((c, k) => { const a = u0 + .2 + k * w + .06, b = a + w - .12, P = lpts(h, [[a, t - .06], [b, t - .06], [b, t + .14], [a, t + .14]]);
+    pathS(shiftS(P, .15, .7)); ctx.fillStyle = 'rgba(40,34,24,.22)'; ctx.fill();
+    pathS(P); ctx.fillStyle = c; ctx.fill(); ctx.strokeStyle = 'rgba(30,24,18,.5)'; ctx.lineWidth = 1; ctx.stroke(); });
+  ctx.fillStyle = WOOD.edge; for (const u of [u0, u1]) { const e = .1; pathS(lpts(h, [[u - e, t - e], [u + e, t - e], [u + e, t + e], [u - e, t + e]])); ctx.fill(); }
+}
+// butte de tir en paille tressée : cercles rouge et blanc
+function targetLT(h, cu, ct, r) {
+  const s = view.s, [X, Y] = LP(h, cu, ct);
+  for (const [k, c] of [[1, '#d6bd7e'], [.66, '#f0e6c8'], [.38, '#b9402b'], [.14, '#f0e6c8']]) { ctx.beginPath(); ctx.arc(X, Y, Math.max(1, r * k * s), 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill(); if (k === 1) { ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke(); } }
+}
+// faisceau de flèches / de baguettes posées, empennage clair
+function arrowsLT(h, cu, ct, len, n) {
+  const s = view.s; if (s < 2) return;
+  ctx.lineWidth = 1;
+  for (let k = 0; k < n; k++) { const y = ct + (k - n / 2) * .09;
+    ctx.strokeStyle = '#8a6a45'; ctx.beginPath(); ctx.moveTo(...LP(h, cu - len / 2, y)); ctx.lineTo(...LP(h, cu + len / 2, y)); ctx.stroke();
+    ctx.strokeStyle = '#e8e0cc'; ctx.beginPath(); ctx.moveTo(...LP(h, cu - len / 2, y)); ctx.lineTo(...LP(h, cu - len / 2 + .18, y)); ctx.stroke(); }
+}
+/* arrière-cour : dessinée dans un repère propre (x sur le petit côté, y sur le long côté,
+   y = 0 côté maison), qu'on retourne pour les cours plus larges que profondes (grande maison) */
+function yardLT(h, kind, U0, T0, U1, T1) {
+  const port = (T1 - T0) >= (U1 - U0), Wy = port ? U1 - U0 : T1 - T0, Ly = port ? T1 - T0 : U1 - U0;
+  const Q = (x, y) => port ? [U0 + x, T0 + y] : [U0 + y, T0 + x];
+  const R = (x0, y0, x1, y1) => { const a = Q(x0, y0), b = Q(x1, y1); return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])]; };
+  const s = view.s, rnd = seeded(Math.round(h.x * 7 + h.y * 3) + kind.length), cx = Wy / 2;
+  const alongY = port ? 't' : 'u', alongX = port ? 'u' : 't';
+  const shed = (y0, straw) => thatchLT(h, ...R(.2, y0, Wy - .2, Ly - .15), alongX, straw || STRAW);
+  const craftShop = () => { const r = R(.25, Ly - 6, Wy - .25, Ly - .15); gableLT(h, ...r); return r; };
+  const spots = (n, y0, y1) => Array.from({ length:n }, () => Q(.6 + rnd() * (Wy - 1.2), y0 + rnd() * (y1 - y0)));
+  switch (kind) {
+    case 'potager': {
+      for (let y = .5; y + 3 < Ly - 2; y += 3.6) { vegPatchLT(h, ...R(.3, y, cx - .45, y + 3)); vegPatchLT(h, ...R(cx + .45, y, Wy - .3, y + 3)); }
+      heapLT(h, ...Q(Wy - 1.3, Ly - 1.1), .9, .8, '#5e4a33', '#735c40');                        // compost
+      barrelLT(h, ...Q(.9, Ly - 1), .42);                                                        // tonneau d'eau de pluie
+      break;
+    }
+    case 'verger': {
+      for (let y = 2, k = 0; y < Ly - 1.2; y += 3.6, k++) for (const x of k % 2 ? [Wy * .3, Wy * .74] : [Wy * .26, Wy * .7]) fruitTreeLT(h, ...Q(x, y), 1.55);
+      if (s > 2) { const [u, t] = Q(cx, Ly - .8); heapLT(h, u, t, .35, .35, '#b08a50', '#c9a468'); }   // panier
+      break;
+    }
+    case 'poulailler': {
+      shed(Ly - 3.2);
+      troughLT(h, ...R(.6, Ly - 4.6, 2.4, Ly - 4.2), '#c9b070');                                // mangeoire
+      if (s > 2) { ctx.fillStyle = '#d9c68c'; for (let k = 0; k < 40; k++) { const [X, Y] = LP(h, ...Q(.5 + rnd() * (Wy - 1), .5 + rnd() * (Ly - 4.5))); ctx.fillRect(X, Y, Math.max(1, .07 * s), Math.max(1, .07 * s)); } } // grain
+      spots(10, .8, Ly - 4.2).forEach(([u, t], k) => henLT(h, u, t, rnd() * Math.PI * 2, ['#efe9dc', '#a9683a', '#efe9dc', '#5b4432'][k % 4]));
+      break;
+    }
+    case 'chevres': {
+      shed(Ly - 3.8, OLD_STRAW);
+      heapLT(h, ...Q(1.5, Ly - 5), 1, .8, '#c7b26a', '#dccb86');                               // foin
+      troughLT(h, ...R(Wy - 1.1, 1, Wy - .5, 3.4), '#6f969c');                                  // abreuvoir
+      spots(5, 1, Ly - 6).forEach(([u, t], k) => goatLT(h, u, t, rnd() * Math.PI * 2, ['#ece6d8', '#7a5a3c', '#b89a74', '#ece6d8', '#4d3d30'][k]));
+      if (s > 2) { ctx.fillStyle = '#5a4630'; for (let k = 0; k < 18; k++) { const [X, Y] = LP(h, ...Q(.5 + rnd() * (Wy - 1), .5 + rnd() * (Ly - 5))); ctx.fillRect(X, Y, Math.max(1, .08 * s), Math.max(1, .08 * s)); } } // crottes
+      break;
+    }
+    default: {                                                                                   // ateliers : échoppe au fond, cour de travail devant
+      const shop = craftShop(), yc = (Ly - 6) / 2;
+      if (kind === 'menuisier') {
+        for (let k = 0; k < 3; k++) beamLT(h, ...R(.5 + k * .6, .6, .95 + k * .6, 5.5 - k * .4));
+        trestleLT(h, ...Q(cx + 1, yc + 1), 2.2); if (s > 1.5) offcutsLT(h, ...Q(cx + 1, yc + 1.4), 1.2, 7, 31);
+        planksLT(h, ...R(Wy - 1.7, .6, Wy - .5, 4.2));
+      } else if (kind === 'flechier') {
+        targetLT(h, ...Q(cx, .9), .6);
+        for (let k = 0; k < 6; k++) beamLT(h, ...R(.6 + k * .28, 2.6, .72 + k * .28, 6.6));       // douelles d'arcs qui sèchent
+        const [u, t] = Q(Wy - 1.6, yc + 1); arrowsLT(h, u, t, 1.1, 7);
+        cordwoodLT(h, ...R(Wy - 1.3, .5, Wy - .5, 2.6));
+      } else if (kind === 'brasserie') {
+        for (const [x, y] of [[.8, .9], [1.8, .9], [1.3, 1.8], [Wy - .9, 1], [Wy - .9, 2]]) barrelLT(h, ...Q(x, y), .42);
+        troughLT(h, ...R(cx - .9, yc, cx + .9, yc + 1.4), '#8a6a3a');                            // cuve de brassage
+        heapLT(h, ...Q(Wy - 1.3, yc + 2), .7, .6, '#c9a15e', '#dcb878');                        // drêche
+        cordwoodLT(h, ...R(.4, yc + 1.8, 1, Ly - 6.6));
+      } else if (kind === 'cordonnier') {
+        hideFrameLT(h, ...Q(1.4, 1.6), .9); hideFrameLT(h, ...Q(Wy - 1.4, 2.2), .9);
+        troughLT(h, ...R(cx - 1.1, yc + 1, cx + 1.1, yc + 2.3), '#6a4a2c'); troughLT(h, ...R(cx - 1.1, yc + 2.6, cx + 1.1, yc + 3.6), '#8b6a3e'); // fosses à tan
+      } else if (kind === 'tailleur') {
+        const [a] = Q(.4, 0), [b] = Q(Wy - .4, 0);
+        if (port) { clothLineLT(h, a, b, T0 + 1.2, ['#8a3b2e', '#3f5d7a', '#c9b27a']); clothLineLT(h, a, b, T0 + 3, ['#e6dcc4', '#5d7a3f', '#8a3b2e']); }
+        else { clothLineLT(h, U0 + 1, U0 + 5, T0 + 1.2, ['#8a3b2e', '#3f5d7a', '#c9b27a']); clothLineLT(h, U0 + 1, U0 + 5, T0 + 3, ['#e6dcc4', '#5d7a3f', '#8a3b2e']); }
+        heapLT(h, ...Q(Wy - 1.3, yc + 1.6), .7, .6, '#ece6d8', '#f8f4ea');                      // laine
+        troughLT(h, ...R(.6, yc + 1.2, 2, yc + 2.4), '#3f5d7a');                                 // cuve de teinture
+      } else if (kind === 'boulangerie') {
+        ovenLT(h, ...Q(cx, yc + .8), 1.3);
+        cordwoodLT(h, ...R(.4, .5, 1, 4)); cordwoodLT(h, ...R(Wy - 1, .5, Wy - .4, 3.4));
+      } else {                                                                                   // forgeron, armurier
+        anvilLT(h, ...Q(cx, yc + 1.6));
+        heapLT(h, ...Q(1.2, 1.2), .8, .7, '#2c2926', '#45403a');                                 // charbon de bois
+        troughLT(h, ...R(Wy - 1.3, yc + .6, Wy - .6, yc + 2.4), '#56777c');                        // bac de trempe
+        if (kind === 'armurier') { for (let k = 0; k < 3; k++) { const [u, t] = Q(1 + k * .9, yc + 3.2); ctx.fillStyle = ['#7a2e24', '#3f5d7a', '#8a8f92'][k]; pathS(lpts(h, [[u - .3, t - .3], [u + .3, t - .3], [u + .3, t + .15], [u, t + .4], [u - .3, t + .15]])); ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.04); ctx.stroke(); } }
+        else beamLT(h, ...R(Wy - 1.2, .5, Wy - .6, 3));                                            // barres de fer
+        const [u, t] = port ? [shop[0] + 1, (shop[1] + shop[3]) / 2] : [(shop[0] + shop[2]) / 2, shop[1] + 1];
+        chimneyLT(h, u, t, .6);
+        if (s > 1.5) { const [X, Y] = LP(h, u, t); ctx.fillStyle = 'rgba(230,110,40,.55)'; ctx.fillRect(X - .15 * s, Y - .15 * s, .3 * s, .3 * s); } // lueur de la forge
+      }
+    }
+  }
 }
 // pile de poutres équarries sur deux cales, le long de u
 function beamStackLT(h, u0, t0, u1, n, wd) {
@@ -2741,30 +2909,25 @@ const BUILD_DRAW = {
     thatchLT(h, -3.4, 2.7, 2.6, 7.4, 'u', STRAW);                                                // chaumière
     chimneyLT(h, -2.6, 5.05, .45);                                                               // cheminée en pignon
   },
+  /* Maison avec arrière-cour (1 × 3 cases, 8 × 24 m) : chaumière côté rue comme la maison
+     simple, puis l'arrière-cour close d'un plessis, selon son extension : potager, verger,
+     poulailler, chèvres, ou un atelier d'artisan au fond (toit de bardeaux) et sa cour de
+     travail. Sert aussi à la cour de la grande maison (_yardFrom : début de la cour). */
   maison_cour: h => {
-    const w2 = h.w / 2, yard = yardOf(h), Y0 = h._yardFrom || CELL; // Y0 : début de la cour
-    // arrière-cour d'abord (avec son extension), maison devant, côté rue
-    const ext = EXT[yard], craft = ext.grp === 'Artisanat';
-    rectLT(h, -w2 + .3, Y0, w2 - .3, h.l - .3);
-    ctx.fillStyle = craft ? Col.earth : yard === 'chevres' || yard === 'poulailler' ? Col['f-plough'] : yard === 'verger' ? Col['f-meadow'] : Col['f-alfalfa']; ctx.fill();
-    if (yard === 'potager' && view.s > 1.2) {             // planches de légumes
-      ctx.strokeStyle = Col['tree-dark']; ctx.globalAlpha = .5; ctx.lineWidth = 1; ctx.beginPath();
-      for (let t = Y0 + 1.5; t < h.l - 1; t += 1.6) { ctx.moveTo(...LP(h, -w2 + 1, t)); ctx.lineTo(...LP(h, w2 - 1, t)); }
-      ctx.stroke(); ctx.globalAlpha = 1;
-    } else if (yard === 'verger') {                       // pommiers alignés
-      for (let t = Y0 + 2.5; t < h.l - 1; t += 4) for (const u of [-w2 / 2, w2 / 2]) { dotLT(h, u, t, 1.5, Col.tree, Col['tree-dark']); dotLT(h, u + .5, t - .3, .35, Col['stall-a']); }
-    } else if (yard === 'chevres' || yard === 'poulailler') { // abri et bêtes (chèvres, ou poules plus petites)
-      roofBlock(h, w2 - 3.6, h.l - 4, w2 - .6, h.l - .6, Col.house);
-      const hen = yard === 'poulailler';
-      for (const [u, t] of [[-1.5, Y0 + 3], [.5, Y0 + 5], [-2, Y0 + 2], [1.5, Y0 + 1.5], [0, Y0 + 7]]) dotLT(h, u, t, hen ? .4 : .7, hen ? Col.sheep : Col['ore-clay'], Col['house-edge']);
-    } else {                                              // atelier au fond de la cour, et sa production
-      roofBlock(h, -w2 + .8, h.l - 6.5, w2 - .8, h.l - .8, Col.tavern);
-      const mark = { flechier:'earth-edge', menuisier:'earth-edge', brasserie:'ore-clay', cordonnier:'ore-iron', tailleur:'stall-a',
-        forgeron:'wall-edge', boulangerie:'stall-b', armurier:'wall' }[yard];
-      for (const [u, t] of [[-1.8, Y0 + 2], [0, Y0 + 3.5], [1.8, Y0 + 2]]) { rectLT(h, u - .6, t - .6, u + .6, t + .6); ctx.fillStyle = Col[mark]; ctx.fill(); }
-    }
-    fenceLT(h, -w2 + .3, Y0, w2 - .3, h.l - .3);
-    if (!h._yardFrom) roofBlock(h, -w2 + .6, .6, w2 - .6, CELL - .4, Col.house); // la maison, côté rue
+    const w2 = h.w / 2, L = h.l, s = view.s, yard = yardOf(h), Y0 = h._yardFrom || CELL, own = !h._yardFrom;
+    const rnd = seeded(Math.round(h.x * 3 + h.y * 7) + 9), craft = EXT[yard].grp === 'Artisanat';
+    if (own) { pathS(lpts(h, softRect(-w2 + .3, .3, w2 - .3, L - .3, .8, .2, rnd))); ctx.fillStyle = WOOD.yard; ctx.fill(); } // courtil
+    const ground = yard === 'verger' ? '#b3b673' : yard === 'potager' ? '#c2ad80' : craft ? WOOD.yard : '#bba27a';
+    pathS(lpts(h, softRect(-w2 + .45, Y0 + .1, w2 - .45, L - .45, .5, .12, rnd))); ctx.fillStyle = ground; ctx.fill();
+    if (s > 3 && yard === 'verger') { ctx.fillStyle = 'rgba(90,120,55,.4)'; for (let k = 0; k < 60; k++) { const [X, Y] = LP(h, -w2 + .7 + rnd() * (h.w - 1.4), Y0 + .5 + rnd() * (L - Y0 - 1)); ctx.fillRect(X, Y, Math.max(1, .1 * s), Math.max(1, .22 * s)); } }
+    yardLT(h, yard, -w2 + .6, Y0 + .4, w2 - .6, L - .6);
+    if (own) {
+      wattleLT(h, -w2 + .25, .25, w2 - .25, L - .25, .1, 1.5, [[[-w2 + .25, Y0], [-.4, Y0]], [[.6, Y0], [w2 - .25, Y0]]]); // plessis, refend et barrière de la cour
+      pathS(lpts(h, [[.1, .3], [1.5, .3], [1.3, 1.9], [.3, 1.9]])); ctx.fillStyle = 'rgba(150,126,86,.45)'; ctx.fill(); // sentier
+      const P = lpts(h, [[.3, 1.95], [1.3, 1.95], [1.3, 2.35], [.3, 2.35]]); pathS(P); ctx.fillStyle = WOOD.stone; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke();
+      thatchLT(h, -3.4, 2.3, 3.4, 7.5, 'u', STRAW);                                               // chaumière
+      chimneyLT(h, -2.6, 4.9, .45);
+    } else wattleLT(h, -w2 + .25, Y0, w2 - .25, L - .25, null);
   },
   manoir: h => {
     const w2 = h.w / 2;
