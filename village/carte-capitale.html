@@ -2144,7 +2144,7 @@ const minScale = () => atelier.on ? Math.min((W - 60), (H - 60)) / atelierSide()
    Vue à part (demande du 30/09) : un simple carré de terrain avec UN bâtiment posé au milieu,
    sans la carte, pour travailler chaque bâtiment en détail. Mode gardé dans ce navigateur. */
 const ATELIER_KEY = 'planVillageZonage.atelier';
-const ATELIER_CUR = 'moulin';                      // bâtiment en cours de travail : l'atelier s'ouvre dessus une fois
+const ATELIER_CUR = 'eglise';                      // bâtiment en cours de travail : l'atelier s'ouvre dessus une fois
 let atelier = { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR };
 try { Object.assign(atelier, JSON.parse(localStorage.getItem(ATELIER_KEY) || '{}')); } catch (e) {}
 if (atelier.cur !== ATELIER_CUR) Object.assign(atelier, { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR });
@@ -3007,7 +3007,7 @@ function graveLT(h, u, t, kind, fresh) {
   const s = view.s, P = lpts(h, softRect(u - .45, t, u + .45, t + 1.9, .4, 0, () => .5));
   pathS(shiftS(P, .12, .16)); ctx.fillStyle = WOOD.shadow; ctx.fill();
   pathS(P); ctx.fillStyle = fresh ? '#9a7f5c' : '#8f9a62'; ctx.fill(); ctx.strokeStyle = 'rgba(50,44,30,.45)'; ctx.lineWidth = 1; ctx.stroke();
-  if (kind) { blockLT(h, u - .4, t - .35, u + .4, t - .05); return; }                             // stèle
+  if (kind) { pathS(lpts(h, [[u - .4, t - .35], [u + .4, t - .35], [u + .4, t - .05], [u - .4, t - .05]])); ctx.fillStyle = STONE.hi; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke(); return; } // stèle (sans ombre portée)
   ctx.strokeStyle = '#4e3a24'; ctx.lineWidth = lw(.11); ctx.beginPath();                          // croix de bois
   ctx.moveTo(...LP(h, u, t - .55)); ctx.lineTo(...LP(h, u, t + .45)); ctx.moveTo(...LP(h, u - .32, t - .22)); ctx.lineTo(...LP(h, u + .32, t - .22)); ctx.stroke();
   if (s > 2) { ctx.strokeStyle = '#8a6a45'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, u - .03, t - .5)); ctx.lineTo(...LP(h, u - .03, t + .4)); ctx.stroke(); }
