@@ -3507,7 +3507,7 @@ const BUILD_DRAW = {
   },
   /* Moulin à vent (2 × 2 cases, 16 × 16 m) : moulin-tour féodal sur sa butte herbeuse — tour
      ronde de pierre, toit conique de bardeaux, quatre grandes ailes montées à l'avant de la calotte,
-     vues par la tranche (un trait en travers du toit), leur ombre en croix au sud-est. Porte et marchepied côté rue, sacs de grain et de farine,
+     vues par la tranche (un trait devant la tour), leur ombre en croix au sud-est. Porte et marchepied côté rue, sacs de grain et de farine,
      meule de rechange, charrette de sacs ; maison du meunier et son courtil au fond. */
   moulin: h => {
     const L = h.l, s = view.s, mu = .8, mt = 8.6;
@@ -3533,10 +3533,10 @@ const BUILD_DRAW = {
       ctx.beginPath(); ctx.arc(X, Y, R * .16, 0, Math.PI * 2); ctx.fillStyle = '#3a352e'; ctx.fill(); }
     cartLT(h, 6.4, 9.6, 'sacs');                                                                     // charrette de sacs
     /* Ailes : vue strictement de dessus. Elles tournent dans un plan vertical face à la rue, au
-       sommet de la calotte, au-dessus du toit : on ne les voit que par la tranche, soit un
+       avant de la calotte, devant la tour : on ne les voit que par la tranche, soit un
        simple trait en travers (vergues et épaisseur du treillis). Seule leur ombre au sol, légère,
        trahit la croix. */
-    const tw = [mu, mt], hub = [mu, mt - 1.9], R = 8, Z = 10;       // rotor au-dessus du toit, à l'avant de la calotte
+    const tw = [mu, mt], hub = [mu, mt - 3.75], R = 8, Z = 10;      // ailes devant la tour, contre son bord (rien sur le toit)
     const sails = [Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4];
     const plane = (a, proj) => { const du = Math.cos(a), dv = Math.sin(a); return (x, y) => proj(du * x - dv * y, dv * x + du * y); };
     const ground = (px, pv) => [hub[0] + px + (Z + pv) * .3, hub[1] + (Z + pv) * .4];              // ombre au sol
@@ -3560,8 +3560,7 @@ const BUILD_DRAW = {
         if (s > 3) for (let r = Rr * .2, j = 0; r < Rr - .1; r += .5 * s, j++) { const n = Math.max(6, Math.round(r * 2 * Math.PI / (.7 * s))); for (let i = 0; i < n; i++) { const a = (i + (j % 2) * .5) / n * Math.PI * 2, r2 = Math.min(Rr, r + .5 * s); ctx.moveTo(X + Math.cos(a) * r, Y + Math.sin(a) * r); ctx.lineTo(X + Math.cos(a) * r2, Y + Math.sin(a) * r2); } }
         ctx.stroke(); }
       ctx.beginPath(); ctx.arc(X, Y, Rr, 0, Math.PI * 2); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.14); ctx.stroke(); }
-    // porte : marchepied de planches côté rue, sacs au seuil
-    beamLT(h, mu - .7, mt - 4.3, mu + .7, mt - 3.4);
+    // sacs de grain et de farine autour de la tour
     for (const [u, t, c] of [[-3, 10.6], [-3.3, 11.4, '#e8e2d2'], [-2.5, 11.5, '#e8e2d2'], [4.6, 8.5], [4.8, 9.4, '#e8e2d2']]) sackLT(h, u, t, .36, c);
     { const w = R * Math.SQRT1_2 + .7;                                                            // demi-envergure vue d'en haut (croix à 45°)
       const bar = (e, col) => { const P = lpts(h, [[hub[0] - w, hub[1] - e], [hub[0] + w, hub[1] - e], [hub[0] + w, hub[1] + e], [hub[0] - w, hub[1] + e]]); pathS(P); ctx.fillStyle = col; ctx.fill(); return P; };
