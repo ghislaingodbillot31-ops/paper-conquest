@@ -3512,11 +3512,11 @@ const BUILD_DRAW = {
      raccourci, devant la tour (jamais couchées sur le toit). Porte et marchepied côté rue, sacs de grain et de farine,
      meule de rechange, charrette de sacs ; maison du meunier et son courtil au fond. */
   moulin: h => {
-    const L = h.l, s = view.s, mu = .8, mt = 8.4;
+    const L = h.l, s = view.s, mu = .8, mt = 9.3;
     groundLT(h, -7.6, .4, 7.6, L - .4, '#bdb78a', null, 1.4);                                    // pré
     tuftsLT(h, -7.4, .6, 7.4, L - .6, 110, true);
     // chemin de terre de la rue à la porte, et vers la maison du meunier
-    pathS(lpts(h, [[-.1, .4], [1.7, .4], [1.8, 4.2], [-.2, 4.2]])); ctx.fillStyle = '#b9a57c'; ctx.fill();
+    pathS(lpts(h, [[-.1, .4], [1.7, .4], [1.8, 5.1], [-.2, 5.1]])); ctx.fillStyle = '#b9a57c'; ctx.fill();
     pathS(lpts(h, [[-3.6, 8.8], [-2.6, 8.4], [-3.4, 11.2], [-4.4, 11.2]])); ctx.fillStyle = 'rgba(185,165,124,.8)'; ctx.fill();
     // butte : herbe foulée, terre tassée au pied de la tour
     { const P = []; for (let i = 0; i < 28; i++) { const a = i / 28 * Math.PI * 2, k = 1 + .05 * Math.sin(a * 3 + 1); P.push([mu + Math.cos(a) * 5 * k, mt + Math.sin(a) * 4.8 * k]); }
@@ -3537,12 +3537,12 @@ const BUILD_DRAW = {
     /* Ailes : moyeu devant la calotte, côté rue, à ~9 m de haut. Dans leur plan vertical, x va le
        long de la façade et y vers le haut ; vu d'en haut, la hauteur n'apparaît qu'en raccourci
        (k), vers la rue. Leur ombre au sol, elle, les montre en entier, cisaillées au sud-est. */
-    const tw = [mu, mt], hub = [mu, mt - 4.7], R = 6.2, k = .5, Z = 9;
+    const tw = [mu, mt], hub = [mu, mt - 4.8], R = 8, k = .8, Z = 10;
     const sails = [Math.PI / 4, Math.PI * 3 / 4, Math.PI * 5 / 4, Math.PI * 7 / 4];
     const plane = (a, proj) => { const du = Math.cos(a), dv = Math.sin(a); return (x, y) => proj(du * x - dv * y, dv * x + du * y); };
     const seen = (px, pv) => [hub[0] + px, hub[1] - pv * k];                                        // vu d'en haut
     const ground = (px, pv) => [hub[0] + px + (Z + pv) * .3, hub[1] + (Z + pv) * .4];              // ombre au sol
-    ctx.beginPath(); for (const a of sails) { const at = plane(a, ground); addS(lpts(h, [at(.3, -.15), at(R, -.15), at(R, 1.2), at(1.3, 1.2), at(1.3, .15), at(.3, .15)])); }
+    ctx.beginPath(); for (const a of sails) { const at = plane(a, ground); addS(lpts(h, [at(0, -.25), at(R * .2, -.25), at(R * .2, -.95), at(R, -.8), at(R, .8), at(R * .2, .95), at(R * .2, .25), at(0, .25)])); }
     ctx.fillStyle = 'rgba(40,34,24,.2)'; ctx.fill();
     // tour ronde de pierre : longue ombre, maçonnerie appareillée, puis le toit conique
     { const [X, Y] = LP(h, ...tw), Rt = 3.5 * s, Rr = 3.05 * s;
@@ -3566,20 +3566,35 @@ const BUILD_DRAW = {
     beamLT(h, mu - .7, mt - 4.3, mu + .7, mt - 3.4);
     for (const [u, t, c] of [[-2.8, 6], [-3.3, 6.7, '#e8e2d2'], [-2.5, 6.8, '#e8e2d2'], [4.6, 7.2], [4.9, 8.1, '#e8e2d2']]) sackLT(h, u, t, .36, c);
     beamLT(h, mu - .22, hub[1] - .2, mu + .22, mt - 2.2);                                         // arbre moteur qui sort de la calotte
-    // ailes : vergue, claire-voie (barreaux et longerons), toile sur deux ailes, à demi roulée sur les autres
+    /* Aile de moulin (repère de son plan : x le long de la vergue, y en travers) : vergue qui
+       s'amincit vers le bout ; treillis de x0 à R, de part et d'autre de la vergue, un peu plus
+       étroit au bout ; barreaux en travers, longerons (bords et milieux) ; toile tendue sur tout
+       le treillis, ou roulée contre le moyeu. */
+    const x0 = R * .2, yb = .95, yt = .8;                                                           // demi-largeur à la base et au bout
+    const edgeY = x => yb + (yt - yb) * (x - x0) / (R - x0), ya = -yb;
+    const frame = at => [at(x0, -yb), at(R, -yt), at(R, yt), at(x0, yb)];
     sails.forEach((a, i) => {
-      const at = plane(a, seen), cloth = i % 2 ? .55 : 1, xc = 1.3 + (R - 1.3) * cloth;
-      pathS(lpts(h, [at(1.3, .15), at(R, .15), at(R, 1.2), at(1.3, 1.2)])); ctx.fillStyle = 'rgba(90,70,48,.25)'; ctx.fill();
-      pathS(lpts(h, [at(1.3, .15), at(xc, .15), at(xc, 1.2), at(1.3, 1.2)])); ctx.fillStyle = '#e6dcc2'; ctx.fill();
-      if (cloth < 1) { pathS(lpts(h, [at(xc, .1), at(xc + .3, .1), at(xc + .3, 1.25), at(xc, 1.25)])); ctx.fillStyle = '#c4b590'; ctx.fill(); } // toile roulée
-      ctx.strokeStyle = '#5a4430'; ctx.lineWidth = lw(.06); ctx.beginPath();
-      for (let x = 1.3; x <= R + .01; x += (R - 1.3) / 9) { ctx.moveTo(...LP(h, ...at(x, .15))); ctx.lineTo(...LP(h, ...at(x, 1.2))); }
-      for (const y of [.68, 1.2]) { ctx.moveTo(...LP(h, ...at(1.3, y))); ctx.lineTo(...LP(h, ...at(R, y))); }
+      const at = plane(a, seen), cloth = i % 2 ? .45 : 1, xc = x0 + (R - x0) * cloth, P = lpts(h, frame(at));
+      pathS(P); ctx.fillStyle = 'rgba(70,56,40,.18)'; ctx.fill();                                    // jour entre les lattes
+      const C = lpts(h, [at(x0, -yb + .06), at(xc, -edgeY(xc) + .06), at(xc, edgeY(xc) - .06), at(x0, yb - .06)]); // toile
+      pathS(C); ctx.fillStyle = '#ebe2c9'; ctx.fill();
+      if (s > 1.6) { ctx.fillStyle = 'rgba(120,100,70,.18)'; for (let x = x0; x < xc - .1; x += (R - x0) / 6) { pathS(lpts(h, [at(x, -edgeY(x) + .06), at(x + .2, -edgeY(x + .2) + .06), at(x + .2, edgeY(x + .2) - .06), at(x, edgeY(x) - .06)])); ctx.fill(); } } // plis de la toile
+      if (cloth < 1) { pathS(lpts(h, [at(xc, -edgeY(xc)), at(xc + .28, -edgeY(xc + .28)), at(xc + .28, edgeY(xc + .28)), at(xc, edgeY(xc))])); ctx.fillStyle = '#cdbf98'; ctx.fill(); ctx.strokeStyle = 'rgba(80,64,40,.6)'; ctx.lineWidth = 1; ctx.stroke(); } // toile roulée, liée
+      ctx.strokeStyle = '#4f3c2a'; ctx.lineCap = 'round';
+      ctx.lineWidth = lw(.07); ctx.beginPath();                                                     // barreaux
+      for (let n = 0; n <= 12; n++) { const x = x0 + (R - x0) * n / 12; ctx.moveTo(...LP(h, ...at(x, -edgeY(x)))); ctx.lineTo(...LP(h, ...at(x, edgeY(x)))); }
       ctx.stroke();
-      pathS(lpts(h, [at(.3, -.15), at(R + .25, -.12), at(R + .25, .12), at(.3, .15)])); // vergue
-      ctx.fillStyle = WOOD.beam; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.06); ctx.stroke();
+      ctx.lineWidth = lw(.09); ctx.beginPath();                                                     // longerons : rebord, milieu de la toile, bord de fuite
+      for (const f of [x => -edgeY(x), x => -edgeY(x) * .5, x => edgeY(x) * .5, edgeY]) { ctx.moveTo(...LP(h, ...at(x0, f(x0)))); ctx.lineTo(...LP(h, ...at(R, f(R)))); }
+      ctx.stroke(); ctx.lineCap = 'butt';
+      const V = lpts(h, [at(0, -.24), at(R + .35, -.12), at(R + .35, .12), at(0, .24)]);            // vergue effilée
+      pathS(V); ctx.fillStyle = WOOD.beam; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.07); ctx.stroke();
+      pathS(lpts(h, [at(0, -.2), at(R + .3, -.1), at(R + .3, -.02), at(0, -.04)])); ctx.fillStyle = 'rgba(255,240,210,.35)'; ctx.fill(); // reflet
     });
-    { const [X, Y] = LP(h, ...hub); ctx.beginPath(); ctx.arc(X, Y, Math.max(1.5, .5 * s), 0, Math.PI * 2); ctx.fillStyle = '#4a3a2a'; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = 1; ctx.stroke(); } // moyeu
+    { const B = lpts(h, [[hub[0] - .55, hub[1] - .45], [hub[0] + .55, hub[1] - .45], [hub[0] + .55, hub[1] + .45], [hub[0] - .55, hub[1] + .45]]); // moyeu : tête d'arbre en fonte, clavettes
+      pathS(shiftS(B, .15, .2)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+      pathS(B); ctx.fillStyle = '#4b4843'; ctx.fill(); ctx.strokeStyle = '#1f1d1a'; ctx.lineWidth = lw(.06); ctx.stroke();
+      const [X, Y] = LP(h, ...hub); ctx.beginPath(); ctx.arc(X, Y, Math.max(1, .2 * s), 0, Math.PI * 2); ctx.fillStyle = '#6d6962'; ctx.fill(); } // moyeu
     thatchLT(h, -7.3, 11, -3.3, 15.4, 'u', STRAW); chimneyLT(h, -6.3, 13.2, .45);                   // maison du meunier
   },
   /* Four communal (2 × 2 cases) : fournil couvert de bardeaux sur la rue, grand four en
