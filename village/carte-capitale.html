@@ -3499,20 +3499,26 @@ const BUILD_DRAW = {
           for (let j = 0; j <= len; j++) { const p = C[(n0 + j) % 40]; j ? ctx.lineTo(...LP(h, ...p)) : ctx.moveTo(...LP(h, ...p)); } }
         ctx.stroke(); }
       ctx.lineCap = 'butt'; }
-    // rampe taillée : part du bord est, descend en lacet de gradin en gradin
-    { const at = (k, a) => { const P = level(k, ...off[Math.min(4, Math.round((1 - k) / .2))]), n = ((Math.round(a / (Math.PI * 2) * 40) % 40) + 40) % 40, c = [cu, ct], p = P[n]; return [c[0] + (p[0] - c[0]) * .93, c[1] + (p[1] - c[1]) * .93]; };
-      const path = []; for (let a = -.6, k = 1; k > .3; a += .1, k -= .0105) path.push(at(k, a));
-      const band = (wd, col) => { ctx.strokeStyle = col; ctx.lineWidth = Math.max(1.5, wd * s); ctx.lineJoin = 'round'; ctx.lineCap = 'round'; ctx.beginPath(); path.forEach((p, i) => i ? ctx.lineTo(...LP(h, ...p)) : ctx.moveTo(...LP(h, ...p))); ctx.stroke(); };
-      band(.85, 'rgba(40,30,18,.35)'); band(.68, '#ab9068');                                       // bord à l'ombre, chaussée tassée
-      if (s > 2) { ctx.strokeStyle = 'rgba(90,70,44,.45)'; ctx.lineWidth = 1; ctx.beginPath(); for (let i = 2; i < path.length - 1; i += 3) { const [a, b] = [path[i - 1], path[i + 1]], d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1, n = [-(b[1] - a[1]) / d * .3, (b[0] - a[0]) / d * .3]; ctx.moveTo(...LP(h, path[i][0] - n[0], path[i][1] - n[1])); ctx.lineTo(...LP(h, path[i][0] + n[0], path[i][1] + n[1])); } ctx.stroke(); } // ornières en travers
-      ctx.lineCap = 'butt';
-      // échelle du dernier ressaut, du bout de la rampe au fond
-      const e0 = path[path.length - 1], e1 = [cu + .5 - .9, ct + .3 + .2];
-      if (s > 1.3) { const d = Math.hypot(e1[0] - e0[0], e1[1] - e0[1]) || 1, n = [-(e1[1] - e0[1]) / d * .22, (e1[0] - e0[0]) / d * .22];
-        ctx.strokeStyle = '#7a5d3b'; ctx.lineWidth = lw(.07); ctx.beginPath();
-        for (const e of [-1, 1]) { ctx.moveTo(...LP(h, e0[0] + n[0] * e, e0[1] + n[1] * e)); ctx.lineTo(...LP(h, e1[0] + n[0] * e, e1[1] + n[1] * e)); }
-        for (let t = .12; t < 1; t += .16) { const p = [e0[0] + (e1[0] - e0[0]) * t, e0[1] + (e1[1] - e0[1]) * t]; ctx.moveTo(...LP(h, p[0] - n[0], p[1] - n[1])); ctx.lineTo(...LP(h, p[0] + n[0], p[1] + n[1])); }
-        ctx.stroke(); } }
+    /* Descente : une seule tranchée en pente, taillée dans le flanc est, du bord jusqu'au fond ;
+       elle coupe les gradins, fonce à mesure qu'elle s'enfonce, et sa paroi nord-ouest jette une
+       ombre sur son sol. */
+    { const B0 = [cu + .5 + .9, ct + .3 + .1], dl = Math.hypot(1, .3), d = [1 / dl, .3 / dl], pr = [-d[1], d[0]], wd = .6;
+      const at2 = (x, y) => [B0[0] + d[0] * x + pr[0] * y, B0[1] + d[1] * x + pr[1] * y];
+      const polys = K.map((k, i) => level(k, ...off[i])), rim = level(1.08);
+      let len = 0; while (len < 9 && inPoly(at2(len, 0), rim)) len += .1;                          // jusqu'au bord de la fosse
+      const hex = c => [1, 3, 5].map(j => parseInt(c.slice(j, j + 2), 16)), mix = (c0, c1, m) => 'rgb(' + hex(c0).map((v, q) => Math.round(v + (hex(c1)[q] - v) * m)).join(',') + ')';
+      pathS(lpts(h, [at2(0, -wd - .1), at2(len, -wd - .1), at2(len, wd + .1), at2(0, wd + .1)])); ctx.fillStyle = 'rgba(40,30,18,.25)'; ctx.fill();
+      for (let x = 0; x < len; x += .25) {                                                           // sol : un peu plus bas que le gradin traversé
+        let i = -1; polys.forEach((P2, j) => { if (inPoly(at2(x + .12, 0), P2)) i = j; });
+        const col = i < 0 ? mix('#bda37c', lit[0], .5) : mix(lit[i], i < 4 ? lit[i + 1] : dark[4], .5);
+        pathS(lpts(h, [at2(x, -wd), at2(x + .27, -wd), at2(x + .27, wd), at2(x, wd)])); ctx.fillStyle = col; ctx.fill();
+      }
+      // parois de la tranchée : celle du nord-ouest à l'ombre, l'autre éclairée
+      const up = LP(h, ...at2(0, -1)), dn = LP(h, ...at2(0, 1)), side = (up[0] + up[1]) < (dn[0] + dn[1]) ? -1 : 1;
+      pathS(lpts(h, [at2(0, side * wd), at2(len, side * wd), at2(len, side * (wd - .22)), at2(0, side * (wd - .22))])); ctx.fillStyle = 'rgba(40,30,18,.45)'; ctx.fill();
+      pathS(lpts(h, [at2(0, -side * wd), at2(len, -side * wd), at2(len, -side * (wd - .12)), at2(0, -side * (wd - .12))])); ctx.fillStyle = 'rgba(255,240,210,.18)'; ctx.fill();
+      if (s > 2) { ctx.strokeStyle = 'rgba(70,54,34,.35)'; ctx.lineWidth = 1; ctx.beginPath(); for (const y of [-.2, .2]) { ctx.moveTo(...LP(h, ...at2(.2, y))); ctx.lineTo(...LP(h, ...at2(len - .1, y))); } ctx.stroke(); } // ornières de brouette
+    }
     // fond : flaque, puits boisé (cadre de rondins croisés aux angles), treuil
     const bu = cu + .5, bt = ct + .3;
     { const P = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; P.push([bu + 1.15 + Math.cos(a) * .55 * (1 + .2 * Math.sin(a * 3)), bt + .55 + Math.sin(a) * .32]); } pathS(lpts(h, P)); ctx.fillStyle = 'rgba(92,120,122,.75)'; ctx.fill(); }
