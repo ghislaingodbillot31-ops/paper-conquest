@@ -848,6 +848,9 @@
       try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
       catch(e){ /* garde la valeur stockee si le calcul echoue */ }
     });
+    // terre d'origine (avant de creuser fleuves et lacs) : les routes s'y tracent, pour qu'un
+    // fleuve se franchisse (pont) au lieu de couper la liaison entre deux regions voisines
+    fc.features.forEach(f => { f.land = { type:'Feature', properties:{}, geometry:f.geometry }; });
     // rivieres et lacs: geometrie des regions avec l'eau deja retiree
     if(waterTopo && water){
       try{
@@ -1066,9 +1069,22 @@
     return pts;
   }
 
+  // Les routes se tracent sur la terre d'origine des regions (un fleuve se franchit par un
+  // pont), mais jamais a travers un lac.
+  let lakeIndex = null;
+  function inLake(pt){
+    if(!lakeIndex) lakeIndex = (waterData ? waterData.lakes : []).map(l => {
+      const ring = l.p.length && (l.p[0][0] !== l.p[l.p.length - 1][0] || l.p[0][1] !== l.p[l.p.length - 1][1]) ? [...l.p, l.p[0]] : l.p;
+      let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+      for(const [x, y] of ring){ if(x < x0) x0 = x; if(x > x1) x1 = x; if(y < y0) y0 = y; if(y > y1) y1 = y; }
+      return { poly:turf.polygon([ring]), bb:[x0, y0, x1, y1] };
+    });
+    const x = normLon(pt[0]), y = pt[1];
+    return lakeIndex.some(l => x >= l.bb[0] && x <= l.bb[2] && y >= l.bb[1] && y <= l.bb[3] && turf.booleanPointInPolygon([x, y], l.poly));
+  }
   function pathStaysOnLandSingle(coords, land){
     for(let i = 1; i < coords.length - 1; i++){
-      if(!turf.booleanPointInPolygon(coords[i], land)) return false;
+      if(!turf.booleanPointInPolygon(coords[i], land) || inLake(coords[i])) return false;
     }
     return true;
   }
@@ -1076,6 +1092,7 @@
     for(let i = 1; i < coords.length - 1; i++){
       const pt = coords[i];
       if(!turf.booleanPointInPolygon(pt, landA) && !turf.booleanPointInPolygon(pt, landB)) return false;
+      if(inLake(pt)) return false;
     }
     return true;
   }
@@ -1284,7 +1301,7 @@
         if(bestIdx === -1) break;
         const [i, j] = remaining[bestIdx];
         remaining.splice(bestIdx, 1);
-        const coords = landPath(topo, villages[i].coord, villages[j].coord, geometries[i], geometries[j], fc.features[i], fc.features[j], edges);
+        const coords = landPath(topo, villages[i].coord, villages[j].coord, geometries[i], geometries[j], fc.features[i].land || fc.features[i], fc.features[j].land || fc.features[j], edges);
         if(!coords){ skippedUnroutable++; continue; } // aucun trace valide sans traverser l'eau: on abandonne cette paire plutot que de tricher
         edges.push({ a:i, b:j, coords, bbox:bboxOfCoords(coords), kind:'land' });
         uf.union(i, j);
