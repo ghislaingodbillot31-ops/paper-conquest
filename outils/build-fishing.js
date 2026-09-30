@@ -1,4 +1,4 @@
-// Zones de peche en mer (data/fishing.json), genere hors ligne.
+// Zones de peche en mer (data/monde/fishing.json), genere hors ligne.
 // Formes adaptees a la terre, jamais de simples cercles:
 //  - cotiere / hauturiere: le trace donne le long de la cote est elargi
 //    ('reach' km), puis limite a une bande de 'band' km autour de la terre

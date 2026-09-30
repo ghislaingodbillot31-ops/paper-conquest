@@ -1,12 +1,12 @@
-// Rivieres et lacs du monde (data/water.json + data/regions-water.topojson).
+// Rivieres et lacs du monde (data/monde/water.json + data/monde/regions-water.topojson).
 // Genere hors ligne (trop lourd a chaque chargement de la page):
 //  1. Relief simule sur une grille de 0.2 deg: distance a la cote, chaines de
 //     montagnes / volcans / massifs anciens du jeu (GEO_TERRAIN), Cordillere
 //     australienne, cuvette du lac Eyre, bruit. Pluie = inverse de l'aridite
-//     du jeu (aridityAt). Les fonctions et donnees sont lues dans la page
-//     elle-meme: une seule source de verite.
+//     du jeu (aridityAt). Les fonctions et donnees sont lues dans les scripts
+//     du jeu (js/jeu/*.js): une seule source de verite.
 //  2. Remplissage des cuvettes (priority-flood): cuvettes = emplacements de lacs.
-//  3. Fleuves REELS (docs/rivers-world.json: cours approche par les villes
+//  3. Fleuves REELS (outils/rivers-world.json: cours approche par les villes
 //     traversees) traces par le generateur: "serpent" (spline + meandres),
 //     la source s'affine; un affluent s'arrete en touchant son fleuve
 //     (confluence, jamais de croisement).
@@ -15,15 +15,15 @@
 //  5. Le lit des rivieres et les lacs sont retires des polygones des regions
 //     (regions-water.topojson, meme ordre que admin1). water.json garde les
 //     traces (largeur par point) et les lacs pour la grille de navigation.
-// Usage: node build-waterways.js <paper-conquest.html> <admin1.topojson> <nav-grid.json> <dossier de sortie>
+// Usage: node outils/build-waterways.js js/jeu data/monde/admin1.topojson data/monde/nav-grid.json data/monde
 const fs = require('fs'), path = require('path');
 const turf = require('@turf/turf'), topojson = require('topojson-client'), topoServer = require('topojson-server'), topoSimplify = require('topojson-simplify');
 
 const [HTML, SRC, NAV, OUT] = process.argv.slice(2);
 const t0 = Date.now(), log = (...a) => console.log(((Date.now() - t0) / 1000).toFixed(1) + 's', ...a);
 
-// ---- fonctions et donnees partagees, lues dans la page ----
-const html = fs.readFileSync(HTML, 'utf8');
+// ---- fonctions et donnees partagees, lues dans les scripts du jeu (un dossier ou un fichier) ----
+const html = fs.statSync(HTML).isDirectory() ? fs.readdirSync(HTML).filter(f => f.endsWith('.js')).map(f => fs.readFileSync(path.join(HTML, f), 'utf8')).join('\n') : fs.readFileSync(HTML, 'utf8');
 function grab(re){ const m = html.match(re); if(!m) throw new Error('introuvable: ' + re); let i = m.index + m[0].length - 1, d = 0;
   for(; i < html.length; i++){ const ch = html[i]; if(ch === '{' || ch === '[' || ch === '(') d++; else if(ch === '}' || ch === ']' || ch === ')'){ d--; if(!d) break; } }
   let end = i + 1; if(html[end] === ';') end++; return html.slice(m.index, end); }
@@ -253,7 +253,7 @@ function cutAtConfluence(w, joinRiver = true, fromRiver = false){
   return w;
 }
 
-// ---- fleuves reels (docs/rivers-world.json) ----
+// ---- fleuves reels (outils/rivers-world.json) ----
 // Chaque fleuve: cours approche (villes traversees), densifie tous les ~20 km,
 // puis trace par le generateur (serpent, source affinee). Les affluents
 // (end: join) viennent apres leur fleuve et s'arretent en le touchant.

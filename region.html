@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carte de la région</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/carte.css">
+
+<div class="app">
+  <aside class="panel" aria-label="Outils">
+    <header>
+      <h1 id="map-title">Village par zonage</h1>
+      <p class="sub" id="map-sub">Terrain de 2 000 × 1 500 m · cases de 8 m le long des routes, 4 cases de profondeur · routes d'une case de large</p>
+    </header>
+
+    <section>
+      <h2>Outil</h2>
+      <div class="seg" role="group" aria-label="Outil actif">
+        <button id="tool-select" data-tool="select">Sélection<kbd>1</kbd></button>
+        <button id="tool-house" data-tool="house">Bâtiment<kbd>2</kbd></button>
+        <button id="tool-road" data-tool="road">Route<kbd>3</kbd></button>
+        <button id="tool-wall" data-tool="wall">Fortification<kbd>4</kbd></button>
+        <button id="tool-tower" data-tool="tower">Tour<kbd>5</kbd></button>
+        <button id="tool-gate" data-tool="gate">Porte<kbd>6</kbd></button>
+      </div>
+    </section>
+
+    <section id="wall-opts" hidden>
+      <h2>Fortification</h2>
+      <div class="row">
+        <button id="finish-wall">Valider la muraille (Entrée)</button>
+        <button id="undo-wall-point">Retirer le dernier point</button>
+        <button id="cancel-wall">Abandonner</button>
+      </div>
+      <p class="muted" style="margin-top:8px"><b>Clic gauche</b> : poser un point. <b>Clic droit</b> : retirer le dernier point. <b>Entrée</b> : valider. La muraille suit le même principe qu'une route : une case de large, accroches orange au milieu des cases, pas de 10°, tronçons d'un nombre entier de cases, branches calées pour remplir l'espace. Elle ne crée aucune case à bâtir, mais borne les zones des routes.<br><b>Ordre :</b> posez d'abord une porte sur une route (outil Porte), puis partez de cette porte (gros point orange) ou d'une muraille existante. La muraille ne traverse ni l'eau ni une route ; elle se termine en recliquant sur son premier point ou sur une autre porte.</p>
+    </section>
+
+    <section id="tower-opts" hidden>
+      <h2>Tour</h2>
+      <p class="muted">Une tour se pose uniquement sur un point orange : angle ou bout de muraille, ou croisement de deux murailles.</p>
+    </section>
+
+    <section id="gate-opts" hidden>
+      <h2>Porte</h2>
+      <p class="muted">Une porte se pose en premier, uniquement sur un point orange de route (milieu de chaque case), comme le départ d'une route. Les murailles partent ensuite de la porte, de chaque côté de la route. Une route ne franchit une muraille que par une porte.</p>
+    </section>
+
+    <section id="house-opts" hidden>
+      <h2>Bâtiments (façade × profondeur)</h2>
+      <div class="presets" id="presets"></div>
+      <p class="muted" id="build-info" style="margin-top:10px"></p>
+      <div class="row" id="yard-row" style="margin-top:8px" hidden>
+        <label for="yard">Extension d'arrière-cour<select id="yard"></select></label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="swap">Pivoter (façade ↔ profondeur)</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Survolez n'importe quelle case verte : le bâtiment se cale sur le quadrillage, au plus près du curseur, sur des cases libres (en bordure de route ou en fond de zone, et à cheval sur deux zones alignées). S'il ne tient pas dans ce sens, il est essayé pivoté.</p>
+    </section>
+
+    <section id="road-opts" hidden>
+      <h2>Revêtement (même largeur : 6 m de chaussée)</h2>
+      <div class="seg" id="road-kinds"></div>
+      <div class="stack" style="margin-top:10px">
+        <label class="check" for="snap-len"><input id="snap-len" type="checkbox" checked> Longueur en multiples de 8 m</label>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <button id="finish-road">Valider la route (Entrée)</button>
+        <button id="undo-point">Retirer le dernier point</button>
+        <button id="cancel-road">Abandonner</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Une route part toujours d'une route existante, sur un point orange (milieu de chaque case, ou bout de route). <b>Clic gauche</b> : poser un point. <b>Clic droit</b> : retirer le dernier point. <b>Entrée</b> : valider la route. Chaque tronçon est orienté par pas de 10° et mesure un nombre entier de cases. Toute route occupe une case de large (8 m, chaussée et bas-côtés), comme la grille.</p>
+    </section>
+
+    <section>
+      <h2>Sélection</h2>
+      <div id="sel-body"></div>
+    </section>
+
+    <section>
+      <h2>Options d'affichage</h2>
+      <div class="stack">
+        <label class="check" for="show-grid"><input id="show-grid" type="checkbox" checked> Quadrillage (cases de zone)</label>
+        <label class="check" for="show-contours" hidden><input id="show-contours" type="checkbox" checked> Courbes de niveau (tous les 2 m)</label>
+      </div>
+      <p class="muted" style="margin-top:6px">Le quadrillage masqué reste actif : les bâtiments se calent toujours sur les cases. Touche <kbd>G</kbd>.</p>
+    </section>
+
+    <section>
+      <h2>Plan</h2>
+      <div class="row">
+        <button id="undo">Annuler l'action</button>
+        <button id="json">Exporter / importer</button>
+        <button id="load-old" hidden>Reprendre mon plan précédent</button>
+        <button id="clear" class="danger">Vider le plan</button>
+      </div>
+    </section>
+
+    <details>
+      <summary>Raccourcis</summary>
+      <ul>
+        <li><kbd>1</kbd> à <kbd>6</kbd> changer d'outil</li>
+        <li><kbd>R</kbd> pivoter le bâtiment</li>
+        <li><kbd>G</kbd> afficher / masquer le quadrillage</li>
+        <li><kbd>Suppr</kbd> supprimer la sélection</li>
+        <li>Route et muraille : clic gauche pose un point, clic droit retire le dernier, <kbd>Entrée</kbd> valide, <kbd>Échap</kbd> abandonne le tracé</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> annuler</li>
+        <li>Molette : zoom. Glisser dans le vide : déplacer la vue</li>
+      </ul>
+    </details>
+  </aside>
+
+  <main class="sheet">
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="plan" aria-label="Plan du village avec zones le long des routes"></canvas>
+      <div class="zoom">
+        <button id="zin" aria-label="Zoomer">+</button>
+        <button id="zout" aria-label="Dézoomer">−</button>
+        <button id="zfit" aria-label="Voir tout le terrain" title="Voir tout le terrain" style="font-size:12px">⤢</button>
+        <button id="zhome" aria-label="Recentrer sur le village" title="Recentrer sur le village" style="font-size:13px">⌂</button>
+        <button id="zgrid" aria-label="Masquer le quadrillage du zonage" title="Masquer / afficher le quadrillage du zonage (G)" style="font-size:15px">▦</button>
+      </div>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="json-dlg" hidden>
+        <div class="dialog" role="dialog" aria-label="Exporter ou importer le plan">
+          <h2 style="margin:0">Plan au format JSON</h2>
+          <p class="muted">Copiez ce texte pour garder le plan, ou collez un plan exporté puis importez-le.</p>
+          <textarea id="json-text" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="json-copy">Copier</button>
+            <button id="json-import">Importer ce texte</button>
+            <button id="json-close" style="margin-left:auto">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+
+<script>const PAGE = 'region';</script>
+<script src="js/carte/base.js"></script>
+<script src="js/batiments/catalogue.js"></script>
+<script src="js/carte/geometrie.js"></script>
+<script src="js/carte/eau.js"></script>
+<script src="js/carte/paysage.js"></script>
+<script src="js/carte/zonage.js"></script>
+<script src="js/carte/generateur.js"></script>
+<script src="js/carte/vue.js"></script>
+<script src="js/batiments/atelier.js"></script>
+<script src="js/carte/dessin.js"></script>
+<script src="js/batiments/elements.js"></script>
+<script src="js/batiments/dessins.js"></script>
+<script src="js/carte/routes.js"></script>
+<script src="js/carte/simulation.js"></script>
+<script src="js/carte/rendu.js"></script>
+<script src="js/carte/fortifications-dessin.js"></script>
+<script src="js/carte/cadre.js"></script>
+<script src="js/carte/trace.js"></script>
+<script src="js/carte/dessin-principal.js"></script>
+<script src="js/carte/actions.js"></script>
+<script src="js/carte/fortifications.js"></script>
+<script src="js/carte/pointeur.js"></script>
+<script src="js/carte/panneau.js"></script>
+<script src="js/carte/demarrage.js"></script>

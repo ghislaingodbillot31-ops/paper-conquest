@@ -1,4 +1,4 @@
-// Grille de navigation des bateaux (data/nav-grid.json).
+// Grille de navigation des bateaux (data/monde/nav-grid.json).
 // Maille de 0.05 deg (~5 km). Raster CONSERVATEUR: toute case touchee par une
 // terre (region, ile, presqu'ile, meme plus fine qu'une case) est un obstacle.
 // Valeurs: 0 = terre, 1 = mer. Codage par plages sur chaque ligne:
