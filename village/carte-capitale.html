@@ -4503,18 +4503,63 @@ function drawFlora() {
   }
   if (missing) requestDraw(); // les tuiles restantes arrivent aux images suivantes
 }
-function drawWalls() {
-  const s = view.s;
-  // emprise d'une case comme une route : lice (bande dégagée), puis maçonnerie de 6 m au centre
-  for (const w of S.walls) strokeLine(w.pts, WALL_W * s, Col.verge);
-  for (const w of S.walls) strokeLine(w.pts, WALL_SURF * s + 2, Col['wall-edge']);
-  for (const w of S.walls) strokeLine(w.pts, WALL_SURF * s, Col.wall);
-  // chemin de ronde crénelé, visible dès qu'on zoome un peu
-  if (s > 2) {
-    ctx.setLineDash([1.2 * s, 1.2 * s]);
-    for (const w of S.walls) strokeLine(w.pts, Math.max(1, WALL_SURF * s * .3), Col['wall-edge']);
-    ctx.setLineDash([]);
+/* ---------- fortifications, style peint (vues strictement de dessus) ----------
+   Muraille : maçonnerie de 6 m (WALL_SURF), parapets crénelés sur ses deux bords, chemin de
+   ronde dallé au milieu, longue ombre portée (courtine de ~8 m). Tour : ronde, parapet crénelé,
+   chemin de ronde, toit conique d'ardoise. Porte : châtelet coiffé d'ardoise sur la route,
+   flanqué de quatre tourelles, passage voûté et herse aux deux bouts. */
+const FORT = { stone:'#a39c8f', cap:'#c6bfb0', walk:'#958e81', crenel:'#6f695f', edge:'#3f3a32', flag:'rgba(60,54,46,.35)', shadow:'rgba(40,34,24,.3)' };
+// repère local d'un tronçon (comme un bâtiment : u le long, t en travers de 0 à l)
+const segFrame = (a, b, l) => ({ x:(a[0] + b[0]) / 2, y:(a[1] + b[1]) / 2, a:Math.atan2(b[1] - a[1], b[0] - a[0]) * 180 / Math.PI, w:segLen(a, b), l, front:1 });
+// toit conique vu de dessus, en coordonnées écran : pans rayonnants teintés selon la lumière du nord-ouest
+function coneS(X, Y, R, hi, lo, s) {
+  const N = 28;
+  for (let i = 0; i < N; i++) {
+    const a0 = i / N * Math.PI * 2, a1 = (i + 1) / N * Math.PI * 2, am = (a0 + a1) / 2, k = (1 + (Math.cos(am) + Math.sin(am)) / Math.SQRT2) / 2;
+    ctx.beginPath(); ctx.moveTo(X, Y); ctx.arc(X, Y, R, a0, a1 + .01); ctx.closePath();
+    ctx.fillStyle = `rgb(${hi.map((v, j) => Math.round(v + (lo[j] - v) * k)).join(',')})`; ctx.fill();
   }
+  if (s > 1.4 && R > 8) { ctx.strokeStyle = 'rgba(30,34,38,.35)'; ctx.lineWidth = 1; ctx.beginPath(); for (let r = R * .25; r < R; r += .5 * s) { ctx.moveTo(X + r, Y); ctx.arc(X, Y, r, 0, Math.PI * 2); } ctx.stroke(); } // rangs d'ardoises
+  ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .1 * s); ctx.stroke();
+  ctx.beginPath(); ctx.arc(X, Y, Math.max(1, .18 * s), 0, Math.PI * 2); ctx.fillStyle = '#3b3a36'; ctx.fill();   // épi
+}
+const SLATE_HI = [140, 146, 151], SLATE_LO = [78, 84, 89];
+// tour ronde (coordonnées écran, rayon R en px) : maçonnerie, parapet crénelé, chemin de ronde, toit conique
+function roundTowerS(X, Y, R, s, sh) {
+  if (sh) { ctx.beginPath(); ctx.arc(X + sh[0] * s, Y + sh[1] * s, R, 0, Math.PI * 2); ctx.fillStyle = FORT.shadow; ctx.fill(); } // ombre (sh null : déjà faite)
+  ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.fillStyle = FORT.cap; ctx.fill(); ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .1 * s); ctx.stroke();
+  const n = Math.max(8, Math.round(R / s * 2.4));                                                                               // créneaux : un tous les ~2,6 m
+  if (s > .8) { ctx.fillStyle = FORT.crenel; for (let i = 0; i < n; i++) { const a0 = (i + .25) / n * Math.PI * 2, a1 = (i + .6) / n * Math.PI * 2; ctx.beginPath(); ctx.arc(X, Y, R * .98, a0, a1); ctx.arc(X, Y, R * .84, a1, a0, true); ctx.closePath(); ctx.fill(); } }
+  ctx.beginPath(); ctx.arc(X, Y, R * .84, 0, Math.PI * 2); ctx.fillStyle = FORT.walk; ctx.fill(); ctx.strokeStyle = 'rgba(40,36,30,.5)'; ctx.lineWidth = 1; ctx.stroke(); // chemin de ronde
+  coneS(X, Y, R * .74, SLATE_HI, SLATE_LO, s);
+}
+function drawWalls() {
+  const s = view.s, M = WALL_SURF, e = M / 2, P = .75;                                                // P : épaisseur d'un parapet
+  const [wx0, wy0] = toW(-80, -80), [wx1, wy1] = toW(W + 80, H + 80), segs = [];
+  for (const w of S.walls) for (let k = 0; k < w.pts.length - 1; k++) {
+    const h = segFrame(w.pts[k], w.pts[k + 1], M), r = h.w / 2 + M;
+    if (h.x + r > wx0 && h.x - r < wx1 && h.y + r > wy0 && h.y - r < wy1) segs.push(h);
+  }
+  const q = (h, u0, t0, u1, t1) => lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]), X = h => h.w / 2 + e; // prolongé d'une demi-épaisseur : les angles se rejoignent
+  const all = f => { ctx.beginPath(); for (const h of segs) f(h); };
+  all(h => addS(shiftS(q(h, -X(h), 0, X(h), M), 2, 2.6))); ctx.fillStyle = FORT.shadow; ctx.fill();      // ombre de la courtine
+  all(h => addS(q(h, -X(h), 0, X(h), M))); ctx.fillStyle = FORT.cap; ctx.fill();                         // dessus des parapets
+  all(h => addS(q(h, -X(h) + P, P, X(h) - P, M - P))); ctx.fillStyle = FORT.walk; ctx.fill();           // chemin de ronde, en contrebas
+  if (s > .9) {                                                                                       // créneaux : un vide de 0,7 m tous les 1,6 m, sur les deux parapets
+    all(h => { for (let u = -h.w / 2 + .6; u < h.w / 2 - .3; u += 1.6) for (const [t0, t1] of [[.05, P], [M - P, M - .05]]) addS(q(h, u, t0, u + .7, t1)); });
+    ctx.fillStyle = FORT.crenel; ctx.fill();
+  }
+  if (s > 2.2) {                                                                                      // dalles du chemin de ronde
+    ctx.strokeStyle = FORT.flag; ctx.lineWidth = 1; ctx.beginPath();
+    for (const h of segs) { for (let u = -h.w / 2; u < h.w / 2; u += 1.2) { ctx.moveTo(...LP(h, u, P)); ctx.lineTo(...LP(h, u, M - P)); } ctx.moveTo(...LP(h, -X(h) + P, e)); ctx.lineTo(...LP(h, X(h) - P, e)); }
+    ctx.stroke();
+  }
+  ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .1 * s); ctx.beginPath();                      // arêtes extérieures
+  for (const h of segs) for (const t of [0, M]) { ctx.moveTo(...LP(h, -X(h), t)); ctx.lineTo(...LP(h, X(h), t)); }
+  ctx.stroke();
+  ctx.strokeStyle = 'rgba(40,36,30,.45)'; ctx.lineWidth = 1; ctx.beginPath();                           // pied intérieur des parapets
+  for (const h of segs) for (const t of [P, M - P]) { ctx.moveTo(...LP(h, -X(h) + P, t)); ctx.lineTo(...LP(h, X(h) - P, t)); }
+  ctx.stroke();
   for (const w of S.walls) {
     if (!isOn('wall', w.id, sel) && !isOn('wall', w.id, hover)) continue;
     ctx.setLineDash([6, 5]); strokeLine(w.pts, isOn('wall', w.id, sel) ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
@@ -4522,29 +4567,39 @@ function drawWalls() {
 }
 function drawTower(t, mode) {
   const s = view.s, [X, Y] = toS(t.x, t.y), r = TOWER_R * s;
-  const ghost = mode === 'ghost' || mode === 'bad';
-  ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
-  if (ghost) { ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1; }
-  else { ctx.fillStyle = Col.wall; ctx.fill(); }
-  ctx.strokeStyle = ghost ? (mode === 'bad' ? Col.bad : Col.accent) : mode === 'normal' ? Col['wall-edge'] : Col.accent;
-  ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
-  if (!ghost && r > 6) { ctx.beginPath(); ctx.arc(X, Y, r * .55, 0, Math.PI * 2); ctx.strokeStyle = Col['wall-edge']; ctx.lineWidth = 1; ctx.stroke(); }
+  if (mode === 'ghost' || mode === 'bad') {
+    ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
+    ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.lineWidth = 1.5; ctx.stroke(); return;
+  }
+  roundTowerS(X, Y, r, s, [3, 3.9]);                                                                   // plus haute que la courtine : ombre plus longue
+  if (mode !== 'normal') { ctx.beginPath(); ctx.arc(X, Y, r + 2, 0, Math.PI * 2); ctx.strokeStyle = Col.accent; ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke(); }
 }
 function drawGate(g, mode) {
-  const ghost = mode === 'ghost' || mode === 'bad';
-  const r = roadThroughGate(g), surf = WALL_SURF;
-  polyPath(gatePoly(g)); ctx.closePath();
-  if (ghost) { ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1; }
-  else { ctx.fillStyle = Col.wall; ctx.fill(); }
-  ctx.strokeStyle = ghost ? (mode === 'bad' ? Col.bad : Col.accent) : mode === 'normal' ? Col['wall-edge'] : Col.accent;
-  ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke();
-  if (ghost) return;
-  // passage voûté dans l'axe de la route, herse au milieu
-  polyPath(corners({ x:g.x, y:g.y, a:g.a, w:GATE_L + .2, l:surf })); ctx.closePath();
-  ctx.fillStyle = r ? roadCols(r)[0] : Col.verge; ctx.fill();
-  ctx.setLineDash([2, 2]); ctx.strokeStyle = Col['wall-edge']; ctx.lineWidth = 1.5;
-  ctx.beginPath(); ctx.moveTo(...toS(...local({ ...g, w:0, l:0 }, 0, -surf / 2))); ctx.lineTo(...toS(...local({ ...g, w:0, l:0 }, 0, surf / 2))); ctx.stroke();
-  ctx.setLineDash([]);
+  if (mode === 'ghost' || mode === 'bad') {
+    polyPath(gatePoly(g)); ctx.closePath();
+    ctx.globalAlpha = .5; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1;
+    ctx.strokeStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.lineWidth = 1.5; ctx.stroke(); return;
+  }
+  // repère : u le long de la route (−4 … 4, traversée de la muraille), t en travers (0 … 11)
+  const s = view.s, h = { x:g.x, y:g.y, a:g.a, w:GATE_L, l:CELL + 3, front:1 }, L = h.l, c = L / 2, r = roadThroughGate(g);
+  const q = (u0, t0, u1, t1) => lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  const turrets = [-1, 1].flatMap(du => [1.9, L - 1.9].map(t => [du * 3.3, t]));
+  ctx.beginPath(); addS(shiftS(q(-3.2, .6, 3.2, L - .6), 2.4, 3.1));                                  // ombres du châtelet et de ses tourelles, d'un seul tenant
+  for (const p of turrets) { const [X, Y] = LP(h, ...p); ctx.moveTo(X + 4.7 * s, Y + 3.6 * s); ctx.arc(X + 2.8 * s, Y + 3.6 * s, 1.9 * s, 0, Math.PI * 2); }
+  ctx.fillStyle = FORT.shadow; ctx.fill();
+  // bouches du passage voûté, de chaque côté : la route s'y enfonce dans l'ombre, herse levée
+  for (const d of [-1, 1]) {
+    pathS(q(d * 3.2, c - 1.8, d * 4.3, c + 1.8)); ctx.fillStyle = r ? roadCols(r)[0] : FORT.walk; ctx.fill();
+    pathS(q(d * 3.2, c - 1.8, d * 4.3, c + 1.8)); ctx.fillStyle = 'rgba(20,16,12,.25)'; ctx.fill();
+    pathS(q(d * 3.2, c - 1.8, d * 3.8, c + 1.8)); ctx.fillStyle = 'rgba(20,16,12,.6)'; ctx.fill();
+    if (s > 1.2) { ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .08 * s); ctx.beginPath(); for (const t of [c - 1.8, c + 1.8]) { ctx.moveTo(...LP(h, d * 3.2, t)); ctx.lineTo(...LP(h, d * 4.3, t)); } ctx.stroke(); } // piédroits
+    if (s > 1.6) { ctx.strokeStyle = '#2b2622'; ctx.lineWidth = Math.max(1, .08 * s); ctx.beginPath(); for (let t = c - 1.6; t <= c + 1.61; t += .4) { ctx.moveTo(...LP(h, d * 3.25, t)); ctx.lineTo(...LP(h, d * 3.6, t)); } ctx.moveTo(...LP(h, d * 3.45, c - 1.8)); ctx.lineTo(...LP(h, d * 3.45, c + 1.8)); ctx.stroke(); } // herse
+  }
+  pathS(q(-3.2, .6, 3.2, L - .6)); ctx.fillStyle = FORT.stone; ctx.fill(); ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .1 * s); ctx.stroke(); // corps du châtelet
+  hipLT(h, -2.9, .9, 2.9, L - .9, SLATE);                                                             // toit d'ardoise
+  for (const p of turrets) { const [X, Y] = LP(h, ...p); roundTowerS(X, Y, 1.9 * s, s, null); }    // tourelles
+  if (mode !== 'normal') { polyPath(gatePoly(g)); ctx.closePath(); ctx.strokeStyle = Col.accent; ctx.lineWidth = mode === 'selected' ? 2.5 : 1.5; ctx.stroke(); }
 }
 // points où l'outil actif peut se poser (tours, portes)
 function drawSpots(list) {
