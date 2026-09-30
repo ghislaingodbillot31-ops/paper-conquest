@@ -3464,8 +3464,7 @@ const BUILD_DRAW = {
   },
   /* Fosse minière (2 × 2 cases) : fosse à ciel ouvert creusée le long d'un filon, au contour
      irrégulier, bordée d'un bourrelet de déblais ; gradins dont les parois nord-ouest sont à
-     l'ombre ; strates et veines de minerai (fer rouille, argile) ; rampe taillée qui descend en
-     lacet, échelle pour le dernier ressaut ; au fond, puits boisé, treuil et flaque. Autour :
+     l'ombre ; strates et veines de minerai (fer rouille, argile) ; au fond, puits boisé, treuil et flaque. Autour :
      tas de minerai de fer et d'argile, déblais, brouette, bois d'étai, cabane. */
   fosse_miniere: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, cu = .5, ct = 8.2, rnd = seeded(Math.round(h.x * 3 + h.y * 11) + 77);
@@ -3499,34 +3498,13 @@ const BUILD_DRAW = {
           for (let j = 0; j <= len; j++) { const p = C[(n0 + j) % 40]; j ? ctx.lineTo(...LP(h, ...p)) : ctx.moveTo(...LP(h, ...p)); } }
         ctx.stroke(); }
       ctx.lineCap = 'butt'; }
-    /* Descente : une seule tranchée en pente, taillée dans le flanc est, du bord jusqu'au fond ;
-       elle coupe les gradins, fonce à mesure qu'elle s'enfonce, et sa paroi nord-ouest jette une
-       ombre sur son sol. */
-    { const B0 = [cu + .5 + .9, ct + .3 + .1], dl = Math.hypot(1, .3), d = [1 / dl, .3 / dl], pr = [-d[1], d[0]], wd = .6;
-      const at2 = (x, y) => [B0[0] + d[0] * x + pr[0] * y, B0[1] + d[1] * x + pr[1] * y];
-      const polys = K.map((k, i) => level(k, ...off[i])), rim = level(1.08);
-      let len = 0; while (len < 9 && inPoly(at2(len, 0), rim)) len += .1;                          // jusqu'au bord de la fosse
-      const hex = c => [1, 3, 5].map(j => parseInt(c.slice(j, j + 2), 16)), mix = (c0, c1, m) => 'rgb(' + hex(c0).map((v, q) => Math.round(v + (hex(c1)[q] - v) * m)).join(',') + ')';
-      pathS(lpts(h, [at2(0, -wd - .1), at2(len, -wd - .1), at2(len, wd + .1), at2(0, wd + .1)])); ctx.fillStyle = 'rgba(40,30,18,.25)'; ctx.fill();
-      for (let x = 0; x < len; x += .25) {                                                           // sol : un peu plus bas que le gradin traversé
-        let i = -1; polys.forEach((P2, j) => { if (inPoly(at2(x + .12, 0), P2)) i = j; });
-        const col = i < 0 ? mix('#bda37c', lit[0], .5) : mix(lit[i], i < 4 ? lit[i + 1] : dark[4], .5);
-        pathS(lpts(h, [at2(x, -wd), at2(x + .27, -wd), at2(x + .27, wd), at2(x, wd)])); ctx.fillStyle = col; ctx.fill();
-      }
-      // parois de la tranchée : celle du nord-ouest à l'ombre, l'autre éclairée
-      const up = LP(h, ...at2(0, -1)), dn = LP(h, ...at2(0, 1)), side = (up[0] + up[1]) < (dn[0] + dn[1]) ? -1 : 1;
-      pathS(lpts(h, [at2(0, side * wd), at2(len, side * wd), at2(len, side * (wd - .22)), at2(0, side * (wd - .22))])); ctx.fillStyle = 'rgba(40,30,18,.45)'; ctx.fill();
-      pathS(lpts(h, [at2(0, -side * wd), at2(len, -side * wd), at2(len, -side * (wd - .12)), at2(0, -side * (wd - .12))])); ctx.fillStyle = 'rgba(255,240,210,.18)'; ctx.fill();
-      if (s > 2) { ctx.strokeStyle = 'rgba(70,54,34,.35)'; ctx.lineWidth = 1; ctx.beginPath(); for (const y of [-.2, .2]) { ctx.moveTo(...LP(h, ...at2(.2, y))); ctx.lineTo(...LP(h, ...at2(len - .1, y))); } ctx.stroke(); } // ornières de brouette
-    }
     // fond : flaque, puits boisé (cadre de rondins croisés aux angles), treuil
     const bu = cu + .5, bt = ct + .3;
     { const P = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; P.push([bu + 1.15 + Math.cos(a) * .55 * (1 + .2 * Math.sin(a * 3)), bt + .55 + Math.sin(a) * .32]); } pathS(lpts(h, P)); ctx.fillStyle = 'rgba(92,120,122,.75)'; ctx.fill(); }
     pathS(lpts(h, [[bu - .55, bt - .55], [bu + .55, bt - .55], [bu + .55, bt + .55], [bu - .55, bt + .55]])); ctx.fillStyle = '#120d09'; ctx.fill();
     for (const [a, b] of [[[bu - .85, bt - .75], [bu + .85, bt - .55]], [[bu - .85, bt + .55], [bu + .85, bt + .75]], [[bu - .75, bt - .85], [bu - .55, bt + .85]], [[bu + .55, bt - .85], [bu + .75, bt + .85]]]) beamLT(h, a[0], a[1], b[0], b[1]);
     windlassLT(h, bu, bt, 2);
-    // sur les gradins : paniers de minerai, pic, étais
-    basketLT(h, cu - 2.6, ct - 1.6, .32, ['#8a4a32', '#a55c3e']); basketLT(h, cu - 2.1, ct - 1.1, .3, ['#b0704a', '#c98a5e']);
+    // sur les gradins : pic, étais
     if (s > 1.8) { ctx.strokeStyle = '#8a6a45'; ctx.lineWidth = lw(.07); ctx.beginPath(); ctx.moveTo(...LP(h, cu + 2.4, ct + 1.9)); ctx.lineTo(...LP(h, cu + 3.2, ct + 2.3)); ctx.stroke();
       ctx.strokeStyle = '#4c5053'; ctx.lineWidth = lw(.08); ctx.beginPath(); ctx.moveTo(...LP(h, cu + 3.05, ct + 1.95)); ctx.lineTo(...LP(h, cu + 3.35, ct + 2.6)); ctx.stroke(); } // pic
     for (const [u, t] of [[cu - 3.6, ct + 1.2], [cu + 3.9, ct - 1.4]]) beamLT(h, u - .12, t - .12, u + .12, t + .12); // étais
