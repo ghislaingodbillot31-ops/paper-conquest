@@ -1,53 +1,11 @@
 // ---------- Carte de la region (onglet de la capitale) ----------
-// La carte de la capitale (region.html : campagne, rivieres, forets, routes, zonage,
-// batiments et fortifications) generee pour CETTE region : biome deduit de son climat
-// reel (latitude, aridite, grandes plaines, massifs), cours d'eau selon les vrais fleuves
-// qui la traversent, graine = numero de la region (meme region, meme carte). Chaque region
-// garde son propre plan (sauvegarde locale de la page, une cle par region).
-const MOUNTAINS = [                      // [lat min, lat max, lon min, lon max, biome]
-  [27, 38, 75, 102, 'toundra_alpine'],   // Tibet, Himalaya
-  [44, 48.5, 5, 16, 'montagne'],         // Alpes
-  [36, 56, -125, -105, 'montagne'],      // Rocheuses
-  [-40, 5, -79, -66, 'montagne'],        // Andes
-  [38, 44, 40, 50, 'montagne'],          // Caucase
-];
-// zones seches pour le choix du biome (plus fines que les teintes du globe) : [lat, lon, rayon en degres]
-const DRYLANDS = [[24, 8, 13], [24, 26, 11], [21, -8, 9], [18, 45, 11], [29, 40, 7], [32, 55, 9], [42, 62, 9], [42, 90, 11], [27, 71, 5],
-  [31, -110, 8], [39, -116, 6], [-25, 133, 15], [-24, -69, 6], [-45, -69, 5], [-24, 18, 8], [8, 45, 6]];
-const drynessAt = (lat, lon) => DRYLANDS.reduce((b, [a, o, r]) => Math.max(b, smooth01(1 - Math.hypot(lat - a, lon - o) / (r * 1.4))), 0);
-function regionClimate(id){
-  const ring = largestRing(regionFeature(id).geometry);
-  let sx = 0, sy = 0; for(const [x, y] of ring){ sx += x; sy += y; }
-  const lat = sy / ring.length, lon = ((sx / ring.length) + 540) % 360 - 180;
-  return { lat, lon, abs:Math.abs(lat), arid:drynessAt(lat, lon) };
-}
-function regionBiome(id){
-  const { lat, lon, abs, arid } = regionClimate(id), inBox = ([a, b, c, d]) => lat >= a && lat <= b && lon >= c && lon <= d;
-  if(abs >= 72) return 'polaire';
-  if(abs >= 64) return 'toundra';
-  const m = MOUNTAINS.find(inBox); if(m && arid < .6) return m[4];
-  if(abs >= 54) return 'taiga';
-  if(arid >= .62) return abs < 32 ? 'desert_aride' : 'semi_aride';
-  if(arid >= .45) return abs < 26 ? 'xerophyte' : 'steppe_aride';
-  if(arid >= .3) return abs < 26 ? 'savane' : 'prairie';
-  if(abs < 8) return 'tropicale';
-  if(abs < 16) return lat > 0 && lon > 65 && lon < 125 ? 'mousson' : 'tropicale_cad';
-  if(abs < 23) return 'savane_claire';
-  if(lat > 29 && lat < 45 && lon > -10 && lon < 42) return 'mediterraneenne';
-  if(abs < 34) return 'subtropicale';
-  if((lat > 30 && lat < 54 && lon > -110 && lon < -92) || (lat > 43 && lat < 54 && lon > 35 && lon < 120) || (lat < -28 && lat > -40 && lon > -65 && lon < -56)) return 'prairie';
-  return 'tempere';
-}
-// cours d'eau de la carte : le plus grand vrai fleuve qui traverse la region ; sinon une
-// petite riviere (aucune dans les deserts et les glaces)
-function regionRiverMode(id, biome){
-  const cls = waterData ? waterData.rivers.filter(r => (r.r || []).includes(id)).map(r => r.cls || 3) : [];
-  if(cls.length){ const c = Math.min(...cls); return c === 1 ? 'fleuve' : c === 2 ? 'riviere' : 'petite'; }
-  return ['polaire', 'desert_aride', 'xerophyte'].includes(biome) ? 'aucun' : 'petite';
-}
+// La carte de la region (region.html : campagne, rivieres, forets, routes, zonage,
+// batiments et fortifications) generee pour CETTE region : biome et cours d'eau lus dans
+// data/regions/regions.json, graine = numero de la region (meme region, meme carte). Chaque
+// region garde son propre plan (sauvegarde locale de la page, une cle par region).
 function renderRegionMapTab(el, regionId){
   if(!regionFeature(regionId)){ el.innerHTML = ''; return; }
-  const biome = regionBiome(regionId), river = regionRiverMode(regionId, biome);
+  const { biome } = regionInfo(regionId).climat, river = regionInfo(regionId).eau.cours_eau_carte;
   const src = 'region.html?region=' + regionId + '&biome=' + biome + '&river=' + river + '&seed=' + (regionId * 7919 + 101);
   const cur = el.querySelector('iframe.region-map');
   if(cur && cur.dataset.src === src) return;              // deja affichee : on ne recharge pas

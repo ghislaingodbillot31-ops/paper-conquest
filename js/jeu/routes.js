@@ -24,55 +24,6 @@ function geoDistance(a, b){
   return turf.distance([normLon(a[0]), a[1]], [normLon(b[0]), b[1]]);
 }
 
-// Position de capitale garantie loin de toute frontiere (jamais "a
-// cheval" entre deux regions): on essaie plusieurs points candidats
-// (centre de masse, centroide, point-sur-feature, plus une grille dans
-// l'emprise de la region) et on garde celui dont la distance a la
-// frontiere la plus proche est maximale -- une approximation rapide du
-// "pole d'inaccessibilite" sans dependance externe.
-// Densite de grille et simplification du contour adaptees a la SURFACE
-// reelle de la region (turf.area): une grande region (ex. un Etat
-// australien) a plus a gagner d'une grille fine, une petite n'en a pas
-// besoin: son interieur est deja proche de la frontiere partout. Le
-// contour est simplifie avant les mesures de distance (calcul par
-// sommets, donc couteux sur un tres long trait de cote) avec une
-// tolerance elle aussi liee a la taille de la region -- suffisant pour
-// choisir un bon point interieur sans re-suivre chaque micro-detail des
-// LIMITES DE FRONTIERE.
-function safeInteriorPoint(feature){
-  const bounds = turf.bbox(feature);
-  const areaKm2 = turf.area(feature) / 1e6;
-  const GRID = areaKm2 > 200000 ? 7 : areaKm2 > 20000 ? 6 : areaKm2 > 2000 ? 5 : 4;
-  let boundaryLine;
-  try{ boundaryLine = turf.polygonToLine(feature); }catch(e){ boundaryLine = null; }
-  let lines = boundaryLine ? (boundaryLine.type === 'FeatureCollection' ? boundaryLine.features : [boundaryLine]) : [];
-  const tolerance = Math.max(0.01, Math.sqrt(areaKm2) / 4000);
-  lines = lines.map(l => { try{ return turf.simplify(l, { tolerance, highQuality:false }); }catch(e){ return l; } });
-  function distToBoundary(pt){
-    let min = Infinity;
-    lines.forEach(l => {
-      try{ const d = turf.pointToLineDistance(pt, l, { units:'kilometers' }); if(d < min) min = d; }catch(e){}
-    });
-    return min === Infinity ? 0 : min;
-  }
-  const candidates = [];
-  const tryAdd = (pt) => { if(pt && turf.booleanPointInPolygon(pt, feature)) candidates.push(pt); };
-  try{ tryAdd(turf.centerOfMass(feature).geometry.coordinates); }catch(e){}
-  try{ tryAdd(turf.centroid(feature).geometry.coordinates); }catch(e){}
-  try{ tryAdd(turf.pointOnFeature(feature).geometry.coordinates); }catch(e){}
-  for(let gx = 0; gx < GRID; gx++){
-    for(let gy = 0; gy < GRID; gy++){
-      const x = bounds[0] + (bounds[2]-bounds[0]) * (gx+0.5)/GRID;
-      const y = bounds[1] + (bounds[3]-bounds[1]) * (gy+0.5)/GRID;
-      tryAdd([x, y]);
-    }
-  }
-  if(!candidates.length) return turf.pointOnFeature(feature).geometry.coordinates;
-  let best = candidates[0], bestD = -1;
-  candidates.forEach(c => { const d = distToBoundary(c); if(d > bestD){ bestD = d; best = c; } });
-  return best;
-}
-
 // ---------- Detection de croisement entre deux tracés (segments) ----------
 // Prefiltre par boite englobante (tres bon marche) avant le test complet
 // segment-par-segment: la grande majorite des paires de tracés sur une
@@ -315,7 +266,7 @@ const MANUAL_ROADS = [
 function buildRegionNetwork(topo, fc, geometries){
   const n = fc.features.length;
   const villages = fc.features.map(f => {
-    const coord = safeInteriorPoint(f);
+    const coord = regionInfo(f.id).capitale;        // position calculee une fois (data/regions/regions.json)
     return { regionId:f.id, coord, gcoord:[normLon(coord[0]), coord[1]] };
   });
 

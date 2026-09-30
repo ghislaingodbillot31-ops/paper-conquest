@@ -78,127 +78,19 @@ function unwrapGeometry(geom){
   else if(geom.type === 'MultiPolygon') geom.coordinates = geom.coordinates.map(poly => poly.map(unwrapRingLongitudes));
 }
 
-// Couleur "carte physique" par climat plutot que par pays: le jeu ne doit
-// pas reveler les vraies frontieres politiques (les joueurs creent leurs
-// propres pays sur ce globe), seulement le relief/climat qu'on verrait sur
-// un vrai globe. Degrade continu sur deux axes (temperature + aridite),
-// jamais de zones a bordure dure.
-function lerp(a, b, t){ return a + (b - a) * t; }
-function smooth01(t){ t = Math.max(0, Math.min(1, t)); return t * t * (3 - 2 * t); }
-function lerpColor(c1, c2, t){
-  t = smooth01(t);
-  const p1 = parseInt(c1.slice(1), 16), p2 = parseInt(c2.slice(1), 16);
-  const r = Math.round(lerp((p1 >> 16) & 255, (p2 >> 16) & 255, t));
-  const g = Math.round(lerp((p1 >> 8) & 255, (p2 >> 8) & 255, t));
-  const b = Math.round(lerp(p1 & 255, p2 & 255, t));
-  const h = v => v.toString(16).padStart(2, '0');
-  return '#' + h(r) + h(g) + h(b);
-}
-
-const COL_DEEP_FOREST = '#1f6b3c'; // grosse foret (equatoriale, humide)
-const COL_FOREST      = '#a9db8e'; // pays forestier (foret temperee)
-const COL_COLD        = '#f5f7f5'; // pays froid
-const COL_HOT_DRY     = '#f0932b'; // climat tres chaud (desert le plus chaud)
-const COL_DESERT      = '#f4e28c'; // desert / steppe seche
-
-// Chaine humide (foret dense->claire->neige) selon la latitude absolue.
-function humidColor(absLat){
-  if(absLat < 12) return lerpColor(COL_DEEP_FOREST, COL_FOREST, absLat / 12);
-  if(absLat < 55) return COL_FOREST;
-  if(absLat < 68) return lerpColor(COL_FOREST, COL_COLD, (absLat - 55) / 13);
-  return COL_COLD;
-}
-// Chaine seche (orange brulant->jaune desert->neige), memes paliers.
-function aridColor(absLat){
-  if(absLat < 25) return lerpColor(COL_HOT_DRY, COL_DESERT, absLat / 25);
-  if(absLat < 55) return COL_DESERT;
-  if(absLat < 68) return lerpColor(COL_DESERT, COL_COLD, (absLat - 55) / 13);
-  return COL_COLD;
-}
-
-// Centres de desert [lat, lon, rayon en degres], pour une aridite continue
-// (score qui s'attenue en douceur avec la distance).
-const ARID_CENTERS = [
-  [23, 10, 20],    // Sahara
-  [20, 45, 15],    // Peninsule arabique
-  [40, 75, 18],    // deserts d'Asie centrale (Gobi, Taklamakan, Kyzylkoum)
-  [28, -108, 12],  // sud-ouest des Etats-Unis / Mexique
-  [-25, 133, 18],  // interieur australien
-  [-24, -69, 8],   // Atacama
-  [-23, 18, 12],   // Kalahari / Namib
-];
-function aridityAt(lat, lon){
-  let best = 0;
-  for(const [clat, clon, radius] of ARID_CENTERS){
-    const d = Math.hypot(lat - clat, lon - clon);
-    const score = smooth01(1 - d / (radius * 2));
-    if(score > best) best = score;
-  }
-  return best;
-}
-
-// Couleur finale: interpole entre la chaine humide et la chaine seche
-// selon l'aridite locale, elle-meme continue -- aucune des deux
-// dimensions ne cree de bordure nette.
-function climateColorAt(lat, lon){
-  const absLat = Math.abs(lat);
-  const aridity = aridityAt(lat, lon);
-  return lerpColor(humidColor(absLat), aridColor(absLat), aridity);
-}
-
-// Eclaircit/assombrit une couleur hex vers le blanc (amt>0) ou le noir
-// (amt<0). Sert a decliner plusieurs teintes distinctes a l'interieur
-// d'une meme sous-region.
-function tintHex(hex, amt){
-  const n = parseInt(hex.slice(1), 16);
-  const r = (n >> 16) & 255, g = (n >> 8) & 255, b = n & 255;
-  const mix = amt >= 0 ? 255 : 0;
-  const p = Math.abs(amt);
-  const c = v => Math.round(v + (mix - v) * p).toString(16).padStart(2, '0');
-  return '#' + c(r) + c(g) + c(b);
-}
-
-// Plus grand anneau (exterieur) d'une geometrie, pour son centroide.
-function largestRing(geom){
-  const rings = geom.type === 'Polygon' ? [geom.coordinates[0]]
-    : geom.coordinates.map(poly => poly[0]);
-  let best = rings[0], bestArea = 0;
-  for(const ring of rings){
-    let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    for(const [x, y] of ring){
-      if(x < minX) minX = x; if(x > maxX) maxX = x;
-      if(y < minY) minY = y; if(y > maxY) maxY = y;
-    }
-    const area = (maxX - minX) * (maxY - minY);
-    if(area > bestArea){ bestArea = area; best = ring; }
-  }
-  return best;
-}
-
-// Empreinte numerique stable d'une geometrie (centroide approche de son
-// plus grand anneau), graine deterministe pour la variation de teinte.
-function geometrySeed(geom){
-  const ring = largestRing(geom);
-  let sx = 0, sy = 0;
-  for(const [x, y] of ring){ sx += x; sy += y; }
-  const cx = Math.round((sx / ring.length) * 1000);
-  const cy = Math.round((sy / ring.length) * 1000);
-  let h = 0;
-  const s = cx + ',' + cy;
-  for(let i = 0; i < s.length; i++) h = (Math.imul(h, 31) + s.charCodeAt(i)) | 0;
-  return Math.abs(h);
-}
-
 let regionsFc = null;
 
 async function addRegions(){
-  const [topo, navGrid, waterTopo, water, fishing] = await Promise.all([
+  const [topo, navGrid, waterTopo, water, fishing, regionsData, animalZones] = await Promise.all([
     fetch('data/monde/admin1.topojson').then(r => r.json()),
     fetch('data/monde/nav-grid.json').then(r => r.json()).catch(e => { console.warn('Grille de navigation indisponible:', e); return null; }),
     fetch('data/monde/regions-water.topojson').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
     fetch('data/monde/water.json').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
     fetch('data/monde/fishing.json').then(r => r.json()).catch(e => { console.warn('Zones de peche indisponibles:', e); return null; }),
+    fetch('data/regions/regions.json').then(r => r.json()),
+    fetch('data/regions/zones-animales.json').then(r => r.json()),
   ]);
+  loadRegionData(regionsData, animalZones);
   const objName = Object.keys(topo.objects)[0];
   const geometries = topo.objects[objName].geometries;
   const fc = topojson.feature(topo, topo.objects[objName]);
@@ -206,17 +98,9 @@ async function addRegions(){
     f.id = i + 1;
     f.properties.regionNum = i + 1;
     f.properties.continent = CODE_TO_CONTINENT[f.properties.adm0_a3] || null;
-    // Couleur du climat reel a la position du morceau (pas du pays: aucune
-    // frontiere politique reelle n'est reveleee), plus une legere
-    // variation de teinte pour eviter des zones plates.
-    const ring = largestRing(f.geometry);
-    let sx = 0, sy = 0;
-    for(const [x, y] of ring){ sx += x; sy += y; }
-    const lat = sy / ring.length, lon = sx / ring.length;
-    const base = climateColorAt(lat, lon);
-    const seed = geometrySeed(f.geometry);
+    // couleur du climat de la region (data/regions/regions.json) ; comptoirs en violet
     f.properties.isNpc = NPC_REGION_IDS.has(f.id);
-    f.properties.fillColor = f.properties.isNpc ? NPC_COLOR : tintHex(base, ((seed % 9) - 4) * 0.03);
+    f.properties.fillColor = f.properties.isNpc ? NPC_COLOR : regionInfo(f.id).climat.couleur;
     unwrapGeometry(f.geometry);
     try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
     catch(e){ /* garde la valeur stockee si le calcul echoue */ }

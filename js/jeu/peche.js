@@ -119,16 +119,8 @@ function showFreshWater(w){
     '<div class="region-row"><span>' + (river ? 'Régions traversées' : 'Région') + '</span><span class="v">' + (regions.join(', ') || '—') + '</span></div>' +
     '<p class="cap-empty">Ses poissons profitent aux régions ' + (river ? 'qu\'il traverse' : 'qui le bordent') + '.</p>';
 }
-// Zones de peche au large d'une region cotiere (son littoral les touche)
-const regionFishingCache = new Map();
-function regionFishingZones(id){
-  if(!fishingFc) return [];
-  if(regionFishingCache.has(id)) return regionFishingCache.get(id);
-  const coast = coastOf(id);
-  const list = coast ? FISHING_ZONES.filter((z, i) => { try{ return turf.booleanIntersects(fishingFc.features[i], coast.lines); }catch(e){ return false; } }) : [];
-  regionFishingCache.set(id, list);
-  return list;
-}
+// Zones de peche au large d'une region cotiere (data/regions/regions.json : peche.mer)
+const regionFishingZones = id => (regionInfo(id).peche.mer || []).map(i => FISHING_ZONES[i]).filter(Boolean);
 // Panneau de droite: fiche d'une zone de peche
 function showFishingZone(i){
   const z = FISHING_ZONES[i];
