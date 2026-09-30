@@ -53,6 +53,7 @@ Depuis la racine du projet, avec `@turf/turf` et `topojson-client` installés :
 | `node outils/build-regions.js` | `data/regions/regions.json` (règles : `outils/modele-regions.js`) |
 | `node outils/build-formes.js` | `data/regions/formes.json` : forme de chaque région pour la carte de sa capitale — à relancer après `build-routes` |
 | `node outils/build-routes.js` | `data/monde/routes.json` : routes entre capitales (règles : `outils/reseau-routes.js`) — à relancer après `build-regions` si les capitales changent |
+| `node outils/build-fleuves-reels.js <ne_10m_rivers_lake_centerlines.geojson>` | Vrai cours des fleuves dans `outils/rivers-world.json`, d'après [Natural Earth](https://www.naturalearthdata.com) (fichier à télécharger) — à relancer seulement si la liste des fleuves change |
 | `node outils/build-waterways.js outils/modele-regions.js data/monde/admin1.topojson data/monde/nav-grid.json data/monde` | `water.json`, `regions-water.topojson` (fleuves réels : `outils/rivers-world.json`) |
 | `node outils/build-fishing.js data/monde/admin1.topojson outils/fishing-zones.json data/monde/fishing.json` | Zones de pêche en mer |
 | `node outils/build-nav-grid.js data/monde/admin1.topojson data/monde/nav-grid.json` | Grille de navigation des bateaux |

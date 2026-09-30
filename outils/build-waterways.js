@@ -6,10 +6,10 @@
 //     (aridityAt). Les fonctions et donnees sont lues dans outils/modele-regions.js:
 //     une seule source de verite.
 //  2. Remplissage des cuvettes (priority-flood): cuvettes = emplacements de lacs.
-//  3. Fleuves REELS (outils/rivers-world.json: cours approche par les villes
-//     traversees) traces par le generateur: "serpent" (spline + meandres),
-//     la source s'affine; un affluent s'arrete en touchant son fleuve
-//     (confluence, jamais de croisement).
+//  3. Fleuves REELS (outils/rivers-world.json) : vrai lit (Natural Earth, trace: reel,
+//     voir outils/build-fleuves-reels.js), a defaut cours approche par les villes
+//     (trace: villes, "serpent" : spline + meandres) ; la source s'affine ; un affluent
+//     s'arrete en touchant son fleuve (confluence, jamais de croisement).
 //  4. Lacs: formes compactes, a l'ecart des rivieres, de la cote et des autres
 //     lacs; cuvettes d'abord, puis petits lacs dans les creux (peche).
 //  5. Le lit des rivieres et les lacs sont retires des polygones des regions
@@ -133,13 +133,14 @@ function snakeRiver(cellPts, seed, opt){
   const toXY = ([lon, lat]) => [lon * kx, lat * ky], toLL = ([x, y]) => [x / kx, y / ky];
   const d2 = (a, b) => Math.hypot(a[0] - b[0], a[1] - b[1]);
   let Pp = cellPts.map(toXY);
-  for(let it = 0; it < 6; it++) Pp = Pp.map((q, i) => i === 0 || i === Pp.length - 1 ? q : [(Pp[i-1][0] + 2 * q[0] + Pp[i+1][0]) / 4, (Pp[i-1][1] + 2 * q[1] + Pp[i+1][1]) / 4]);
+  // trace reel (Natural Earth) : le lit tel quel, juste adouci (1 passe) ; trace par les villes : lisse fort puis spline
+  for(let it = 0; it < (opt.reel ? 1 : 6); it++) Pp = Pp.map((q, i) => i === 0 || i === Pp.length - 1 ? q : [(Pp[i-1][0] + 2 * q[0] + Pp[i+1][0]) / 4, (Pp[i-1][1] + 2 * q[1] + Pp[i+1][1]) / 4]);
   const ctrl = [Pp[0]]; let run = 0;
   for(let i = 1; i < Pp.length; i++){ run += d2(Pp[i-1], Pp[i]); if(run >= 90){ ctrl.push(Pp[i]); run = 0; } }
   if(ctrl.length > 1 && d2(ctrl[ctrl.length - 1], Pp[Pp.length - 1]) < 40) ctrl.pop();
   ctrl.push(Pp[Pp.length - 1]);
-  const base = [];
-  for(let i = 0; i < ctrl.length - 1; i++){
+  const base = opt.reel ? Pp.slice(0, -1) : [];
+  if(!opt.reel) for(let i = 0; i < ctrl.length - 1; i++){
     const p0 = ctrl[i - 1] || ctrl[i], p1 = ctrl[i], p2 = ctrl[i + 1], p3 = ctrl[i + 2] || p2, n = Math.max(2, Math.ceil(d2(p1, p2) / 2));
     for(let k = 0; k < n; k++){ const t = k / n, t2 = t * t, t3 = t2 * t;
       base.push([0, 1].map(j => 0.5 * (2 * p1[j] + (-p0[j] + p2[j]) * t + (2 * p0[j] - 5 * p1[j] + 4 * p2[j] - p3[j]) * t2 + (-p0[j] + 3 * p1[j] - 3 * p2[j] + p3[j]) * t3))); }
@@ -155,7 +156,7 @@ function snakeRiver(cellPts, seed, opt){
     if(i) phase += 2 * Math.PI * (sArr[i] - sArr[i-1]) / (1.5 * (65 + 70 * geoNoise(ll[0], ll[1], seed + 21, 200)));
     const taper = smooth01(sArr[i] / 25) * smooth01((L - sArr[i]) / 50);
     const amp = (5 + 9 * u) * (0.6 + 0.8 * geoNoise(ll[0], ll[1], seed + 5, 400)) * taper;
-    const off = amp * (Math.sin(phase) + 0.25 * Math.sin(2 * phase + 1.3));
+    const off = opt.reel ? 0 : amp * (Math.sin(phase) + 0.25 * Math.sin(2 * phase + 1.3)); // (pas de meandres inventes sur un vrai lit)
     out.push([base[i][0] + nx * off, base[i][1] + ny * off]);
     // la source s'affine (0.15 x la largeur de depart a la pointe), sauf
     // pour une liaison (depart en mer ou sur un fleuve): pleine largeur
@@ -266,8 +267,8 @@ function densify(pts, stepKm){ const out = [pts[0]];
   return out; }
 const rivers = []; let water = 0, joined = 0; const cutEarly = [];
 for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
-  const opt = { ...WIDTH[R.cls], mouth:R.end === 'sea', taper:!R.start, startSea:R.start === 'sea' };
-  let w = snakeRiver(densify(R.pts, 20), nameSeed(R.n) % 1000, opt);
+  const opt = { ...WIDTH[R.cls], mouth:R.end === 'sea', taper:!R.start, startSea:R.start === 'sea', reel:R.trace === 'reel' };
+  let w = snakeRiver(densify(R.pts, R.trace === 'reel' ? 3 : 20), nameSeed(R.n) % 1000, opt);
   if(R.start === 'join' && rivers.length){   // bras: debut colle au fleuve dont il part
     const st = turf.point(w.coords[0]);
     let best = null, bd = Infinity; for(const o of rivers){ const d = turf.pointToLineDistance(st, o.line); if(d < bd){ bd = d; best = o; } }
