@@ -48,6 +48,8 @@ function renderCapitalView(){
   const tabsEl = document.getElementById('capview-tabs'), body = document.getElementById('capview-body');
   sw.hidden = owned.length < 2;
   document.getElementById('capview-select').innerHTML = owned.map(id => '<option value="' + id + '"' + (id === capitalRegion ? ' selected' : '') + '>' + id + '</option>').join('');
+  // onglet « Carte de la region » : la carte du village occupe tout l'ecran
+  document.querySelector('.capital-view').classList.toggle('plein-ecran', capitalRegion !== null && capitalTab === 'carte');
   if(capitalRegion === null){
     title.textContent = 'Capitale';
     tabsEl.innerHTML = ''; body._liveHtml = null;
@@ -57,6 +59,8 @@ function renderCapitalView(){
   title.textContent = 'Capitale — Région ' + capitalRegion;
   renderTabs(tabsEl, body, CAPITAL_TABS, capitalTab, id => { capitalTab = id; renderCapitalView(); }, capitalRegion);
 }
+document.getElementById('cap-globe').addEventListener('click', () => showView('carte'));
+document.getElementById('cap-gestion').addEventListener('click', () => { capitalTab = 'plan'; renderCapitalView(); });
 function openCapital(regionId){
   if(!ownedRegions.has(regionId)) return;
   capitalRegion = regionId;

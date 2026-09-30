@@ -15,8 +15,9 @@ function renderTool() {
   $('yard-row').hidden = !preset.yard;
   $('build-info').innerHTML = `<b>${preset.name}</b> · ${preset.f} × ${preset.d} cases (${preset.f * CELL} × ${preset.d * CELL} m)<br>${preset.use}` +
       (preset.unique ? '<br>Un seul par village.' : '') + (preset.turn ? '' : '<br>Orientation fixe : façade sur la rue.');
-  for (const b of $('road-kinds').children) b.setAttribute('aria-pressed', b.dataset.id === roadKind.id);
+  for (const b of $('road-kinds').children) b.setAttribute('aria-pressed', tool === 'road' && b.dataset.id === roadKind.id);
   cv.style.cursor = tool === 'select' ? 'default' : 'crosshair';
+  if (typeof syncBarre === 'function') syncBarre(); // interface de la capitale (region.html)
 }
 const mini = (f, d) => `<span class="mini" style="grid-template-columns:repeat(${f},9px)">${'<i></i>'.repeat(f * d)}</span>`;
 // liste groupée : bâtiments du village, puis bâtiments de ressources
@@ -182,6 +183,7 @@ $('json-import').addEventListener('click', () => {
 
 function renderSel() {
   const o = findSel(), body = $('sel-body');
+  $('fiche').hidden = !o; // capitale : la fiche de sélection ne s'affiche que s'il y a une sélection
   if (!o) { body.innerHTML = '<p class="muted">Cliquez un bâtiment pour le déplacer, le pivoter ou le supprimer. Cliquez une route pour changer son type. Cliquez une muraille, une tour ou une porte pour la supprimer.</p>'; return; }
   const del = '<button id="sdel" class="danger">Supprimer</button>';
   const fortRow = (type, o) => { const L = lvlOf(o), names = FORT_LEVELS[type];
@@ -282,6 +284,6 @@ function updateStatus() {
     `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
     `<span>1 case = 8 × 8 m</span>`;
   // la barre d'état n'est réécrite que si son texte change (pas de mise en page à chaque image)
-  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; }
+  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; $('villageois').textContent = fmt(cap, 0); }
 }
 let lastStatus = '';

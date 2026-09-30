@@ -1,6 +1,7 @@
 /* ---------- démarrage ---------- */
 fixGates();                                                                     // portes des anciens plans recalées sur les routes
-{ const bn = (BIOMES[S.biome] || BIOMES.tempere).name;                        // titre de la page
+if (document.getElementById('map-title')) {                                   // titre de la page (éditeurs ; la capitale affiche le nom du village)
+  const bn = (BIOMES[S.biome] || BIOMES.tempere).name;
   const title = PAGE === 'batiments' ? 'Éditeur de bâtiments' : PAGE === 'carte' ? 'Éditeur de carte' : GAME ? 'Région ' + GAME.region : 'Carte de région (essai)';
   document.title = title; $('map-title').textContent = title;
   $('map-sub').textContent = PAGE === 'batiments' ? 'Chaque bâtiment seul sur un carré de terrain · rue en haut'

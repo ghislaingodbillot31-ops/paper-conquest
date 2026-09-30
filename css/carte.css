@@ -110,3 +110,101 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
   .panel{order:2}
 }
 @media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+
+/* ---------- capitale (region.html) : carte plein écran, bandeau, onglets et panneaux posés dessus ---------- */
+:root{
+  --hud:rgba(247,242,228,.94); --hud-edge:#8a7654; --hud-ink:#3b2e1d; --hud-soft:#7a6a52; --hud-on:#5c4526; --hud-on-ink:#fbf5e6;
+  --hud-shadow:0 6px 20px rgba(40,30,15,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --hud:rgba(33,27,19,.93); --hud-edge:#8a7654; --hud-ink:#efe4cc; --hud-soft:#b7a585; --hud-on:#e0c48e; --hud-on-ink:#241c10; --hud-shadow:0 6px 20px rgba(0,0,0,.5); }
+}
+:root[data-theme="dark"]{ --hud:rgba(33,27,19,.93); --hud-edge:#8a7654; --hud-ink:#efe4cc; --hud-soft:#b7a585; --hud-on:#e0c48e; --hud-on-ink:#241c10; --hud-shadow:0 6px 20px rgba(0,0,0,.5); }
+
+body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
+.capitale [hidden]{display:none !important}
+.capitale .canvas-wrap{position:fixed; inset:0}
+.capitale .muted{color:var(--hud-soft)}
+.capitale button{background:var(--hud); color:var(--hud-ink); border-color:var(--hud-edge)}
+.capitale button[aria-pressed="true"]{background:var(--hud-on); color:var(--hud-on-ink); border-color:var(--hud-on)}
+.capitale button.danger{color:var(--bad)}
+.capitale .zoom{top:auto; left:auto; right:14px; bottom:96px}
+.capitale .zoom button{box-shadow:var(--hud-shadow)}
+.capitale .toast{bottom:auto; top:74px}
+
+/* bandeau du haut */
+.bandeau{
+  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%);
+  display:flex; align-items:stretch; background:var(--hud); color:var(--hud-ink);
+  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); max-width:calc(100% - 32px);
+}
+.bandeau-pop{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft)}
+.bandeau-pop svg{width:20px; height:20px; fill:var(--hud-ink)}
+.bandeau-pop b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
+.bandeau-nom{display:flex; align-items:center; gap:6px; padding:4px 10px 4px 18px; min-width:0}
+.bandeau-nom h1{margin:0; font:700 22px/1.1 "Barlow Condensed",sans-serif; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nom-btn{border:0; background:none !important; padding:2px 6px; font-size:16px; color:var(--hud-soft) !important}
+.nom-btn:hover{color:var(--hud-ink) !important}
+.nom-form{
+  position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); width:min(320px, calc(100vw - 32px));
+  background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow);
+  padding:12px; display:flex; flex-direction:column; gap:8px; color:var(--hud-ink); font-size:13px;
+}
+.nom-form input{padding:6px 8px; border:1px solid var(--hud-edge); border-radius:3px; background:var(--btn); font-size:15px}
+.nom-form .muted:empty{display:none}
+
+/* fiche de sélection (à droite) */
+.fiche{
+  position:fixed; top:74px; right:14px; width:min(320px, calc(100vw - 28px)); max-height:calc(100% - 190px); overflow:auto;
+  background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px;
+}
+.fiche-tete{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+.fiche h2, .tiroir h2, .aide h3{font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0}
+.fiche-tete button{padding:2px 7px}
+.fiche .kv dt{color:var(--hud-soft)}
+
+/* panneau d'onglet, posé au-dessus de la barre du bas */
+.tiroir{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(66px + env(safe-area-inset-bottom, 0px)); width:max-content; max-width:min(1020px, calc(100% - 32px));
+  max-height:calc(100% - 170px); overflow:auto; background:var(--hud); color:var(--hud-ink);
+  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:12px 14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+.tiroir-opts{display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--hud-edge); padding-top:8px; margin:0}
+.tiroir .row label{color:var(--hud-soft)}
+.tiroir .row label.check{flex-direction:row; margin-left:8px}
+.chemins{display:flex; gap:10px; flex-wrap:wrap}
+.chemins button{display:flex; flex-direction:column; align-items:flex-start; gap:4px; width:150px; padding:8px; text-align:left; font-weight:600}
+.chemins button::before{content:""; width:100%; height:34px; border-radius:3px; border:1px solid var(--earth-edge)}
+#kind-terre::before{background:repeating-linear-gradient(100deg, var(--earth) 0 7px, #bfb189 7px 9px)}
+#kind-gravier::before{background:radial-gradient(circle at 30% 40%, #b5ad93 1.5px, transparent 2px) 0 0/7px 7px, var(--gravel)}
+#kind-pave::before{background:linear-gradient(90deg, var(--paving-edge) 1px, transparent 1px) 0 0/12px 100%, linear-gradient(var(--paving-edge) 1px, transparent 1px) 0 0/100% 9px, var(--paving)}
+.chemins kbd{font:400 11px "IBM Plex Mono",monospace; font-weight:400; opacity:.75}
+.categories{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--hud-edge); padding-bottom:8px}
+.categories button{font:600 14px "Barlow Condensed",sans-serif; letter-spacing:.04em; padding:5px 12px}
+.categories button[aria-selected="true"]{background:var(--hud-on); color:var(--hud-on-ink); border-color:var(--hud-on)}
+.cartes{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+.carte{flex:0 0 112px; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 6px 8px; text-align:center; border-radius:5px}
+.carte .vignette{position:static; width:84px; height:84px; border-radius:3px; border:1px solid var(--hud-edge); display:block; background:var(--grass)}
+.carte b{font-size:12.5px; line-height:1.15}
+.carte span{font:400 10.5px "IBM Plex Mono",monospace; opacity:.75}
+.outil-wall{background:linear-gradient(transparent 38%, var(--wall-edge) 38% 42%, var(--wall) 42% 58%, var(--wall-edge) 58% 62%, transparent 62%), var(--grass) !important}
+.outil-tower{background:radial-gradient(circle, var(--wall) 0 18px, var(--wall-edge) 18px 20px, transparent 21px), var(--grass) !important}
+.outil-gate{background:linear-gradient(90deg, transparent 30%, var(--earth) 30% 70%, transparent 70%), linear-gradient(transparent 38%, var(--wall) 38% 62%, transparent 62%), var(--grass) !important}
+.aide{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px}
+.aide ul{margin:6px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:3px}
+.aide kbd{font:400 11px "IBM Plex Mono",monospace; border:1px solid var(--hud-edge); border-radius:3px; padding:0 4px}
+
+/* barre d'onglets du bas */
+.onglets{
+  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  display:flex; gap:4px; padding:4px; background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:8px; box-shadow:var(--hud-shadow);
+}
+.onglets button{display:flex; align-items:center; gap:7px; padding:7px 16px; border-radius:5px; border-color:transparent; font:600 16px "Barlow Condensed",sans-serif; letter-spacing:.05em}
+.onglets svg{width:20px; height:20px}
+@media (max-width:560px){
+  .onglets button{padding:7px 10px; font-size:15px}
+  .bandeau-pop span{display:none}
+  .capitale .zoom{bottom:auto; top:74px; right:10px}
+  .fiche{top:auto; bottom:calc(66px + env(safe-area-inset-bottom, 0px)); max-height:45%}
+}

@@ -113,3 +113,16 @@ PRESETS.push(
     use:'Transforme la farine (prise au moulin le plus proche, à moins de 500 m) en pain' },
 );
 const buildingOf = h => PRESETS.find(p => p.id === h.kind) || null;
+
+/* Menus de construction de la capitale (onglet Construction) : catégorie → bâtiments, dans
+   l'ordre d'affichage. Un bâtiment absent de ces listes n'est pas proposé au joueur.
+   Défense : les outils de fortification (muraille, tour, porte), pas des bâtiments. */
+const BUILD_MENUS = [
+  { id:'recolte',     name:'Récolte',     ids:['camp_bucherons', 'loge_bucheron', 'hutte_forestier', 'camp_chasse', 'hutte_cueillette', 'rucher', 'tailleur_pierre', 'fosse_miniere'] },
+  { id:'stockage',    name:'Stockage',    ids:['grange', 'entrepot', 'relais', 'poteau', 'comptoir', 'comptoir_betail'] },
+  { id:'residentiel', name:'Résidentiel', ids:['maison', 'maison_cour', 'grande_maison', 'manoir', 'marche', 'taverne', 'eglise'] },
+  { id:'agriculture', name:'Agriculture', ids:['ferme', 'bergerie'] },
+  { id:'industrie',   name:'Industrie',   ids:['scierie', 'moulin', 'four'] },
+  { id:'decoratif',   name:'Décoratif',   ids:['puits', 'cimetiere'] },
+  { id:'defense',     name:'Défense',     tools:[['wall', 'Fortification'], ['tower', 'Tour'], ['gate', 'Porte']] },
+];
