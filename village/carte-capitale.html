@@ -2589,7 +2589,11 @@ function fruitTreeLT(h, cu, ct, r) {
   pathS(C); ctx.fillStyle = '#6a8741'; ctx.fill(); ctx.strokeStyle = '#3d5026'; ctx.lineWidth = lw(.06); ctx.stroke();
   pathS(shiftS(lpts(h, hi), -r * .22, -r * .25)); ctx.fillStyle = '#84a150'; ctx.fill();
   if (s > 2) { ctx.fillStyle = 'rgba(45,62,28,.35)'; for (let k = 0; k < 14; k++) { const [X, Y] = LP(h, cu + (rnd() - .5) * r * 1.4, ct + (rnd() - .5) * r * 1.4); ctx.fillRect(X, Y, Math.max(1, .2 * s), Math.max(1, .14 * s)); } }
-  if (s > 1.5) { ctx.fillStyle = '#b9402b'; for (let k = 0; k < 8; k++) { const a = rnd() * Math.PI * 2, d = rnd() * r * .8, [X, Y] = LP(h, cu + Math.cos(a) * d, ct + Math.sin(a) * d), e = Math.max(1, .13 * s); ctx.fillRect(X - e / 2, Y - e / 2, e, e); } }
+  if (s > 1.5) {                                                                              // fruits semés sur tout le houppier, jamais en grappe
+    const pts = [], gap = r * .42, e = Math.max(1, .13 * s);
+    for (let k = 0; k < 60 && pts.length < 8; k++) { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * r * .82, p = [cu + Math.cos(a) * d, ct + Math.sin(a) * d]; if (pts.every(q => Math.hypot(q[0] - p[0], q[1] - p[1]) >= gap)) pts.push(p); }
+    ctx.fillStyle = '#b9402b'; for (const p of pts) { const [X, Y] = LP(h, ...p); ctx.fillRect(X - e / 2, Y - e / 2, e, e); }
+  }
 }
 // tas (fumier, compost, charbon, foin…) : monticule irrégulier, crête plus claire
 function heapLT(h, cu, ct, ru, rt, col, hiCol) {
@@ -2747,10 +2751,10 @@ const lpts = (h, pts) => pts.map(([u, t]) => LP(h, u, t));
 const lw = k => Math.max(.6, Math.min(2, view.s * k)); // épaisseur de trait qui suit un peu le zoom
 // toit à deux pans (faîtage dans l'axe le plus long, ou imposé) : pan éclairé au nord-ouest,
 // pan à l'ombre, rangs de bardeaux parallèles au faîtage, débord et ombre portée
-function gableLT(h, u0, t0, u1, t1, along) {
+function gableLT(h, u0, t0, u1, t1, along, sh = 1) { // sh : longueur de l'ombre (1 = bâtiment, moins pour un petit toit bas)
   const ridgeT = along ? along === 't' : (t1 - t0) >= (u1 - u0), s = view.s;
   const all = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
-  pathS(shiftS(all, 1.4, 1.8)); ctx.fillStyle = WOOD.shadow; ctx.fill();                       // ombre portée
+  pathS(shiftS(all, 1.4 * sh, 1.8 * sh)); ctx.fillStyle = WOOD.shadow; ctx.fill();             // ombre portée
   const cu = (u0 + u1) / 2, ct = (t0 + t1) / 2;
   const pans = ridgeT ? [[[u0, t0], [cu, t0], [cu, t1], [u0, t1]], [[cu, t0], [u1, t0], [u1, t1], [cu, t1]]]
                       : [[[u0, t0], [u1, t0], [u1, ct], [u0, ct]], [[u0, ct], [u1, ct], [u1, t1], [u0, t1]]];
@@ -3008,9 +3012,15 @@ function graveLT(h, u, t, kind, fresh) {
   pathS(shiftS(P, .12, .16)); ctx.fillStyle = WOOD.shadow; ctx.fill();
   pathS(P); ctx.fillStyle = fresh ? '#9a7f5c' : '#8f9a62'; ctx.fill(); ctx.strokeStyle = 'rgba(50,44,30,.45)'; ctx.lineWidth = 1; ctx.stroke();
   if (kind) { pathS(lpts(h, [[u - .4, t - .35], [u + .4, t - .35], [u + .4, t - .05], [u - .4, t - .05]])); ctx.fillStyle = STONE.hi; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke(); return; } // stèle (sans ombre portée)
-  ctx.strokeStyle = '#4e3a24'; ctx.lineWidth = lw(.11); ctx.beginPath();                          // croix de bois
-  ctx.moveTo(...LP(h, u, t - .55)); ctx.lineTo(...LP(h, u, t + .45)); ctx.moveTo(...LP(h, u - .32, t - .22)); ctx.lineTo(...LP(h, u + .32, t - .22)); ctx.stroke();
-  if (s > 2) { ctx.strokeStyle = '#8a6a45'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, u - .03, t - .5)); ctx.lineTo(...LP(h, u - .03, t + .4)); ctx.stroke(); }
+  topCrossLT(h, u, t - .2, .32, .05);                                                          // croix de bois, vue du dessus
+}
+// croix plantée vue du dessus : on ne voit que le dessus de sa traverse (demi-longueur a,
+// demi-épaisseur e) et la tête du montant ; petite ombre au sud-est
+function topCrossLT(h, cu, ct, a, e, col = '#6b4f32') {
+  const B = lpts(h, [[cu - a, ct - e], [cu + a, ct - e], [cu + a, ct + e], [cu - a, ct + e]]), q = e * 1.3;
+  const T = lpts(h, [[cu - q, ct - q], [cu + q, ct - q], [cu + q, ct + q], [cu - q, ct + q]]);
+  ctx.beginPath(); addS(shiftS(B, a * .35, a * .45)); addS(shiftS(T, a * .35, a * .45)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+  for (const P of [B, T]) { pathS(P); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.03); ctx.stroke(); }
 }
 // if / arbre sombre (houppier en lobes), ou feuillu : col = [ombre, corps, reflet]
 function treeLT(h, cu, ct, r, col) {
@@ -3037,7 +3047,15 @@ const pigLT = (h, u, t, a) => beastLT(h, u, t, a, 1.05, .6, '#d8a896', '#c89280'
 function tableLT(h, cu, ct, len, goods) {
   for (const e of [-.62, .62]) beamLT(h, cu - len / 2 + .2, ct + e - .12, cu + len / 2 - .2, ct + e + .12);   // bancs
   beamLT(h, cu - len / 2, ct - .4, cu + len / 2, ct + .4);                                                     // plateau
-  if (goods && view.s > 2) { const rnd = seeded(Math.round(cu * 9 + ct * 21)); for (let k = 0; k < goods.length * 2; k++) { const [X, Y] = LP(h, cu - len / 2 + .3 + rnd() * (len - .6), ct + (rnd() - .5) * .5), e = Math.max(1, .16 * view.s); ctx.fillStyle = goods[k % goods.length]; ctx.beginPath(); ctx.arc(X, Y, e, 0, Math.PI * 2); ctx.fill(); } }
+  if (goods && view.s > 2) {                                                                  // assiettes : une par convive, face à chaque banc, bien espacées
+    const n = Math.max(1, Math.floor((len - .3) / .7)), step = (len - .3) / n, rnd = seeded(Math.round(cu * 9 + ct * 21)), e = Math.max(1, .15 * view.s);
+    for (const side of [-1, 1]) for (let k = 0; k < n; k++) {
+      if (rnd() < .2) continue;                                                                 // place libre
+      const [X, Y] = LP(h, cu - len / 2 + .15 + step * (k + .5) + (side > 0 ? step * .25 : 0), ct + side * .2);
+      ctx.beginPath(); ctx.arc(X, Y, e, 0, Math.PI * 2); ctx.fillStyle = '#e8dcc0'; ctx.fill(); ctx.strokeStyle = 'rgba(80,60,36,.6)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.beginPath(); ctx.arc(X, Y, e * .5, 0, Math.PI * 2); ctx.fillStyle = goods[(k + (side > 0 ? 1 : 0)) % goods.length]; ctx.fill();
+    }
+  }
 }
 // étal de marché : auvent de toile rayée sur quatre perches, tréteaux et marchandises devant
 function stallLT(h, u0, t0, u1, t1, ca, cb, goods) {
@@ -3320,8 +3338,7 @@ const BUILD_DRAW = {
     gableLT(h, -10.7, 8.2, -1.3, 27.4, 't');                                                      // nef
     gableLT(h, -1.8, 15.1, .4, 17.3, 'u');                                                        // porche de la porte latérale
     towerLT(h, -6, 5.4, 3, SHINGLE);                                                              // clocher
-    ctx.strokeStyle = '#2f2a24'; ctx.lineWidth = lw(.14); ctx.beginPath();                        // croix du clocher
-    ctx.moveTo(...LP(h, -6, 4.5)); ctx.lineTo(...LP(h, -6, 6.3)); ctx.moveTo(...LP(h, -6.55, 5)); ctx.lineTo(...LP(h, -5.45, 5)); ctx.stroke();
+    topCrossLT(h, -6, 5.4, .55, .07, '#3b3a36');                                                  // croix du clocher, vue du dessus
   },
   /* Cimetière (2 × 2 cases) : pré clos d'un muret, porche couvert sur la rue, allée jusqu'au
      calvaire, rangs de tombes (croix de bois, stèles, terre fraîche), if */
@@ -3335,11 +3352,11 @@ const BUILD_DRAW = {
       const k = rnd(); if (k < .1) continue;
       graveLT(h, u, t + (rnd() - .5) * .3, k > .78, k < .22);
     }
-    blockLT(h, -.9, 8.8, .9, 10.6, true);                                                         // calvaire
-    beamLT(h, -.2, 7.8, .2, 11.2); beamLT(h, -1.1, 8.6, 1.1, 8.95);
+    blockLT(h, -.9, 8.8, .9, 10.6, true);                                                         // calvaire : socle de pierre
+    topCrossLT(h, 0, 9.7, 1.1, .14, '#7a5c3c');                                                   // grande croix, vue du dessus, au centre du socle
     treeLT(h, 5.4, 13.3, 1.9, YEW);
     stoneWallLT(h, [[-1.6, .75], [-w2 + .7, .75], [-w2 + .7, L - .7], [w2 - .7, L - .7], [w2 - .7, .75], [1.6, .75]], .55, false);
-    gableLT(h, -2.1, .05, 2.1, 1.5, 'u');                                                         // porche couvert
+    gableLT(h, -2.1, .05, 2.1, 1.5, 'u', .4);                                                     // porche couvert (toit bas : ombre courte)
   },
   /* Maison avec cour et jardin (3 × 3 cases) : longère de chaume en L (deux cheminées),
      jardin d'agrément à droite (carrés d'herbes, fruitiers, banc, ruche), arrière-cour au fond
