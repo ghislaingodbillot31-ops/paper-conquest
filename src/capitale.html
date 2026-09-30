@@ -120,8 +120,8 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
 <div class="app">
   <aside class="panel" aria-label="Outils du plan">
     <header>
-      <h1>Village par zonage</h1>
-      <p class="sub">Terrain de 2 000 × 1 500 m · cases de 8 m le long des routes, 4 cases de profondeur · routes d'une case de large</p>
+      <h1 id="map-title">Village par zonage</h1>
+      <p class="sub" id="map-sub">Terrain de 2 000 × 1 500 m · cases de 8 m le long des routes, 4 cases de profondeur · routes d'une case de large</p>
     </header>
 
     <section id="atelier-sec">
@@ -299,7 +299,12 @@ const WALL_W = CELL, WALL_SURF = 6, TOWER_R = 6, GATE_L = CELL;
 const ANG_STEP = Math.PI / 18; // routes orientées uniquement par pas de 10°
 // v5 : la page s'ouvre sur la campagne européenne (le plan v4 reste dans le navigateur)
 // v7 : la page s'ouvre sur le plan de test (simple village) ; le plan v5 reste repris par bouton
-const KEY = 'planVillageZonage.v11', OLD_KEY = 'planVillageZonage.v10'; // v11 : sans cadastre, régions générées par biome
+/* Dans le jeu (Paper Conquest), la page s'ouvre pour une région du globe :
+   ?region=numéro&biome=…&river=…&seed=… ; chaque région garde son propre plan. Sans paramètre,
+   c'est la page de travail autonome (plan de test, atelier des bâtiments). */
+const GAME = (() => { try { const p = new URLSearchParams(location.search), r = +p.get('region');
+  return r ? { region:r, biome:p.get('biome') || 'tempere', river:p.get('river') || 'auto', seed:+p.get('seed') || r * 7919 + 101 } : null; } catch (e) { return null; } })();
+const KEY = GAME ? 'paperConquestRegionMap.' + GAME.region : 'planVillageZonage.v11', OLD_KEY = GAME ? '' : 'planVillageZonage.v10'; // v11 : sans cadastre, régions générées par biome
 /* Bâtiments du jeu de base (façade × profondeur, en cases de 8 m).
    cap : habitants au plus ; turn : peut pivoter (façade ↔ profondeur) ; unique : un seul
    par village ; yard : arrière-cour au choix ; radius : rayon d'action (m). */
@@ -2107,7 +2112,8 @@ try {
   const o = JSON.parse(localStorage.getItem(KEY) || 'null');
   if (o && Array.isArray(o.houses) && Array.isArray(o.roads)) { S = normalize(o); computeZones(); fixGates(); }
 } catch (e) {}
-if (!S) generateRegion('tempere', 20260929); // première ouverture : une région de plaine tempérée
+if (!S) { if (GAME) generateRegion(BIOMES[GAME.biome] ? GAME.biome : 'tempere', GAME.seed, GAME.river); // région du jeu : générée d'après son climat
+  else generateRegion('tempere', 20260929); }                          // première ouverture : une région de plaine tempérée
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 let tool = 'select', preset = PRESETS[0], custom = null, swapped = false, roadKind = ROADS[1], yardKind = 'potager';
@@ -2149,6 +2155,7 @@ const ATELIER_CUR = 'fosse_miniere';                      // bâtiment en cours 
 let atelier = { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR };
 try { Object.assign(atelier, JSON.parse(localStorage.getItem(ATELIER_KEY) || '{}')); } catch (e) {}
 if (atelier.cur !== ATELIER_CUR) Object.assign(atelier, { on:true, kind:ATELIER_CUR, cur:ATELIER_CUR });
+if (GAME) atelier.on = false; // dans le jeu, la région s'ouvre sur sa carte (l'atelier reste à un clic)
 const saveAtelier = () => { try { localStorage.setItem(ATELIER_KEY, JSON.stringify(atelier)); } catch (e) {} };
 function atelierHouse() {
   const b = PRESETS.find(p => p.id === atelier.kind) || PRESETS.find(p => p.id === 'scierie');
@@ -5605,6 +5612,13 @@ function updateStatus() {
 let lastStatus = '';
 
 /* ---------- démarrage ---------- */
+if (GAME) {                                                                    // région du jeu : titre, et plus de tirage de région ni d'ajout d'eau
+  const bn = (BIOMES[S.biome] || BIOMES.tempere).name;
+  document.title = 'Région ' + GAME.region;
+  $('map-title').textContent = 'Région ' + GAME.region;
+  $('map-sub').textContent = bn + ' · terrain de 2 000 × 1 500 m · cases de 8 m le long des routes';
+  for (const id of ['biome', 'new-river']) { const sec = $(id).closest('section'); if (sec) sec.hidden = true; }
+}
 readColors();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); requestDraw(); });
 new MutationObserver(() => { readColors(); requestDraw(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
