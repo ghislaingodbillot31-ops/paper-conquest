@@ -3575,6 +3575,12 @@ const BUILD_DRAW = {
       for (const d of [-1, 1]) for (const y of [-.13, .13]) line(hu + d * x0, ht + y, hu + d * (w - .25), ht + y, '#efe8d6', Math.max(1, .1 * s));
       line(hu - w, ht, hu + w, ht, '#6b4f32', Math.max(1.2, .12 * s));
       if (s > 1.5) for (const d of [-1, 1]) for (let x = x0; x < w - .2; x += .5) line(hu + d * x, ht - .19, hu + d * x, ht + .19, '#5a4128', 1);
+      // aile du dessus : presque dressée, elle se voit en raccourci, courte, du moyeu vers la rue
+      const top = 3.2, y0 = .6;
+      line(hu + .3, ht + .25, hu + .3, ht - top + .25, WOOD.shadow, Math.max(1.2, .3 * s));
+      for (const e of [-.13, .13]) line(hu + e, ht - y0, hu + e, ht - top + .2, '#efe8d6', Math.max(1, .1 * s));
+      line(hu, ht, hu, ht - top, '#6b4f32', Math.max(1.2, .12 * s));
+      if (s > 1.5) for (let y = y0; y < top - .15; y += .5) line(hu - .19, ht - y, hu + .19, ht - y, '#5a4128', 1);
       ctx.lineCap = 'butt'; }
     thatchLT(h, -7.3, 11, -3.3, 15.4, 'u', STRAW); chimneyLT(h, -6.3, 13.2, .45);                   // maison du meunier
   },
