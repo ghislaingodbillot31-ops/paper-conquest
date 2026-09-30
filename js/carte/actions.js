@@ -4,6 +4,7 @@ function changed(roadsChanged) {
   touchScene(); // le décor a changé : l'image gardée en mémoire est refaite
   if (roadsChanged) computeZones(); else computeOcc();
   computeFlora(); // les arbres cèdent la place aux nouvelles constructions
+  sceneDiff();    // décor à repeindre autour de ce qui a changé
   save(); renderSel(); requestDraw();
 }
 function undo() {

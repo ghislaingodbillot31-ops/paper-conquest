@@ -1,40 +1,28 @@
-/* Image de la carte en deux temps (anti-lag) :
-   - le décor (sol, relief, eau, routes, ponts, murailles, végétation, bâtiments) est dessiné
-     puis gardé dans une image ; tant que ni le décor, ni la vue, ni la sélection ne changent,
-     il est simplement recopié (les habitants qui marchent ne le redessinent plus) ;
-   - par-dessus, à chaque image : ce qui bouge (habitants, aperçu du bâtiment à poser, tracé
-     en cours, zones de travail, échelle). */
-const scene = { c:null, key:'' };
-function drawScene() {
-  ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
-  drawFrame();
-  drawContours();
-  drawWater();
-  drawZones();
-  drawRoads();
-  drawBridges();
-  drawWalls();
-  const complete = !drawFlora();                          // tuiles de végétation encore à peindre : pas de mise en cache
-  const modeOf = (type, id) => isOn(type, id, sel) ? 'selected' : isOn(type, id, hover) ? 'hover' : 'normal';
-  for (const g of S.gates) drawGate(g, modeOf('gate', g.id));
-  for (const h of S.houses) drawHouse(h, modeOf('house', h.id));
-  for (const t of S.towers) drawTower(t, modeOf('tower', t.id));
-  return complete;
+/* Image de la carte en deux couches (anti-lag) :
+   - le décor (sol, relief, eau, routes, ponts, murailles, végétation, bâtiments) : tuiles
+     peintes une fois et affichées par la carte graphique (tuiles.js) ;
+   - par-dessus, à chaque image, sur le canevas transparent : ce qui bouge ou dépend de la
+     souris (sélection, survol, habitants, aperçu du bâtiment, tracé en cours, graduations). */
+// sélection et survol : l'ouvrage est redessiné en surbrillance au-dessus du décor
+function drawHighlights() {
+  for (const st of [hover, sel]) {
+    if (!st || (st === hover && sel && sel.type === hover.type && sel.id === hover.id)) continue;
+    const o = findById(st.type, st.id); if (!o) continue;
+    const mode = st === sel ? 'selected' : 'hover';
+    if (st.type === 'house') drawHouse(o, mode);
+    else if (st.type === 'gate') drawGate(o, mode);
+    else if (st.type === 'tower') drawTower(o, mode);
+    else { ctx.setLineDash([6, 5]); strokeLine(st.type === 'road' ? smoothPts(o) : o.pts, mode === 'selected' ? 2 : 1.5, Col.accent); ctx.setLineDash([]); }
+  }
 }
 function draw() {
   queued = false;
   if (!W) return;
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (atelier.on) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
-  const key = [sceneV, view.s, view.ox, view.oy, W, H, dpr, sel ? sel.type + sel.id : '', hover ? hover.type + hover.id : '', opts.grid, opts.contours].join('|');
-  if (key === scene.key) {                                // décor inchangé : on le recopie
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.drawImage(scene.c, 0, 0); ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  } else if (drawScene()) {                               // décor complet : gardé pour les images suivantes
-    if (!scene.c) scene.c = document.createElement('canvas');
-    if (scene.c.width !== cv.width || scene.c.height !== cv.height) { scene.c.width = cv.width; scene.c.height = cv.height; }
-    const g = scene.c.getContext('2d'); g.clearRect(0, 0, cv.width, cv.height); g.drawImage(cv, 0, 0);
-    scene.key = key;
-  } else scene.key = '';
+  const pending = presentScene();                         // décor (tuiles)
+  drawFrameMarks();
+  drawHighlights();
   if (tool === 'tower') {
     drawSpots(Z.wallNodes.filter(q => !S.towers.some(t => segLen([t.x, t.y], q) < .6)));
     const t = towerSpot();
@@ -60,4 +48,5 @@ function draw() {
   drawDraft();
   drawScale();
   updateStatus();
+  if (pending) requestDraw();                             // tuiles restantes : aux images suivantes
 }

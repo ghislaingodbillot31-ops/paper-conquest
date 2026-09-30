@@ -8,7 +8,7 @@ function setOpt(k, v) {
   const box = document.getElementById({ grid:'show-grid', contours:'show-contours' }[k]);
   if (box) box.checked = v;
   syncGridButton();
-  requestDraw();
+  markAllDirty(); // quadrillage et courbes sont peints dans le décor
 }
 // bouton ▦ sur la carte : enfoncé quand le quadrillage est affiché
 function syncGridButton() {
@@ -175,79 +175,4 @@ function drawBridges() {
       }
     }
   }
-}
-/* ---------- végétation en tuiles (anti-lag) ----------
-   Des dizaines de milliers d'arbres ne sont plus redessinés à chaque image : la couche
-   végétation est peinte par tuiles de 512 px, à la résolution du zoom (2, 4, 8 ou 16 px
-   par mètre), gardées en mémoire (160 au plus, les moins récentes sont libérées). Déplacer
-   ou zoomer ne fait que recopier des images ; une tuile n'est repeinte que si un arbre
-   change dessous (coupe, pousse, nouveau bâtiment). Trois tuiles au plus sont peintes par
-   image ; en attendant, la vue de loin (1 px/m) bouche le trou. */
-const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16], TILE_MAX = 160, TILE_BUDGET = 3; // (0,5 et 1 px/m : vue de loin, détaillée elle aussi)
-const tiles = new Map();
-let floraIdx = null, tileClock = 0;
-// index des arbres par seaux de 64 m (chaque seau garde l'ordre nord → sud)
-function floraNear(x0, y0, x1, y1) {
-  if (!floraIdx) {
-    floraIdx = new Map();
-    for (const f of flora) { const k = Math.floor(f.x / 64) + ',' + Math.floor(f.y / 64); if (!floraIdx.has(k)) floraIdx.set(k, []); floraIdx.get(k).push(f); }
-  }
-  const out = [];
-  for (let j = Math.floor(y0 / 64); j <= Math.floor(y1 / 64); j++) for (let i = Math.floor(x0 / 64); i <= Math.floor(x1 / 64); i++)
-    for (const f of floraIdx.get(i + ',' + j) || []) if (f.x >= x0 && f.x <= x1 && f.y >= y0 && f.y <= y1) out.push(f);
-  return out.sort((a, b) => a.y - b.y);
-}
-function invalidateTiles(x, y, r) {
-  touchScene();
-  for (const [k, tl] of tiles) if (x + r > tl.x0 && x - r < tl.x0 + tl.m && y + r > tl.y0 && y - r < tl.y0 + tl.m) tiles.delete(k);
-}
-function renderTile(L, i, j) {
-  const m = TILE_PX / L, x0 = i * m, y0 = j * m, M = 40; // marge : houppiers et ombres qui débordent
-  const c = document.createElement('canvas'); c.width = c.height = TILE_PX;
-  const g = c.getContext('2d');
-  g.imageSmoothingEnabled = true;
-  const list = floraNear(x0 - M, y0 - M, x0 + m + M, y0 + m + M);
-  drawWoods(g, list.filter(f => f.wood), L, -x0 * L, -y0 * L);
-  for (const f of list) if (!f.wood) stampTree(g, f, (f.x - x0) * L, (f.y - y0) * L, L);
-  const tl = { c, x0, y0, m, used:++tileClock };
-  tiles.set(L + ':' + i + ':' + j, tl);
-  if (tiles.size > TILE_MAX) {                                   // on libère les plus anciennes
-    const old = [...tiles.entries()].sort((a, b) => a[1].used - b[1].used).slice(0, tiles.size - TILE_MAX);
-    for (const [k] of old) tiles.delete(k);
-  }
-  return tl;
-}
-// arbres et buissons : modèles peints posés du nord au sud (les houppiers se recouvrent)
-function drawFlora() {
-  const s = view.s, eff = s * dpr, [tx, ty] = toS(0, 0);
-  ctx.imageSmoothingEnabled = true;
-  // (plus d'image unique floue pour la vue de loin : les tuiles à 0,5 et 1 px/m gardent les
-  // détails — arbres, bosquets, rochers restent visibles)
-  const [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
-  if (eff > 16) { // très près : peu d'arbres visibles, dessinés directement
-    const list = floraNear(wx0 - 40, wy0 - 40, wx1 + 40, wy1 + 40);
-    drawWoods(ctx, list.filter(f => f.wood), s, view.ox, view.oy);
-    for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, s); }
-    return false;
-  }
-  const L = TILE_LEVELS.find(l => l >= eff) || 16, m = TILE_PX / L;
-  // budget de temps : on peint des tuiles pendant 10 ms au plus par image (au moins une),
-  // pour que le zoom et le déplacement restent fluides
-  const t0 = performance.now();
-  let budget = TILE_BUDGET, missing = false;
-  const i0 = Math.max(0, Math.floor(wx0 / m)), i1 = Math.min(Math.ceil(TW / m) - 1, Math.floor(wx1 / m));
-  const j0 = Math.max(0, Math.floor(wy0 / m)), j1 = Math.min(Math.ceil(TH / m) - 1, Math.floor(wy1 / m));
-  for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) {
-    let tl = tiles.get(L + ':' + i + ':' + j);
-    if (!tl && budget > 0 && (budget === TILE_BUDGET || performance.now() - t0 < 10)) { tl = renderTile(L, i, j); budget--; }
-    const X = i * m * s + view.ox, Y = j * m * s + view.oy, Z = m * s;
-    if (tl) { tl.used = ++tileClock; ctx.drawImage(tl.c, X, Y, Z + .6, Z + .6); }
-    else {  // pas encore peinte : la vue de loin en attendant
-      missing = true;
-      const sw = Math.min(m, TW - i * m), sh = Math.min(m, TH - j * m); // sans déborder de l'image
-      ctx.drawImage(floraImage(), i * m, j * m, sw, sh, X, Y, sw * s, sh * s);
-    }
-  }
-  if (missing) requestDraw(); // les tuiles restantes arrivent aux images suivantes
-  return missing;             // (vrai : image incomplète, à ne pas garder en cache)
 }

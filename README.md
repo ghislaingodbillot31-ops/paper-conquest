@@ -31,6 +31,8 @@ Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, p
 └── outils/                  # Scripts Node qui génèrent les données (hors ligne)
 ```
 
+Le décor des cartes (sol, eau, routes, végétation, bâtiments) est peint en tuiles puis affiché par la carte graphique avec [PixiJS](https://pixijs.com/) (`js/carte/tuiles.js`) ; sans WebGL, les mêmes tuiles sont affichées en Canvas 2D. Ce qui bouge (habitants, aperçus, sélection) est dessiné par-dessus à chaque image.
+
 Les trois pages de carte partagent les mêmes scripts `js/carte` et `js/batiments`. Chacune déclare son mode avec `const PAGE = 'region' | 'carte' | 'batiments'`.
 
 ## Utiliser le projet

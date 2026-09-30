@@ -94,32 +94,26 @@ $('cartes').addEventListener('click', e => {
   if (tool !== 'house') setTool('house'); else renderTool();
 });
 
-/* Vignettes : chaque bâtiment est peint une fois, seul, comme dans l'atelier, dans le coin de
-   la carte, recopié, puis la carte est aussitôt repeinte (rien ne s'affiche entre-temps). */
+/* Vignettes : chaque bâtiment est peint une fois, seul, comme dans l'atelier, dans sa propre
+   image (même méthode que les tuiles du décor, voir paintWith). */
 const VIGNETTE = 84, vignettes = new Map();
 function peindreVignettes(list) {
-  let peint = false;
   for (const c of list) {
     const id = c.dataset.v;
-    if (!vignettes.has(id) && W >= VIGNETTE && H >= VIGNETTE) {
-      const b = PRESETS.find(p => p.id === id);
+    if (!vignettes.has(id)) {
+      const b = PRESETS.find(p => p.id === id), n = Math.round(VIGNETTE * (window.devicePixelRatio || 1));
       const h = { id:-1, x:0, y:0, a:0, w:b.f * CELL, l:b.d * CELL, f:b.f, d:b.d, kind:b.id, type:b.name, front:1, ...(b.yard ? { yard:'potager' } : {}) };
-      const keep = { ...view };
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.fillStyle = biomeLook().ground; ctx.fillRect(0, 0, VIGNETTE, VIGNETTE);
-      view.s = VIGNETTE / (Math.max(h.w, h.l) + 4); view.ox = VIGNETTE / 2; view.oy = VIGNETTE / 2;
-      try { alignPatterns(); drawHouse(h, 'normal'); } catch (err) { console.warn('vignette', id, err); }
-      Object.assign(view, keep);
-      const img = document.createElement('canvas'), n = Math.round(VIGNETTE * dpr);
-      img.width = img.height = n;
-      img.getContext('2d').drawImage(cv, 0, 0, n, n, 0, 0, n, n);
-      vignettes.set(id, img); peint = true;
+      const img = document.createElement('canvas'); img.width = img.height = n;
+      const g = img.getContext('2d');
+      g.fillStyle = biomeLook().ground; g.fillRect(0, 0, n, n);
+      try { paintWith(g, n, n, n / (Math.max(h.w, h.l) + 4), n / 2, n / 2, () => { alignPatterns(); drawHouse(h, 'normal'); }); }
+      catch (err) { console.warn('vignette', id, err); }
+      vignettes.set(id, img);
     }
-    const img = vignettes.get(id); if (!img) continue;
+    const img = vignettes.get(id);
     c.width = img.width; c.height = img.height;
     c.getContext('2d').drawImage(img, 0, 0);
   }
-  if (peint) draw();
 }
 
 /* ---- fiche de sélection, touche Échap ---- */

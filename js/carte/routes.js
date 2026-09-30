@@ -85,11 +85,6 @@ function drawRoads() {
   // les chaussées se fondent sans trait
   for (const r of bySurf) stroke(r, roadCols(r)[1], Math.max(.8, Math.min(1.4, s * .4)));
   for (const r of bySurf) stroke(r, roadCols(r)[0], 0);
-  for (const r of S.roads) {
-    const isSel = sel && sel.type === 'road' && sel.id === r.id, isHov = hover && hover.type === 'road' && hover.id === r.id;
-    if (!isSel && !isHov) continue;
-    ctx.setLineDash([6, 5]); strokeLine(smoothPts(r), isSel ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
-  }
 }
 const isOn = (type, id, st) => st && st.type === type && st.id === id;
 let zoneEdit = null;

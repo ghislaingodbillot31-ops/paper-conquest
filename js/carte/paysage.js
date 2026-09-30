@@ -489,30 +489,15 @@ function computeFlora() {
   classifyWoods(); // intérieur des bois / lisière
   floraVersion++; // les habitants au travail repartiront des nouveaux arbres
   floraIdx = null;
-  // tuiles : toutes à refaire si le paysage fixe a changé, sinon seulement autour des arbres
-  // qui apparaissent ou disparaissent (le dégradé d'un bois change jusqu'à ~100 m) ; l'image
-  // de loin, elle, est simplement marquée à refaire (au plus toutes les 4 s)
-  if (full) { floraImg = null; tiles.clear(); return; }
-  floraStale = true;
-  // les arbres fixes sont les mêmes objets d'un calcul à l'autre : comparaison directe
-  const was = new Set(old), now = new Set(flora), diff = [];
-  for (const f of flora) if (!was.has(f) && !grown.includes(f)) diff.push(f);
-  for (const f of old) if (!now.has(f) && !f.planted) diff.push(f);
-  if (diff.length > 400) { tiles.clear(); return; }
+  // décor : on ne repeint qu'autour des arbres qui apparaissent ou disparaissent (le dégradé
+  // d'un bois change jusqu'à ~100 m) ; comparaison par position (même quand le paysage fixe
+  // est recalculé après une nouvelle route, la plupart des arbres ne bougent pas)
+  const was = new Set(old.map(treeKey)), now = new Set(flora.map(treeKey)), diff = [];
+  for (const f of flora) if (!was.has(treeKey(f))) diff.push(f);
+  for (const f of old) if (!now.has(treeKey(f))) diff.push(f);
+  if (diff.length > 1500) { markAllDirty(); return; }
+  if (diff.length > 40) { const b = bbox(diff.map(f => [f.x, f.y])); markDirty([b[0] - 110, b[1] - 110, b[2] + 110, b[3] + 110]); return; } // (un seul rectangle)
   for (const f of diff) invalidateTiles(f.x, f.y, f.wood ? 110 : 12);
-}
-/* Vue de loin : la végétation est peinte une fois dans une image (1 pixel par mètre),
-   au lieu de redessiner des dizaines de milliers d'arbres à chaque image. */
-let floraImg = null, floraStale = false, floraBuilt = 0;
-function floraImage() {
-  // après une coupe ou une pousse, l'image de loin n'est refaite qu'au plus toutes les 4 s
-  if (floraImg && (!floraStale || performance.now() - floraBuilt < 4000)) return floraImg;
-  floraStale = false; floraBuilt = performance.now();
-  const c = document.createElement('canvas'); c.width = TW; c.height = TH;
-  const g = c.getContext('2d');
-  drawWoods(g, flora.filter(f => f.wood), 1, 0, 0);
-  for (const f of flora) if (!f.wood) stampTree(g, f, f.x, f.y, 1);
-  return floraImg = c;
 }
 // sol peint une fois (2 m par pixel), redessiné à l'échelle
 let groundImg = null, groundSeed = null;

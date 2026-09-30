@@ -10,9 +10,9 @@ function hint(text) {
   ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   haloText(text, X + 12, Y - 8, Col.bad, Col.sheet);
 }
-function drawFrame() {
+// sol du terrain (dans les tuiles du décor) : nappes claires et foncées, puis brins d'herbe quand on zoome
+function drawGround() {
   const s = view.s, [tx, ty] = toS(0, 0);
-  // herbe : nappes claires et foncées, puis brins d'herbe quand on zoome
   ctx.imageSmoothingEnabled = true;
   ctx.drawImage(groundImage(), tx, ty, TW*s, TH*s);
   alignPatterns();
@@ -21,6 +21,10 @@ function drawFrame() {
     const x0 = Math.max(tx, 0), y0 = Math.max(ty, 0), x1 = Math.min(tx + TW*s, W), y1 = Math.min(ty + TH*s, H);
     if (x1 > x0 && y1 > y0) { ctx.fillStyle = PAT.herbe; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); }
   }
+}
+// cadre du terrain et graduations en mètres (dessinés par-dessus, à chaque image)
+function drawFrameMarks() {
+  const s = view.s, [tx, ty] = toS(0, 0);
   ctx.strokeStyle = Col.ink; ctx.lineWidth = 1.5; ctx.strokeRect(tx, ty, TW*s, TH*s);
   // graduations en mètres sur le cadre seulement
   const step = [8, 16, 40, 80, 200, 400].find(v => v * s >= 38) || 400;

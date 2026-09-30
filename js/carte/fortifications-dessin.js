@@ -95,10 +95,6 @@ function drawWalls() {
     ctx.strokeStyle = 'rgba(40,36,30,.45)'; ctx.lineWidth = 1; ctx.beginPath();
     for (const h of segs) for (const t of [P, M - P]) { ctx.moveTo(...LP(h, -X(h) + P, t)); ctx.lineTo(...LP(h, X(h) - P, t)); }
     ctx.stroke(); }
-  for (const w of S.walls) {
-    if (!isOn('wall', w.id, sel) && !isOn('wall', w.id, hover)) continue;
-    ctx.setLineDash([6, 5]); strokeLine(w.pts, isOn('wall', w.id, sel) ? 2 : 1.5, Col.accent); ctx.setLineDash([]);
-  }
 }
 // tour de bois carrée (repère local centré, côté a m) : pieux en rondins, plancher, toit de bardeaux
 function woodTowerLT(h, a, s, big) {

@@ -33,6 +33,7 @@
   color-scheme:dark;
 }
 html,body{height:100%}
+[hidden]{display:none !important} /* un élément caché le reste, même avec un display propre (.overlay, .tiroir…) */
 body{
   margin:0; box-sizing:border-box; padding-inline:16px; padding-block:12px;
   background:var(--desk); color:var(--ink);

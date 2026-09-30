@@ -13,5 +13,6 @@ new MutationObserver(() => { readColors(); requestDraw(); }).observe(document.do
 new ResizeObserver(resize).observe(wrap);
 if (document.fonts) document.fonts.ready.then(() => { touchScene(); requestDraw(); }); // graduations redessinées avec la bonne police
 computeFlora();
+sceneDiff(); // état de départ du décor (les changements suivants ne repeignent que ce qui bouge)
 renderTool(); renderSel(); resize();
 requestAnimationFrame(simLoop); // les bûcherons travaillent

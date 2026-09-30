@@ -27,7 +27,7 @@ function growSaplings() {
     invalidateTiles(g.x, g.y, 15);
     grew = true; return false;
   });
-  if (grew) { floraStale = true; floraIdx = null; save(); }
+  if (grew) { floraIdx = null; save(); }
   return grew;
 }
 function plantSpot(h) {
@@ -64,7 +64,7 @@ function cutTree(f) {
   S.cut.push(treeKey(f));
   const i = flora.indexOf(f); if (i >= 0) flora.splice(i, 1);
   if (f.wood) classifyWoods(); // une clairière s'ouvre : ses bords deviennent lisière
-  floraStale = true; floraIdx = null;
+  floraIdx = null;
   invalidateTiles(f.x, f.y, f.wood ? 110 : 12); // le dégradé du bois change autour de la clairière
 }
 function simTick(dt) {

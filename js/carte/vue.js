@@ -1,5 +1,7 @@
 /* ---------- vue ---------- */
-const cv = document.getElementById('plan'), ctx = cv.getContext('2d'), wrap = document.getElementById('wrap');
+// (ctx est remplacé le temps de peindre une tuile du décor ou une vignette : voir paintWith, tuiles.js)
+const cv = document.getElementById('plan'), wrap = document.getElementById('wrap');
+let ctx = cv.getContext('2d');
 let W = 0, H = 0, dpr = 1, Col = {}, fitted = false;
 const view = { s:4, ox:0, oy:0 };
 const toS = (x, y) => [x*view.s + view.ox, y*view.s + view.oy];
@@ -53,5 +55,5 @@ function readColors() {
   for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','contour','f-meadow','f-wheat','f-plough','f-fallow','f-alfalfa','f-forest','parcel-edge','veil','stall-a','stall-b','tavern','church','ore-iron','ore-clay','f-field','f-pasture','sheep','accent','bad','shadow'])
     Col[k] = cs.getPropertyValue('--' + k).trim();
   makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
-  groundImg = null; floraImg = null; tiles.clear(); touchScene(); // sol et végétation repeints avec les nouvelles couleurs
+  groundImg = null; markAllDirty(); // sol, végétation et tout le décor repeints avec les nouvelles couleurs
 }
