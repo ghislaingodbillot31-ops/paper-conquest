@@ -6,6 +6,7 @@ Tout ce qui décrit les 500 régions du globe est ici. Le jeu lit ces fichiers a
 |---|---|
 | `regions.json` | Une fiche par région (500), dans l'ordre des numéros de région |
 | `zones-animales.json` | Les 37 zones de faune : nom, ensemble de continents, points d'ancrage, espèces |
+| `formes.json` | Forme de chaque région pour la carte de sa capitale : contour, terres voisines (le reste est la mer), vrais fleuves et lacs, capitale, routes vers les voisines — en mètres de la carte (2 000 × 1 500 m). Généré par `node outils/build-formes.js` |
 
 ## Une fiche de région
 

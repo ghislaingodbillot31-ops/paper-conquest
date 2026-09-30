@@ -28,6 +28,10 @@
         </select></label>
         <button id="new-region">Nouvelle région</button>
       </div>
+      <div class="row" style="margin-top:8px">
+        <label for="forme-id">Forme réelle (n° de région du globe)<input id="forme-id" type="number" min="1" max="500" placeholder="aucune"></label>
+      </div>
+      <p class="muted" style="margin-top:6px">Avec un numéro, la carte prend la forme de cette région : contour, terres voisines, mer, vrais fleuves, lacs et routes. Vide : terrain rectangulaire.</p>
       <p class="muted" style="margin-top:8px">Une grande route en serpentin traverse la région d'ouest en est. Le biome règle les lacs, la végétation et, par défaut, le cours d'eau ; le menu « Cours d'eau » peut l'imposer : petite rivière (3 à 8 m, très sinueuse), rivière (10 à 24 m) ou fleuve (34 à 56 m, grandes boucles). « Nouvelle région » tire une autre carte ; changer de biome ou de cours d'eau refait la même région.</p>
     </section>
 
@@ -96,6 +100,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
 <script>const PAGE = 'carte';</script>
 <script src="js/carte/base.js"></script>
+<script src="js/carte/forme.js"></script>
 <script src="js/batiments/catalogue.js"></script>
 <script src="js/carte/geometrie.js"></script>
 <script src="js/carte/eau.js"></script>

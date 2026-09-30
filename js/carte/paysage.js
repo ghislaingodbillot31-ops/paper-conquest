@@ -473,7 +473,7 @@ function computeFlora() {
     staticFlora = floraCandidates().filter(f => {
       const h = f.r * .6;
       // (les arbres des îles sont au milieu de l'eau de la rivière : on ne les teste pas contre elle)
-      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && (f.isle || f.wet || !blocked(f)); // (cailloux de berge : à moitié dans l'eau, voulu)
+      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.isle || f.wet || !blocked(f)); // (cailloux de berge : à moitié dans l'eau, voulu)
     }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
     staticKey = key;
   }

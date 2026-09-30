@@ -125,6 +125,9 @@ const newRegion = (biome, seed) => {
 $('biome').addEventListener('change', e => newRegion(e.target.value, S.landSeed));
 $('river-mode').addEventListener('change', () => newRegion($('biome').value, S.landSeed)); // même région, autre cours d'eau
 $('new-region').addEventListener('click', () => newRegion($('biome').value, 1 + Math.floor(Math.random() * 2147483000)));
+// éditeur : forme réelle d'une région du globe (vide : terrain rectangulaire)
+$('forme-id').value = FORME_ID || '';
+$('forme-id').addEventListener('change', e => { const id = Math.round(+e.target.value) || null; chargeForme(id); if (id && !FORME) flash('Région inconnue', true); newRegion($('biome').value, S.landSeed); });
 $('undo').addEventListener('click', undo);
 $('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
 $('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));

@@ -285,6 +285,7 @@ function distToRoads(p) {
 }
 // riverMode : 'auto' (selon le biome), 'aucun', 'petite', 'riviere' ou 'fleuve'
 function generateRegion(biome, seed, riverMode = 'auto') {
+  if (FORME) { genereDepuisForme(biome, seed); return; } // forme réelle de la région (forme.js)
   const B = BIOMES[biome] || BIOMES.tempere, rnd = seeded(seed * 31 + 7);
   const mr = mainRoad(rnd), road = mr.pts;
   S = {
@@ -406,7 +407,11 @@ const normalize = o => {
 };
 try {
   const o = JSON.parse(localStorage.getItem(KEY) || 'null');
-  if (PAGE !== 'batiments' && o && Array.isArray(o.houses) && Array.isArray(o.roads)) { S = normalize(o); computeZones(); } // (portes recalées au démarrage)
+  if (PAGE !== 'batiments' && o && Array.isArray(o.houses) && Array.isArray(o.roads)) {
+    if (o.forme && !GAME) chargeForme(o.forme.id);                                  // éditeur : la région choisie
+    // région du jeu : un plan d'avant les formes réelles (rectangle) est remplacé par la vraie forme
+    if (!(GAME && FORME && !(o.forme && o.forme.v === FORMES_V))) { S = normalize(o); computeZones(); } // (portes recalées au démarrage)
+  }
 } catch (e) {}
 if (!S) { if (PAGE === 'batiments') { S = normalize({ nextId:1 }); computeZones(); } // éditeur de bâtiments : pas de région
   else if (GAME) generateRegion(BIOMES[GAME.biome] ? GAME.biome : 'tempere', GAME.seed, GAME.river); // région du jeu : générée d'après son climat

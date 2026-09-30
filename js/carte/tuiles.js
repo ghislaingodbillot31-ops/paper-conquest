@@ -43,6 +43,7 @@ function drawDecor() {
   const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
   ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
   drawGround();
+  drawSea();
   drawContours();
   drawWater();
   drawZones();
@@ -52,6 +53,7 @@ function drawDecor() {
   const list = floraNear(x0 - 40, y0 - 40, x1 + 40, y1 + 40);   // (houppiers et ombres qui débordent)
   drawWoods(ctx, list.filter(f => f.wood), view.s, view.ox, view.oy);
   for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  drawBorder();
   const near = (o, m) => o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m;
   for (const g of S.gates) if (near(g, 20)) drawGate(g, 'normal');
   for (const h of S.houses) if (near(h, 40)) drawHouse(h, 'normal');
@@ -109,7 +111,7 @@ const invalidateTiles = (x, y, r) => markDirty([x - r, y - r, x + r, y + r]);
 // repeint qu'autour de ceux qui ont changé (les cases à bâtir d'une route vont jusqu'à 40 m)
 let lastObjs = null, lastLand = null;
 function sceneDiff() {
-  const land = JSON.stringify([S.landSeed, S.biome, S.reliefSeed, S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.isles]), S.lakes.map(l => [l.c, l.pts.length])]);
+  const land = JSON.stringify([FORME_ID, S.landSeed, S.biome, S.reliefSeed, S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.isles]), S.lakes.map(l => [l.c, l.pts.length])]);
   const now = new Map(), box = new Map();
   const add = (k, o, pts, m) => { now.set(k, JSON.stringify(o)); const b = bbox(pts); box.set(k, [b[0] - m, b[1] - m, b[2] + m, b[3] + m]); };
   for (const h of S.houses) add('h' + h.id, h, corners(h), 24);

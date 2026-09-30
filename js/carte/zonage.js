@@ -34,7 +34,7 @@ function computeZones() {
           const poly = [P(s0, t0), P(s0+CELL, t0), P(s0+CELL, t0+CELL), P(s0, t0+CELL)];
           const test = [P(s0+e, t0+e), P(s0+CELL-e, t0+e), P(s0+CELL-e, t0+CELL-e), P(s0+e, t0+CELL-e)];
           const bb = bbox(poly);
-          let ok = poly.every(inTerrain) && !tooSteep(poly); // pas de case sur une pente raide
+          let ok = poly.every(p => inTerrain(p) && dansRegion(p)) && !tooSteep(poly); // pas de case sur une pente raide
           if (ok) for (const f of foot) if (bbHit(bb, f.bb) && polysOverlap(test, f.P)) { ok = false; break; }
           if (ok) for (const c of cells) if (bbHit(bb, c.bb) && polysOverlap(test, c.poly)) { ok = false; break; }
           if (!ok) break;
@@ -209,6 +209,7 @@ const roadSegOk = (a, b, w) => !roadIssue(a, b, w);
 // raison pour laquelle un tronçon de route est impossible, ou null
 function roadIssue(a, b, w) {
   if (!inTerrain(a) || !inTerrain(b)) return 'Hors du terrain';
+  if (!segSurTerre(a, b)) return 'Une route ne va pas en mer';
   const P = segRect(a, b, w);
   // la rivière se franchit par un pont ; le lac, non
   if (!S.houses.every(h => !polysOverlap(P, shrunk(h)))) return 'La route traverse un bâtiment';

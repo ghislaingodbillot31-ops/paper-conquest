@@ -36,6 +36,7 @@ function drawWater() {
   const s = view.s, [tx, ty] = toS(0, 0);
   ctx.save();
   ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip(); // la rivière sort par les bords
+  clipTerre(); // (et s'arrête au rivage)
   const shape = (pts, close) => { polyPath(pts); if (close) ctx.closePath(); };
   ctx.fillStyle = Col.water; ctx.strokeStyle = Col['water-edge']; ctx.lineJoin = 'round';
   /* Rivières dessinées comme une suite serrée de disques le long du cours (rayon = demi-
