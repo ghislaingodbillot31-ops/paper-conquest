@@ -3568,9 +3568,10 @@ const BUILD_DRAW = {
       const bar = (e, col) => { const P = lpts(h, [[hub[0] - w, hub[1] - e], [hub[0] + w, hub[1] - e], [hub[0] + w, hub[1] + e], [hub[0] - w, hub[1] + e]]); pathS(P); ctx.fillStyle = col; ctx.fill(); return P; };
       pathS(shiftS(lpts(h, [[hub[0] - w, hub[1] - .2], [hub[0] + w, hub[1] - .2], [hub[0] + w, hub[1] + .2], [hub[0] - w, hub[1] + .2]]), .25, .35)); ctx.fillStyle = WOOD.shadow; ctx.fill();
       const P = bar(.2, WOOD.beam); bar(.06, 'rgba(255,240,210,.35)');                                 // tranche des ailes, arête éclairée
-      pathS(P); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.06); ctx.stroke(); }
-    { const B = lpts(h, [[hub[0] - .35, hub[1] - .35], [hub[0] + .35, hub[1] - .35], [hub[0] + .35, hub[1] + .35], [hub[0] - .35, hub[1] + .35]]); // moyeu en fonte
-      pathS(B); ctx.fillStyle = '#4b4843'; ctx.fill(); ctx.strokeStyle = '#1f1d1a'; ctx.lineWidth = lw(.05); ctx.stroke(); }
+      pathS(P); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.06); ctx.stroke();
+      // toile des ailes : un trait blanc plus fin sur la tranche, du début du treillis au bout
+      const x0 = R * .2 * Math.SQRT1_2, e = .07;
+      for (const d of [-1, 1]) { pathS(lpts(h, [[hub[0] + d * x0, hub[1] - e], [hub[0] + d * (w - .35), hub[1] - e], [hub[0] + d * (w - .35), hub[1] + e], [hub[0] + d * x0, hub[1] + e]])); ctx.fillStyle = '#f4efe2'; ctx.fill(); } }
     thatchLT(h, -7.3, 11, -3.3, 15.4, 'u', STRAW); chimneyLT(h, -6.3, 13.2, .45);                   // maison du meunier
   },
   /* Four communal (2 × 2 cases) : fournil couvert de bardeaux sur la rue, grand four en
