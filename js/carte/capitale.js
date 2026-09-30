@@ -49,18 +49,21 @@ function montrer(o) {
   for (const t of ONGLETS) document.getElementById('tiroir-' + t).hidden = onglet !== t;
   if (onglet === 'construction') afficherCartes();
 }
+// Les onglets ne font qu'ouvrir ou fermer leur panneau : le mode placement (bâtiment, route,
+// fortification) reste actif ; seule Échap le quitte.
 function ouvrir(o) {
   montrer(onglet === o ? null : o);
-  // fermer un onglet range son outil
-  if ((onglet !== 'route' && tool === 'road') || (onglet !== 'construction' && OUTILS_CONSTRUCTION.includes(tool))) setTool('select');
-  else syncBarre();
+  syncBarre();
 }
-// appelé à chaque changement d'outil (panneau.js) : un outil choisi au clavier ouvre son onglet
+// appelé par renderTool (panneau.js) : un outil qui vient d'être choisi au clavier ouvre son onglet
+let dernierOutil = 'select';
 function syncBarre() {
+  const neuf = tool !== dernierOutil; dernierOutil = tool;
   const t = tool === 'road' ? 'route' : OUTILS_CONSTRUCTION.includes(tool) ? 'construction' : null;
-  if (tool === 'house') { const m = BUILD_MENUS.find(x => x.ids && x.ids.includes(preset.id)); if (m && m.id !== categorie) { categorie = m.id; if (onglet === 'construction') afficherCartes(); } }
-  if (['wall', 'tower', 'gate'].includes(tool) && categorie !== 'defense') { categorie = 'defense'; if (onglet === 'construction') afficherCartes(); }
-  if (t && onglet !== t) montrer(t);
+  // outil choisi au clavier (2, 4, 5, 6) : on montre sa catégorie ; ensuite, le joueur parcourt librement les catégories
+  if (neuf && tool === 'house') { const m = BUILD_MENUS.find(x => x.ids && x.ids.includes(preset.id)); if (m && m.id !== categorie) { categorie = m.id; if (onglet === 'construction') afficherCartes(); } }
+  if (neuf && ['wall', 'tower', 'gate'].includes(tool) && categorie !== 'defense') { categorie = 'defense'; if (onglet === 'construction') afficherCartes(); }
+  if (neuf && t && !onglet) montrer(t);
   for (const b of document.querySelectorAll('[data-onglet]')) b.setAttribute('aria-pressed', String(b.dataset.onglet === onglet));
   for (const c of document.querySelectorAll('#cartes [data-id]')) c.setAttribute('aria-pressed', String(tool === 'house' && c.dataset.id === preset.id));
   for (const c of document.querySelectorAll('#cartes [data-outil]')) c.setAttribute('aria-pressed', String(tool === c.dataset.outil));
@@ -121,10 +124,15 @@ function peindreVignettes(list) {
 
 /* ---- fiche de sélection, touche Échap ---- */
 $('fiche-close').addEventListener('click', () => { sel = null; zoneEdit = null; renderSel(); requestDraw(); });
-// Échap sans tracé ni sélection en cours : range l'outil (le tracé, lui, est abandonné par pointeur.js)
+// Échap sert uniquement à quitter le mode placement (un tracé en cours est abandonné avec lui) ;
+// hors placement, pointeur.js garde la main (zone de travail, sélection)
 addEventListener('keydown', e => {
   if (e.key !== 'Escape' || (e.target.closest && e.target.closest('input,textarea,select'))) return;
-  if (!draft && !zoneEdit && !sel && tool !== 'select') setTool('select');
+  if (tool === 'select') return;
+  e.stopImmediatePropagation();
+  draft = null; setTool('select'); flash('Mode placement quitté');
 }, true);
+// un bouton cliqué ne garde pas le focus : Entrée, R, Suppr… restent pour la carte
+document.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.closest('form')) b.blur(); });
 
 afficherNom();

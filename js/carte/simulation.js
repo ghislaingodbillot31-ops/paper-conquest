@@ -4,7 +4,7 @@
    disparaît définitivement), rapporte le bois au bâtiment et le stocke, puis repart,
    jusqu'à ce que la zone soit vide. Temps accéléré pour qu'on voie le travail. */
 const LUMBER = { camp_bucherons:"bois d'œuvre", loge_bucheron:'bois de chauffage' };
-const WALK = 8, CUT_TIME = 2.5, DROP_TIME = .8; // m/s et secondes (accélérés)
+const WALK = 8, CUT_TIME = 2.5, DROP_TIME = .8; // m/s sur route (moitié hors route, deplacements.js) et secondes (accélérés)
 const workers = new Map();
 let floraVersion = 0;
 const zoneKeyOf = z => z ? `${z.x},${z.y},${z.r}` : '';
@@ -46,8 +46,8 @@ function plantSpot(h) {
 function stepForester(h, dt) {
   let w = workers.get(h.id);
   if (!w || w.zone !== zoneKeyOf(h.zone)) { w = { x:w ? w.x : h.x, y:w ? w.y : h.y, state:'idle', zone:zoneKeyOf(h.zone), forester:true }; workers.set(h.id, w); }
-  const before = w.state, sp = WALK * dt;
-  const walkTo = (tx, ty) => { const d = Math.hypot(tx - w.x, ty - w.y); if (sp >= d) { w.x = tx; w.y = ty; return true; } w.x += (tx - w.x) / d * sp; w.y += (ty - w.y) / d * sp; return false; };
+  const before = w.state;
+  const walkTo = (tx, ty) => marcher(w, tx, ty, WALK, dt); // par les routes si elles font gagner du temps
   if (w.state === 'idle' || w.state === 'done') {
     if ((w.t = (w.t || 0) - dt) <= 0) { const p = plantSpot(h); if (p) { w.dest = p; w.state = 'go'; } else { w.state = 'done'; w.t = 2; } }
   } else if (w.state === 'go') {
@@ -84,7 +84,7 @@ function simTick(dt) {
     active = true;
     const before = w.state;
     const sp = WALK * (hasOxen(h) ? 1.5 : 1); // les bœufs tirent le bois : trajets plus rapides
-    const walkTo = (tx, ty) => { const d = Math.hypot(tx - w.x, ty - w.y), st = sp * dt; if (st >= d) { w.x = tx; w.y = ty; return true; } w.x += (tx - w.x) / d * st; w.y += (ty - w.y) / d * st; return false; };
+    const walkTo = (tx, ty) => marcher(w, tx, ty, sp, dt);
     if (w.state === 'idle' || w.state === 'done') {
       if (w.carry) { w.state = 'back'; }
       else {
@@ -214,7 +214,7 @@ function stepJob(h, job, dt) {
   }
   const before = w.state;
   const speed = WALK * (hasOxen(h) ? 1.5 : 1);
-  const walkTo = (tx, ty) => { const d = Math.hypot(tx - w.x, ty - w.y), st = speed * dt; if (st >= d) { w.x = tx; w.y = ty; return true; } w.x += (tx - w.x) / d * st; w.y += (ty - w.y) / d * st; return false; };
+  const walkTo = (tx, ty) => marcher(w, tx, ty, speed, dt);
   if (job.type === 'passive') {                             // pas de déplacement : un minuteur
     w.full = (h.stock || 0) >= job.cap;
     if (!w.full && (w.t = (w.t === undefined ? job.every : w.t) - dt) <= 0) { h.stock = (h.stock || 0) + 1; w.t = job.every; save(); }

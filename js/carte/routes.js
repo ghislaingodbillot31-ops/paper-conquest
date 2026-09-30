@@ -69,55 +69,22 @@ function smoothPts(r) {
   smoothCache.set(r.id, { key, P:out });
   return out;
 }
-/* Chaussée « imparfaite », comme la carte de référence : dessinée en disques serrés le long
-   du tracé lissé, avec une largeur qui varie (lente ondulation ±15 %, petites irrégularités
-   ±5 %), un axe qui louvoie d'un demi-mètre, et un élargissement aux carrefours. Le tracé
-   logique (zonage, 8 m d'emprise) ne change pas : seule la chaussée dessinée varie. */
-const roadDiscCache = new WeakMap();
-function roadDiscs(r) {
-  const P = smoothPts(r), hit = roadDiscCache.get(r);
-  if (hit && hit.P === P && hit.n === S.roads.length) return hit.d;
-  const rnd = seeded(Math.round(Math.abs(P[0][0] * 17 + P[0][1] * 5)) + r.id * 101), ph = [rnd(), rnd(), rnd(), rnd()].map(v => v * 6.28);
-  const base = roadType(r).surf / 2, d = [];
-  // carrefours : bouts d'autres routes posés sur celle-ci, et ses propres bouts posés sur une autre
-  const joints = [];
-  for (const o of S.roads) if (o !== r) for (const e of [o.pts[0], o.pts[o.pts.length - 1]]) if (r.pts.slice(1).some((b, k) => ptSeg(e, r.pts[k], b).d < 1)) joints.push(e);
-  for (const e of [r.pts[0], r.pts[r.pts.length - 1]]) if (S.roads.some(o => o !== r && o.pts.slice(1).some((b, k) => ptSeg(e, o.pts[k], b).d < 1))) joints.push(e);
-  let walked = 0;
-  for (let i = 0; i < P.length - 1; i++) {
-    const a = P[i], b = P[i + 1], L = segLen(a, b), n = Math.max(1, Math.ceil(L / .8));
-    const nx = -(b[1] - a[1]) / (L || 1), ny = (b[0] - a[0]) / (L || 1);
-    for (let k = 0; k < n; k++) {
-      const t = k / n, x = a[0] + (b[0] - a[0]) * t, y = a[1] + (b[1] - a[1]) * t, w = walked + L * t;
-      let hw = base * (1 + .15 * Math.sin(w / 140 * 6.28 + ph[0]) + .07 * Math.sin(w / 23 * 6.28 + ph[1]) + .05 * Math.sin(w / 7 * 6.28 + ph[2]) + .035 * Math.sin(w / 2.9 * 6.28 + ph[3] * 2));
-      for (const j of joints) { const dj = segLen([x, y], j); if (dj < 30) hw *= 1 + .45 * Math.exp(-((dj / 11) ** 2)); }
-      const side = .5 * Math.sin(w / 61 * 6.28 + ph[3]) + .18 * Math.sin(w / 4.3 * 6.28 + ph[1] * 3); // axe qui louvoie, bords inégaux
-      d.push([x + nx * side, y + ny * side, hw]);
-    }
-    walked += L;
-  }
-  const e = P[P.length - 1]; d.push([e[0], e[1], base]);
-  roadDiscCache.set(r, { P, n:S.roads.length, d });
-  return d;
-}
+/* Chaussée de largeur FIXE (demande du 30/09) : un trait de la largeur de la chaussée le long
+   du tracé lissé, identique sur toute la longueur ; aux carrefours, les chaussées se
+   recouvrent simplement, sans élargissement ni déformation. */
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
   const rank = r => ROADS.indexOf(roadType(r));
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
-  const [wx0, wy0] = toW(-20, -20), [wx1, wy1] = toW(W + 20, H + 20);
-  const discs = (r, grow) => {
-    const path = new Path2D();
-    for (const [x, y, rr] of roadDiscs(r)) {
-      if (x + rr < wx0 || x - rr > wx1 || y + rr < wy0 || y - rr > wy1) continue;
-      const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(rr * s, 1.8) + grow; // (au moins 3,6 px de large, même de loin)
-      path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
-    }
-    return path;
+  const stroke = (r, color, grow) => {
+    ctx.strokeStyle = color; ctx.lineWidth = Math.max(roadType(r).surf * s, 3.6) + 2 * grow; // (au moins 3,6 px de large, même de loin)
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    polyPath(smoothPts(r)); ctx.stroke();
   };
   // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
   // les chaussées se fondent sans trait
-  for (const r of bySurf) { ctx.fillStyle = roadCols(r)[1]; ctx.fill(discs(r, Math.max(.8, Math.min(1.4, s * .4)))); }
-  for (const r of bySurf) { ctx.fillStyle = roadCols(r)[0]; ctx.fill(discs(r, 0)); }
+  for (const r of bySurf) stroke(r, roadCols(r)[1], Math.max(.8, Math.min(1.4, s * .4)));
+  for (const r of bySurf) stroke(r, roadCols(r)[0], 0);
   for (const r of S.roads) {
     const isSel = sel && sel.type === 'road' && sel.id === r.id, isHov = hover && hover.type === 'road' && hover.id === r.id;
     if (!isSel && !isHov) continue;
