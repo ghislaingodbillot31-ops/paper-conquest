@@ -12,4 +12,3 @@ const ANG_STEP = Math.PI / 18; // routes orientées uniquement par pas de 10°
 const GAME = (() => { try { const p = new URLSearchParams(location.search), r = +p.get('region');
   return r ? { region:r, biome:p.get('biome') || 'tempere', river:p.get('river') || 'auto', seed:+p.get('seed') || r * 7919 + 101 } : null; } catch (e) { return null; } })();
 const KEY = PAGE === 'carte' ? 'editeurCarte.v1' : GAME ? 'paperConquestRegionMap.' + GAME.region : 'planVillageZonage.v11';
-const OLD_KEY = PAGE === 'region' && !GAME ? 'planVillageZonage.v10' : '';          // (plan d'essai de la version précédente)

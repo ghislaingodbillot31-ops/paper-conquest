@@ -152,8 +152,6 @@ function riverDiscs(rv) {
   riverDiscCache.set(rv, { hw:HW, d });
   return d;
 }
-// bandes du dégradé de l'eau (part de la largeur) et teintes, du bord clair au milieu foncé
-const WATER_BANDS = [1, .85, .7, .55, .4, .26];
 const WATER_FOAM = '#d3dfdb'; // liseré clair le long des berges
 // contour d'un lac pour le dessin : ses 40 points lissés (Chaikin fermé, 3 passes), sans coin
 const lakeShapeCache = new WeakMap();
@@ -168,13 +166,6 @@ function lakeShape(lk) {
   }
   lakeShapeCache.set(lk, P);
   return P;
-}
-function waterRamp(base) {
-  const hex = s => [1, 3, 5].map(i => parseInt(s.slice(i, i + 2), 16)), c = hex(base);
-  const mix = (t, to) => '#' + c.map((v, k) => Math.round(v + (to[k] - v) * t).toString(16).padStart(2, '0')).join('');
-  // comme la carte de référence : bord #a9c1c0 → centre #749aa3 (dégradé doux)
-  const light = hex(mix(.3, [255, 255, 255])), deep = hex(mix(.12, [47, 90, 102]));
-  return WATER_BANDS.map((_, i) => { const t = i / (WATER_BANDS.length - 1); return '#' + light.map((v, k) => Math.round(v + (deep[k] - v) * t).toString(16).padStart(2, '0')).join(''); });
 }
 // disques d'une bande intérieure (rayon × k) : on resserre l'espacement pour garder un bord
 // lisse même quand les disques sont petits

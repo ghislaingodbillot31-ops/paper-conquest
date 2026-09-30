@@ -31,9 +31,6 @@ const roadType = r => ROADS.find(k => k.id === r.kind) || ROADS[1];
    4 passes) entre deux points fixes. Restent fixes les bouts de route et les sommets de
    croisement ou de raccord, pour que les routes continuent de se rejoindre exactement.
    Le même tracé sert au dessin, aux ponts et au découpage du cadastre. */
-function isJunction(r, v) {
-  return S.roads.some(o => o !== r && o.pts.slice(1).some((b, k) => ptSeg(v, o.pts[k], b).d < 1));
-}
 const smoothCache = new Map();
 function chaikin(run) {
   let P = run;
@@ -71,29 +68,6 @@ function smoothPts(r) {
   }
   smoothCache.set(r.id, { key, P:out });
   return out;
-}
-function roadPath(r) {
-  const path = new Path2D();
-  smoothPts(r).forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? path.lineTo(X, Y) : path.moveTo(X, Y); });
-  return path;
-}
-// tracé d'une route en mètres, gardé tant que la route ne change pas : à chaque image on ne
-// fait que le tracer à l'échelle de la vue (plus de reconstruction point par point)
-const roadWorldPaths = new WeakMap();
-function strokeRoad(r, lw, color) {
-  const P = smoothPts(r);
-  let c = roadWorldPaths.get(r);
-  if (!c || c.P !== P) {
-    const path = new Path2D();
-    P.forEach((p, i) => i ? path.lineTo(p[0], p[1]) : path.moveTo(p[0], p[1]));
-    c = { P, path }; roadWorldPaths.set(r, c);
-  }
-  const s = view.s;
-  ctx.save();
-  ctx.setTransform(dpr * s, 0, 0, dpr * s, dpr * view.ox, dpr * view.oy);
-  ctx.strokeStyle = color; ctx.lineWidth = lw / s; ctx.lineCap = 'square'; ctx.lineJoin = 'round';
-  ctx.stroke(c.path);
-  ctx.restore();
 }
 /* Chaussée « imparfaite », comme la carte de référence : dessinée en disques serrés le long
    du tracé lissé, avec une largeur qui varie (lente ondulation ±15 %, petites irrégularités

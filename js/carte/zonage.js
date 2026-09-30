@@ -149,13 +149,6 @@ function segLayout(r, k) {
   }
   return { a, b, L, u, parts };
 }
-// marque les cases couvertes par un seul bâtiment (plus rapide que tout recalculer)
-function occupy(h) {
-  const C = corners(h), bb = bbox(C);
-  for (let gx = Math.floor(bb[0] / CELL); gx <= Math.floor(bb[2] / CELL); gx++)
-    for (let gy = Math.floor(bb[1] / CELL); gy <= Math.floor(bb[3] / CELL); gy++)
-      for (const c of Z.hash.get(gx + ',' + gy) || []) if (inPoly(c.c, C)) c.occ = h.id;
-}
 function computeOcc() {
   for (const c of Z.cells) c.occ = null;
   for (const h of S.houses) {

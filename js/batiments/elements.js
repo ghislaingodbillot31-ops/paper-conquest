@@ -2,45 +2,6 @@
    Repère local : u le long de la façade (−w/2 … w/2), t en profondeur depuis la rue
    (0 = bord de rue, l = fond de parcelle). */
 const LP = (h, u, t) => toS(...local(h, u, (h.front || 1) * (t - h.l / 2)));
-function shapeLT(h, pts) {
-  ctx.beginPath();
-  pts.forEach((p, i) => { const P = LP(h, p[0], p[1]); i ? ctx.lineTo(...P) : ctx.moveTo(...P); });
-  ctx.closePath();
-}
-const rectLT = (h, u0, t0, u1, t1) => shapeLT(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
-// bâtiment couvert d'un toit en croupe (faîtage sur le grand côté)
-function roofBlock(h, u0, t0, u1, t1, fill) {
-  rectLT(h, u0, t0, u1, t1);
-  ctx.fillStyle = fill; ctx.fill(); ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1.2; ctx.stroke();
-  const W = u1 - u0, L = t1 - t0, cu = (u0 + u1) / 2, ct = (t0 + t1) / 2;
-  if (Math.min(W, L) * view.s < 8) return;
-  const [r1, r2] = L >= W ? [[cu, t0 + W / 2], [cu, t1 - W / 2]] : [[u0 + L / 2, ct], [u1 - L / 2, ct]];
-  const R1 = LP(h, ...r1), R2 = LP(h, ...r2);
-  ctx.strokeStyle = Col['roof-line']; ctx.lineWidth = 1; ctx.beginPath();
-  ctx.moveTo(...R1); ctx.lineTo(...R2);
-  for (const c of [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]) {
-    const near = L >= W ? (c[1] < ct ? R1 : R2) : (c[0] < cu ? R1 : R2);
-    ctx.moveTo(...LP(h, ...c)); ctx.lineTo(...near);
-  }
-  ctx.stroke();
-}
-const dotLT = (h, u, t, r, fill, edge) => {
-  const [X, Y] = LP(h, u, t);
-  ctx.beginPath(); ctx.arc(X, Y, Math.max(.8, r * view.s), 0, Math.PI * 2);
-  ctx.fillStyle = fill; ctx.fill(); if (edge) { ctx.strokeStyle = edge; ctx.lineWidth = 1; ctx.stroke(); }
-};
-const fenceLT = (h, u0, t0, u1, t1) => { rectLT(h, u0, t0, u1, t1); ctx.setLineDash([3, 2]); ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = 1; ctx.stroke(); ctx.setLineDash([]); };
-const gravesLT = (h, u0, t0, u1, t1) => {
-  if (view.s < 1.5) return;
-  ctx.fillStyle = Col.wall;
-  for (let t = t0 + 2; t < t1 - 1; t += 3) for (let u = u0 + 1.5; u < u1 - 1; u += 2.4) { rectLT(h, u, t, u + 1, t + 1.8); ctx.fill(); }
-};
-const crossLT = (h, u, t, size) => {
-  ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = Math.max(1, .5 * view.s); ctx.beginPath();
-  ctx.moveTo(...LP(h, u, t - size)); ctx.lineTo(...LP(h, u, t + size));
-  ctx.moveTo(...LP(h, u - size * .6, t - size * .3)); ctx.lineTo(...LP(h, u + size * .6, t - size * .3));
-  ctx.stroke();
-};
 /* ---------- éléments détaillés (scierie et bâtiments suivants) ----------
    Style de la carte de référence : aplats peints, contour sombre, ombre portée au sud-est,
    lumière venant du nord-ouest ; les petits détails n'apparaissent qu'en zoomant. */

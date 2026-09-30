@@ -115,8 +115,6 @@ function simTick(dt) {
    - sell    : comptoir commercial, qui vend le contenu des granges et entrepôts contre de l'Or ;
    - relay   : poste de relais, dont les mulets vont aux confins de la région et reviennent.
    Chaque unité ramassée est retirée du stock de la source au moment où on la réserve. */
-const FOOD = ['légumes', 'œufs', 'pommes', 'pain'];
-const GOODS = ['pièces en bois', 'arcs et flèches', 'vêtements', 'chaussures', 'bière', 'outils et armes', 'armures'];
 const RAW = ['bois', 'laine', 'peaux'];                 // matières premières : on en laisse aux artisans
 const RAW_KEEP = 4;
 const VALUE = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'planches':4, 'laine':3, 'peaux':3, 'pièces en bois':5,

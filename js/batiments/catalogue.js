@@ -80,7 +80,6 @@ const EXT = {
 // anciennes arrière-cours (jardin / verger / élevage) → extensions équivalentes
 const YARD_OLD = { jardin:'potager', verger:'verger', elevage:'chevres' };
 const yardOf = h => YARD_OLD[h.yard] || (EXT[h.yard] ? h.yard : 'potager');
-const YARDS = Object.fromEntries(Object.entries(EXT).map(([k, v]) => [k, v.name]));
 // liste déroulante groupée (Production / Artisanat)
 const extOptions = current => ['Production', 'Artisanat'].map(g => `<optgroup label="${g}">` +
   Object.entries(EXT).filter(([, v]) => v.grp === g).map(([k, v]) => `<option value="${k}"${k === current ? ' selected' : ''}>${v.name}</option>`).join('') + '</optgroup>').join('');

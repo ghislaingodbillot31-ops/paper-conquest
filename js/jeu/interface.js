@@ -62,7 +62,6 @@ function svgEl(tag, attrs){
   return el;
 }
 function iconCheck(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 12l5 5 11-11"/></svg>'; }
-function iconWarn(){ return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4l9 16H3Z"/><path d="M12 10v4M12 17h.01"/></svg>'; }
 
 // ---------- Sidebar ----------
 const sidebar = document.getElementById('sidebar');

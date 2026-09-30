@@ -233,9 +233,6 @@ function floraCandidates() {
    à droite, reflets en haut à gauche, ombre portée), puis posés comme des tampons.
    Dégradé de verts (demande du 29/09) : les arbres seuls sont vert clair, la lisière
    un peu plus foncée, et la forêt fonce jusqu'à son cœur — [teinte, reflet, ombre]. */
-// teintes des arbres du biome : 0 · arbres seuls, buissons (clair) ; 1 · premier rang de
-// lisière ; 2 · second rang de lisière
-const treePal = () => biomeLook().pal;
 const TREE_EDGE = '#223020', TREE_DROP = 'rgba(30,45,25,.3)';
 const SPR = 96, SPR_C = 40, SPR_R = 28, SHAPES = 5; // taille du modèle, centre et rayon du houppier (px)
 let treeSprites = null;
@@ -428,14 +425,6 @@ function stampTree(g, f, X, Y, s) {
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
 const WATER_MARGIN = 2; // m laissés libres au bord des rivières et des lacs
-/* Repère du bourg, figé : le cœur de la région à la création du plan. Construire ensuite ne déplace rien ; seuls les arbres sous un nouveau
-   bâtiment (ou une route) disparaissent. */
-function bourgPts() {
-  if (!Array.isArray(S.bourg) || !S.bourg.length)
-    S.bourg = S.houses.length ? S.houses.map(h => [Math.round(h.x), Math.round(h.y)]) : [[TW / 2, TH / 2]];
-  return S.bourg;
-}
-const bourgHub = () => { const b = bourgPts(); return [b.reduce((s, p) => s + p[0], 0) / b.length, b.reduce((s, p) => s + p[1], 0) / b.length]; };
 let flora = [];
 const treeKey = f => f.x + ',' + f.y; // identité stable d'un arbre (sa position)
 // obstacles en seaux de 32 m : chaque arbre n'est testé que contre les obstacles voisins

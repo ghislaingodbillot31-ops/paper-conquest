@@ -1,43 +1,63 @@
 # Paper Conquest
 
-Jeu de gestion politique et territoriale, rendu en une seule page HTML autonome (pas de build, pas de framework). Identité visuelle "papier & crayon" (palette claire, typographie manuscrite) posée sur un vrai globe interactif [MapLibre GL](https://maplibre.org/) (projection globe, [TopoJSON](https://github.com/topojson/topojson)) : chaque pays y est subdivisé en régions administratives synthétiques (admin-1), individuellement sélectionnables.
+Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, pas de framework). Identité visuelle "papier & crayon" posée sur un vrai globe interactif [MapLibre GL](https://maplibre.org/) : 500 régions compactes, individuellement sélectionnables, chacune avec sa propre carte générée (campagne, routes, bâtiments, fortifications).
 
 ## Structure du projet
 
 ```
 .
-├── index.html                  # Redirection vers src/paper-conquest.html
-├── src/
-│   ├── paper-conquest.html     # Jeu principal : globe, régions, économie, capitale (CDN pour MapLibre/TopoJSON/Turf + Google Fonts)
-│   ├── capitale.html           # Carte d'une région (générateur de campagne, routes, zonage, bâtiments, fortifications)
-│   └── data/
-│       ├── admin1.topojson         # Les 500 régions
-│       ├── regions-water.topojson  # Les régions avec fleuves et lacs creusés
-│       ├── water.json              # Fleuves et lacs réels
-│       ├── fishing.json            # Zones de pêche en mer
-│       └── nav-grid.json           # Grille de navigation des bateaux (mer / terre, ~5 km)
-├── docs/                       # Scripts Node de génération des données (régions, fleuves, pêche, grille de navigation)
-└── README.md
+├── index.html               # Le jeu : globe, régions, routes, pêche, économie, capitale
+├── region.html              # Carte d'une région (ouverte par le jeu, onglet « Carte de la région »)
+├── editeur-carte.html       # Fenêtre d'édition du générateur de carte (biome, paysage, fleuve)
+├── editeur-batiments.html   # Fenêtre de gestion et de modification des bâtiments (atelier)
+├── css/
+│   ├── jeu.css              # Styles du jeu
+│   ├── carte.css            # Styles des pages de carte (région et éditeurs)
+│   └── maplibre-gl.css      # Copie locale de la feuille MapLibre
+├── js/
+│   ├── jeu/                 # Systèmes du jeu : globe, données des régions, routes, bateaux, caravane,
+│   │                        #   ressources, faune, pêche, eau, régions, capitale, construction, économie
+│   ├── carte/               # Générateur et rendu des cartes de région : relief, eau, paysage, zonage,
+│   │                        #   routes, simulation, fortifications, outils, panneau
+│   └── batiments/           # Bâtiments : catalogue, atelier, éléments de dessin, dessins de chaque bâtiment
+├── data/
+│   ├── monde/               # Géographie : admin1.topojson (les 500 régions), regions-water.topojson,
+│   │                        #   water.json (fleuves et lacs), fishing.json (pêche en mer), nav-grid.json (bateaux)
+│   └── regions/             # Caractéristiques des régions — voir data/regions/LISEZMOI.md
+│       ├── regions.json     #   une fiche par région : climat, température, humidité, relief, sol,
+│       │                    #   ressources, agriculture, animaux, pêche, eau, capitale
+│       └── zones-animales.json
+└── outils/                  # Scripts Node qui génèrent les données (hors ligne)
 ```
 
-`capitale.html` s'ouvre dans l'onglet **Carte de la région** de la capitale, pour chaque région possédée : la carte est générée d'après le climat réel de la région (biome), les vrais fleuves qui la traversent et son numéro (même région, même carte), puis chaque région garde son propre plan. Ouverte seule (sans paramètre), c'est la page de travail : plan de test et atelier des bâtiments.
+Les trois pages de carte partagent les mêmes scripts `js/carte` et `js/batiments`. Chacune déclare son mode avec `const PAGE = 'region' | 'carte' | 'batiments'`.
 
 ## Utiliser le projet
 
-Ouvrir `src/paper-conquest.html` via un serveur local (le chargement de `data/admin1.topojson` nécessite `fetch`, donc pas de double-clic direct). Connexion internet requise pour charger MapLibre GL, TopoJSON et Turf depuis les CDN (jsdelivr) et les polices Google Fonts.
+Ouvrez `index.html` via un serveur local, par exemple `npx serve .` ou `python -m http.server`. Le chargement des données passe par `fetch`, donc un double-clic sur le fichier ne suffit pas. Une connexion internet est nécessaire pour MapLibre GL, TopoJSON, Turf (jsdelivr) et Google Fonts.
 
-## Interface actuelle
+- **Modifier une région** (ressources, biome, sol…) : éditez `data/regions/regions.json`, puis rechargez.
+- **Modifier le générateur de carte** : ouvrez `editeur-carte.html`. Le code se trouve dans `js/carte/`.
+- **Modifier un bâtiment** : ouvrez `editeur-batiments.html`. Le catalogue est dans `js/batiments/catalogue.js`, les dessins dans `js/batiments/dessins.js`.
 
-- **Carte** : globe interactif (glisser pour tourner) où chaque région admin-1 est cliquable et colorée selon son continent. Le choix de départ se verrouille définitivement après validation et est conservé dans le `localStorage` du navigateur (persiste après reconnexion sur le même appareil, mais pas d'un appareil à l'autre).
-- **Capitale** : onglets de gestion de chaque région possédée — Carte de la région (campagne, routes, zonage, bâtiments, fortifications en palissade, bois ou pierre), Plan, Stocks, Construction, Caravane, Voyage.
+## Régénérer les données
+
+Depuis la racine du projet, avec `@turf/turf` et `topojson-client` installés :
+
+| Commande | Produit |
+|---|---|
+| `node outils/build-regions.js` | `data/regions/regions.json` (règles : `outils/modele-regions.js`) |
+| `node outils/build-waterways.js outils/modele-regions.js data/monde/admin1.topojson data/monde/nav-grid.json data/monde` | `water.json`, `regions-water.topojson` (fleuves réels : `outils/rivers-world.json`) |
+| `node outils/build-fishing.js data/monde/admin1.topojson outils/fishing-zones.json data/monde/fishing.json` | Zones de pêche en mer |
+| `node outils/build-nav-grid.js data/monde/admin1.topojson data/monde/nav-grid.json` | Grille de navigation des bateaux |
+
+Attention : `build-regions.js` réécrit `regions.json` et efface les modifications faites à la main.
 
 ## Hébergement
 
-Le dépôt local n'a pas encore de remote GitHub configuré. Le lien de travail actuel est un aperçu privé publié via Claude Artifacts ; un lien public définitif nécessite de déployer ce dossier (par ex. GitHub Pages, en pointant sur `index.html`).
+Le dépôt local n'a pas encore de remote GitHub. Le lien de travail actuel est un aperçu privé publié via Claude Artifacts. Pour obtenir un lien public définitif, déployez ce dossier (par exemple sur GitHub Pages) en pointant sur `index.html`.
 
 ## Suivi des versions
-
-Ce dossier est un dépôt Git. Pour voir l'historique complet :
 
 ```
 git log --oneline --stat

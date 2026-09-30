@@ -111,27 +111,6 @@ const goDeg = (p, deg, len) => [round2(p[0] + Math.cos(deg * Math.PI / 180) * le
    sort à l'est. Tronçons de 3 cases ; le cap suit une onde (amplitude 45 à 65°, longueur
    d'onde 700 à 1 100 m, soit des boucles de 100 à 150 m de part et d'autre) arrondie au pas de 10°, avec un rappel vers le milieu de la carte.
    Le dessin lissé en fait une route qui ondule sans angle. */
-function serpentineRoad(rnd) {
-  const A = 45 + rnd() * 20, lam = 700 + rnd() * 400, ph = rnd() * Math.PI * 2;
-  let p = [0, round2(TH / 2 + (rnd() - .5) * 160)];
-  const pts = [p];
-  let last = null;
-  for (let k = 0; k < 400; k++) {
-    let deg = A * Math.sin(2 * Math.PI * p[0] / lam + ph) - (p[1] - TH / 2) / 12;
-    deg = Math.max(-70, Math.min(70, Math.round(deg / 10) * 10));
-    const q = goDeg(p, deg, 3 * CELL);
-    if (q[0] >= TW - 1) {
-      // dernier tronçon : prolongé tout droit jusqu'au bord est
-      const c = Math.cos(deg * Math.PI / 180), e = goDeg(p, deg, (TW - p[0]) / c);
-      pts.push([TW, Math.max(0, Math.min(TH, e[1]))]);
-      break;
-    }
-    // deux tronçons de même cap n'en font qu'un
-    if (deg === last && pts.length > 1) pts[pts.length - 1] = q; else pts.push(q);
-    p = q; last = deg;
-  }
-  return pts;
-}
 /* Routes de formes variées (demande du 29/09) : la route entre par un bord et sort par un
    autre — opposé ou voisin, pas forcément ouest → est — et suit une des formes :
    - serpentin : ondule régulièrement autour de la ligne directe ;

@@ -112,16 +112,6 @@ $('new-land').addEventListener('click', () => {
 });
 $('del-river').addEventListener('click', () => { if (!S.rivers.length) return; commit(); S.rivers.pop(); changed(true); });
 $('del-lake').addEventListener('click', () => { if (!S.lakes.length) return; commit(); S.lakes.pop(); changed(true); });
-// plan enregistré par la version précédente de la page (même navigateur)
-let oldPlan = null;
-try { const o = JSON.parse(localStorage.getItem(OLD_KEY) || 'null'); if (o && Array.isArray(o.roads)) oldPlan = o; } catch (e) {}
-$('load-old').hidden = !oldPlan;
-$('load-old').addEventListener('click', () => {
-  if (!oldPlan) return;
-  commit(); S = normalize(JSON.parse(JSON.stringify(oldPlan))); computeZones(); fixGates();
-  sel = null; draft = null; changed(true); fitContent();
-  flash('Plan précédent rechargé. Ctrl+Z pour revenir au paysage');
-});
 $('biome').innerHTML = Object.entries(BIOMES).map(([k, b]) => `<option value="${k}">${b.name}</option>`).join('');
 $('biome').value = S.biome;
 $('river-mode').value = S.riverMode || 'auto';

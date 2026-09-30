@@ -18,12 +18,6 @@ function syncGridButton() {
   b.setAttribute('aria-label', opts.grid ? 'Masquer le quadrillage du zonage' : 'Afficher le quadrillage du zonage');
 }
 // courbes de niveau : fines tous les 2 m, appuyées tous les 10 m
-function polyPath2D(P) {
-  const path = new Path2D();
-  P.forEach((p, i) => { const X = p[0] * view.s + view.ox, Y = p[1] * view.s + view.oy; i ? path.lineTo(X, Y) : path.moveTo(X, Y); });
-  path.closePath();
-  return path;
-}
 function drawContours() {
   if (!opts.contours) return;
   const s = view.s, segs = contourSegments(), [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H);
@@ -140,10 +134,6 @@ function bridges() {
   bridgeCache = { key, list };
   return list;
 }
-// (compatibilité : les deux parapets de chaque pont, en segments)
-const bridgeSegs = () => bridges().flatMap(b => [1, -1].map(sd => [
-  [b.c[0] - b.u[0] * b.half + b.n[0] * b.w * sd, b.c[1] - b.u[1] * b.half + b.n[1] * b.w * sd],
-  [b.c[0] + b.u[0] * b.half + b.n[0] * b.w * sd, b.c[1] + b.u[1] * b.half + b.n[1] * b.w * sd]]));
 const BRIDGE = { deck:'#bdb6a8', course:'rgba(120,112,98,.45)', wall:'#a39c8e', joint:'rgba(63,69,69,.55)', edge:'#3f4545', shadow:'rgba(28,40,44,.32)' };
 function drawBridges() {
   const list = bridges();

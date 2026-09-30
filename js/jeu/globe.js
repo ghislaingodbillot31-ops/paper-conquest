@@ -2,7 +2,7 @@
 // Chaque pays (adm0_a3) est classe dans l'un des 6 continents, seulement
 // pour la couleur et le petit texte de contexte dans le panneau -- les
 // regions cliquables sont 500 regions compactes d'aire comparable (~260 000 km2,
-// decoupage k-means + Voronoi par continent -- voir outils/build-repartition.js),
+// decoupage k-means + Voronoi par continent, fige dans data/monde/admin1.topojson),
 // pas les continents eux-memes.
 const ISO3_CONTINENT = {
   namerica:['BLZ','CAN','CRI','CUB','DOM','GRL','GTM','HND','HTI','MEX','NIC','PAN','USA'],
