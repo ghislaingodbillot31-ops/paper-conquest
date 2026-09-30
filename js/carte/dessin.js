@@ -1,6 +1,11 @@
 /* ---------- dessin ---------- */
 let queued = false;
 function requestDraw() { if (!queued) { queued = true; requestAnimationFrame(draw); } }
+/* Version du décor (sol, eau, routes, végétation, bâtiments…) : le décor dessiné est gardé en
+   mémoire et seulement recopié tant qu'il ne change pas (voir draw). Toute modification du
+   décor appelle touchScene() ; la vue, la sélection et les options font partie de la clé. */
+let sceneV = 0;
+const touchScene = () => { sceneV++; };
 function polyPath(pts) {
   ctx.beginPath();
   pts.forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });

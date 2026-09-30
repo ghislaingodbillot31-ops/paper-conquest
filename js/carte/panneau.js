@@ -272,7 +272,8 @@ function renderSel() {
 function updateStatus() {
   const built = S.houses.reduce((s, h) => s + h.w * h.l, 0);
   const cap = S.houses.reduce((s, h) => s + ((buildingOf(h) || {}).cap || 0), 0); // logements
-  let free = 0; for (const c of Z.cells) if (c.occ === null) free++;
+  if (freeCells.v !== sceneV) { let n = 0; for (const c of Z.cells) if (c.occ === null) n++; freeCells.n = n; freeCells.v = sceneV; } // (une fois par changement du décor)
+  const free = freeCells.n;
   const len = S.roads.reduce((s, r) => s + roadLen(r), 0);
   const c = cursor && inTerrain(cursor)
     ? `x <b>${fmt(cursor[0])}</b> · y <b>${fmt(cursor[1])}</b> m` + (RELIEF_ON ? ` · altitude <b>${fmt(hAt(...cursor))}</b> m` : '')
@@ -287,3 +288,4 @@ function updateStatus() {
   if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; $('villageois').textContent = fmt(cap, 0); }
 }
 let lastStatus = '';
+const freeCells = { v:-1, n:0 };

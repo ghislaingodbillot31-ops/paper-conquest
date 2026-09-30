@@ -22,7 +22,8 @@ Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, p
 │   └── batiments/           # Bâtiments : catalogue, atelier, éléments de dessin, dessins de chaque bâtiment
 ├── data/
 │   ├── monde/               # Géographie : admin1.topojson (les 500 régions), regions-water.topojson,
-│   │                        #   water.json (fleuves et lacs), fishing.json (pêche en mer), nav-grid.json (bateaux)
+│   │                        #   water.json (fleuves et lacs), fishing.json (pêche en mer), nav-grid.json (bateaux),
+│   │                        #   routes.json (capitales et routes entre elles, précalculées)
 │   └── regions/             # Caractéristiques des régions — voir data/regions/LISEZMOI.md
 │       ├── regions.json     #   une fiche par région : climat, température, humidité, relief, sol,
 │       │                    #   ressources, agriculture, animaux, pêche, eau, capitale
@@ -47,6 +48,7 @@ Depuis la racine du projet, avec `@turf/turf` et `topojson-client` installés :
 | Commande | Produit |
 |---|---|
 | `node outils/build-regions.js` | `data/regions/regions.json` (règles : `outils/modele-regions.js`) |
+| `node outils/build-routes.js` | `data/monde/routes.json` : routes entre capitales (règles : `outils/reseau-routes.js`) — à relancer après `build-regions` si les capitales changent |
 | `node outils/build-waterways.js outils/modele-regions.js data/monde/admin1.topojson data/monde/nav-grid.json data/monde` | `water.json`, `regions-water.topojson` (fleuves réels : `outils/rivers-world.json`) |
 | `node outils/build-fishing.js data/monde/admin1.topojson outils/fishing-zones.json data/monde/fishing.json` | Zones de pêche en mer |
 | `node outils/build-nav-grid.js data/monde/admin1.topojson data/monde/nav-grid.json` | Grille de navigation des bateaux |

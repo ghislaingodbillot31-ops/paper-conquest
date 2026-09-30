@@ -11,7 +11,7 @@ readColors();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); requestDraw(); });
 new MutationObserver(() => { readColors(); requestDraw(); }).observe(document.documentElement, { attributes:true, attributeFilter:['data-theme'] });
 new ResizeObserver(resize).observe(wrap);
-if (document.fonts) document.fonts.ready.then(requestDraw);
+if (document.fonts) document.fonts.ready.then(() => { touchScene(); requestDraw(); }); // graduations redessinées avec la bonne police
 computeFlora();
 renderTool(); renderSel(); resize();
 requestAnimationFrame(simLoop); // les bûcherons travaillent

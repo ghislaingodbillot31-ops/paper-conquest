@@ -457,6 +457,7 @@ function obstacleTest(polys) {
       (quelques millisecondes). Seules les tuiles autour des arbres qui changent sont repeintes. */
 let staticFlora = [], staticKey = null;
 function computeFlora() {
+  touchScene();
   const key = JSON.stringify([S.landSeed, S.biome, S.roads.map(r => r.pts), S.walls.map(w => w.pts), S.towers.map(t => [t.x, t.y]),
     S.gates.map(g => [g.x, g.y, g.a]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => l.c)]);
   const full = key !== staticKey;

@@ -81,7 +81,7 @@ function unwrapGeometry(geom){
 let regionsFc = null;
 
 async function addRegions(){
-  const [topo, navGrid, waterTopo, water, fishing, regionsData, animalZones] = await Promise.all([
+  const [topo, navGrid, waterTopo, water, fishing, regionsData, animalZones, roads] = await Promise.all([
     fetch('data/monde/admin1.topojson').then(r => r.json()),
     fetch('data/monde/nav-grid.json').then(r => r.json()).catch(e => { console.warn('Grille de navigation indisponible:', e); return null; }),
     fetch('data/monde/regions-water.topojson').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
@@ -89,6 +89,7 @@ async function addRegions(){
     fetch('data/monde/fishing.json').then(r => r.json()).catch(e => { console.warn('Zones de peche indisponibles:', e); return null; }),
     fetch('data/regions/regions.json').then(r => r.json()),
     fetch('data/regions/zones-animales.json').then(r => r.json()),
+    fetch('data/monde/routes.json').then(r => r.json()),
   ]);
   loadRegionData(regionsData, animalZones);
   const objName = Object.keys(topo.objects)[0];
@@ -102,12 +103,8 @@ async function addRegions(){
     f.properties.isNpc = NPC_REGION_IDS.has(f.id);
     f.properties.fillColor = f.properties.isNpc ? NPC_COLOR : regionInfo(f.id).climat.couleur;
     unwrapGeometry(f.geometry);
-    try{ f.properties.clusterArea = Math.round(turf.area(f) / 1e6); }
-    catch(e){ /* garde la valeur stockee si le calcul echoue */ }
+    f.properties.clusterArea = regionInfo(f.id).aire_km2 || f.properties.clusterArea; // surface precalculee (data/regions)
   });
-  // terre d'origine (avant de creuser fleuves et lacs) : les routes s'y tracent, pour qu'un
-  // fleuve se franchisse (pont) au lieu de couper la liaison entre deux regions voisines
-  fc.features.forEach(f => { f.land = { type:'Feature', properties:{}, geometry:f.geometry }; });
   // rivieres et lacs: geometrie des regions avec l'eau deja retiree
   if(waterTopo && water){
     try{
@@ -164,21 +161,8 @@ async function addRegions(){
   map.on('mouseenter', 'regions', () => { if(!interactionBusy()) map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
-  // Un reseau independant par continent (jamais de faux voisinage entre
-  // deux masses continentales separees par un ocean): chaque appel a
-  // buildRegionNetwork ne compare que les geometries de son propre
-  // sous-ensemble, donc le cout de calcul de chacun reste borne a sa
-  // propre taille plutot que d'exploser avec le nombre total de regions
-  // du monde.
-  addVillageNetwork(topo, fc, geometries, [
-    f => f.properties.adm0_a3 === 'AUS',
-    f => ISO3_CONTINENT.africa.includes(f.properties.adm0_a3),
-    f => ISO3_CONTINENT.europe.includes(f.properties.adm0_a3),
-    f => ISO3_CONTINENT.asia.includes(f.properties.adm0_a3),
-    f => ISO3_CONTINENT.namerica.includes(f.properties.adm0_a3),
-    f => ISO3_CONTINENT.samerica.includes(f.properties.adm0_a3),
-    f => ISO3_CONTINENT.oceania.includes(f.properties.adm0_a3) && f.properties.adm0_a3 !== 'AUS',
-  ]);
+  // routes entre capitales : precalculees (data/monde/routes.json, outils/build-routes.js)
+  addVillageNetwork(roads);
 
   const loadingEl = document.getElementById('map-loading');
   if(loadingEl) loadingEl.style.display = 'none';

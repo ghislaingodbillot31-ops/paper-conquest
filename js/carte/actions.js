@@ -1,6 +1,7 @@
 /* ---------- actions ---------- */
 function commit() { undoStack.push(JSON.stringify(S)); if (undoStack.length > 150) undoStack.shift(); }
 function changed(roadsChanged) {
+  touchScene(); // le décor a changé : l'image gardée en mémoire est refaite
   if (roadsChanged) computeZones(); else computeOcc();
   computeFlora(); // les arbres cèdent la place aux nouvelles constructions
   save(); renderSel(); requestDraw();

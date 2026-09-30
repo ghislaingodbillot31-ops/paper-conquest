@@ -2,17 +2,21 @@
    Priorité à la route : dès qu'une route est disponible, l'habitant la rejoint au plus près,
    la suit par le plus court chemin du réseau jusqu'au point de route le plus proche de sa
    destination, et ne finit à pied qu'à partir de là. Il ne coupe à travers champs que s'il
-   n'y a pas de route, ou si la route ne le mènerait nulle part (moins de 2 cases à y faire).
+   n'y a pas de route, si la route ne le mènerait nulle part (moins de 2 cases à y faire), ou si
+   le trajet par la route ferait plus du double de la ligne droite (route trop loin, détour absurde).
    Hors route, on marche deux fois moins vite. */
 const VITESSE_TERRE = .5;                 // hors route : moitié de la vitesse sur route
 const RACCORD = 2;                        // deux points de routes à moins de 2 m : carrefour
 const ROUTE_MIN = 2 * CELL;               // en deçà de 16 m à faire sur la route, on va tout droit
+const DETOUR_MAX = 2;                     // par la route, au plus deux fois la distance à vol d'oiseau
 let reseau = null;
 // Réseau des routes : les points du tracé lissé (celui qui est dessiné), reliés le long de
 // chaque route, et d'une route à l'autre là où elles se touchent (raccords, croisements).
 function reseauRoutes() {
+  // refait seulement si le décor a changé et que les routes ne sont plus les mêmes (signature complète calculée rarement)
+  if (reseau && reseau.v === sceneV && reseau.S === S) return reseau;
   const key = S.roads.map(r => r.id + ':' + r.pts.map(p => p[0] + ',' + p[1]).join(';')).join('|');
-  if (reseau && reseau.key === key) return reseau;
+  if (reseau && reseau.key === key) { reseau.v = sceneV; reseau.S = S; return reseau; }
   const N = [], adj = [], segs = [], roadOf = [];
   const link = (a, b) => { const L = segLen(N[a], N[b]); adj[a].push([b, L]); adj[b].push([a, L]); };
   S.roads.forEach((r, ri) => {
@@ -29,7 +33,7 @@ function reseauRoutes() {
       for (const j of grid.get((cx + dx) + ',' + (cy + dy)) || [])
         if (j > i && roadOf[j] !== roadOf[i] && segLen(p, N[j]) < RACCORD) link(i, j);
   });
-  return (reseau = { key, N, adj, segs });
+  return (reseau = { key, v:sceneV, S, N, adj, segs });
 }
 // point de route le plus proche d'un lieu
 function procheRoute(R, p) {
@@ -62,6 +66,7 @@ function trajet(A, B) {
     for (const [j, L] of R.adj[i]) if (d + L < dist[j]) { dist[j] = d + L; prev[j] = i; pousser(j, d + L); }
   }
   if (!isFinite(meilleur)) return direct;                    // routes non reliées entre elles
+  if (pa.d + meilleur + pb.d > DETOUR_MAX * segLen(A, B)) return direct; // détour absurde
   if (sortie < 0) return [{ p:pa.q, route:false }, { p:pb.q, route:true }, { p:B, route:false }]; // même tronçon
   const noeuds = [];
   for (let i = sortie; i >= 0; i = prev[i]) noeuds.unshift(R.N[i]);

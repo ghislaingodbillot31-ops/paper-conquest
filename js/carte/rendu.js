@@ -99,8 +99,9 @@ function drawWater() {
    sur les berges). Calculés une fois, refaits seulement si routes ou rivières changent. */
 let bridgeCache = { key:null, list:[] };
 function bridges() {
+  if (bridgeCache.v === sceneV && bridgeCache.S === S) return bridgeCache.list; // décor inchangé : rien à vérifier
   const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined, r.isles])]);
-  if (bridgeCache.key === key) return bridgeCache.list;
+  if (bridgeCache.key === key) { bridgeCache.v = sceneV; bridgeCache.S = S; return bridgeCache.list; }
   const list = [];
   for (const river of S.rivers) {
     const rv = river.pts, HW = riverHW(river), rbb = rv.slice(1).map((q, i) => bbox([rv[i], q]));
@@ -131,7 +132,7 @@ function bridges() {
       }
     } }
   }
-  bridgeCache = { key, list };
+  bridgeCache = { key, list, v:sceneV, S };
   return list;
 }
 const BRIDGE = { deck:'#bdb6a8', course:'rgba(120,112,98,.45)', wall:'#a39c8e', joint:'rgba(63,69,69,.55)', edge:'#3f4545', shadow:'rgba(28,40,44,.32)' };
@@ -197,6 +198,7 @@ function floraNear(x0, y0, x1, y1) {
   return out.sort((a, b) => a.y - b.y);
 }
 function invalidateTiles(x, y, r) {
+  touchScene();
   for (const [k, tl] of tiles) if (x + r > tl.x0 && x - r < tl.x0 + tl.m && y + r > tl.y0 && y - r < tl.y0 + tl.m) tiles.delete(k);
 }
 function renderTile(L, i, j) {
@@ -226,7 +228,7 @@ function drawFlora() {
     const list = floraNear(wx0 - 40, wy0 - 40, wx1 + 40, wy1 + 40);
     drawWoods(ctx, list.filter(f => f.wood), s, view.ox, view.oy);
     for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, s); }
-    return;
+    return false;
   }
   const L = TILE_LEVELS.find(l => l >= eff) || 16, m = TILE_PX / L;
   // budget de temps : on peint des tuiles pendant 10 ms au plus par image (au moins une),
@@ -247,4 +249,5 @@ function drawFlora() {
     }
   }
   if (missing) requestDraw(); // les tuiles restantes arrivent aux images suivantes
+  return missing;             // (vrai : image incomplète, à ne pas garder en cache)
 }

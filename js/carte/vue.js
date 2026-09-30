@@ -53,5 +53,5 @@ function readColors() {
   for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','contour','f-meadow','f-wheat','f-plough','f-fallow','f-alfalfa','f-forest','parcel-edge','veil','stall-a','stall-b','tavern','church','ore-iron','ore-clay','f-field','f-pasture','sheep','accent','bad','shadow'])
     Col[k] = cs.getPropertyValue('--' + k).trim();
   makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
-  groundImg = null; floraImg = null; tiles.clear(); // sol et végétation repeints avec les nouvelles couleurs
+  groundImg = null; floraImg = null; tiles.clear(); touchScene(); // sol et végétation repeints avec les nouvelles couleurs
 }
