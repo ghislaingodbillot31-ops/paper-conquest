@@ -3562,10 +3562,16 @@ const BUILD_DRAW = {
       ctx.beginPath(); ctx.arc(X, Y, Rr, 0, Math.PI * 2); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.14); ctx.stroke(); }
     // sacs de grain et de farine autour de la tour
     for (const [u, t, c] of [[-3, 10.6], [-3.3, 11.4, '#e8e2d2'], [-2.5, 11.5, '#e8e2d2'], [4.6, 8.5], [4.8, 9.4, '#e8e2d2']]) sackLT(h, u, t, .36, c);
-    { const w = R * Math.SQRT1_2 + .7, [A, B] = [LP(h, hub[0] - w, hub[1]), LP(h, hub[0] + w, hub[1])]; // ailes : une simple ligne marron
-      ctx.lineCap = 'round'; ctx.lineWidth = Math.max(1.2, .14 * s);
-      ctx.strokeStyle = WOOD.shadow; ctx.beginPath(); ctx.moveTo(A[0] + .2 * s, A[1] + .3 * s); ctx.lineTo(B[0] + .2 * s, B[1] + .3 * s); ctx.stroke();
-      ctx.strokeStyle = '#5a4128'; ctx.beginPath(); ctx.moveTo(...A); ctx.lineTo(...B); ctx.stroke(); ctx.lineCap = 'butt'; }
+    { // ailes vues par la tranche : vergue épaisse au moyeu, effilée vers les bouts ; bouts des lattes ; toile côté rue
+      const w = R * Math.SQRT1_2 + .7, x0 = R * .2 * Math.SQRT1_2, [hu, ht] = hub;
+      const P = lpts(h, [[hu - w, ht - .13], [hu, ht - .22], [hu + w, ht - .13], [hu + w, ht + .13], [hu, ht + .22], [hu - w, ht + .13]]);
+      pathS(shiftS(P, .25, .35)); ctx.fillStyle = WOOD.shadow; ctx.fill();
+      pathS(P); ctx.fillStyle = '#8a6a45'; ctx.fill();
+      for (const d of [-1, 1]) { pathS(lpts(h, [[hu + d * x0, ht - .2], [hu + d * (w - .3), ht - .2], [hu + d * (w - .3), ht - .06], [hu + d * x0, ht - .06]])); ctx.fillStyle = '#efe8d6'; ctx.fill(); }
+      if (s > 1.5) { ctx.strokeStyle = 'rgba(50,36,22,.7)'; ctx.lineWidth = 1; ctx.beginPath();
+        for (const d of [-1, 1]) for (let x = x0; x < w - .2; x += .45) { ctx.moveTo(...LP(h, hu + d * x, ht - .2)); ctx.lineTo(...LP(h, hu + d * x, ht + .18)); }
+        ctx.stroke(); }
+      pathS(P); ctx.strokeStyle = WOOD.edge; ctx.lineWidth = lw(.05); ctx.stroke(); }
     thatchLT(h, -7.3, 11, -3.3, 15.4, 'u', STRAW); chimneyLT(h, -6.3, 13.2, .45);                   // maison du meunier
   },
   /* Four communal (2 × 2 cases) : fournil couvert de bardeaux sur la rue, grand four en
