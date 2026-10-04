@@ -57,3 +57,23 @@ topo.transform = { scale: [1 / Q, 1 / Q], translate: [-180, -90] };
 topo.arcs = newArcs.map(a => { let px = 0, py = 0; return a.map(([x, y]) => { const ix = Math.round((x + 180) * Q), iy = Math.round((y + 90) * Q), d = [ix - px, iy - py]; px = ix; py = iy; return d; }); });
 fs.writeFileSync(OUT, JSON.stringify(topo));
 console.log('points', before, '->', after, '| passes', PASSES, 'tolerance', TOL, '|', Math.round(fs.statSync(OUT).size / 1024), 'Ko');
+
+// Arcs "de cote" qui sont en fait en pleine terre (fentes entre deux morceaux de terre, ponts de
+// la fusion des regions) : sans ce repere ils sont dessines comme une cote, en petits traits noirs.
+// Liste ecrite dans le TopoJSON (champ facultatif "interieurs"), lue par js/jeu/globe.js.
+{
+  const tj = require('topojson-client'), turf = require('@turf/turf');
+  const obj = topo.objects[Object.keys(topo.objects)[0]], fc = tj.feature(topo, obj), bbs = fc.features.map(f => turf.bbox(f));
+  const cnt = new Map(); const walk = a => Array.isArray(a) ? a.forEach(walk) : cnt.set(a < 0 ? ~a : a, (cnt.get(a < 0 ? ~a : a) || 0) + 1);
+  obj.geometries.forEach(g => walk(g.arcs));
+  const terre = (x, y) => { for(let i = 0; i < fc.features.length; i++){ const b = bbs[i]; if(x < b[0] || x > b[2] || y < b[1] || y > b[3]) continue; if(turf.booleanPointInPolygon([x, y], fc.features[i])) return true; } return false; };
+  const interieurs = [];
+  for(const [k, c] of cnt){ if(c !== 1) continue;
+    let x = 0, y = 0; const pts = topo.arcs[k].map(([dx, dy]) => { x += dx; y += dy; return [x / Q - 180, y / Q - 90]; });
+    const i = pts.length >> 1, m = pts[i], a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)];
+    const dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, e = 0.03;
+    if(terre(m[0] - dy / l * e, m[1] + dx / l * e) && terre(m[0] + dy / l * e, m[1] - dx / l * e)) interieurs.push(k); }
+  topo.interieurs = interieurs;
+  fs.writeFileSync(OUT, JSON.stringify(topo));
+  console.log('arcs de cote en pleine terre :', interieurs.length);
+}

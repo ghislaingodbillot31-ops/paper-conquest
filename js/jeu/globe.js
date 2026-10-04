@@ -122,8 +122,14 @@ async function addRegions(){
   // Bords "papier decoupe" : la cote (bord exterieur, partage par une seule region) et les
   // frontieres internes sont deux traits distincts, tires du TopoJSON (aucun doublon).
   // Sous la terre : eaux peu profondes claires puis ombre portee ; sur la terre : trait d'encre.
-  const coastLine = topojson.mesh(topo, topo.objects[objName], (a, b) => a === b);
-  const borderLines = topojson.mesh(topo, topo.objects[objName], (a, b) => a !== b);
+  // Cote = arcs utilises une seule fois, SAUF ceux marques "interieurs" (en pleine terre, voir
+  // outils/lisser-bords.js) qui, dessines comme une cote, donnaient de petits traits noirs.
+  const arcUse = new Map(), countArcs = a => Array.isArray(a) ? a.forEach(countArcs) : arcUse.set(a < 0 ? ~a : a, (arcUse.get(a < 0 ? ~a : a) || 0) + 1);
+  geometries.forEach(g => countArcs(g.arcs));
+  const inland = new Set(topo.interieurs || []);
+  const arcLines = keep => ({ type: 'MultiLineString', arcs: [...arcUse].filter(([k, c]) => keep(k, c)).map(([k]) => [k]) });
+  const coastLine = topojson.mesh(topo, arcLines((k, c) => c === 1 && !inland.has(k)));
+  const borderLines = topojson.mesh(topo, arcLines((k, c) => c > 1 || inland.has(k)));
   for(const m of [coastLine, borderLines]) m.coordinates = m.coordinates.map(unwrapRingLongitudes);   // meme correction de l'antimeridien que les regions
   const zoomW =(...v) => ['interpolate', ['exponential', 1.6], ['zoom'], 0, v[0], 3, v[1], 6, v[2], 10, v[3]];
   const lineLayout = { 'line-join': 'round', 'line-cap': 'round' };
