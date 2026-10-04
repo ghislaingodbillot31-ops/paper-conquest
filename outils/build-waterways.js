@@ -304,14 +304,26 @@ const cellOfPt = ([lon, lat]) => { const x = Math.floor((lon - BOX.lon0) / BOX.r
 const riverBoxes = rivers.map(x => turf.bbox(x.poly));
 const onLand = ([lon, lat]) => { const c = cellOfPt([lon, lat]); return c >= 0 && land[c] && dist[c] >= 2; };
 const lakes = [], lakeBoxes = [];
-const OFFSETS = [[0, 0]]; for(const d of [40, 80]) for(let a = 0; a < 8; a++) OFFSETS.push([d * Math.sin(a * Math.PI / 4), d * Math.cos(a * Math.PI / 4)]);
-function tryLake(c0, r0, seed){
+// Lacs et etangs, sans donnees reelles : trois tailles, places selon le climat (pluie) et la forme du relief.
+//   grands lacs (22-62 km de rayon) : au creux des plus grands bassins, loin de la mer, tres espaces ;
+//   lacs moyens (8-20 km) : cuvettes et bassins de taille moyenne ;
+//   etangs (2-6,5 km) : partout ou il pleut, en semis irreguliers, regroupes autour des lacs (pays d'etangs).
+// Un lac ne touche jamais une riviere ni un autre lac (rive libre propre a sa taille) ; le desert n'en a presque pas.
+const LACS_ACTIFS = true;   // passer a false pour n'avoir aucun lac
+const OFFS = dmax => { const o = [[0, 0]]; for(const d of [dmax / 2, dmax]) for(let a = 0; a < 8; a++) o.push([d * Math.sin(a * Math.PI / 4), d * Math.cos(a * Math.PI / 4)]); return o; };
+const TIERS = [
+  { nom:'grand', n:42,  r:[22, 62], clair:15,  bord:3, espace:420, offs:OFFS(80), scales:[1, 0.8, 0.62] },
+  { nom:'moyen', n:230, r:[8, 20],  clair:9,   bord:2, espace:120, offs:OFFS(40), scales:[1, 0.8, 0.62] },
+  { nom:'etang', n:760, r:[2.2, 6.5], clair:3.5, bord:1, espace:30,  offs:OFFS(14), scales:[1, 0.75] },
+];
+function tryLake(c0, r0, seed, T){
   if(Math.abs(c0[0]) > EDGE_LON - 2) return null;
-  for(const [ox, oy] of OFFSETS) for(const scale of [1, 0.75, 0.55]){
+  const onLandT = ([lon, lat]) => { const c = cellOfPt([lon, lat]); return c >= 0 && land[c] && dist[c] >= T.bord; };
+  for(const [ox, oy] of T.offs) for(const scale of T.scales){
     const center = [c0[0] + ox / (111.32 * Math.cos(c0[1] * Math.PI / 180)), c0[1] + oy / 110.57];
     const poly = lakeShape(center, r0 * scale, seed);
-    if(!poly.geometry.coordinates[0].every(onLand)) continue;
-    const halo = turf.buffer(poly, LAKE_CLEAR, { units:'kilometers', steps:6 }), hb = turf.bbox(halo);
+    if(!poly.geometry.coordinates[0].every(onLandT)) continue;
+    const halo = turf.buffer(poly, T.clair, { units:'kilometers', steps:6 }), hb = turf.bbox(halo);
     const near = bb => !(hb[0] > bb[2] || hb[2] < bb[0] || hb[1] > bb[3] || hb[3] < bb[1]);
     if(rivers.some((x, k) => near(riverBoxes[k]) && turf.booleanIntersects(halo, x.poly))) continue;
     if(lakes.some((o, k) => near(lakeBoxes[k]) && turf.booleanIntersects(halo, o.poly))) continue;
@@ -319,29 +331,52 @@ function tryLake(c0, r0, seed){
   }
   return null;
 }
-const addLake = poly => { lakes.push({ poly }); lakeBoxes.push(turf.bbox(poly)); water += turf.area(poly) / 1e6; };
-const LACS_ACTIFS = false;   // lacs supprimes le 04/10/2026 (on refait l'eau de zero) : passer a true pour les regenerer
-const lakeTarget = LACS_ACTIFS ? Math.round(landKm2 * LAKE_DENSITY) : 0;
-for(const b of basins.slice().sort((a, b2) => b2.size - a.size)){
-  if(lakes.length >= lakeTarget) break;
-  const y = (b.sink / W) | 0, c0 = [lonAt(b.sink % W), latAt(y)];
-  const poly = tryLake(c0, Math.max(9, Math.sqrt(b.size * cellKm2(y) * 0.55 / Math.PI)), b.sink);
-  if(poly) addLake(poly);
+const addLake = (poly, tier) => { lakes.push({ poly, tier }); lakeBoxes.push(turf.bbox(poly)); water += turf.area(poly) / 1e6; };
+// index des lacs deja poses (cases de 2 degres) : espacement et « pays d'etangs »
+const lakeGrid = new Map(), GK = 2;
+const gkey = (lon, lat) => Math.floor(lon / GK) + ',' + Math.floor(lat / GK);
+const centreLac = [];
+const posee = (lon, lat, tier) => { const c = [lon, lat, tier]; centreLac.push(c); const k = gkey(lon, lat); (lakeGrid.get(k) || lakeGrid.set(k, []).get(k)).push(c); };
+const kmEntre = (lon1, lat1, lon2, lat2) => { const kx = 111.32 * Math.cos((lat1 + lat2) / 2 * Math.PI / 180); let dl = lon1 - lon2; dl -= 360 * Math.round(dl / 360); return Math.hypot(dl * kx, (lat1 - lat2) * 110.57); };
+const voisins = (lon, lat, rKm, f) => { const n = Math.ceil(rKm / (111.32 * Math.max(0.2, Math.cos(lat * Math.PI / 180))) / GK) + 1, m = Math.ceil(rKm / 110.57 / GK) + 1;
+  for(let i = -n; i <= n; i++) for(let j = -m; j <= m; j++) for(const c of lakeGrid.get(Math.floor(lon / GK) + i + ',' + (Math.floor(lat / GK) + j)) || []) if(kmEntre(lon, lat, c[0], c[1]) <= rKm && f(c)) return true; return false; };
+const maxBassin = Math.max(1, ...basins.map(b => b.size));
+function candidats(T){
+  const list = [];
+  if(T.nom === 'etang'){
+    for(let i = 0; i < N; i++){ if(!land[i] || dist[i] < T.bord || rain[i] < 0.18) continue;
+      list.push([i, rain[i] * (0.4 + geoHash(i, 11, 401)) ]); }
+  } else {
+    for(const bs of basins){ const i = bs.sink; if(!land[i] || dist[i] < T.bord) continue; const grand = T.nom === 'grand';
+      const t = bs.size / maxBassin; if(grand ? t < 0.12 : t > 0.5) continue;                 // grands : grands bassins ; moyens : les autres
+      list.push([i, (0.3 + rain[i]) * (grand ? 1 + 3 * t : 1) * (0.7 + 0.6 * geoHash(i, 13, 409)) * (grand ? Math.min(1.4, dist[i] / 6) : 1)]); }
+    for(let i = 0; i < N; i++){ if(T.nom !== 'moyen' || !land[i] || dist[i] < T.bord || rain[i] < 0.25 || geoHash(i, 17, 419) > 0.012) continue; list.push([i, rain[i] * 0.8]); }   // semis de cuvettes diffuses
+  }
+  return list.sort((x, y) => y[1] - x[1]);
 }
-const pits = [];
-for(let i = 0; i < N; i++){
-  if(!land[i] || dist[i] < 4) continue;
-  const cx = i % W, cy = (i / W) | 0; let pit = true;
-  for(let dy = -1; dy <= 1 && pit; dy++) for(let dx = -1; dx <= 1; dx++){ const nx = cx + dx, ny = cy + dy; if(nx < 0 || ny < 0 || nx >= W || ny >= H) continue; const n = ny * W + nx; if(n !== i && land[n] && elev[n] < elev[i]){ pit = false; break; } }
-  if(pit) pits.push([i, rain[i] + geoHash(i, 3, 211) * 0.3]);
+const compte = {};
+for(const T of (LACS_ACTIFS ? TIERS : [])){
+  let poses = 0; const cand = candidats(T);
+  for(const [i, sc] of cand){
+    if(poses >= T.n) break;
+    const lon = lonAt(i % W), lat = latAt((i / W) | 0);
+    if(voisins(lon, lat, T.espace, c => c[2] === T.nom)) continue;                           // trop pres d'un lac de meme taille
+    if(T.nom === 'etang'){                                                                     // pays d'etangs : plus de chances pres d'un lac
+      const pres = voisins(lon, lat, 140, c => c[2] !== 'etang');
+      if(!pres && geoHash(i, 23, 431) > 0.35) continue;
+    }
+    const hsh = geoHash(i, 7, 313), q = T.nom === 'etang' ? Math.pow(hsh, 1.7) : T.nom === 'moyen' ? Math.pow(hsh, 1.3) : hsh;
+    const humide = 0.65 + 0.35 * Math.min(1, rain[i] * 1.2);
+    const bs = T.nom === 'grand' ? Math.min(1, Math.sqrt((basins.find(b => b.sink === i) || { size:0 }).size / maxBassin) * 1.4) : 0;
+    const r0 = (T.r[0] + (T.r[1] - T.r[0]) * Math.min(1, q * 0.6 + bs * 0.4)) * humide;
+    const poly = tryLake([lon, lat], r0, i, T);
+    if(!poly) continue;
+    const c = turf.centroid(poly).geometry.coordinates;
+    addLake(poly, T.nom); posee(c[0], c[1], T.nom); poses++;
+  }
+  compte[T.nom] = poses + ' / ' + T.n;
 }
-pits.sort((a, b) => b[1] - a[1]);
-for(const [i] of pits){
-  if(lakes.length >= lakeTarget) break;
-  const poly = tryLake([lonAt(i % W), latAt((i / W) | 0)], 8 + geoHash(i, 7, 313) * 12, i);
-  if(poly) addLake(poly);
-}
-log('lacs', lakes.length, '/', lakeTarget, 'eau', (water / landKm2 * 100).toFixed(2) + ' %');
+log('lacs', lakes.length, JSON.stringify(compte), 'eau', (water / landKm2 * 100).toFixed(2) + ' %');
 
 // ---- regions: lit des rivieres et lacs retires ----
 const topo = JSON.parse(fs.readFileSync(SRC));
@@ -377,7 +412,7 @@ function resample(w, stepKm){ const c = [w.coords[0]], ww = [w.width[0]]; let ru
 const waterOut = {
   stats:{ landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:+(water / landKm2).toFixed(4), rivers:rivers.length, lakes:lakes.length, confluences:joined },
   rivers:rivers.map(w => ({ n:w.name, cls:w.cls, r:[...(w.regions || [])].sort((a, b) => a - b), ...resample(w, 4) })),
-  lakes:lakes.map(l => ({ p:l.poly.geometry.coordinates[0].map(([x, y]) => [r3(x), r3(y)]), a:Math.round(turf.area(l.poly) / 1e6), r:l.region || null })),
+  lakes:lakes.map(l => ({ t:l.tier, p:l.poly.geometry.coordinates[0].map(([x, y]) => [r3(x), r3(y)]), a:Math.round(turf.area(l.poly) / 1e6), r:l.region || null })),
 };
 fs.writeFileSync(path.join(OUT, 'water.json'), JSON.stringify(waterOut));
 // simplification legere (triangles < ~0.25 km2 retires) puis ~400 m de precision: invisible a l'echelle du jeu
