@@ -55,49 +55,7 @@ function renderLineChart(svg, legendEl, tipEl, tab){
   svg.appendChild(rect);
 }
 
-// Situation mondiale (tabs)
-const situationTabsEl = document.getElementById('situation-tabs');
-SITUATION_TABS.forEach((t,i) => {
-  const b = document.createElement('button');
-  b.className = 'tab' + (i===0 ? ' active' : '');
-  b.textContent = t.label;
-  b.addEventListener('click', () => {
-    situationTabsEl.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-    b.classList.add('active');
-    renderLineChart(document.getElementById('situation-chart'), document.getElementById('situation-legend'), document.getElementById('chart-tip'), t);
-  });
-  situationTabsEl.appendChild(b);
-});
-renderLineChart(document.getElementById('situation-chart'), document.getElementById('situation-legend'), document.getElementById('chart-tip'), SITUATION_TABS[0]);
-
-// ---------- Ranking (vide: pas encore de puissances classees) ----------
-const rankBody = document.getElementById('rank-body');
-if(RANKING.length){
-  const maxPower = Math.max(...RANKING.map(r => r.power));
-  RANKING.forEach((r,i) => {
-    const lightness = 68 - (r.power/maxPower)*30;
-    const tr = document.createElement('tr');
-    tr.innerHTML = '<td class="num">' + (i+1) + '</td>' +
-      '<td class="rank-name">' + r.flag + ' ' + r.name + '</td>' +
-      '<td style="width:50%"><div class="rank-bar-track"><div class="rank-bar-fill" style="width:' + r.power + '%; background:hsl(206,45%,' + lightness + '%)"></div></div></td>' +
-      '<td class="num">' + r.power + '%</td>';
-    rankBody.appendChild(tr);
-  });
-} else {
-  rankBody.innerHTML = '<tr><td colspan="4" class="empty-row">Aucune puissance classée pour le moment.</td></tr>';
-}
-
-// ---------- Events (vide: pas encore d'evenements) ----------
-const eventsList = document.getElementById('events-list');
-if(EVENTS.length){
-  EVENTS.forEach(ev => {
-    const li = document.createElement('li');
-    li.innerHTML = '<span class="ev-icon">' + ev.icon + '</span><span><span class="ev-date">' + ev.date + '</span>' + ev.text + '</span>';
-    eventsList.appendChild(li);
-  });
-} else {
-  eventsList.innerHTML = '<li class="empty-row">Aucun événement pour le moment.</li>';
-}
+// (Situation mondiale, Top 5 des puissances et Evenements recents : retires, la carte prend toute la place)
 
 // ---------- Clock ----------
 // (date et jour de jeu: voir l'economie, renderEconomy)

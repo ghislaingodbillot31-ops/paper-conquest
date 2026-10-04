@@ -227,8 +227,6 @@ main.workspace{ grid-area:main; padding:16px 22px; min-height:0; display:flex; f
 }
 @keyframes map-loading-spin{ to{ transform:rotate(360deg); } }
 
-.bottom-row{ flex:0 0 auto; display:grid; grid-template-columns:1.3fr 1fr 1fr; gap:14px; }
-.bottom-row .card{ min-height:0; max-height:230px; overflow-y:auto; }
 
 .tabs{ display:flex; gap:4px; margin-bottom:8px; }
 .tab{
@@ -401,7 +399,6 @@ table.rank .empty-row{ display:table-cell; }
   .app{ grid-template-columns:64px 1fr; }
   .nav-item span{ display:none; }
   .nav-item{ justify-content:center; padding:10px; }
-  .bottom-row{ grid-template-columns:1fr; }
   .carte-row{ flex-direction:column; }
   .region-panel{ flex:1 1 auto; width:100%; }
   .stat-pills{ gap:12px; }
