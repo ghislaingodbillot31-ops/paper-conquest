@@ -21,7 +21,7 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (atelier.on) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
   const pending = presentScene();                         // décor (tuiles)
-  if (typeof HORIZON !== 'undefined' && HORIZON) drawHorizonLabels(); else drawFrameMarks();   // (horizon : plus de cadre, mais le numéro des régions voisines)
+  drawFrameMarks();
   drawHighlights();
   if (tool === 'tower') {
     drawSpots(Z.wallNodes.filter(q => !S.towers.some(t => segLen([t.x, t.y], q) < .6)));

@@ -172,9 +172,9 @@ function drawSea() {
 function drawBorder() {
   if (!FORME) return;
   const out = cadreEtAnneaux(FORME.region), land = cheminAnneaux(FORME.terres), front = cheminAnneaux(FORME.region);
-  if (!(typeof HORIZON !== 'undefined' && HORIZON)) { ctx.save(); ctx.clip(land, 'evenodd');          // (sans horizon : les terres voisines sont voilées)
+  ctx.save(); ctx.clip(land, 'evenodd');
   ctx.globalAlpha = .45; ctx.fillStyle = Col.sheet; ctx.fill(out, 'evenodd');
-  ctx.restore(); }
+  ctx.restore();
   ctx.save(); ctx.clip(land, 'evenodd');
   ctx.setLineDash([10, 6]); ctx.strokeStyle = Col.ink; ctx.globalAlpha = .75; ctx.lineWidth = 2; ctx.stroke(front);
   ctx.restore();

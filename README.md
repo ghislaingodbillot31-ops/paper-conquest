@@ -17,8 +17,6 @@ Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, p
 ├── js/
 │   ├── jeu/                 # Systèmes du jeu : globe, données des régions, routes, bateaux, caravane,
 │   │                        #   ressources, faune, pêche, eau, régions, capitale, construction, économie
-│   │                        #   paysage-monde.js : bouton « Paysage » (essai), le monde peint comme une carte de région
-│   ├── commun/              # paysage-peint.js : peintre de paysage (sol, forêts, montagnes) partagé par le globe et la carte de région
 │   ├── carte/               # Générateur et rendu des cartes de région : relief, eau, paysage, zonage,
 │   │                        #   routes, simulation, fortifications, outils, panneau
 │   └── batiments/           # Bâtiments : catalogue, atelier, éléments de dessin, dessins de chaque bâtiment

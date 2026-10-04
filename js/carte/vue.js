@@ -23,8 +23,7 @@ function fitContent() {
   fit([Math.max(0, bb[0] - m), Math.max(0, bb[1] - m), Math.min(TW, bb[2] + m), Math.min(TH, bb[3] + m)]);
 }
 // zoom arrière limité : au plus loin, toute la carte tient dans la fenêtre (avec sa marge)
-const bornes = () => typeof horizonBornes === 'function' ? horizonBornes() : [0, 0, TW, TH];   // zone où l'on peut aller : le terrain, ou toute la carte autour (horizon)
-const minScale = () => { if (atelier.on) return Math.min((W - 60), (H - 60)) / atelierSide() * .5; const B = bornes(); return Math.max(.03, Math.min((W - 90) / (B[2] - B[0]), (H - 70) / (B[3] - B[1]))); };
+const minScale = () => atelier.on ? Math.min((W - 60), (H - 60)) / atelierSide() * .5 : Math.max(.05, Math.min((W - 90) / TW, (H - 70) / TH));
 // la carte ne peut pas sortir de la fenêtre : si elle est plus petite que la fenêtre, elle
 // reste centrée ; sinon ses bords ne s'écartent pas des bords de la fenêtre (marge de 40 px)
 function clampView() {
@@ -33,9 +32,9 @@ function clampView() {
     view.ox = Math.min(W - 40 + half, Math.max(40 - half, view.ox)); view.oy = Math.min(H - 40 + half, Math.max(40 - half, view.oy));
     return;
   }
-  const M = 40, B = bornes(), s = view.s, mw = (B[2] - B[0]) * s, mh = (B[3] - B[1]) * s;
-  view.ox = mw + 2 * M <= W ? (W - mw) / 2 - B[0] * s : Math.min(M - B[0] * s, Math.max(W - M - B[2] * s, view.ox));
-  view.oy = mh + 2 * M <= H ? (H - mh) / 2 - B[1] * s : Math.min(M - B[1] * s, Math.max(H - M - B[3] * s, view.oy));
+  const M = 40, mw = TW * view.s, mh = TH * view.s;
+  view.ox = mw + 2 * M <= W ? (W - mw) / 2 : Math.min(M, Math.max(W - M - mw, view.ox));
+  view.oy = mh + 2 * M <= H ? (H - mh) / 2 : Math.min(M, Math.max(H - M - mh, view.oy));
 }
 function zoomAt(px, py, f) {
   const ns = Math.min(60, Math.max(minScale(), view.s * f)), k = ns / view.s;
@@ -57,5 +56,4 @@ function readColors() {
     Col[k] = cs.getPropertyValue('--' + k).trim();
   makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
   groundImg = null; markAllDirty(); // sol, végétation et tout le décor repeints avec les nouvelles couleurs
-  if (typeof lanceHorizon === 'function') lanceHorizon(); // (et les régions voisines, à la couleur de mer du thème)
 }
