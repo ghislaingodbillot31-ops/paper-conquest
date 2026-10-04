@@ -55,7 +55,8 @@ const out = vm.runInContext(`(() => {
     routes.push([r.a, r.b, [a, ...r.via, b]]);
   });
   console.log('routes de reparation (continents voisins) :', repairConnectivity(topo, fc, geometries, routes, capitalById));
-  return { capitales, routes };
+  console.log('routes supplementaires :', addExtraRoads(topo, fc, geometries, routes, capitalById));
+  return { capitales, routes:refineRoads(topo, routes, capitalById) };
 })()`, ctx, { filename:'build-routes (calcul)' });
 log(out.capitales.length, 'capitales,', out.routes.length, 'routes');
 

@@ -434,3 +434,104 @@ function repairConnectivity(topo, fc, geometries, routes, capitalById){
   if(left.length) console.warn('connexions terrestres impossibles a tracer (a verifier) :', left.join(' '));
   return added;
 }
+
+// ---------- Routes supplementaires voulues explicitement (paires d'id de regions voisines) ----------
+const EXTRA_ROADS = [
+  [59, 68],   // Bielorussie - Russie
+];
+function addExtraRoads(topo, fc, geometries, routes, capitalById){
+  const idx = new Map(fc.features.map((f, i) => [f.id, i]));
+  const edges = routes.map(r => ({ coords:r[2], bbox:bboxOfCoords(r[2]) }));
+  let boxes = null, onAnyLand = null;
+  const lazyLand = () => { if(onAnyLand) return;
+    boxes = fc.features.map(f => bboxOfCoords((f.land || f).geometry.type === 'Polygon' ? (f.land || f).geometry.coordinates[0] : (f.land || f).geometry.coordinates.flat(1).flatMap(r => r)));
+    onAnyLand = pt => fc.features.some((f, k) => pt[0] >= boxes[k][0] && pt[0] <= boxes[k][2] && pt[1] >= boxes[k][1] && pt[1] <= boxes[k][3] && turf.booleanPointInPolygon(pt, f.land || f)); };
+  let added = 0;
+  for(const [ia, ib] of EXTRA_ROADS){
+    if(routes.some(r => (r[0] === ia && r[1] === ib) || (r[0] === ib && r[1] === ia))) continue;
+    const i = idx.get(ia), j = idx.get(ib), A = fc.features[i], B = fc.features[j];
+    let coords = landPath(topo, capitalById.get(ia), capitalById.get(ib), geometries[i], geometries[j], A.land || A, B.land || B, edges);
+    if(!coords){ lazyLand(); coords = anyLandPath(topo, capitalById.get(ia), capitalById.get(ib), geometries[i], geometries[j], onAnyLand, edges); }
+    if(!coords){ console.warn('route supplementaire impossible a tracer :', ia, ib); continue; }
+    routes.push([ia, ib, coords]); edges.push({ coords, bbox:bboxOfCoords(coords) }); added++;
+  }
+  return added;
+}
+
+// ---------- Raffinement des routes : adoucies et tenues a distance de la cote ----------
+// Index des segments de cote (arcs utilises une seule fois, hors fentes interieures), par cases de 0,5 degre.
+function buildCoastIndex(topo){
+  const obj = topo.objects[Object.keys(topo.objects)[0]], use = new Map();
+  const walk = a => Array.isArray(a) ? a.forEach(walk) : use.set(a < 0 ? ~a : a, (use.get(a < 0 ? ~a : a) || 0) + 1);
+  obj.geometries.forEach(g => walk(g.arcs));
+  const inland = new Set(topo.interieurs || []);
+  const arcs = [...use].filter(([k, c]) => c === 1 && !inland.has(k)).map(([k]) => [k]);
+  const lines = topojson.feature(topo, { type:'MultiLineString', arcs }).geometry.coordinates;
+  const cells = new Map(), C = 0.5, key = (i, j) => i + ',' + j;
+  for(const line of lines) for(let q = 0; q < line.length - 1; q++){
+    const a = line[q], b = line[q + 1]; if(Math.abs(a[0] - b[0]) > 180) continue;   // segment qui saute l'antimeridien
+    const i0 = Math.floor(Math.min(a[0], b[0]) / C), i1 = Math.floor(Math.max(a[0], b[0]) / C), j0 = Math.floor(Math.min(a[1], b[1]) / C), j1 = Math.floor(Math.max(a[1], b[1]) / C);
+    for(let i = i0; i <= i1; i++) for(let j = j0; j <= j1; j++){ const k = key(i, j); (cells.get(k) || cells.set(k, []).get(k)).push([a[0], a[1], b[0], b[1]]); }
+  }
+  // distance (km) du point a la cote la plus proche + ce point ; rayon de recherche en km
+  return function nearestCoast(lon, lat, rKm){
+    const kx = 111.32 * Math.cos(lat * Math.PI / 180), ky = 110.57, rx = Math.ceil(rKm / kx / C) + 1, ry = Math.ceil(rKm / ky / C) + 1;
+    const ci = Math.floor(lon / C), cj = Math.floor(lat / C); let best = Infinity, bx = 0, by = 0;
+    for(let i = ci - rx; i <= ci + rx; i++) for(let j = cj - ry; j <= cj + ry; j++){
+      const segs = cells.get(key(i, j)); if(!segs) continue;
+      for(const [x1, y1, x2, y2] of segs){
+        const ax = (x1 - lon) * kx, ay = (y1 - lat) * ky, dx = (x2 - x1) * kx, dy = (y2 - y1) * ky, L = dx * dx + dy * dy;
+        let t = L ? -(ax * dx + ay * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+        const px = ax + t * dx, py = ay + t * dy, d = Math.hypot(px, py);
+        if(d < best){ best = d; bx = px; by = py; } } }
+    return { d:best, dx:bx, dy:by, kx, ky };   // (dx, dy) : du point vers la cote, en km
+  };
+}
+
+// Routes : points toutes les ~15 km, lissage de Laplace, puis eloignement de la cote jusqu'a MARGE km.
+// Un point ne bouge jamais de plus de 80 % de sa distance a la cote : il ne peut donc pas passer en mer.
+// Sur un isthme plus etroit que 2 x MARGE, on garde la meilleure distance atteignable.
+function refineRoads(topo, routes, capitalById, opt){
+  const MARGE = (opt && opt.marge) || 15, PAS = 15, ENDS = 10, near = buildCoastIndex(topo);
+  const km = (p, q) => { const kx = 111.32 * Math.cos((p[1] + q[1]) / 2 * Math.PI / 180); return Math.hypot((q[0] - p[0]) * kx, (q[1] - p[1]) * 110.57); };
+  const dens = pts => { const out = [pts[0]]; for(let q = 1; q < pts.length; q++){ const a = pts[q - 1], b = pts[q], n = Math.max(1, Math.round(km(a, b) / PAS));
+    for(let s = 1; s <= n; s++) out.push([a[0] + (b[0] - a[0]) * s / n, a[1] + (b[1] - a[1]) * s / n]); } return out; };
+  const stats = { points:0, pousses:0, restants:0 };
+  const refined = routes.map(([a, b, orig]) => {
+    let p = dens(orig).map(x => x.slice()); if(p.length < 4) return [a, b, orig];
+    const dFrom = p.map((_, q) => { let s = 0; for(let r = 1; r <= q; r++) s += km(p[r - 1], p[r]); return s; }), total = dFrom[p.length - 1];
+    const free = q => dFrom[q] < ENDS || total - dFrom[q] < ENDS;       // pres des capitales : pas de contrainte
+    for(let it = 0; it < 10; it++){
+      const nx = p.map(x => x.slice());
+      for(let q = 1; q < p.length - 1; q++){
+        const m = [(p[q - 1][0] + p[q + 1][0]) / 2, (p[q - 1][1] + p[q + 1][1]) / 2], c = near(normLon(p[q][0]), p[q][1], 60);
+        let f = 0.5, mv = Math.hypot((m[0] - p[q][0]) * c.kx, (m[1] - p[q][1]) * c.ky);
+        if(mv > 0.8 * c.d) f = 0.5 * 0.8 * c.d / mv;                      // ne jamais depasser la cote
+        nx[q] = [p[q][0] + (m[0] - p[q][0]) * f, p[q][1] + (m[1] - p[q][1]) * f];
+      }
+      p = nx;
+      for(let q = 1; q < p.length - 1; q++){ if(free(q)) continue;
+        for(let k = 0; k < 6; k++){ const c = near(normLon(p[q][0]), p[q][1], MARGE + 10); if(c.d >= MARGE || c.d < 0.05) break;
+          const step = Math.min(MARGE - c.d, 0.5 * c.d, 4), len = Math.hypot(c.dx, c.dy) || 1;
+          const np = [p[q][0] - c.dx / len * step / c.kx, p[q][1] - c.dy / len * step / c.ky];
+          if(near(normLon(np[0]), np[1], MARGE + 10).d <= c.d + 1e-6) break;   // ne s'eloigne plus : isthme etroit
+          p[q] = np; stats.pousses++; } }
+    }
+    for(let q = 1; q < p.length - 1; q++){ stats.points++; if(!free(q) && near(normLon(p[q][0]), p[q][1], MARGE + 10).d < MARGE - 0.5) stats.restants++; }
+    return [a, b, p];
+  });
+  // Une route raffinee qui en croiserait une autre alors que l'originale ne le faisait pas revient a l'originale.
+  const bbs = refined.map(r => bboxOfCoords(r[2])), bbo = routes.map(r => bboxOfCoords(r[2]));
+  let reverts = 0;
+  for(let i = 0; i < refined.length; i++){
+    for(let j = 0; j < refined.length; j++){
+      if(i === j) continue;
+      const [ai, bi] = refined[i], [aj, bj] = refined[j];
+      if(ai === aj || ai === bj || bi === aj || bi === bj) continue;
+      if(pathsCross(refined[i][2], bbs[i], refined[j][2], bbs[j]) && !pathsCross(routes[i][2], bbo[i], routes[j][2], bbo[j])){
+        refined[i] = routes[i]; bbs[i] = bbo[i]; reverts++; break; }
+    }
+  }
+  console.log('raffinement des routes : marge', MARGE, 'km,', stats.points, 'points,', stats.pousses, 'eloignements,', stats.restants, 'points encore a moins de la marge (isthmes),', reverts, 'route(s) rendue(s) a leur trace d\'origine (croisement)');
+  return refined;
+}
