@@ -228,7 +228,7 @@
     "agriculture": {"bois_chauffage": 1, "pierre": 3},
     "animaux": {"zone": 25, "elevage": {}, "faune": {"elan": 1, "renne": 1, "castor": 1, "renard": 1}, "predateurs": {"loup": 1, "ours_brun": 1, "ours_noir": 1, "lynx": 1}},
     "peche": {"eau_douce": {"brochet": 3, "perche": 1, "coregone": 3, "truite_rouge": 3}, "mer": []},
-    "eau": {"fleuves": ["Mackenzie", "Porcupine"], "lacs": 17, "cotiere": true, "cours_eau_carte": "fleuve"}
+    "eau": {"fleuves": ["Mackenzie", "Porcupine"], "lacs": 18, "cotiere": true, "cours_eau_carte": "fleuve"}
   },
   {
     "id": 22, "pays": "ISL", "centre": [-19.49,65.24], "capitale": [-17.953172531225285,64.71088777214442], "aire_km2": 103212,
@@ -305,7 +305,7 @@
     "agriculture": {"seigle": 1, "bois": 2, "bois_chauffage": 2, "pierre": 1},
     "animaux": {"zone": 6, "elevage": {"cheval": 2, "renne_dom": 2}, "faune": {"elan": 2, "renne": 2, "castor": 2, "zibeline": 2, "hermine": 2}, "predateurs": {"loup": 2, "ours_brun": 2, "lynx": 2}},
     "peche": {"eau_douce": {"brochet": 1, "coregone": 2}, "mer": []},
-    "eau": {"fleuves": ["Kolyma", "Indigirka"], "lacs": 15, "cotiere": false, "cours_eau_carte": "riviere"}
+    "eau": {"fleuves": ["Kolyma", "Indigirka"], "lacs": 14, "cotiere": false, "cours_eau_carte": "riviere"}
   },
   {
     "id": 29, "pays": "RUS", "centre": [128.26,65.66], "capitale": [126.61282647276477,65.64563322433227], "aire_km2": 264923,
@@ -316,7 +316,7 @@
     "agriculture": {"bois_chauffage": 1, "pierre": 3},
     "animaux": {"zone": 6, "elevage": {"cheval": 3, "renne_dom": 3}, "faune": {"elan": 3, "renne": 3, "castor": 3, "zibeline": 3, "hermine": 3}, "predateurs": {"loup": 3, "ours_brun": 3, "lynx": 3}},
     "peche": {"eau_douce": {"brochet": 3, "coregone": 3}, "mer": []},
-    "eau": {"fleuves": ["Lena", "Vilyuy"], "lacs": 21, "cotiere": false, "cours_eau_carte": "fleuve"}
+    "eau": {"fleuves": ["Lena", "Vilyuy"], "lacs": 20, "cotiere": false, "cours_eau_carte": "fleuve"}
   },
   {
     "id": 30, "pays": "USA", "centre": [-161.59,66.67], "capitale": [-158.9713191766203,67.81043449973075], "aire_km2": 281766,
@@ -338,7 +338,7 @@
     "agriculture": {"bois": 1, "bois_chauffage": 1, "pierre": 3},
     "animaux": {"zone": 24, "elevage": {}, "faune": {"renne": 3, "boeuf_musque": 3, "renard": 3}, "predateurs": {"loup": 3, "ours_polaire": 3}},
     "peche": {"eau_douce": {"brochet": 1, "perche": 1, "coregone": 1}, "mer": []},
-    "eau": {"fleuves": ["Thelon", "Back"], "lacs": 20, "cotiere": true, "cours_eau_carte": "petite"}
+    "eau": {"fleuves": ["Thelon", "Back"], "lacs": 19, "cotiere": true, "cours_eau_carte": "petite"}
   },
   {
     "id": 32, "pays": "SWE", "centre": [13.99,64.17], "capitale": [16.630911262684084,64.56893305308054], "aire_km2": 236451,
@@ -382,7 +382,7 @@
     "agriculture": {"orge": 1, "seigle": 2, "bois": 2, "bois_chauffage": 2},
     "animaux": {"zone": 25, "elevage": {}, "faune": {"elan": 2, "renne": 2, "castor": 2, "renard": 2}, "predateurs": {"loup": 2, "ours_brun": 2, "ours_noir": 2, "lynx": 2}},
     "peche": {"eau_douce": {"brochet": 3, "perche": 3, "coregone": 3, "truite_rouge": 3}, "mer": []},
-    "eau": {"fleuves": ["Mackenzie", "Liard"], "lacs": 9, "cotiere": false, "cours_eau_carte": "fleuve"}
+    "eau": {"fleuves": ["Mackenzie", "Liard"], "lacs": 7, "cotiere": false, "cours_eau_carte": "fleuve"}
   },
   {
     "id": 36, "pays": "RUS", "centre": [77.9,64.73], "capitale": [77.53101686368265,64.80630154146314], "aire_km2": 313819,
@@ -569,7 +569,7 @@
     "agriculture": {"orge": 2, "seigle": 2, "avoine": 2, "bois": 3, "bois_chauffage": 3},
     "animaux": {"zone": 6, "elevage": {"cheval": 2, "renne_dom": 2}, "faune": {"elan": 2, "renne": 2, "castor": 2, "zibeline": 2, "hermine": 2}, "predateurs": {"loup": 2, "ours_brun": 2, "lynx": 2}},
     "peche": {"eau_douce": {"brochet": 3, "coregone": 3}, "mer": []},
-    "eau": {"fleuves": ["Lena", "Vilyuy"], "lacs": 7, "cotiere": false, "cours_eau_carte": "fleuve"}
+    "eau": {"fleuves": ["Lena", "Vilyuy"], "lacs": 6, "cotiere": false, "cours_eau_carte": "fleuve"}
   },
   {
     "id": 53, "pays": "RUS", "centre": [128.09,60.78], "capitale": [127.37995501245297,61.02240850431219], "aire_km2": 271743,
@@ -998,7 +998,7 @@
     "agriculture": {"ble": 3, "orge": 3, "seigle": 3, "avoine": 3, "lin": 3, "chanvre": 3, "garance": 2, "pastel": 3, "bois": 3, "bois_chauffage": 3},
     "animaux": {"zone": 3, "elevage": {"cheval": 3, "vache": 3, "mouton": 3, "cochon": 3}, "faune": {"sanglier": 3, "elan": 3, "bison": 3, "castor": 3}, "predateurs": {"loup": 3, "ours_brun": 3}},
     "peche": {"eau_douce": {"carpe": 3, "brochet": 3, "perche": 3, "esturgeon": 1, "sandre": 1}, "mer": []},
-    "eau": {"fleuves": ["Dnieper", "Don"], "lacs": 2, "cotiere": true, "cours_eau_carte": "riviere"}
+    "eau": {"fleuves": ["Dnieper", "Don"], "lacs": 3, "cotiere": true, "cours_eau_carte": "riviere"}
   },
   {
     "id": 92, "pays": "RUS", "centre": [82.87,53.14], "capitale": [83.1337878638875,53.1138822447506], "aire_km2": 313210,
@@ -1108,7 +1108,7 @@
     "agriculture": {"ble": 3, "orge": 3, "seigle": 3, "avoine": 3, "lin": 3, "chanvre": 3, "garance": 1, "pastel": 3, "bois": 3, "bois_chauffage": 3},
     "animaux": {"zone": 3, "elevage": {"cheval": 3, "vache": 3, "mouton": 3, "cochon": 3}, "faune": {"sanglier": 3, "elan": 3, "bison": 3, "castor": 3}, "predateurs": {"loup": 3, "ours_brun": 3}},
     "peche": {"eau_douce": {"carpe": 1, "brochet": 3, "perche": 1, "esturgeon": 1, "sandre": 1, "coregone": 3}, "mer": []},
-    "eau": {"fleuves": ["Don"], "lacs": 8, "cotiere": true, "cours_eau_carte": "petite"}
+    "eau": {"fleuves": ["Don"], "lacs": 10, "cotiere": true, "cours_eau_carte": "petite"}
   },
   {
     "id": 102, "pays": "CAN", "centre": [-101.02,51.88], "capitale": [-100.70846465001375,51.426703255198355], "aire_km2": 313828,
@@ -1119,7 +1119,7 @@
     "agriculture": {"ble": 3, "orge": 3, "seigle": 3, "avoine": 3, "lin": 3, "chanvre": 3, "garance": 3, "pastel": 3, "bois": 3, "bois_chauffage": 3},
     "animaux": {"zone": 26, "elevage": {}, "faune": {"cerf": 1, "bison": 1, "antilope": 1}, "predateurs": {"loup": 1, "puma": 1}},
     "peche": {"eau_douce": {"brochet": 2, "perche": 2, "esturgeon": 2, "coregone": 2}, "mer": []},
-    "eau": {"fleuves": ["Nelson", "Saskatchewan"], "lacs": 4, "cotiere": false, "cours_eau_carte": "riviere"}
+    "eau": {"fleuves": ["Nelson", "Saskatchewan"], "lacs": 5, "cotiere": false, "cours_eau_carte": "riviere"}
   },
   {
     "id": 103, "pays": "KAZ", "centre": [68.72,51.66], "capitale": [68.7363445389849,51.67067936210066], "aire_km2": 284747,
@@ -1449,7 +1449,7 @@
     "agriculture": {"ble": 3, "orge": 3, "seigle": 3, "avoine": 3, "lin": 3, "chanvre": 3, "garance": 3, "pastel": 3, "bois": 3, "bois_chauffage": 3},
     "animaux": {"zone": 3, "elevage": {"cheval": 1, "vache": 1, "mouton": 1, "cochon": 1}, "faune": {"sanglier": 1, "elan": 1, "bison": 1, "castor": 1}, "predateurs": {"loup": 1, "ours_brun": 1}},
     "peche": {"eau_douce": {"carpe": 1, "brochet": 1, "perche": 1, "esturgeon": 1, "sandre": 2, "carassin": 2}, "mer": [12]},
-    "eau": {"fleuves": ["Don"], "lacs": 3, "cotiere": true, "cours_eau_carte": "petite"}
+    "eau": {"fleuves": ["Don"], "lacs": 1, "cotiere": true, "cours_eau_carte": "petite"}
   },
   {
     "id": 133, "pays": "USA", "centre": [-101.57,47.03], "capitale": [-102.82114140594871,46.24014943268865], "aire_km2": 340331,
