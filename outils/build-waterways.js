@@ -301,7 +301,7 @@ for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
   if(!w){ cutEarly.push(R.n); continue; }
   if(w.joined) joined++;
   if(w.grazed) cutEarly.push(R.n + ' (frole une autre riviere)');
-  w.name = R.n; w.cls = R.cls; w.canal = !!R.canal; w.line = turf.lineString(w.coords);
+  w.name = R.n; w.cls = R.cls; w.canal = !!R.canal; w.startsJoin = R.start === 'join'; w.line = turf.lineString(w.coords);
   w.poly = riverPolygon(w); stamp(w.coords, w.width);
   rivers.push(w); water += turf.area(w.poly) / 1e6;
 }
@@ -312,6 +312,29 @@ const cellOfPt = ([lon, lat]) => { const x = Math.floor((lon - BOX.lon0) / BOX.r
 const riverBoxes = rivers.map(x => turf.bbox(x.poly));
 const onLand = ([lon, lat]) => { const c = cellOfPt([lon, lat]); return c >= 0 && land[c] && dist[c] >= 2; };
 const lakes = [], lakeBoxes = [];
+// Routes et capitales (data/monde/routes.json, data/regions/regions.json) : les plans d'eau les evitent.
+const ROUTES_J = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data/monde/routes.json'), 'utf8'));
+const CAPITALES = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'data/regions/regions.json'), 'utf8')).map(r => r.capitale);
+const segCases = new Map(), SC = 0.25;
+for(const [, , pts] of ROUTES_J.routes) for(let i = 0; i < pts.length - 1; i++){
+  const a = pts[i], b = pts[i + 1];
+  for(let x = Math.floor(Math.min(a[0], b[0]) / SC); x <= Math.floor(Math.max(a[0], b[0]) / SC); x++) for(let y = Math.floor(Math.min(a[1], b[1]) / SC); y <= Math.floor(Math.max(a[1], b[1]) / SC); y++){
+    const k = x + ',' + y; (segCases.get(k) || segCases.set(k, []).get(k)).push([a[0], a[1], b[0], b[1]]); } }
+const capCases = new Map(); CAPITALES.forEach(c => { const k = Math.floor(c[0] / SC) + ',' + Math.floor(c[1] / SC); (capCases.get(k) || capCases.set(k, []).get(k)).push(c); });
+// vrai si le disque (centre, rayon R km) reste a plus de `clair` km de toute route et de plus de CLAIR_CAPITALE km d'une capitale
+const CLAIR_CAPITALE = 12;
+function loinDesRoutes(lon, lat, R, clair){
+  const kx = 111.32 * Math.cos(lat * Math.PI / 180), ky = 110.57, rx = Math.ceil((R + Math.max(clair, CLAIR_CAPITALE)) / kx / SC) + 1, ry = Math.ceil((R + Math.max(clair, CLAIR_CAPITALE)) / ky / SC) + 1;
+  const ci = Math.floor(lon / SC), cj = Math.floor(lat / SC);
+  for(let i = ci - rx; i <= ci + rx; i++) for(let j = cj - ry; j <= cj + ry; j++){
+    for(const c of capCases.get(i + ',' + j) || []) if(Math.hypot((c[0] - lon) * kx, (c[1] - lat) * ky) < R + CLAIR_CAPITALE) return false;
+    for(const [x1, y1, x2, y2] of segCases.get(i + ',' + j) || []){
+      const ax = (x1 - lon) * kx, ay = (y1 - lat) * ky, dx = (x2 - x1) * kx, dy = (y2 - y1) * ky, L = dx * dx + dy * dy;
+      let t = L ? -(ax * dx + ay * dy) / L : 0; t = Math.max(0, Math.min(1, t));
+      if(Math.hypot(ax + t * dx, ay + t * dy) < R + clair) return false; } }
+  return true;
+}
+const rayonKm = (poly, lon, lat) => { const kx = 111.32 * Math.cos(lat * Math.PI / 180); let R = 0; for(const [x, y] of poly.geometry.coordinates[0]) R = Math.max(R, Math.hypot((x - lon) * kx, (y - lat) * 110.57)); return R; };
 // Lacs et etangs, sans donnees reelles : trois tailles, places selon le climat (pluie) et la forme du relief.
 //   grands lacs (22-62 km de rayon) : au creux des plus grands bassins, loin de la mer, tres espaces ;
 //   lacs moyens (8-20 km) : cuvettes et bassins de taille moyenne ;
@@ -320,9 +343,9 @@ const lakes = [], lakeBoxes = [];
 const LACS_ACTIFS = true;   // passer a false pour n'avoir aucun lac
 const OFFS = dmax => { const o = [[0, 0]]; for(const d of [dmax / 2, dmax]) for(let a = 0; a < 8; a++) o.push([d * Math.sin(a * Math.PI / 4), d * Math.cos(a * Math.PI / 4)]); return o; };
 const TIERS = [
-  { nom:'grand', n:42,  r:[22, 62], clair:15,  bord:3, espace:420, offs:OFFS(80), scales:[1, 0.8, 0.62] },
-  { nom:'moyen', n:230, r:[8, 20],  clair:9,   bord:2, espace:120, offs:OFFS(40), scales:[1, 0.8, 0.62] },
-  { nom:'etang', n:760, r:[2.2, 6.5], clair:3.5, bord:1, espace:30,  offs:OFFS(14), scales:[1, 0.75] },
+  { nom:'grand', n:42,  r:[22, 62], routes:8, clair:15,  bord:3, espace:420, offs:OFFS(80), scales:[1, 0.8, 0.62] },
+  { nom:'moyen', n:230, r:[8, 20],  routes:5, clair:9,   bord:2, espace:120, offs:OFFS(40), scales:[1, 0.8, 0.62] },
+  { nom:'etang', n:760, r:[2.2, 6.5], routes:3, clair:3.5, bord:1, espace:30,  offs:OFFS(14), scales:[1, 0.75] },
 ];
 function tryLake(c0, r0, seed, T){
   if(Math.abs(c0[0]) > EDGE_LON - 2) return null;
@@ -331,6 +354,7 @@ function tryLake(c0, r0, seed, T){
     const center = [c0[0] + ox / (111.32 * Math.cos(c0[1] * Math.PI / 180)), c0[1] + oy / 110.57];
     const poly = lakeShape(center, r0 * scale, seed);
     if(!poly.geometry.coordinates[0].every(onLandT)) continue;
+    if(!loinDesRoutes(center[0], center[1], rayonKm(poly, center[0], center[1]), T.routes)) continue;
     const halo = turf.buffer(poly, T.clair, { units:'kilometers', steps:6 }), hb = turf.bbox(halo);
     const near = bb => !(hb[0] > bb[2] || hb[2] < bb[0] || hb[1] > bb[3] || hb[3] < bb[1]);
     if(rivers.some((x, k) => near(riverBoxes[k]) && turf.booleanIntersects(halo, x.poly))) continue;
@@ -406,15 +430,15 @@ if(LACS_ACTIFS){
   fc.features.forEach((f, k) => {
     if(avec.has(k)) return;
     const b = fBoxes[k], pts = [];
-    try{ pts.push(turf.pointOnFeature(f).geometry.coordinates); }catch(e){}
-    for(let i = 0; i < 14; i++) for(let j = 0; j < 14; j++){ const p = [b[0] + (b[2] - b[0]) * (i + .5) / 14, b[1] + (b[3] - b[1]) * (j + .5) / 14];
+    for(let i = 0; i < 24; i++) for(let j = 0; j < 24; j++){ const p = [b[0] + (b[2] - b[0]) * (i + .5) / 24, b[1] + (b[3] - b[1]) * (j + .5) / 24];
       if(Math.abs(p[0]) < EDGE_LON - 3 && turf.booleanPointInPolygon(p, f)) pts.push(p); }
     const c0 = pts[0] || [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
-    pts.sort((p, q) => Math.hypot(p[0] - c0[0], p[1] - c0[1]) - Math.hypot(q[0] - c0[0], q[1] - c0[1]));
+    pts.sort((p, q) => geoHash(Math.round(p[0] * 1e3), Math.round(p[1] * 1e3), 977 + k) - geoHash(Math.round(q[0] * 1e3), Math.round(q[1] * 1e3), 977 + k));   // ordre au hasard : pas toujours au centre
     for(const clair of [2.5, 1.2, 0.5]) for(const r of [4.5, 3.2, 2.2, 1.5, 1, 0.6]){
-      for(const p of pts.slice(0, 60)){
+      for(const p of pts.slice(0, 120)){
         const poly = lakeShape(p, r, 7919 + k * 31);
         if(!poly.geometry.coordinates[0].every(q => turf.booleanPointInPolygon(q, f))) continue;
+        if(!loinDesRoutes(p[0], p[1], rayonKm(poly, p[0], p[1]), 2.5)) continue;
         if(!libre(poly, clair)) continue;
         addLake(poly, 'etang'); ajoutes++; avec.add(k); return;
       }
@@ -423,7 +447,39 @@ if(LACS_ACTIFS){
   });
   log('etangs ajoutes pour que chaque region ait un point d\'eau :', ajoutes, rates.length ? '| regions sans place : ' + rates.join(', ') : '| toutes les regions en ont un');
 }
-const waters = [...rivers.map(r => r.poly), ...lakes.map(l => l.poly)], waterBoxes = waters.map(p => turf.bbox(p));
+// ---- intersections : a chaque confluence, depart de bras ou croisement de deux cours, l'eau forme une vraie jonction ----
+// Les deux cours sont fermes l'un sur l'autre autour du point de rencontre (fermeture morphologique de rayon proportionnel
+// a la largeur du plus petit) : le coin de terre aigu entre l'affluent et le fleuve est comble et arrondi, la jonction
+// est un Y (ou une croix) en eau, sans pointe de terre ni angle vif.
+const jonctions = [];
+const largeurEn = (w, p) => { let bi = 0, bd = Infinity; w.coords.forEach((c, i) => { const d = Math.hypot(c[0] - p[0], c[1] - p[1]); if(d < bd){ bd = d; bi = i; } }); return w.width[bi]; };
+rivers.forEach((w, i) => {
+  // extremites rattachees a un autre cours (affluent, bras)
+  for(const [pt, fin] of [[w.coords[w.coords.length - 1], true], [w.coords[0], false]]){
+    if(fin && !w.joined) continue; if(!fin && !w.startsJoin) continue;
+    let best = -1, bd = Infinity; rivers.forEach((o, k) => { if(k === i) return; const d = turf.pointToLineDistance(turf.point(pt), o.line); if(d < bd){ bd = d; best = k; } });
+    if(best >= 0 && bd < 40) jonctions.push({ pt, a:i, b:best });
+  }
+});
+{ const lignes = rivers.map(r => r.line), boites = lignes.map(l => turf.bbox(l));
+  for(let i = 0; i < rivers.length; i++) for(let j = i + 1; j < rivers.length; j++){
+    const A = boites[i], B = boites[j]; if(A[0] > B[2] || B[0] > A[2] || A[1] > B[3] || B[1] > A[3]) continue;
+    let x; try{ x = turf.lineIntersect(lignes[i], lignes[j]); }catch(e){ continue; }
+    for(const f of x.features){ const pt = f.geometry.coordinates; if(!jonctions.some(q => Math.hypot(q.pt[0] - pt[0], q.pt[1] - pt[1]) < 0.15)) jonctions.push({ pt, a:i, b:j }); } } }
+const fillets = []; let nF = 0;
+for(const J of jonctions){
+  try{
+    const A = rivers[J.a], B = rivers[J.b], wmin = Math.min(largeurEn(A, J.pt), largeurEn(B, J.pt)), r = Math.max(1.5, Math.min(12, wmin * 0.8)), R = Math.max(12, r * 6);
+    const disque = turf.circle(J.pt, R, { units:'kilometers', steps:24 });
+    const parts = [A.poly, B.poly].map(p => { try{ return turf.intersect(turf.featureCollection([p, disque])); }catch(e){ return null; } }).filter(Boolean);
+    if(parts.length < 2) continue;
+    const U = turf.union(turf.featureCollection(parts)); if(!U) continue;
+    const ferme = turf.buffer(turf.buffer(U, r, { units:'kilometers', steps:10 }), -r, { units:'kilometers', steps:10 });
+    const dedans = turf.intersect(turf.featureCollection([ferme, disque])); if(dedans){ fillets.push(dedans); nF++; }
+  }catch(e){ /* jonction laissee telle quelle */ }
+}
+log('intersections de cours d\'eau arrondies :', nF, '/', jonctions.length);
+const waters = [...rivers.map(r => r.poly), ...fillets, ...lakes.map(l => l.poly)], waterBoxes = waters.map(p => turf.bbox(p));
 let carved = 0, failed = 0;
 const origParts = new Map();   // parties d'origine de chaque region (avant l'eau), pour reperer les eclats que l'eau a detaches
 fc.features.forEach((f, idx) => {

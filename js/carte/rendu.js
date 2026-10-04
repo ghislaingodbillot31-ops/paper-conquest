@@ -45,8 +45,14 @@ function drawWater() {
      angles adoucis. Berges d'abord (disques un peu plus grands, couleur de berge), puis
      toute l'eau par-dessus : aucun trait ne traverse une confluence. */
   const [wx0, wy0] = toW(-30, -30), [wx1, wy1] = toW(W + 30, H + 30), edge = 1.5;
+  const jun = riverJunctions();
   const discs = (grow, k = 1) => {
     const path = new Path2D();
+    for (const [x, y, rr] of jun) {                                  // jonctions : un disque un peu plus large que les deux cours, les coins s'arrondissent
+      if (x + rr < wx0 || x - rr > wx1 || y + rr < wy0 || y - rr > wy1) continue;
+      const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(rr * k * s, 1.3) + grow;
+      path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
+    }
     for (const rv of S.rivers) for (const [x, y, r] of bandDiscs(rv, k)) {
       if (x + r < wx0 || x - r > wx1 || y + r < wy0 || y - r > wy1) continue;
       const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(r * s, 1.3) + grow; // (petite rivière visible même de loin)
@@ -101,6 +107,45 @@ function drawWater() {
    et la route s'arrête à son entrée et reprend à sa sortie (elle n'est pas dessinée sous le tablier : voir
    roadPieces dans routes.js). Calculés une fois, refaits seulement si routes ou rivières changent. */
 const PONT_BORD = 4.5, PONT_PAS = 1.5;
+/* Jonctions de rivières : là où deux cours se rejoignent, se croisent ou se touchent, on pose un disque de la largeur du
+   plus large (x 1,15) : le coin de terre aigu entre les deux cours disparaît, la jonction est arrondie. Calculé une fois. */
+let junctionCache = { key:null, list:[] };
+function riverJunctions() {
+  const key = S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined]).join('|');
+  if (junctionCache.key === key) return junctionCache.list;
+  const list = [], rv = S.rivers.map(river => ({ P:river.pts, HW:riverHW(river), bb:bbox(river.pts) }));
+  const hmax = v => Math.max(...v.HW);
+  for (let i = 0; i < rv.length; i++) for (let j = i + 1; j < rv.length; j++) {
+    const A = rv[i], B = rv[j], m = hmax(A) + hmax(B);
+    if (A.bb[0] > B.bb[2] + m || B.bb[0] > A.bb[2] + m || A.bb[1] > B.bb[3] + m || B.bb[1] > A.bb[3] + m) continue;
+    for (let a = 0; a < A.P.length - 1; a += 2) {
+      const a2 = Math.min(A.P.length - 1, a + 2), seg = bbox([A.P[a], A.P[a2]]);
+      if (seg[0] > B.bb[2] + m || seg[2] < B.bb[0] - m || seg[1] > B.bb[3] + m || seg[3] < B.bb[1] - m) continue;
+      for (let b = 0; b < B.P.length - 1; b += 2) {
+        const b2 = Math.min(B.P.length - 1, b + 2), p = segCross(A.P[a], A.P[a2], B.P[b], B.P[b2]);
+        let q = p, ra = A.HW[a], rb = B.HW[b];
+        if (!q) { const d = ptSeg(B.P[b], A.P[a], A.P[a2]); if (d.d < Math.max(ra, rb) * .8) q = d.q; }   // un cours qui finit contre l'autre
+        if (!q) continue;
+        if (list.some(t => Math.hypot(t[0] - q[0], t[1] - q[1]) < Math.max(ra, rb) * 2)) continue;
+        list.push([q[0], q[1], Math.max(ra, rb) * 1.15]);
+        // le coin de terre aigu entre deux cours qui se rejoignent est BIEN en amont du point de rencontre : on le comble par un
+        // disque a mi-chemin, sur chaque bras (jusqu'a l'endroit ou les deux cours se separent vraiment)
+        for (const [X, Y, ix] of [[A, B, a], [B, A, b]]) for (const dir of [-1, 1]) {
+          let sep = null;
+          for (let k = ix, step = 0; k >= 0 && k < X.P.length && step < 160; k += dir, step++) {
+            let dmin = Infinity; for (let j = 0; j < Y.P.length - 1; j++) { const t = ptSeg(X.P[k], Y.P[j], Y.P[j + 1]).d; if (t < dmin) dmin = t; }
+            if (dmin >= ra + rb) { sep = X.P[k]; break; }
+          }
+          if (!sep) continue;
+          const dsep = Math.hypot(sep[0] - q[0], sep[1] - q[1]); if (dsep < 4 || dsep > 8 * Math.max(ra, rb)) continue;
+          list.push([(q[0] + sep[0]) / 2, (q[1] + sep[1]) / 2, Math.min(Math.min(ra, rb) * .9, dsep * .3 + 4)]);
+        }
+      }
+    }
+  }
+  junctionCache = { key, list };
+  return list;
+}
 let bridgeCache = { key:null, list:[] };
 const ptInPoly = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if ((poly[i][1] > p[1]) !== (poly[j][1] > p[1]) && p[0] < (poly[j][0] - poly[i][0]) * (p[1] - poly[i][1]) / (poly[j][1] - poly[i][1]) + poly[i][0]) c = !c; return c; };
 function bridges() {
