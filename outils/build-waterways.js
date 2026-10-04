@@ -195,7 +195,17 @@ function riverPolygon(w){
     for(let k = i; k < Math.min(w.coords.length - 1, i + CH); k++) run += turf.distance(w.coords[k], w.coords[k + 1]);
     i += CH;
   }
-  return parts.length > 1 ? turf.union(turf.featureCollection(parts)) : parts[0];
+  if(parts.length < 2) return parts[0];
+  try{ return turf.union(turf.featureCollection(parts)); }
+  catch(e){   // morceaux qui se recouvrent mal (boucles de delta) : reunion un par un, en ecartant ceux qui echouent
+    let acc = parts[0], lost = 0;
+    for(let k = 1; k < parts.length; k++){
+      try{ acc = turf.union(turf.featureCollection([acc, parts[k]])); }
+      catch(e2){ try{ acc = turf.union(turf.featureCollection([acc, turf.buffer(parts[k], 0.02, { units:'kilometers' })])); }catch(e3){ lost++; } }
+    }
+    if(lost) console.warn('riviere : ' + lost + ' morceau(x) ecarte(s) (reunion impossible)');
+    return acc;
+  }
 }
 function attachTributary(t, trunkLine){
   const end = t.coords[t.coords.length - 1];
@@ -259,7 +269,7 @@ function cutAtConfluence(w, joinRiver = true, fromRiver = false){
 // puis trace par le generateur (serpent, source affinee). Les affluents
 // (end: join) viennent apres leur fleuve et s'arretent en le touchant.
 const RIVER_FILE = path.join(__dirname, 'rivers-world.json');
-const WIDTH = { 1:{ w0:9, w1:30 }, 2:{ w0:8, w1:22 }, 3:{ w0:7, w1:15 } };
+const WIDTH = { 1:{ w0:8, w1:28 }, 2:{ w0:5, w1:14 }, 3:{ w0:3, w1:8 } };   // largeurs (km) : fines pour les ~370 cours d'eau
 const nameSeed = n => [...n].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) | 0, 7) >>> 0;
 function densify(pts, stepKm){ const out = [pts[0]];
   for(let i = 1; i < pts.length; i++){ const a = pts[i-1], b = pts[i], n = Math.max(1, Math.round(turf.distance(a, b) / stepKm));
