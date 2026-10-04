@@ -210,6 +210,9 @@ for(let j = 1; j < resultat.length; j++){
 const rives = resultat.filter(c => longueur(c.pts) >= (c.end === 'join' ? 100 : 60)).map(c => ({ n:c.nom, cls:c.rang <= 2 ? 1 : c.rang <= 4 ? 2 : 3, end:c.end, pts:c.pts.map(q => [Math.round(q[0] * 1e4) / 1e4, Math.round(q[1] * 1e4) / 1e4]), trace:'reel' }));
 console.log('croisements : ' + coupes + ' cours arretes sur le cours qu\'ils croisent, ' + croix + ' croix gardees');
 // un affluent vient apres le cours auquel il se jette : les cours de rang plus grand sont deja avant
+// cours dessines a la main (canaux) : ajoutes tels quels apres les cours generes
+const manuels = fs.existsSync(path.join(__dirname, 'fleuves-manuels.json')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'fleuves-manuels.json'), 'utf8')).rivers : [];
+manuels.forEach(m => rives.push(m));
 const doc2 = { _doc:'Fleuves et rivieres generes par outils/build-fleuves-ne.js d\'apres Natural Earth 10m (rang <= ' + RANG_MAX + '). pts = cours [lon, lat], de la source vers l\'aval, adouci ; cls 1 geant, 2 grand, 3 moyen ; end : sea | join (affluent) | inland ; trace: reel. Ancienne liste a la main : rivers-world.ancien.json.', rivers:rives };
 fs.writeFileSync(OUT, JSON.stringify(doc2));
 const n = { 1:0, 2:0, 3:0 }, bilanFin = { sea:0, join:0, inland:0 }; rives.forEach(r => { n[r.cls]++; bilanFin[r.end]++; });

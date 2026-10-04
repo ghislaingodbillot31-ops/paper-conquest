@@ -60,6 +60,8 @@ for(let y = 0; y < H; y++) for(let x = 0; x < W; x++){
   const fy = Math.floor((NTOP - lat) / NRES), fx = Math.floor((lon + 180) / NRES);
   if(fy >= 0 && fy < NH && navLand[fy * NW + fx]) land[y * W + x] = 1;
 }
+// vrai si le point est en mer (case de la grille fine sans terre)
+function seaPoint(lon, lat){ const fy = Math.floor((NTOP - lat) / NRES), fx = Math.floor((((lon + 540) % 360) - 180 + 180) / NRES); if(fy < 0 || fy >= NH) return true; return !navLand[fy * NW + ((fx % NW) + NW) % NW]; }
 // pleine eau: aucune terre (grille fine) dans un rayon de rKm
 function openSeaAt(lon, lat, rKm = 20){
   const cy = Math.floor((NTOP - lat) / NRES), cx = Math.floor((((lon + 540) % 360) - 180 + 180) / NRES);
@@ -167,9 +169,15 @@ function snakeRiver(cellPts, seed, opt){
   // LIBRE: au moins 40 km, puis jusqu'a deux points de suite en pleine eau
   // (aucune terre a 20 km), 250 km au plus: jamais de poche fermee par les
   // iles d'un delta
+  // (le prolongement s'arrete des qu'il est en mer : 2 pas de 10 km au-dela de la cote, 140 km au plus.
+  //  Avant : jusqu'en pleine eau, donc des traits droits de 250 km qui traversaient presqu'iles et iles)
+  // Le prolongement ondule doucement (meandres de 6 km, ~75 km de long d'onde) : un trace droit de 100 km a travers un delta
+  // est la ou le cours reel de Natural Earth s'arrete avant la mer ; il ne doit pas ressembler a un canal.
   const extend = (from, dirFrom, add) => { const el = d2(dirFrom, from) || 1; let open = 0;
-    for(let k = 1; k <= 25; k++){ const pt = [from[0] + (from[0] - dirFrom[0]) / el * 10 * k, from[1] + (from[1] - dirFrom[1]) / el * 10 * k]; add(pt);
-      if(k >= 4 && openSeaAt(...toLL(pt))){ if(++open >= 2) break; } else open = 0; } };
+    const ux = (from[0] - dirFrom[0]) / el, uy = (from[1] - dirFrom[1]) / el, nx = -uy, ny = ux, ph = seed * 1.3 + from[0] * .01;
+    for(let k = 1; k <= 14; k++){ const off = 6 * Math.sin(k * .85 + ph) * Math.min(1, k / 3);
+      const pt = [from[0] + ux * 10 * k + nx * off, from[1] + uy * 10 * k + ny * off]; add(pt);
+      if(seaPoint(...toLL(pt))){ if(++open >= 2) break; } else open = 0; } };
   if(opt.mouth) extend(out[out.length - 1], out[Math.max(0, out.length - 6)], pt => { out.push(pt); width.push(width[width.length - 1]); });
   if(opt.startSea) extend(out[0], out[Math.min(out.length - 1, 5)], pt => { out.unshift(pt); width.unshift(width[0]); });
   return { coords:out.map(toLL), width };
@@ -277,7 +285,7 @@ function densify(pts, stepKm){ const out = [pts[0]];
   return out; }
 const rivers = []; let water = 0, joined = 0; const cutEarly = [];
 for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
-  const opt = { ...WIDTH[R.cls], mouth:R.end === 'sea', taper:!R.start, startSea:R.start === 'sea', reel:R.trace === 'reel' };
+  const opt = { ...WIDTH[R.cls], ...(R.w ? { w0:R.w[0], w1:R.w[1] } : {}), mouth:R.end === 'sea', taper:!R.start, startSea:R.start === 'sea', reel:R.trace === 'reel' };
   let w = snakeRiver(densify(R.pts, R.trace === 'reel' ? 3 : 20), nameSeed(R.n) % 1000, opt);
   if(R.start === 'join' && rivers.length){   // bras: debut colle au fleuve dont il part
     const st = turf.point(w.coords[0]);
@@ -293,7 +301,7 @@ for(const R of JSON.parse(fs.readFileSync(RIVER_FILE)).rivers){
   if(!w){ cutEarly.push(R.n); continue; }
   if(w.joined) joined++;
   if(w.grazed) cutEarly.push(R.n + ' (frole une autre riviere)');
-  w.name = R.n; w.cls = R.cls; w.line = turf.lineString(w.coords);
+  w.name = R.n; w.cls = R.cls; w.canal = !!R.canal; w.line = turf.lineString(w.coords);
   w.poly = riverPolygon(w); stamp(w.coords, w.width);
   rivers.push(w); water += turf.area(w.poly) / 1e6;
 }
@@ -443,7 +451,7 @@ function resample(w, stepKm){ const c = [w.coords[0]], ww = [w.width[0]]; let ru
   return { c:c.map(([x, y]) => [r3(x), r3(y)]), w:ww.map(v => Math.round(v * 10) / 10) }; }
 const waterOut = {
   stats:{ landKm2:Math.round(landKm2), waterKm2:Math.round(water), ratio:+(water / landKm2).toFixed(4), rivers:rivers.length, lakes:lakes.length, confluences:joined },
-  rivers:rivers.map(w => ({ n:w.name, cls:w.cls, r:[...(w.regions || [])].sort((a, b) => a - b), ...resample(w, 4) })),
+  rivers:rivers.map(w => ({ n:w.name, cls:w.cls, ...(w.canal ? { k:1 } : {}), r:[...(w.regions || [])].sort((a, b) => a - b), ...resample(w, 4) })),
   lakes:lakes.map(l => ({ t:l.tier, p:l.poly.geometry.coordinates[0].map(([x, y]) => [r3(x), r3(y)]), a:Math.round(turf.area(l.poly) / 1e6), r:l.region || null })),
 };
 fs.writeFileSync(path.join(OUT, 'water.json'), JSON.stringify(waterOut));
