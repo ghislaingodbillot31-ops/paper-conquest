@@ -169,7 +169,7 @@ const SEA_NAMES = { ...SEA_FISH, ...SEA_ANIMALS };
 // (pleine-mer), sans chevauchement; dessinees sous les terres.
 let FISHING_ZONES = [];
 const FISH_ZONE_TYPES = { cotiere:'Pêche côtière', hauturiere:'Pêche hauturière', 'pleine-mer':'Pêche en pleine mer' };
-const FISH_ZONE_COLORS = { cotiere:'#2a9d8f', hauturiere:'#1f5f8b', 'pleine-mer':'#123b63' };
+const FISH_ZONE_COLORS = { cotiere:'#4cc9b0', hauturiere:'#6f9ae8', 'pleine-mer':'#5f82da' };   // (clairs : la mer est bleu roi)
 
 // Qualite des sols (overlay "Sol / Qualite"): 5 niveaux de fertilite
 const SOIL_LEVELS = ['Stérile', 'Pauvre', 'Moyen', 'Fertile', 'Très fertile'];

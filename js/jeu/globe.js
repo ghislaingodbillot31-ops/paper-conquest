@@ -22,7 +22,7 @@ const map = new maplibregl.Map({
     glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
     sources: {},
     layers: [
-      { id: 'background', type: 'background', paint: { 'background-color': '#a7c8d3' } },
+      { id: 'background', type: 'background', paint: { 'background-color': '#27479f' } },
     ],
   },
   projection: 'globe',

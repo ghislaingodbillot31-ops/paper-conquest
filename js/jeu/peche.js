@@ -28,7 +28,7 @@ function initSeaLabels(){
     layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-max-width':7,
       'text-size':['match', ['get', 'rank'], 1, 17, 2, 12.5, 10.5],
       'text-letter-spacing':['match', ['get', 'rank'], 1, 0.25, 2, 0.12, 0.05], 'text-transform':['match', ['get', 'rank'], 1, 'uppercase', 'none'] },
-    paint:{ 'text-color':['match', ['get', 'rank'], 1, '#3f6f8a', '#4a7d99'], 'text-halo-color':'rgba(232,243,246,0.85)', 'text-halo-width':1.3 } });
+    paint:{ 'text-color':['match', ['get', 'rank'], 1, '#dfe8ff', '#c6d6ff'], 'text-halo-color':'rgba(14,26,76,0.85)', 'text-halo-width':1.3 } });
   applyDevFilters();
 }
 
@@ -47,11 +47,11 @@ function initFishingZones(){
   map.addSource('fishing', { type:'geojson', data:fishingFc });
   map.addSource('fishing-labels', { type:'geojson', data:labels });
   const color = ['match', ['get', 'type'], ...Object.entries(FISH_ZONE_COLORS).flat(), '#2a9d8f'];
-  map.addLayer({ id:'fishing-fill', type:'fill', source:'fishing', paint:{ 'fill-color':color, 'fill-opacity':0.3 } }, 'regions');
+  map.addLayer({ id:'fishing-fill', type:'fill', source:'fishing', paint:{ 'fill-color':color, 'fill-opacity':0.12 } }, 'regions');
   map.addLayer({ id:'fishing-line', type:'line', source:'fishing', paint:{ 'line-color':color, 'line-width':1.2, 'line-dasharray':[2, 2], 'line-opacity':0.8 } }, 'regions');
   map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:3.5,
     layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-size':10, 'text-max-width':8 },
-    paint:{ 'text-color':'#12415e', 'text-halo-color':'#e8f3f6', 'text-halo-width':1.2 } });
+    paint:{ 'text-color':'#d4e0ff', 'text-halo-color':'rgba(14,26,76,0.85)', 'text-halo-width':1.2 } });
   initFreshWaters();
   initSeaLabels();
   // clic hors des regions: fleuve / lac d'abord, sinon zone de peche en mer

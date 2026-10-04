@@ -152,7 +152,7 @@ function riverDiscs(rv) {
   riverDiscCache.set(rv, { hw:HW, d });
   return d;
 }
-const WATER_FOAM = '#d3dfdb'; // liseré clair le long des berges
+const WATER_FOAM = '#8ea5e0'; // liseré clair le long des berges
 // contour d'un lac pour le dessin : ses 40 points lissés (Chaikin fermé, 3 passes), sans coin
 const lakeShapeCache = new WeakMap();
 function lakeShape(lk) {

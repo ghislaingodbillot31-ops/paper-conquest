@@ -23,7 +23,7 @@ const NO_FOREST = { forest:2, dense:2, mid:2 };
 const BIOMES = {
   polaire:       { name:'Inlandsis et désert polaire', rivers:[0, 0], lakes:[0, 2], lakeR:[40, 90],
     river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:0, bush:0, rocks:.004 },
-    look:{ ground:'#e9eef0', groundDark:'#d9e2e8', patch:'#f8fbfc', patchAt:.55, water:'#9dbfca', species:{} } },
+    look:{ ground:'#e9eef0', groundDark:'#d9e2e8', patch:'#f8fbfc', patchAt:.55, water:'#3d5fb8', species:{} } },
   toundra:       { name:'Toundra', rivers:[1, 1], lakes:[4, 8], lakeR:[14, 35],
     river:{ amp:[60, 100], cycles:[2.5, 3.5], w0:5, w1:12 }, flora:{ ...NO_FOREST, dense:.66, mid:.58, sparse:.01, bush:.25, rocks:.003 },
     look:{ ground:'#c8c6a3', groundDark:'#b8b690', patch:'#eef1ec', patchAt:.66, species:{ c:1 }, small:.6,
@@ -53,7 +53,7 @@ const BIOMES = {
       steps:['#607a3a', '#566f35', '#4c6430', '#43592c', '#3a4e27'] } },
   desert_aride:  { name:'Désert aride', rivers:[0, 0], lakes:[0, 1], lakeR:[18, 30],
     river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.0015, bush:.02, rocks:.002 },
-    look:{ ground:'#ead5a0', groundDark:'#dec48c', patch:'#f4e4bb', patchAt:.6, water:'#77a9ae', species:{ p:1 }, bushPal:DRY_BUSH } },
+    look:{ ground:'#ead5a0', groundDark:'#dec48c', patch:'#f4e4bb', patchAt:.6, water:'#2f50a8', species:{ p:1 }, bushPal:DRY_BUSH } },
   xerophyte:     { name:'Désert et broussaille xérophytes', rivers:[0, 0], lakes:[0, 0], lakeR:[18, 30],
     river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.004, bush:.18, rocks:.003 },
     look:{ ground:'#e0c894', groundDark:'#d3b880', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },

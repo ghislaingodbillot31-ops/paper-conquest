@@ -330,11 +330,11 @@ table.rank td.num{ font-variant-numeric:tabular-nums; font-weight:700; text-alig
 .plan-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
 .plan-head .boat-btn{ width:auto; padding:6px 12px; margin-left:auto; }
 /* proportions exactes du dessin: tout le plan tient a l'ecran, sans bandes vides */
-.plan-svg{ width:100%; height:auto; margin:0 auto; background:#a7c8d3; border:1.5px solid var(--line-strong); border-radius:10px; display:block; }
+.plan-svg{ width:100%; height:auto; margin:0 auto; background:#27479f; border:1.5px solid var(--line-strong); border-radius:10px; display:block; }
 .plan-legend{ display:flex; flex-wrap:wrap; gap:14px; font-size:0.74rem; color:var(--ink-soft); }
 .plan-legend span{ display:inline-flex; align-items:center; gap:6px; }
 .plan-legend i{ display:inline-block; width:18px; height:0; border-top:2px dashed #6b4a2a; }
-.plan-legend i.water{ height:8px; border:none; background:#a7c8d3; border-radius:3px; outline:1px solid #7fa6b5; }
+.plan-legend i.water{ height:8px; border:none; background:#27479f; border-radius:3px; outline:1px solid #1b3375; }
 .plan-legend i.cap{ width:10px; height:10px; border:2px solid #fff; background:#b3261e; border-radius:50%; }
 /* Onglet Stocks (economie) */
 .eco-cards{ display:grid; grid-template-columns:repeat(auto-fit, minmax(160px, 1fr)); gap:10px; }
