@@ -42,8 +42,7 @@ function renderWindow(){
     id => { s.tab = id; renderWindow(); }, s.ctx);
 }
 function renderCapitalView(){
-  const owned = [...ownedRegions].sort((a, b) => a - b);
-  if(!owned.includes(capitalRegion)) capitalRegion = owned.length ? owned[0] : null;
+  const owned = [];   // (plus d'achat : la region affichee est celle sur laquelle on a clique)
   const title = document.getElementById('capview-title'), sw = document.getElementById('capview-switch');
   const tabsEl = document.getElementById('capview-tabs'), body = document.getElementById('capview-body');
   sw.hidden = owned.length < 2;
@@ -53,7 +52,7 @@ function renderCapitalView(){
   if(capitalRegion === null){
     title.textContent = 'Capitale';
     tabsEl.innerHTML = ''; body._liveHtml = null;
-    body.innerHTML = '<p class="cap-none">Vous n\'avez pas encore de capitale.<br>Achetez une région sur la carte pour commencer.</p>';
+    body.innerHTML = '<p class="cap-none">Aucune région affichée.<br>Cliquez sur une région du globe pour l\'afficher.</p>';
     return;
   }
   title.textContent = 'Capitale — Région ' + capitalRegion;
@@ -62,7 +61,6 @@ function renderCapitalView(){
 document.getElementById('cap-globe').addEventListener('click', () => showView('carte'));
 document.getElementById('cap-gestion').addEventListener('click', () => { capitalTab = 'plan'; renderCapitalView(); });
 function openCapital(regionId){
-  if(!ownedRegions.has(regionId)) return;
   capitalRegion = regionId;
   showView('capitale');
 }

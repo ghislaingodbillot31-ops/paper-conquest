@@ -37,7 +37,7 @@ const interactionBusy = () => placement.active || boat.placing || boat.selected 
 function updateRibbon(){
   const ribbon = document.getElementById('map-ribbon');
   const ids = [...ownedRegions].sort((a, b) => a - b);
-  ribbon.textContent = ids.length ? '🏳️ Vos régions : ' + ids.join(', ') : '📍 Achetez une région pour commencer';
+  ribbon.textContent = selectedId !== null ? '📍 Région ' + selectedId : '📍 Cliquez sur une région pour l\'afficher';   // (plus d'achat : toute région s'affiche)
 }
 function refreshOwnershipLayers(){
   regionsFc.features.forEach(f => map.setFeatureState({ source:'regions', id:f.id }, { owned:ownedRegions.has(f.id) }));
@@ -50,29 +50,13 @@ function refreshOwnershipLayers(){
 
 function selectRegion(id){
   const f = regionFeature(id);
-  if(f && f.properties.isNpc && !ownedRegions.has(id)){
-    // Region NPC (comptoir de commerce): jamais achetable -- petit message
-    // temporaire sur le ruban plutot qu'un refus silencieux.
-    const ribbon = document.getElementById('map-ribbon');
-    ribbon.textContent = '🟣 Comptoir de commerce -- non disponible à l\'achat';
-    clearTimeout(selectRegion._npcTimer);
-    selectRegion._npcTimer = setTimeout(updateRibbon, 2200);
-    return;
-  }
   if(selectedId !== null) map.setFeatureState({ source:'regions', id:selectedId }, { selected:false });
   selectedId = id;
   map.setFeatureState({ source:'regions', id }, { selected:true });
   renderRegionPanel();
-}
-
-function buyRegion(id){
-  const f = regionFeature(id);
-  if(!f || f.properties.isNpc || ownerOf(id) !== null) return; // deja possedee: plus achetable
-  if(!spendGold(regionPrice())) return;                          // pas assez d'Or
-  ownedRegions.add(id);
-  savePlayerState();
-  refreshOwnershipLayers();
-  renderRegionPanel();
+  updateRibbon();
+  // plus d'achat : un clic sur une région l'affiche (sa carte de région s'ouvre ; « ← Globe » ramene a la planete)
+  capitalRegion = id; capitalTab = 'carte'; showView('capitale');
 }
 
 function renderRegionPanel(){
@@ -97,20 +81,18 @@ function renderRegionPanel(){
     '<div class="region-row"><span>Numéro</span><span class="v">' + selectedId + '</span></div>' +
     '<div class="region-row"><span>Aire</span><span class="v">' + area + '</span></div>' +
     '<div class="region-row"><span>Continent</span><span class="v">' + contName + '</span></div>' +
-    '<div class="region-row"><span>Propriétaire</span><span class="v">' + (owned ? 'Vous' : 'Aucun') + '</span></div>' +
+    
     (owned ? '<div class="region-row"><span>Ports</span><span class="v">' + ports + '</span></div>' +
       (() => { const pr = Object.entries(regionProduction(selectedId)); return '<div class="region-row"><span>Production / jour</span><span class="v">' +
         (pr.length ? pr.map(([k, q]) => q + ' ' + goodName(k)).join(', ') : 'aucune') + '</span></div>'; })() : '') +
     regionResourcesHtml(selectedId) +
-    (owned ? '<button class="boat-btn" id="explore-btn" type="button">🏰 Carte de la région</button>' : '') +
+    '<button class="boat-btn" id="explore-btn" type="button">🏰 Carte de la région</button>' +
     (owned
       ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
         '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
-      : '<button class="select-btn" id="buy-btn"' + (eco.gold < regionPrice() ? ' disabled title="Pas assez d\'Or"' : '') + '>' + iconCheck() + 'ACHETER CETTE RÉGION — ' + (regionPrice() ? fmtGold(regionPrice()) : 'OFFERTE') + '</button>');
+      : '');
   const explore = document.getElementById('explore-btn');
   if(explore) explore.addEventListener('click', () => { capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale'); });
-  const buy = document.getElementById('buy-btn');
-  if(buy) buy.addEventListener('click', () => buyRegion(selectedId));
   const boatBtn = document.getElementById('boat-place-btn');
   if(boatBtn){ boatBtn.addEventListener('click', toggleBoatPlacing); renderBoat(); }
 }
