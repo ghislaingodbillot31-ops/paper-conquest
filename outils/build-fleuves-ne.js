@@ -244,7 +244,7 @@ const manuels = fs.existsSync(path.join(__dirname, 'fleuves-manuels.json')) ? JS
 const exclus = new Set(fs.existsSync(path.join(__dirname, 'fleuves-manuels.json')) ? (JSON.parse(fs.readFileSync(path.join(__dirname, 'fleuves-manuels.json'), 'utf8')).exclus || []) : []);
 for(let i = rives.length - 1; i >= 0; i--) if(exclus.has(rives[i].n)) rives.splice(i, 1);   // cours retires a la demande
 manuels.forEach(m => rives.push(m));
-const doc2 = { _doc:'Fleuves et rivieres generes par outils/build-fleuves-ne.js d\'apres Natural Earth 10m (rang <= ' + RANG_MAX + '). pts = cours [lon, lat], de la source vers l\'aval, adouci ; cls 1 geant, 2 grand, 3 moyen ; end : sea | join (affluent) | inland ; trace: reel. Ancienne liste a la main : rivers-world.ancien.json.', rivers:rives };
+const doc2 = { _doc:'Fleuves et rivieres generes par outils/build-fleuves-ne.js d\'apres Natural Earth 10m (rang <= ' + RANG_MAX + '). pts = cours [lon, lat], de la source vers l\'aval, adouci ; cls 1 geant, 2 grand, 3 moyen ; end : sea | join (affluent) | inland ; trace: reel.', rivers:rives };
 fs.writeFileSync(OUT, JSON.stringify(doc2));
 const n = { 1:0, 2:0, 3:0 }, bilanFin = { sea:0, join:0, inland:0 }; rives.forEach(r => { n[r.cls]++; bilanFin[r.end]++; });
 console.log('cours :', rives.length, '| cls', JSON.stringify(n), '| fin', JSON.stringify(bilanFin), '| points', rives.reduce((s, r) => s + r.pts.length, 0), '|', Math.round(fs.statSync(OUT).size / 1024), 'Ko');

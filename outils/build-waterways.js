@@ -7,7 +7,7 @@
 //     une seule source de verite.
 //  2. Remplissage des cuvettes (priority-flood): cuvettes = emplacements de lacs.
 //  3. Fleuves REELS (outils/rivers-world.json) : vrai lit (Natural Earth, trace: reel,
-//     voir outils/build-fleuves-reels.js), a defaut cours approche par les villes
+//     voir outils/build-fleuves-ne.js)
 //     (trace: villes, "serpent" : spline + meandres) ; la source s'affine ; un affluent
 //     s'arrete en touchant son fleuve (confluence, jamais de croisement).
 //  4. Lacs: formes compactes, a l'ecart des rivieres, de la cote et des autres
