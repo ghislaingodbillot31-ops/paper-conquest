@@ -411,3 +411,13 @@ table.rank .empty-row{ display:table-cell; }
   .stat-pills{ margin-left:0; order:3; width:100%; justify-content:space-between; }
   main.workspace{ padding:14px 12px 24px; }
 }
+
+/* Bouton « Paysage » : peint le monde comme une carte de région (js/jeu/paysage-monde.js). */
+.map-tool{
+  position:absolute; right:12px; bottom:44px; z-index:3;
+  background:var(--card); border:1.5px solid var(--line-strong); border-radius:8px;
+  padding:5px 10px; font-size:0.72rem; font-weight:700; color:var(--ink);
+  box-shadow:2px 2px 0 var(--shadow); cursor:pointer;
+}
+.map-tool[aria-pressed="true"]{ background:var(--ink); color:var(--card); }
+.map-tool:disabled{ opacity:.7; cursor:progress; }
