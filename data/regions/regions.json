@@ -2373,7 +2373,7 @@
     "agriculture": {"ble": 1, "orge": 2, "chanvre": 1, "garance": 2, "safran": 1, "bois": 1, "bois_chauffage": 1},
     "animaux": {"zone": 15, "elevage": {"cheval": 1, "chameau": 1, "mouton": 1, "chevre": 1}, "faune": {"gazelle": 1, "antilope": 1, "autruche": 1}, "predateurs": {"loup": 1, "leopard": 1, "hyene": 1}},
     "peche": {"eau_douce": {"sandre": 2, "carassin": 2, "tilapia": 1, "silure_nil": 1}, "mer": []},
-    "eau": {"fleuves": ["Euphrates", "Jordan"], "lacs": 1, "cotiere": true, "cours_eau_carte": "riviere"}
+    "eau": {"fleuves": ["Euphrates"], "lacs": 1, "cotiere": true, "cours_eau_carte": "riviere"}
   },
   {
     "id": 217, "pays": "CHN", "centre": [110,33.29], "capitale": [109.85213673351691,32.66862558291074], "aire_km2": 243811,
@@ -2670,7 +2670,7 @@
     "agriculture": {"orge": 1},
     "animaux": {"zone": 15, "elevage": {"cheval": 3, "chameau": 3, "mouton": 3, "chevre": 3}, "faune": {"gazelle": 3, "antilope": 3, "autruche": 3}, "predateurs": {"loup": 3, "leopard": 3, "hyene": 3}},
     "peche": {"eau_douce": {"tilapia": 1, "silure_nil": 1}, "mer": [23]},
-    "eau": {"fleuves": ["Jordan"], "lacs": 1, "cotiere": true, "cours_eau_carte": "petite"}
+    "eau": {"fleuves": [], "lacs": 1, "cotiere": true, "cours_eau_carte": "aucun"}
   },
   {
     "id": 244, "pays": "LBY", "centre": [17.56,29.43], "capitale": [17.519200187012768,28.704128487443757], "aire_km2": 244345,

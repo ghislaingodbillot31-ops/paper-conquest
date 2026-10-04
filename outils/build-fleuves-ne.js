@@ -212,6 +212,8 @@ console.log('croisements : ' + coupes + ' cours arretes sur le cours qu\'ils cro
 // un affluent vient apres le cours auquel il se jette : les cours de rang plus grand sont deja avant
 // cours dessines a la main (canaux) : ajoutes tels quels apres les cours generes
 const manuels = fs.existsSync(path.join(__dirname, 'fleuves-manuels.json')) ? JSON.parse(fs.readFileSync(path.join(__dirname, 'fleuves-manuels.json'), 'utf8')).rivers : [];
+const exclus = new Set(fs.existsSync(path.join(__dirname, 'fleuves-manuels.json')) ? (JSON.parse(fs.readFileSync(path.join(__dirname, 'fleuves-manuels.json'), 'utf8')).exclus || []) : []);
+for(let i = rives.length - 1; i >= 0; i--) if(exclus.has(rives[i].n)) rives.splice(i, 1);   // cours retires a la demande
 manuels.forEach(m => rives.push(m));
 const doc2 = { _doc:'Fleuves et rivieres generes par outils/build-fleuves-ne.js d\'apres Natural Earth 10m (rang <= ' + RANG_MAX + '). pts = cours [lon, lat], de la source vers l\'aval, adouci ; cls 1 geant, 2 grand, 3 moyen ; end : sea | join (affluent) | inland ; trace: reel. Ancienne liste a la main : rivers-world.ancien.json.', rivers:rives };
 fs.writeFileSync(OUT, JSON.stringify(doc2));
