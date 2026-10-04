@@ -41,9 +41,12 @@ function floraNear(x0, y0, x1, y1) {
 // le décor de la vue courante (rectangle toW(0,0)…toW(W,H)), dans l'ordre des couches
 function drawDecor() {
   const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
-  ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
+  const seule = typeof HORIZON !== 'undefined' && HORIZON && FORME;       // horizon peint : le décor détaillé ne couvre que la région
+  if (!seule) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); }
+  ctx.save();
+  if (seule) ctx.clip(cheminAnneaux(FORME.region), 'evenodd');
   drawGround();
-  drawSea();
+  if (!seule) drawSea();
   drawContours();
   drawWater();
   drawZones();
@@ -53,6 +56,7 @@ function drawDecor() {
   const list = floraNear(x0 - 40, y0 - 40, x1 + 40, y1 + 40);   // (houppiers et ombres qui débordent)
   drawWoods(ctx, list.filter(f => f.wood), view.s, view.ox, view.oy);
   for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  ctx.restore();
   drawBorder();
   const near = (o, m) => o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m;
   for (const g of S.gates) if (near(g, 20)) drawGate(g, 'normal');
@@ -66,6 +70,7 @@ function paintTile(t, r) {
   if (px1 <= px0 || py1 <= py0) return;
   const g = t.c.getContext('2d');
   g.save(); g.setTransform(1, 0, 0, 1, px0, py0); g.beginPath(); g.rect(0, 0, px1 - px0, py1 - py0); g.clip();
+  g.clearRect(0, 0, px1 - px0, py1 - py0);                 // (le décor est transparent hors de la région : on repart d'une image vide)
   g.imageSmoothingEnabled = true;
   try { paintWith(g, px1 - px0, py1 - py0, L, -t.x0 * L - px0, -t.y0 * L - py0, drawDecor); }
   finally { g.restore(); }
@@ -135,10 +140,10 @@ const GPU = (() => {
     const renderer = PIXI.autoDetectRenderer({ width:1, height:1, autoDensity:true, antialias:false, backgroundAlpha:1, powerPreference:'high-performance' });
     if (!renderer.gl) { renderer.destroy(); return null; }
     const stage = new PIXI.Container(), world = new PIXI.Container(), base = new PIXI.Container(), cur = new PIXI.Container();
-    world.addChild(base, cur); stage.addChild(world);
+    const hor = new PIXI.Container(); world.addChild(hor, base, cur); stage.addChild(world);
     renderer.view.setAttribute('aria-hidden', 'true');
     wrap.insertBefore(renderer.view, cv);                      // sous le canevas des éléments mobiles
-    return { renderer, stage, world, base, cur };
+    return { renderer, stage, world, base, cur, hor };
   } catch (e) { console.warn('WebGL indisponible, affichage classique', e); return null; }
 })();
 function tileSprite(t, layer) {
@@ -179,7 +184,10 @@ function presentScene() {
     }
   }
   if (GPU) {
-    const { renderer, stage, world, base, cur } = GPU;
+    const { renderer, stage, world, base, cur, hor } = GPU;
+    if (typeof HORIZON !== 'undefined' && HORIZON && !hor.children.length) {
+      const sp = new PIXI.Sprite(PIXI.Texture.from(HORIZON.canvas)); sp.position.set(HORIZON.x0, HORIZON.y0); sp.scale.set(HORIZON.m); hor.addChild(sp); }
+    if (typeof HORIZON !== 'undefined' && !HORIZON && hor.children.length) hor.removeChildren();
     if (renderer.width !== Math.round(W * dpr) || renderer.height !== Math.round(H * dpr)) renderer.resize(W, H);
     const bg = PIXI.utils.string2hex(Col.sheet || '#f5f7f2'); if (renderer.background.color !== bg) renderer.background.color = bg;
     for (const t of baseTiles) tileSprite(t, base);
@@ -191,6 +199,7 @@ function presentScene() {
   } else {
     ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
     ctx.imageSmoothingEnabled = true;
+    if (typeof HORIZON !== 'undefined' && HORIZON) ctx.drawImage(HORIZON.canvas, HORIZON.x0 * s + view.ox, HORIZON.y0 * s + view.oy, HORIZON.canvas.width * HORIZON.m * s, HORIZON.canvas.height * HORIZON.m * s);
     const put = t => ctx.drawImage(t.c, t.x0 * s + view.ox, t.y0 * s + view.oy, t.m * s + .6, t.m * s + .6);
     baseTiles.forEach(put); shown.forEach(put);
   }

@@ -91,7 +91,7 @@ for (const f of fc.features.map((f, i) => ({ ...f, id:i + 1 }))) {
     const cut = []; for (const p of line) { cut.push([R(p[0]), R(p[1])]); if (!inF(p)) break; }
     if (cut.length > 1) vers.push({ vers:a === id ? bId : a, pts:cut });
   }
-  out[id] = { echelle:+sc.toFixed(3), region, terres, fleuves, lacs, capitale, routes:vers };
+  out[id] = { echelle:+sc.toFixed(3), o:[+lon0.toFixed(5), +lat0.toFixed(5)], region, terres, fleuves, lacs, capitale, routes:vers };
 }
 // --- ecriture : une region par ligne
 const txt = '{\n"version": 2, "terrain": [' + TW + ', ' + TH + '],\n"regions": {\n' +
