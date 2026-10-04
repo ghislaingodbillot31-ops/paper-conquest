@@ -165,13 +165,24 @@ cours.forEach((c, idx) => {
   const e0 = c.pts[0], e1 = c.pts[c.pts.length - 1], deja = entrees.size > 0;
   const g = p => deja ? versGrandLisse(p, idx) : Infinity;
   const s0 = Math.min(versCote(e0), g(e0)), s1 = Math.min(versCote(e1), g(e1));
-  const mouth1 = s1 <= s0, e = mouth1 ? e1 : e0;
-  if(!mouth1) c.pts.reverse();                                                 // toujours : de la source vers l'aval
+  // bras de delta (Damiette...) : un bout est sur la cote, l'autre touche un plus grand cours -> il part du fleuve et se jette en mer
+  const cA = versCote(e0), cB = versCote(e1), tA = g(e0), tB = g(e1);
+  let distrib = false;
+  // (vrai bras : court (<= 450 km), part tout contre le fleuve (<= 10 km), a moins de 260 km de la mer)
+  const court = longueur(c.pts) <= 450;
+  if(deja && court && cB <= MER && tA <= 10 && cA <= 260) distrib = true;       // de A (sur le fleuve) vers B (sur la cote) : sens deja bon
+  else if(deja && court && cA <= MER && tB <= 10 && cB <= 260){ c.pts.reverse(); distrib = true; }
+  const mouth1 = distrib ? true : s1 <= s0, e = distrib ? c.pts[c.pts.length - 1] : (mouth1 ? e1 : e0);
+  if(!distrib && !mouth1) c.pts.reverse();                                     // toujours : de la source vers l'aval
   const pe = c.pts, Lp = pe.length, avant = pe[Math.max(0, Lp - 1 - 4)], cote = procheCote(e), dir = plan0(avant, e), dn = Math.hypot(...dir) || 1, cn = Math.hypot(...cote.v) || 1;
   const versLaMer = cote.d <= MER || (cote.d <= 250 && (dir[0] * cote.v[0] + dir[1] * cote.v[1]) / (dn * cn) > .3);
   const dg = g(e);
-  c.end = versLaMer && cote.d <= dg ? 'sea' : dg <= JONCTION ? 'join' : versLaMer ? 'sea' : 'inland';
+  c.end = distrib ? 'sea' : versLaMer && cote.d <= dg ? 'sea' : dg <= JONCTION ? 'join' : versLaMer ? 'sea' : 'inland';
   let p = lisse(c.pts);
+  if(distrib){                                                                  // depart raccorde au fleuve en courbe, dans le sens de son courant
+    const T0 = procheCours(p[0], idx);
+    if(T0 && T0.d <= PORTEE){ p = raccorde(p.slice().reverse(), T0.pt, [-T0.tan[0], -T0.tan[1]]).reverse(); c.start = 'join'; c.depart = fin[T0.c].nom; }
+  }
   if(c.end === 'join'){
     const T = procheCours(p[p.length - 1], idx);
     if(T && T.d <= PORTEE) { p = raccorde(p, T.pt, T.tan); c.joint = fin[T.c].nom; }
@@ -207,7 +218,7 @@ for(let j = 1; j < resultat.length; j++){
 }
 
 // ---- sortie : cours de moins de 60 km (100 km pour un affluent) ecartes, points arrondis
-const rives = resultat.filter(c => longueur(c.pts) >= (c.end === 'join' ? 100 : 60)).map(c => ({ n:c.nom, cls:c.rang <= 2 ? 1 : c.rang <= 4 ? 2 : 3, end:c.end, pts:c.pts.map(q => [Math.round(q[0] * 1e4) / 1e4, Math.round(q[1] * 1e4) / 1e4]), trace:'reel' }));
+const rives = resultat.filter(c => longueur(c.pts) >= (c.end === 'join' ? 100 : 60)).map(c => ({ n:c.nom, cls:c.rang <= 2 ? 1 : c.rang <= 4 ? 2 : 3, end:c.end, ...(c.start ? { start:c.start } : {}), pts:c.pts.map(q => [Math.round(q[0] * 1e4) / 1e4, Math.round(q[1] * 1e4) / 1e4]), trace:'reel' }));
 console.log('croisements : ' + coupes + ' cours arretes sur le cours qu\'ils croisent, ' + croix + ' croix gardees');
 // un affluent vient apres le cours auquel il se jette : les cours de rang plus grand sont deja avant
 // cours dessines a la main (canaux) : ajoutes tels quels apres les cours generes

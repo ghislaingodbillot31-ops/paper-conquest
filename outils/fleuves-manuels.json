@@ -1,5 +1,5 @@
 {
- "_doc": "Cours d'eau dessines a la main, ajoutes par build-fleuves-ne.js. canal:true = navigable (bateaux) meme etroit. w = [largeur a la source, a l'embouchure] en km (le canal de Suez a la largeur d'un grand fleuve). start/end 'sea' : le canal est prolonge jusqu'a la mer a chaque bout. exclus = noms de cours generes par Natural Earth a ne pas garder (le Jourdain, par exemple).",
+ "_doc": "Cours d'eau dessines a la main, ajoutes par build-fleuves-ne.js. canal:true = navigable (bateaux) meme etroit. w = [largeur a la source, a l'embouchure] en km (le canal de Suez a la largeur d'un grand fleuve). start/end 'sea' : le canal est prolonge jusqu'a la mer a chaque bout. exclus = noms de cours generes par Natural Earth a ne pas garder (Jourdain ; Suez Canal et Ismailiya Canal font double emploi avec notre Canal de Suez).",
  "rivers": [
   {
    "n": "Canal de Suez",
@@ -61,6 +61,8 @@
   }
  ],
  "exclus": [
-  "Jordan"
+  "Jordan",
+  "Suez Canal",
+  "Ismailiya Canal"
  ]
 }
