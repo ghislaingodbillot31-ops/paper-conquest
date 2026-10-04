@@ -199,7 +199,7 @@ function riverPolygon(w){
     const CH = run < SOURCE_TAPER_KM * 1.2 ? 3 : 24;
     const seg = w.coords.slice(i, Math.min(w.coords.length, i + CH + 1));
     if(seg.length >= 2){ const km = Math.max(0.4, w.width[Math.min(w.width.length - 1, i + (seg.length >> 1))] / 2);
-      parts.push(turf.buffer(turf.lineString(seg), km, { units:'kilometers', steps:8 })); }
+      parts.push(turf.buffer(turf.lineString(seg), km, { units:'kilometers', steps:14 })); }
     for(let k = i; k < Math.min(w.coords.length - 1, i + CH); k++) run += turf.distance(w.coords[k], w.coords[k + 1]);
     i += CH;
   }
@@ -425,6 +425,7 @@ if(LACS_ACTIFS){
 }
 const waters = [...rivers.map(r => r.poly), ...lakes.map(l => l.poly)], waterBoxes = waters.map(p => turf.bbox(p));
 let carved = 0, failed = 0;
+const origParts = new Map();   // parties d'origine de chaque region (avant l'eau), pour reperer les eclats que l'eau a detaches
 fc.features.forEach((f, idx) => {
   const g = f.geometry;
   if(g.type === 'Polygon') g.coordinates = g.coordinates.map(unwrapRing); else if(g.type === 'MultiPolygon') g.coordinates = g.coordinates.map(p => p.map(unwrapRing));
@@ -435,14 +436,59 @@ fc.features.forEach((f, idx) => {
   lakes.forEach((l, k) => { if(over(lakeBoxes[k]) && turf.booleanPointInPolygon(turf.centroid(l.poly), f)) l.region = idx + 1; });
   const hits = waters.filter((w, k) => { const bb = waterBoxes[k]; return !(fb[0] > bb[2] || fb[2] < bb[0] || fb[1] > bb[3] || fb[3] < bb[1]); });
   if(!hits.length) return;
+  { const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates; origParts.set(idx, polys.map(c => { const pf = turf.polygon([c[0]]); return { pf, a:turf.area(pf) / 1e6, b:turf.bbox(pf) }; })); }
   try{ const d = turf.difference(turf.featureCollection([f, ...hits])); if(d){ f.geometry = d.geometry; carved++; } }
   catch(e){ // une a une si l'ensemble echoue
     let cur = f; for(const h of hits){ try{ const d = turf.difference(turf.featureCollection([cur, h])); if(d) cur = { type:'Feature', properties:{}, geometry:d.geometry }; }catch(e2){ failed++; } }
     f.geometry = cur.geometry; carved++; }
   if(idx % 50 === 0) log('decoupe', idx, '/', fc.features.length);
 });
+// ---- eclats : un petit morceau de terre detache d'une grande partie par l'eau (bande entre un fleuve et la mer, ilot entre
+// deux bras de delta...) devient de l'eau : bord net, pas de miette de terre. Les vraies petites iles (deja separees avant) restent.
+const AIRE_ECLAT = 150;   // km2
+let eclats = 0;
+fc.features.forEach((f, idx) => {
+  const orig = origParts.get(idx); if(!orig) return;
+  const g = f.geometry, polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : null; if(!polys || polys.length < 2) return;
+  const garde = polys.filter(c => { let a; try{ a = turf.area(turf.polygon([c[0]])) / 1e6; }catch(e){ return true; }
+    if(a >= AIRE_ECLAT) return true;
+    const ct = turf.centroid(turf.polygon([c[0]])).geometry.coordinates;
+    const mere = orig.find(o => ct[0] >= o.b[0] && ct[0] <= o.b[2] && ct[1] >= o.b[1] && ct[1] <= o.b[3] && o.a >= 3 * a && turf.booleanPointInPolygon(ct, o.pf));
+    if(mere){ eclats++; return false; } return true; });
+  if(garde.length === polys.length) return;
+  if(!garde.length) return;
+  f.geometry = garde.length === 1 ? { type:'Polygon', coordinates:garde[0] } : { type:'MultiPolygon', coordinates:garde };
+});
+// ---- ouverture : les parties de terre plus etroites que 2 x OUVERTURE_KM, collees a l'eau creusee (pointes entre un fleuve et la mer,
+// croissants au bord d'un delta, languettes), sont retirees : bord net. Une partie etroite qui ne touche pas l'eau (coin de frontiere entre
+// regions, cap de la cote) est conservee telle quelle, les frontieres entre regions ne bougent donc pas.
+const OUVERTURE_KM = 3.5;
+let ouvertes = 0, pointes = 0;
+fc.features.forEach((f, idx) => {
+  if(!origParts.has(idx)) return;                                              // region sans eau creusee
+  const fb = turf.bbox(f), proches = waters.filter((w, k) => { const bb = waterBoxes[k]; return !(fb[0] > bb[2] + .1 || fb[2] < bb[0] - .1 || fb[1] > bb[3] + .1 || fb[3] < bb[1] - .1); });
+  try{
+    const er = turf.buffer(f, -OUVERTURE_KM, { units:'kilometers', steps:6 });
+    if(!er) return;
+    const op = turf.buffer(er, OUVERTURE_KM, { units:'kilometers', steps:6 });
+    if(!op) return;
+    const rest = turf.difference(turf.featureCollection([f, op]));
+    if(!rest){ return; }
+    const morceaux = (rest.geometry.type === 'Polygon' ? [rest.geometry.coordinates] : rest.geometry.coordinates)
+      .map(c => { const pf = turf.polygon([c[0]]); return { c, pf, a:turf.area(pf) / 1e6, bb:turf.bbox(pf) }; })
+      .filter(m => m.a >= 0.4);                                                 // (les poussieres le long des bords restent telles quelles)
+    const aRetirer = morceaux.filter(m => proches.some((w, k) => { const b2 = turf.bbox(w);
+      if(m.bb[0] > b2[2] + .05 || m.bb[2] < b2[0] - .05 || m.bb[1] > b2[3] + .05 || m.bb[3] < b2[1] - .05) return false;
+      try{ return turf.booleanIntersects(turf.buffer(m.pf, 0.8, { units:'kilometers', steps:4 }), w); }catch(e){ return false; } }));
+    if(!aRetirer.length) return;
+    pointes += aRetirer.length;
+    let res = f;
+    for(const m of aRetirer){ try{ const d = turf.difference(turf.featureCollection([res, m.pf])); if(d) res = d; }catch(e){} }
+    if(res !== f && res.geometry){ f.geometry = res.geometry; ouvertes++; }
+  }catch(e){ /* region laissee telle quelle */ }
+});
 fc.features.forEach(f => { f.properties = {}; });
-log('regions decoupees', carved, 'echecs', failed);
+log('regions decoupees', carved, 'echecs', failed, '| eclats de terre retires :', eclats, '| pointes etroites retirees :', pointes, 'dans', ouvertes, 'regions');
 
 // ---- ecriture ----
 const r3 = v => Math.round(v * 1000) / 1000;
@@ -456,8 +502,28 @@ const waterOut = {
 };
 fs.writeFileSync(path.join(OUT, 'water.json'), JSON.stringify(waterOut));
 // simplification legere (triangles < ~0.25 km2 retires) puis ~400 m de precision: invisible a l'echelle du jeu
-let topoOut = topoSimplify.simplify(topoSimplify.presimplify(topoServer.topology({ regions:fc })), 2e-5);
-topoOut = topojson.quantize(topoOut, 1e5);
+// Bords nets : on lisse les arcs EXTERIEURS (cotes et berges, partages par une seule region ; les frontieres entre regions
+// ne bougent pas), puis on allege (tolerance 50 m) et on quantifie a ~20 m (avant : simplification de Visvalingam et grille de
+// 400 m, d'ou des facettes et des marches d'escalier sur les berges).
+let topoOut = topoServer.topology({ regions:fc });
+{ const obj = topoOut.objects.regions, use = new Map(), walkA = a => Array.isArray(a) ? a.forEach(walkA) : use.set(a < 0 ? ~a : a, (use.get(a < 0 ? ~a : a) || 0) + 1);
+  obj.geometries.forEach(g => walkA(g.arcs));
+  const chaikin2 = (pts, closed) => { const n = pts.length, o = []; if(closed){ for(let i = 0; i < n; i++){ const a = pts[i], b = pts[(i + 1) % n]; o.push([.75 * a[0] + .25 * b[0], .75 * a[1] + .25 * b[1]], [.25 * a[0] + .75 * b[0], .25 * a[1] + .75 * b[1]]); } return o; }
+    o.push(pts[0]); for(let i = 0; i < n - 1; i++){ const a = pts[i], b = pts[i + 1]; if(i) o.push([.75 * a[0] + .25 * b[0], .75 * a[1] + .25 * b[1]]); if(i < n - 2) o.push([.25 * a[0] + .75 * b[0], .25 * a[1] + .75 * b[1]]); } o.push(pts[n - 1]); return o; };
+  const dp = (pts, tol) => { const keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1; const st = [[0, pts.length - 1]];
+    while(st.length){ const [i, j] = st.pop(); let md = 0, mi = -1; const [x1, y1] = pts[i], [x2, y2] = pts[j], dx = x2 - x1, dy = y2 - y1, L = dx * dx + dy * dy;
+      for(let k = i + 1; k < j; k++){ let t = L ? ((pts[k][0] - x1) * dx + (pts[k][1] - y1) * dy) / L : 0; t = Math.max(0, Math.min(1, t)); const d = Math.hypot(pts[k][0] - (x1 + t * dx), pts[k][1] - (y1 + t * dy)); if(d > md){ md = d; mi = k; } }
+      if(md > tol){ keep[mi] = 1; st.push([i, mi], [mi, j]); } }
+    return pts.filter((_, i) => keep[i]); };
+  const ends = new Map(), key = p => p[0].toFixed(7) + ',' + p[1].toFixed(7);
+  topoOut.arcs.forEach(a => { for(const p of [a[0], a[a.length - 1]]) ends.set(key(p), (ends.get(key(p)) || 0) + 1); });
+  topoOut.arcs = topoOut.arcs.map((a, k) => {
+    if(use.get(k) !== 1 || a.length < 3) return dp(a, 0.0003);                  // frontiere partagee : juste allegee
+    const closed = a.length > 3 && key(a[0]) === key(a[a.length - 1]) && ends.get(key(a[0])) === 2;
+    let p = closed ? a.slice(0, -1) : a; p = chaikin2(chaikin2(p, closed), closed); if(closed) p.push(p[0]);
+    const q = dp(p, 0.0004); return closed && q.length < 4 ? a : q; });
+}
+topoOut = topojson.quantize(topoOut, 2e6);
 fs.writeFileSync(path.join(OUT, 'regions-water.topojson'), JSON.stringify(topoOut));
 log('ecrit', waterOut.stats, 'water.json', Math.round(fs.statSync(path.join(OUT, 'water.json')).size / 1024) + ' Ko',
   'regions-water.topojson', Math.round(fs.statSync(path.join(OUT, 'regions-water.topojson')).size / 1024) + ' Ko');

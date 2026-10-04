@@ -13,7 +13,7 @@
 // Le resultat est lu par outils/build-waterways.js (champ trace: 'reel' = pas de meandres ajoutes).
 // Usage (depuis la racine, avec @turf/turf et topojson-client) :
 //   node outils/build-fleuves-ne.js <ne_10m_rivers_lake_centerlines.geojson> [rang_max=6]
-const fs = require('fs'), path = require('path'), topojson = require('topojson-client');
+const fs = require('fs'), path = require('path'), topojson = require('topojson-client'), turf = require('@turf/turf');
 const [NE, RANG] = process.argv.slice(2), RANG_MAX = +RANG || 6;
 if(!NE){ console.log('Usage : node outils/build-fleuves-ne.js <ne_10m_rivers_lake_centerlines.geojson> [rang_max=6]'); process.exit(1); }
 const ROOT = path.join(__dirname, '..'), OUT = path.join(__dirname, 'rivers-world.json');
@@ -107,7 +107,9 @@ const densifie = (pts, pas) => { const o = [pts[0]]; for(let i = 1; i < pts.leng
 const versGrand = (p, c) => { let best = Infinity; const ci = Math.floor(p[0] / PS), cj = Math.floor(p[1] / PS);
   for(let i = ci - 1; i <= ci + 1; i++) for(let j = cj - 1; j <= cj + 1; j++) for(const q of pointsDe.get(i + ',' + j) || []) if(q.c !== c) best = Math.min(best, kmDe(p, q.p)); return best; };
 const indexe = (pts, c) => densifie(pts, 8).forEach(p => { const k = Math.floor(p[0] / PS) + ',' + Math.floor(p[1] / PS); (pointsDe.get(k) || pointsDe.set(k, []).get(k)).push({ p, c }); });
-const MER = 40, JONCTION = 30, FILET = 40, PORTEE = 80;   // km : mer proche, cours proche, longueur du raccord en courbe, distance maxi pour retrouver son fleuve
+const terres = topojson.feature(topo, obj).features.map(f => ({ f, b:turf.bbox(f) }));
+const surTerre = p => { for(const t of terres){ if(p[0] < t.b[0] || p[0] > t.b[2] || p[1] < t.b[1] || p[1] > t.b[3]) continue; try{ if(turf.booleanPointInPolygon(p, t.f)) return true; }catch(e){} } return false; };
+const MER = 40, JONCTION = 30, FILET = 40, PORTEE = 80, ACCES_MER = 150;   // km : distance maxi dont on va chercher la mer   // km : mer proche, cours proche, longueur du raccord en courbe, distance maxi pour retrouver son fleuve
 const chaikin = pts => { const o = [pts[0]]; for(let i = 0; i < pts.length - 1; i++){ const a = pts[i], b = pts[i + 1];
   if(i) o.push([.75 * a[0] + .25 * b[0], .75 * a[1] + .25 * b[1]]); if(i < pts.length - 2) o.push([.25 * a[0] + .75 * b[0], .25 * a[1] + .75 * b[1]]); } o.push(pts[pts.length - 1]); return o; };
 // points a intervalle regulier le long du trace (les extremites sont gardees)
@@ -160,6 +162,21 @@ function raccorde(pts, J, T3){
   out[out.length - 1] = J;
   return out;
 }
+// l'embouchure d'un cours qui se jette en mer : s'il finit sur la terre, une courbe le conduit a la cote la plus proche
+// puis 8 km au large (avant : prolongement droit dans le sens du courant, qui longeait parfois la cote sur 140 km)
+function versLaMerCourbe(p){
+  const P = p[p.length - 1];
+  if(!surTerre(P)) return p;
+  const c = procheCote(P); if(!(c.d <= ACCES_MER)) return p;
+  const n = Math.hypot(c.v[0], c.v[1]) || 1, u = [c.v[0] / n, c.v[1] / n];
+  const R = hors(P, [c.v[0] + u[0] * 8, c.v[1] + u[1] * 8]);                     // 8 km apres la cote
+  const a = plan(P, p[Math.max(0, p.length - 4)]), T0 = (() => { const l = Math.hypot(a[0], a[1]) || 1; return [-a[0] / l, -a[1] / l]; })();
+  const dR = plan(P, R), dist = Math.hypot(dR[0], dR[1]), droit = T0[0] * u[0] + T0[1] * u[1] < -0.2;   // le cours tourne le dos a la mer : trait direct
+  const h = droit ? 0 : dist * .4, c1 = [T0[0] * h, T0[1] * h], c2 = [dR[0] - u[0] * h, dR[1] - u[1] * h], m = Math.max(3, Math.round(dist / 5)), out = p.slice();
+  for(let s = 1; s <= m; s++){ const t = s / m, w = 1 - t;
+    out.push(hors(P, [3 * w * w * t * c1[0] + 3 * w * t * t * c2[0] + t * t * t * dR[0], 3 * w * w * t * c1[1] + 3 * w * t * t * c2[1] + t * t * t * dR[1]])); }
+  return out;
+}
 const resultat = [];
 cours.forEach((c, idx) => {
   const e0 = c.pts[0], e1 = c.pts[c.pts.length - 1], deja = entrees.size > 0;
@@ -188,6 +205,7 @@ cours.forEach((c, idx) => {
     if(T && T.d <= PORTEE) { p = raccorde(p, T.pt, T.tan); c.joint = fin[T.c].nom; }
     else c.end = 'inland';                                                      // pas de fleuve a portee : il s'arrete
   }
+  if(c.end === 'sea') p = versLaMerCourbe(p);
   c.pts = p; fin.push(c); indexeSommets(p, fin.length - 1); resultat.push(c);
 });
 function versGrandLisse(p, sauf){ let best = Infinity; const ci = Math.floor(p[0] / PS), cj = Math.floor(p[1] / PS);
