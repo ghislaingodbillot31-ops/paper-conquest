@@ -94,44 +94,48 @@ function drawWater() {
 // pont : parapets de part et d'autre de la chaussée, sur toute la traversée de la rivière
 // les parapets ne sont recalculés que si routes ou rivières changent (avant : à chaque image,
 // des centaines de milliers de tests de croisement)
-/* Ponts en pierre (demande du 30/09) : un tablier droit dans l'axe de la route au point de
-   traversée, un peu plus long que la rivière n'est large à cet endroit (largeur réelle,
-   divisée par le sinus de l'angle de traversée, plus 3,5 m de chaque côté pour poser le pont
-   sur les berges). Calculés une fois, refaits seulement si routes ou rivières changent. */
+/* Ponts en pierre. Un pont relie l'ENTREE et la SORTIE de la route de part et d'autre de l'eau :
+   on suit la route (tracé lissé, un point tous les 1,5 m), on repère chaque passage sur l'eau (rivière ou lac),
+   et le pont va du point de la route situé PONT_BORD m avant la berge au point situé PONT_BORD m après l'autre
+   berge. Ces deux points sont sur la route : le pont les relie en ligne droite, il dépasse donc bien des deux berges
+   et la route s'arrête à son entrée et reprend à sa sortie (elle n'est pas dessinée sous le tablier : voir
+   roadPieces dans routes.js). Calculés une fois, refaits seulement si routes ou rivières changent. */
+const PONT_BORD = 4.5, PONT_PAS = 1.5;
 let bridgeCache = { key:null, list:[] };
+const ptInPoly = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if ((poly[i][1] > p[1]) !== (poly[j][1] > p[1]) && p[0] < (poly[j][0] - poly[i][0]) * (p[1] - poly[i][1]) / (poly[j][1] - poly[i][1]) + poly[i][0]) c = !c; return c; };
 function bridges() {
   if (bridgeCache.v === sceneV && bridgeCache.S === S) return bridgeCache.list; // décor inchangé : rien à vérifier
-  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined, r.isles])]);
+  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined, r.isles]), (S.lakes || []).map(l => [l.c, l.pts && l.pts.length])]);
   if (bridgeCache.key === key) { bridgeCache.v = sceneV; bridgeCache.S = S; return bridgeCache.list; }
   const list = [];
-  for (const river of S.rivers) {
-    const rv = river.pts, HW = riverHW(river), rbb = rv.slice(1).map((q, i) => bbox([rv[i], q]));
-    for (const r of S.roads) { const RP = smoothPts(r); for (let k = 0; k < RP.length - 1; k++) {
-      const a = RP[k], b = RP[k+1], sb = bbox([a, b]);
-      for (let i = 0; i < rv.length - 1; i++) {
-        if (!(sb[0] <= rbb[i][2] && rbb[i][0] <= sb[2] && sb[1] <= rbb[i][3] && rbb[i][1] <= sb[3])) continue;
-        const p = segCross(a, b, rv[i], rv[i+1]);
-        if (!p) continue;
-        // axe du pont : la direction de la route sur ±12 m autour du point de traversée
-        const a2 = RP[Math.max(0, k - 12)], b2 = RP[Math.min(RP.length - 1, k + 13)], L = segLen(a2, b2) || 1;
-        const u = [(b2[0] - a2[0]) / L, (b2[1] - a2[1]) / L], n = [-u[1], u[0]];
-        /* Longueur : on mesure, le long des DEUX bords du pont (et de son axe), jusqu'où l'on
-           est au-dessus de l'eau — en biais, un bord de la route atteint la berge bien plus
-           loin que l'axe. Le pont va jusqu'au point le plus éloigné, + 3,5 m sur la berge. */
-        const w = roadType(r).surf / 2 + 1.2, i0 = Math.max(0, i - 60), i1 = Math.min(rv.length - 2, i + 60);
-        const wet = q => { for (let j = i0; j <= i1; j++) if (ptSeg(q, rv[j], rv[j + 1]).d < HW[j]) return true; return false; };
-        const reach = { '-1':0, '1':0 };
-        for (const t of [-w, 0, w]) for (const e of [-1, 1]) {
-          let l = 0;
-          while (l < 400 && wet([p[0] + u[0] * l * e + n[0] * t, p[1] + u[1] * l * e + n[1] * t])) l += .5;
-          reach[e] = Math.max(reach[e], l);
-        }
-        // chaque bout va jusqu'à sa propre berge (le pont n'est pas forcément centré sur l'axe
-        // de la rivière)
-        const hf = reach[1] + 3.5, hb = reach[-1] + 3.5, sh = (hf - hb) / 2;
-        list.push({ c:[p[0] + u[0] * sh, p[1] + u[1] * sh], u, n, half:(hf + hb) / 2, w });
-      }
-    } }
+  const rivs = S.rivers.map(river => { const rv = river.pts, HW = riverHW(river); return { rv, HW, bb:bbox(rv), hmax:Math.max(...HW) }; });
+  const lacs = (S.lakes || []).map(lk => { const poly = lakeShape(lk); return { poly, bb:bbox(poly) }; });
+  for (const r of S.roads) {
+    const RP = smoothPts(r), P = resample(RP, PONT_PAS), n = P.length, rbb = bbox(RP), w = roadType(r).surf / 2 + 1.2;
+    if (n < 6) continue;
+    // chaque rivière et chaque lac dont l'emprise touche la route
+    const near = rivs.filter(v => !(rbb[0] > v.bb[2] + v.hmax + w || rbb[2] < v.bb[0] - v.hmax - w || rbb[1] > v.bb[3] + v.hmax + w || rbb[3] < v.bb[1] - v.hmax - w));
+    const lnear = lacs.filter(l => !(rbb[0] > l.bb[2] + w || rbb[2] < l.bb[0] - w || rbb[1] > l.bb[3] + w || rbb[3] < l.bb[1] - w));
+    if (!near.length && !lnear.length) continue;
+    const wet = P.map(q => {
+      for (const v of near) { if (q[0] < v.bb[0] - v.hmax - w || q[0] > v.bb[2] + v.hmax + w || q[1] < v.bb[1] - v.hmax - w || q[1] > v.bb[3] + v.hmax + w) continue;
+        for (let j = 0; j < v.rv.length - 1; j++) if (ptSeg(q, v.rv[j], v.rv[j + 1]).d < Math.max(v.HW[j], v.HW[j + 1]) + w * .5) return true; }
+      for (const l of lnear) if (q[0] >= l.bb[0] - w && q[0] <= l.bb[2] + w && q[1] >= l.bb[1] - w && q[1] <= l.bb[3] + w && ptInPoly(q, l.poly)) return true;
+      return false;
+    });
+    // passages sur l'eau (les trous secs de moins de 6 m sont comblés : un seul pont)
+    const runs = []; let i = 0;
+    while (i < n) { if (!wet[i]) { i++; continue; } let j = i; while (j + 1 < n && wet[j + 1]) j++; runs.push([i, j]); i = j + 1; }
+    const merged = []; for (const rn of runs) { const last = merged[merged.length - 1]; if (last && (rn[0] - last[1]) * PONT_PAS < 6) last[1] = rn[1]; else merged.push(rn.slice()); }
+    const m = Math.ceil(PONT_BORD / PONT_PAS);
+    for (const [i0, i1] of merged) {
+      if (i0 - m < 0 || i1 + m > n - 1) continue;                    // la route finit dans l'eau : pas de pont possible
+      const A = P[i0 - m], B = P[i1 + m], L = segLen(A, B) || 1, u = [(B[0] - A[0]) / L, (B[1] - A[1]) / L];
+      // longueur le long de la route (pour couper la chaussée sous le tablier)
+      let s0 = 0; for (let k = 0; k < i0 - m; k++) s0 += segLen(P[k], P[k + 1]);
+      let s1 = s0; for (let k = i0 - m; k < i1 + m; k++) s1 += segLen(P[k], P[k + 1]);
+      list.push({ c:[(A[0] + B[0]) / 2, (A[1] + B[1]) / 2], u, n:[-u[1], u[0]], half:L / 2, w, road:r.id, a:A, b:B, s0, s1 });
+    }
   }
   bridgeCache = { key, list, v:sceneV, S };
   return list;

@@ -72,6 +72,22 @@ function smoothPts(r) {
 /* Chaussée de largeur FIXE (demande du 30/09) : un trait de la largeur de la chaussée le long
    du tracé lissé, identique sur toute la longueur ; aux carrefours, les chaussées se
    recouvrent simplement, sans élargissement ni déformation. */
+/* Morceaux de chaussée : le tracé lissé de la route, sans les passages sur l'eau (entre l'entrée et la sortie de chaque
+   pont, c'est le tablier qui relie les deux bouts, voir bridges dans rendu.js). */
+function roadPieces(r) {
+  const P = smoothPts(r), cuts = bridges().filter(b => b.road === r.id).sort((a, b) => a.s0 - b.s0);
+  if (!cuts.length) return [P];
+  const cum = [0]; for (let i = 1; i < P.length; i++) cum.push(cum[i - 1] + segLen(P[i - 1], P[i]));
+  const at = d => { let i = 1; while (i < P.length - 1 && cum[i] < d) i++; const t = (d - cum[i - 1]) / ((cum[i] - cum[i - 1]) || 1); return [P[i - 1][0] + (P[i][0] - P[i - 1][0]) * t, P[i - 1][1] + (P[i][1] - P[i - 1][1]) * t]; };
+  const pieces = []; let from = 0;
+  for (const b of cuts) {
+    const seg = [at(from)]; for (let i = 0; i < P.length; i++) if (cum[i] > from && cum[i] < b.s0) seg.push(P[i]); seg.push(at(b.s0));
+    if (seg.length > 1) pieces.push(seg); from = b.s1;
+  }
+  const last = [at(from)]; for (let i = 0; i < P.length; i++) if (cum[i] > from) last.push(P[i]);
+  if (last.length > 1) pieces.push(last);
+  return pieces;
+}
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
   const rank = r => ROADS.indexOf(roadType(r));
@@ -79,7 +95,7 @@ function drawRoads() {
   const stroke = (r, color, grow) => {
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(roadType(r).surf * s, 3.6) + 2 * grow; // (au moins 3,6 px de large, même de loin)
     ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    polyPath(smoothPts(r)); ctx.stroke();
+    for (const piece of roadPieces(r)) { polyPath(piece); ctx.stroke(); }
   };
   // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
   // les chaussées se fondent sans trait
