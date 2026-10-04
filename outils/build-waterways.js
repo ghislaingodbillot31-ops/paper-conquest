@@ -383,6 +383,38 @@ const topo = JSON.parse(fs.readFileSync(SRC));
 const fc = topojson.feature(topo, topo.objects[Object.keys(topo.objects)[0]]);
 function unwrapRing(ring){ const out = [[ring[0][0], ring[0][1]]]; let off = 0;
   for(let i = 1; i < ring.length; i++){ const d = ring[i][0] - ring[i-1][0]; if(d > 180) off -= 360; else if(d < -180) off += 360; out.push([ring[i][0] + off, ring[i][1]]); } return out; }
+// ---- au moins un point d'eau par region : une region sans lac recoit un etang (une oasis dans le desert) ----
+if(LACS_ACTIFS){
+  fc.features.forEach(f => { const g = f.geometry;
+    if(g.type === 'Polygon') g.coordinates = g.coordinates.map(unwrapRing); else if(g.type === 'MultiPolygon') g.coordinates = g.coordinates.map(p => p.map(unwrapRing)); });
+  const fBoxes = fc.features.map(f => turf.bbox(f)), dedans = (pt, k) => pt[0] >= fBoxes[k][0] && pt[0] <= fBoxes[k][2] && pt[1] >= fBoxes[k][1] && pt[1] <= fBoxes[k][3];
+  const avec = new Set();
+  lakes.forEach(l => { const c = turf.centroid(l.poly).geometry.coordinates;
+    for(let k = 0; k < fc.features.length; k++) if(!avec.has(k) && dedans(c, k) && turf.booleanPointInPolygon(c, fc.features[k])){ avec.add(k); break; } });
+  const libre = (poly, clair) => { const halo = turf.buffer(poly, clair, { units:'kilometers', steps:6 }), hb = turf.bbox(halo);
+    const near = bb => !(hb[0] > bb[2] || hb[2] < bb[0] || hb[1] > bb[3] || hb[3] < bb[1]);
+    return !rivers.some((x, k) => near(riverBoxes[k]) && turf.booleanIntersects(halo, x.poly)) && !lakes.some((o, k) => near(lakeBoxes[k]) && turf.booleanIntersects(halo, o.poly)); };
+  let ajoutes = 0; const rates = [];
+  fc.features.forEach((f, k) => {
+    if(avec.has(k)) return;
+    const b = fBoxes[k], pts = [];
+    try{ pts.push(turf.pointOnFeature(f).geometry.coordinates); }catch(e){}
+    for(let i = 0; i < 14; i++) for(let j = 0; j < 14; j++){ const p = [b[0] + (b[2] - b[0]) * (i + .5) / 14, b[1] + (b[3] - b[1]) * (j + .5) / 14];
+      if(Math.abs(p[0]) < EDGE_LON - 3 && turf.booleanPointInPolygon(p, f)) pts.push(p); }
+    const c0 = pts[0] || [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+    pts.sort((p, q) => Math.hypot(p[0] - c0[0], p[1] - c0[1]) - Math.hypot(q[0] - c0[0], q[1] - c0[1]));
+    for(const clair of [2.5, 1.2, 0.5]) for(const r of [4.5, 3.2, 2.2, 1.5, 1, 0.6]){
+      for(const p of pts.slice(0, 60)){
+        const poly = lakeShape(p, r, 7919 + k * 31);
+        if(!poly.geometry.coordinates[0].every(q => turf.booleanPointInPolygon(q, f))) continue;
+        if(!libre(poly, clair)) continue;
+        addLake(poly, 'etang'); ajoutes++; avec.add(k); return;
+      }
+    }
+    rates.push(k + 1);
+  });
+  log('etangs ajoutes pour que chaque region ait un point d\'eau :', ajoutes, rates.length ? '| regions sans place : ' + rates.join(', ') : '| toutes les regions en ont un');
+}
 const waters = [...rivers.map(r => r.poly), ...lakes.map(l => l.poly)], waterBoxes = waters.map(p => turf.bbox(p));
 let carved = 0, failed = 0;
 fc.features.forEach((f, idx) => {
