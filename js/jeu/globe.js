@@ -119,14 +119,31 @@ async function addRegions(){
   regionTopo = topo; regionGeoms = geometries;
 
   map.addSource('regions', { type: 'geojson', data: fc });
+  // Bords "papier decoupe" : la cote (bord exterieur, partage par une seule region) et les
+  // frontieres internes sont deux traits distincts, tires du TopoJSON (aucun doublon).
+  // Sous la terre : eaux peu profondes claires puis ombre portee ; sur la terre : trait d'encre.
+  const coastLine = topojson.mesh(topo, topo.objects[objName], (a, b) => a === b);
+  const borderLines = topojson.mesh(topo, topo.objects[objName], (a, b) => a !== b);
+  for(const m of [coastLine, borderLines]) m.coordinates = m.coordinates.map(unwrapRingLongitudes);   // meme correction de l'antimeridien que les regions
+  const zoomW =(...v) => ['interpolate', ['exponential', 1.6], ['zoom'], 0, v[0], 3, v[1], 6, v[2], 10, v[3]];
+  const lineLayout = { 'line-join': 'round', 'line-cap': 'round' };
+  map.addSource('coast', { type: 'geojson', data: coastLine });
+  map.addSource('borders', { type: 'geojson', data: borderLines });
+  map.addLayer({ id: 'coast-shallows', type: 'line', source: 'coast', layout: lineLayout,
+    paint: { 'line-color': '#d4ebee', 'line-opacity': 0.85, 'line-width': zoomW(3, 9, 22, 60), 'line-blur': zoomW(2, 6, 14, 40) } });
+  map.addLayer({ id: 'coast-shadow', type: 'line', source: 'coast', layout: lineLayout,
+    paint: { 'line-color': '#1d4658', 'line-opacity': 0.4, 'line-width': zoomW(1.2, 3.5, 9, 24), 'line-blur': zoomW(1, 2.5, 6, 16) } });
   map.addLayer({
     id: 'regions', type: 'fill', source: 'regions',
     paint: { 'fill-color': ['get', 'fillColor'] },
   });
+  // frontieres entre regions : fines, douces, a peine plus sombres que la terre
   map.addLayer({
-    id: 'regions-outline', type: 'line', source: 'regions',
-    paint: { 'line-color': 'rgba(60,53,39,0.35)', 'line-width': 0.5 },
+    id: 'regions-outline', type: 'line', source: 'borders', layout: lineLayout,
+    paint: { 'line-color': 'rgba(60,53,39,0.32)', 'line-width': zoomW(0.35, 0.6, 1, 1.8), 'line-blur': zoomW(0, 0.2, 0.4, 0.8) },
   });
+  map.addLayer({ id: 'coast-line', type: 'line', source: 'coast', layout: lineLayout,
+    paint: { 'line-color': 'rgba(52,44,30,0.85)', 'line-width': zoomW(0.5, 0.9, 1.5, 2.6) } });
   map.addLayer({
     id: 'regions-selected', type: 'fill', source: 'regions',
     // region selectionnee: plus de contour noir, juste un leger eclaircissement
