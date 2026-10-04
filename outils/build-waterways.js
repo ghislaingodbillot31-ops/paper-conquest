@@ -310,7 +310,8 @@ function tryLake(c0, r0, seed){
   return null;
 }
 const addLake = poly => { lakes.push({ poly }); lakeBoxes.push(turf.bbox(poly)); water += turf.area(poly) / 1e6; };
-const lakeTarget = Math.round(landKm2 * LAKE_DENSITY);
+const LACS_ACTIFS = false;   // lacs supprimes le 04/10/2026 (on refait l'eau de zero) : passer a true pour les regenerer
+const lakeTarget = LACS_ACTIFS ? Math.round(landKm2 * LAKE_DENSITY) : 0;
 for(const b of basins.slice().sort((a, b2) => b2.size - a.size)){
   if(lakes.length >= lakeTarget) break;
   const y = (b.sink / W) | 0, c0 = [lonAt(b.sink % W), latAt(y)];
