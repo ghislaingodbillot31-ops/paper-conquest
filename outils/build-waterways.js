@@ -40,7 +40,7 @@ const { smooth01, clamp01, geoHash, geoNoise, aridityAt, GEO_TERRAIN, geoDist } 
 const BOX = { lon0:-180, lon1:180, lat0:-56, lat1:84, res:0.2 };
 const LAKE_CLEAR = 12;                                 // rive libre minimale (km)
 const LAKE_DENSITY = 40 / 7.745e6;                     // lacs par km2 de terre (reference: Australie)
-const SOURCE_TAPER_KM = 140;                           // longueur sur laquelle la source s'affine
+const SOURCE_TAPER_KM = 90;                            // longueur sur laquelle la source s'affine (jamais en pointe : bout arrondi)
 const P = { noise:30, lakeDepth:1, lakeMax:30, lakeFill:0.2, seed:5 };
 const AUS_RIDGE = [[-37.8,145.5],[-36.3,148.3],[-33.5,150],[-30.5,151.8],[-27.5,152],[-24.5,149.5],[-21.5,147.8],[-18.5,145.5],[-15.5,144.6],[-12.5,143]];
 const AUS_RANGES = [[-23.7,133.5,2,0.55],[-22.5,118,2.5,0.6],[-17,126,2.5,0.5],[-31.5,138.6,1.3,0.45],[-26,131.5,1.8,0.5],[-42,146.5,1.2,0.8],[-34,117,2,0.25]];
@@ -160,7 +160,7 @@ function snakeRiver(cellPts, seed, opt){
     out.push([base[i][0] + nx * off, base[i][1] + ny * off]);
     // la source s'affine (0.15 x la largeur de depart a la pointe), sauf
     // pour une liaison (depart en mer ou sur un fleuve): pleine largeur
-    const tp = opt.taper === false ? 1 : 0.15 + 0.85 * smooth01(sArr[i] / SOURCE_TAPER_KM);
+    const tp = opt.taper === false ? 1 : 0.5 + 0.5 * smooth01(sArr[i] / SOURCE_TAPER_KM);   // la source garde la moitie de la largeur : bout en demi-cercle
     width.push((opt.w0 + (opt.w1 - opt.w0) * Math.pow(u, 0.8)) * tp);
   }
   // embouchure (et depart en mer d'une liaison) prolongee jusqu'a la mer
