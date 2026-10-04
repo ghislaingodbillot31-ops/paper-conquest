@@ -344,5 +344,93 @@ function buildRegionNetwork(topo, fc, geometries){
   }
   if(skippedUnroutable) console.warn(skippedUnroutable, 'connexion(s) terrestre(s) abandonnee(s): aucun trace ne pouvait eviter l\'eau.');
 
+
   return { villages, edges };
+}
+
+
+// Reparation de connexite MONDIALE. Le reseau est calcule continent par continent, donc deux regions qui
+// se touchent par terre mais classees dans deux continents (Russie / Ukraine, Guyane / Suriname,
+// Panama, Nouvelle-Guinee...) restent separees. Tant que deux morceaux du reseau se touchent par une
+// vraie frontiere terrestre, on ajoute la plus courte route possible entre eux, sans plafond de
+// connexions (la connexite prime). Une route ne traverse jamais la mer.
+// routes : [[idRegionA, idRegionB, coords], ...] (modifie sur place) ; renvoie le nombre ajoute.
+// Dernier recours pour la reparation : le trace doit rester sur la terre de N'IMPORTE QUELLE region
+// (et pas seulement des deux regions reliees : une peninsule etroite fait sortir un trace droit de
+// sa region). Chaque troncon est echantillonne finement, pour ne pas enjamber un golfe.
+function anyLandPath(topo, a, b, geomI, geomJ, onAnyLand, existingEdges){
+  const ok = coords => { for(let i = 0; i < coords.length - 1; i++) for(const t of [0, .25, .5, .75]){
+    const p = [coords[i][0] + (coords[i+1][0] - coords[i][0]) * t, coords[i][1] + (coords[i+1][1] - coords[i][1]) * t];
+    if(!onAnyLand(p)) return false; } return true; };
+  let fallback = null;
+  const wps = borderWaypoints(topo, geomI, geomJ).slice().sort((w1, w2) => bearingTurn(a, w1, b) - bearingTurn(a, w2, b));
+  for(const w of wps) for(const s1 of [1, 0.4, 0]) for(const s2 of [1, 0.4, 0]){
+    const coords = windingPath(a, w, s1).concat(windingPath(w, b, s2).slice(1));
+    if(!ok(coords)) continue;
+    if(!fallback) fallback = coords;
+    if(!crossesExisting(coords, existingEdges)) return coords;
+  }
+  return fallback || gridLandPath(a, b, onAnyLand);
+}
+
+// Vrai plus court chemin sur la terre (A* sur une grille de 0,1 degre, ~11 km) : pour les peninsules
+// etroites ou aucun trace ondule/droit ne tient sur la terre (Kra, Kamtchatka, Panama...).
+// Les routes sont ensuite adoucies, puis le resultat est re-verifie sur la terre.
+function gridLandPath(a, b, onAnyLand){
+  const S = 0.1, x0 = Math.min(a[0], b[0]) - 3, y0 = Math.min(a[1], b[1]) - 3;
+  const W = Math.ceil((Math.abs(a[0] - b[0]) + 6) / S), H = Math.ceil((Math.abs(a[1] - b[1]) + 6) / S);
+  const cell = ([x, y]) => [Math.round((x - x0) / S), Math.round((y - y0) / S)], pos = (i, j) => [x0 + i * S, y0 + j * S];
+  const land = new Map(); const isLand = (i, j) => { if(i < 0 || j < 0 || i >= W || j >= H) return false; const k = j * W + i; let v = land.get(k); if(v === undefined){ v = onAnyLand(pos(i, j)); land.set(k, v); } return v; };
+  const [si, sj] = cell(a), [gi, gj] = cell(b), gk = gj * W + gi;
+  const open = [[0, si, sj]], g = new Map([[sj * W + si, 0]]), from = new Map();
+  const h = (i, j) => Math.hypot(i - gi, j - gj);
+  while(open.length){
+    let bi = 0; for(let q = 1; q < open.length; q++) if(open[q][0] < open[bi][0]) bi = q;
+    const [, i, j] = open.splice(bi, 1)[0], k = j * W + i;
+    if(k === gk) break;
+    for(let di = -1; di <= 1; di++) for(let dj = -1; dj <= 1; dj++){
+      if(!di && !dj) continue; const ni = i + di, nj = j + dj, nk = nj * W + ni;
+      if(!(nk === gk) && !isLand(ni, nj)) continue;
+      if(di && dj && !(isLand(i + di, j) && isLand(i, j + dj))) continue;   // pas de passage en diagonale entre deux eaux
+      const c = g.get(k) + Math.hypot(di, dj); if(c < (g.get(nk) ?? Infinity)){ g.set(nk, c); from.set(nk, k); open.push([c + h(ni, nj), ni, nj]); }
+    }
+  }
+  if(!from.has(gk) && gk !== si + sj * W) return null;
+  const cells = []; for(let k = gk; k !== undefined; k = from.get(k)) cells.push([k % W, (k / W) | 0]);
+  cells.reverse();
+  let pts = [a, ...cells.slice(1, -1).map(([i, j]) => pos(i, j)), b];
+  // allegement : on garde un point sur 3, puis on adoucit une fois
+  pts = pts.filter((_, q) => q === 0 || q === pts.length - 1 || q % 3 === 0);
+  const sm = [pts[0]]; for(let q = 0; q < pts.length - 1; q++){ const p = pts[q], r = pts[q + 1];
+    if(q > 0) sm.push([.75 * p[0] + .25 * r[0], .75 * p[1] + .25 * r[1]]);
+    if(q < pts.length - 2) sm.push([.25 * p[0] + .75 * r[0], .25 * p[1] + .75 * r[1]]); } sm.push(pts[pts.length - 1]);
+  const ok = c => { for(let q = 0; q < c.length - 1; q++) for(const t of [0, .5]) if(!onAnyLand([c[q][0] + (c[q+1][0] - c[q][0]) * t, c[q][1] + (c[q+1][1] - c[q][1]) * t])) return false; return true; };
+  return ok(sm) ? sm : pts;
+}
+
+function repairConnectivity(topo, fc, geometries, routes, capitalById){
+  const n = fc.features.length, idx = new Map(fc.features.map((f, i) => [f.id, i]));
+  const uf = makeUnionFind(n), edges = [];
+  routes.forEach(([a, b, coords]) => { uf.union(idx.get(a), idx.get(b)); edges.push({ coords, bbox:bboxOfCoords(coords) }); });
+  const boxes = fc.features.map(f => bboxOfCoords((f.land || f).geometry.type === 'Polygon' ? (f.land || f).geometry.coordinates[0] : (f.land || f).geometry.coordinates.flat(1).flatMap(r => r)));
+  const onAnyLand = pt => fc.features.some((f, k) => pt[0] >= boxes[k][0] && pt[0] <= boxes[k][2] && pt[1] >= boxes[k][1] && pt[1] <= boxes[k][3] && turf.booleanPointInPolygon(pt, f.land || f));
+  const nb = topojson.neighbors(geometries), cand = [];
+  for(let i = 0; i < n; i++) for(const j of nb[i]) if(j > i) cand.push([i, j, geoDistance(capitalById.get(fc.features[i].id), capitalById.get(fc.features[j].id))]);
+  cand.sort((p, q) => p[2] - q[2]);
+  let added = 0, progress = true; const failed = new Set();
+  while(progress){
+    progress = false;
+    for(const [i, j] of cand){
+      if(uf.find(i) === uf.find(j)) continue;
+      const a = fc.features[i], b = fc.features[j];
+      const coords = landPath(topo, capitalById.get(a.id), capitalById.get(b.id), geometries[i], geometries[j], a.land || a, b.land || b, edges);
+      const coords2 = coords || anyLandPath(topo, capitalById.get(a.id), capitalById.get(b.id), geometries[i], geometries[j], onAnyLand, edges);
+      if(!coords2){ failed.add(a.id + '-' + b.id); continue; }
+      routes.push([a.id, b.id, coords2]); edges.push({ coords:coords2, bbox:bboxOfCoords(coords2) });
+      uf.union(i, j); added++; progress = true;
+    }
+  }
+  const left = []; cand.forEach(([i, j]) => { if(uf.find(i) !== uf.find(j)) left.push(fc.features[i].id + '-' + fc.features[j].id); });
+  if(left.length) console.warn('connexions terrestres impossibles a tracer (a verifier) :', left.join(' '));
+  return added;
 }

@@ -54,6 +54,7 @@ const out = vm.runInContext(`(() => {
     if(!a || !b){ console.warn('Route manuelle ignoree (capitale absente):', r.a, r.b); return; }
     routes.push([r.a, r.b, [a, ...r.via, b]]);
   });
+  console.log('routes de reparation (continents voisins) :', repairConnectivity(topo, fc, geometries, routes, capitalById));
   return { capitales, routes };
 })()`, ctx, { filename:'build-routes (calcul)' });
 log(out.capitales.length, 'capitales,', out.routes.length, 'routes');
