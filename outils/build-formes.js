@@ -15,7 +15,8 @@ const fs = require('fs'), path = require('path');
 const turf = require('@turf/turf'), topojson = require('topojson-client');
 const ROOT = path.join(__dirname, '..'), json = f => JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'));
 const t0 = Date.now(), log = (...a) => console.log(((Date.now() - t0) / 1000).toFixed(1) + 's', ...a);
-const TW = 2000, TH = 1500, MARGE = .08;             // terrain de la carte (m) et marge autour de la region
+const ECHELLE_TERRAIN = 3;                          // meme valeur que js/carte/base.js
+const TW = 2000 * ECHELLE_TERRAIN, TH = 1500 * ECHELLE_TERRAIN, MARGE = .08;             // terrain de la carte (m) et marge autour de la region
 const topo = json('data/monde/admin1.topojson'), obj = topo.objects[Object.keys(topo.objects)[0]], geoms = obj.geometries;
 const water = json('data/monde/water.json'), routes = json('data/monde/routes.json'), regions = json('data/regions/regions.json');
 const fc = topojson.feature(topo, obj);
@@ -93,7 +94,7 @@ for (const f of fc.features.map((f, i) => ({ ...f, id:i + 1 }))) {
   out[id] = { echelle:+sc.toFixed(3), region, terres, fleuves, lacs, capitale, routes:vers };
 }
 // --- ecriture : une region par ligne
-const txt = '{\n"version": 1, "terrain": [' + TW + ', ' + TH + '],\n"regions": {\n' +
+const txt = '{\n"version": 2, "terrain": [' + TW + ', ' + TH + '],\n"regions": {\n' +
   Object.entries(out).map(([id, r]) => JSON.stringify(id) + ': ' + JSON.stringify(r)).join(',\n') + '\n}\n}\n';
 fs.writeFileSync(path.join(ROOT, 'data/regions/formes.json'), txt);
 const sea = Object.values(out).filter(r => { const a = r.terres.reduce((s, q) => s + ringArea(q), 0); return a < TW * TH * 1.04 * .995; }).length;

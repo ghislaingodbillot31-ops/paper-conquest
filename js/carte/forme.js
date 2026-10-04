@@ -5,7 +5,7 @@
    les vrais fleuves, les vrais lacs et les vraies routes vers les capitales voisines.
    Sans forme (éditeur sans région choisie, page d'essai), le terrain reste un rectangle. */
 let FORME = null, FORME_ID = null, FORMES = null, masque = null;
-const FORMES_V = 1;
+const FORMES_V = 2;
 // La carte est construite dès le chargement de la page (scripts synchrones) : le fichier des
 // formes est lu d'un bloc, une seule fois (le navigateur le garde en cache ensuite).
 function chargeForme(id) {
