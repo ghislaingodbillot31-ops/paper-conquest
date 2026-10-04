@@ -1,12 +1,12 @@
 {
- "_doc": "Cours d'eau dessines a la main, ajoutes par build-fleuves-ne.js. canal:true = navigable (bateaux) meme etroit. w = [largeur a la source, a l'embouchure] en km. start/end 'sea' : le canal est prolonge jusqu'a la mer a chaque bout.",
+ "_doc": "Cours d'eau dessines a la main, ajoutes par build-fleuves-ne.js. canal:true = navigable (bateaux) meme etroit. w = [largeur a la source, a l'embouchure] en km (le canal de Suez a la largeur d'un grand fleuve). start/end 'sea' : le canal est prolonge jusqu'a la mer a chaque bout.",
  "rivers": [
   {
    "n": "Canal de Suez",
-   "cls": 3,
+   "cls": 1,
    "w": [
-    2.4,
-    2.4
+    16,
+    16
    ],
    "canal": true,
    "start": "sea",

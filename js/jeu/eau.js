@@ -27,7 +27,7 @@ function carveNav(nav, W, H, res, latTop, data){
       const next = r.c[Math.min(r.c.length - 1, k + 1)];
       for(const f of [0, 0.5]){
         const lon = r.c[k][0] + (next[0] - r.c[k][0]) * f, lat = r.c[k][1] + (next[1] - r.c[k][1]) * f;
-        const rKm = r.k ? 3.5 : Math.max(r.w[k] / 2 + 2, 7), ry = rKm / 110.57 / res, rx = rKm / (111.32 * Math.cos(lat * Math.PI / 180)) / res;
+        const rKm = r.k ? Math.max(r.w[k] / 2 + 2, 3.5) : Math.max(r.w[k] / 2 + 2, 7), ry = rKm / 110.57 / res, rx = rKm / (111.32 * Math.cos(lat * Math.PI / 180)) / res;
         const cy = (latTop - lat) / res, cx = (lon + 180) / res;
         for(let y = Math.floor(cy - ry); y <= Math.ceil(cy + ry); y++){ if(y < 0 || y >= H) continue;
           for(let x = Math.floor(cx - rx); x <= Math.ceil(cx + rx); x++){
