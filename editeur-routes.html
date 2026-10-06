@@ -2,7 +2,7 @@
 <html lang="fr">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Carte de la région</title>
+<title>Éditeur de routes</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -45,6 +45,20 @@
   <button id="heure-auj" type="button">Maintenant</button>
 </aside>
 <script>document.getElementById('reglage-heure').hidden = !new URLSearchParams(location.search).has('test');</script>
+
+<!-- éditeur de routes : un monde plat et vert (plan à part, clé editeurRoutes.v1), quelques routes de départ, toutes modifiables -->
+<aside class="reglage-heure" id="routes-outils">
+  <b>Éditeur de routes</b>
+  <button id="routes-reset" type="button">Remettre les routes de départ</button>
+</aside>
+<script>
+document.getElementById('routes-reset').addEventListener('click', function () {
+  const txt = "Remettre les routes de départ";
+  if (this.dataset.arme !== '1') { this.dataset.arme = '1'; this.textContent = 'Confirmer : efface tout'; setTimeout(() => { this.dataset.arme = ''; this.textContent = txt; }, 4000); return; }
+  try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + '.arrivants'); } catch (e) {}
+  location.reload();
+});
+</script>
 
 <div class="toast" id="toast" style="opacity:0"></div>
 
@@ -124,7 +138,7 @@
 </nav>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
-<script>const PAGE = 'region';</script>
+<script>const PAGE = 'region', EDIT_ROUTES = true;</script>
 <script src="js/carte/base.js"></script>
 <script src="js/saisons.js"></script>
 <script src="js/carte/forme.js"></script>

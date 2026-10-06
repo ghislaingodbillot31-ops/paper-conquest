@@ -4,7 +4,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Paper Conquest Studio</title>
 <style>
-  :root { --bg:#14212b; --bar:#1d2d3a; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
+  :root { --bg:#14212b; --bar:#1d2d3a; --bar2:#18262f; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
   * { box-sizing:border-box }
   html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font:500 15px/1.3 system-ui, sans-serif }
   body { display:flex; flex-direction:column }
@@ -13,52 +13,79 @@
   nav button { background:none; border:0; color:var(--soft); padding:8px 14px; border-radius:6px; font:inherit; cursor:pointer }
   nav button:hover { color:var(--ink) }
   nav button[aria-selected="true"] { background:#0004; color:var(--on) }
+  nav.principal button { text-transform:uppercase; letter-spacing:.08em; font-weight:700 }
+  nav.edition { background:var(--bar2); padding:4px 12px 4px 24px; flex-wrap:wrap }
+  nav.edition[hidden] { display:none }
+  nav.edition button { padding:6px 12px; font-size:14px }
+  nav button:disabled { opacity:.4; cursor:default }
   #msg { margin-left:auto; color:var(--on); font-size:14px; opacity:0; transition:opacity .3s }
   #msg.on { opacity:1 }
   main { flex:1; position:relative; min-height:0 }
   iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--bg); display:none }
   iframe.on { display:block }
 </style>
-<nav role="tablist" aria-label="Outils">
+<nav class="principal" role="tablist" aria-label="Sections">
   <b>Paper Conquest</b>
-  <button role="tab" data-tab="jeu" aria-selected="true">Carte globale</button>
-  <button role="tab" data-tab="carte" aria-selected="false">Éditeur de carte</button>
-  <button role="tab" data-tab="batiments" aria-selected="false">Éditeur de bâtiments</button>
-  <button role="tab" data-tab="maptest" aria-selected="false">Map test</button>
-  <button role="tab" data-tab="animaux" aria-selected="false">Animaux</button>
-  <button role="tab" data-tab="vehicules" aria-selected="false">Véhicules</button>
-  <button role="tab" data-tab="villageois" aria-selected="false">Villageois</button>
+  <button role="tab" data-section="testjeu" aria-selected="true">Test jeu</button>
+  <button role="tab" data-section="edition" aria-selected="false">Édition</button>
   <span id="msg" role="status"></span>
 </nav>
+<!-- ÉDITION : tout ce qui crée, modifie ou configure le monde. Un outil = une page existante.
+     Routes : monde plat et vert pour travailler les routes et le quadrillage (plan à part du jeu). Terrains n'a pas encore son outil (désactivé) : le Générateur et la Map test couvrent le terrain et les routes en attendant. -->
+<nav class="edition" role="tablist" aria-label="Outils d'édition" hidden>
+  <button role="tab" data-tool="carte" aria-selected="false">Générateur</button>
+  <button role="tab" data-tool="animaux" aria-selected="false">Animaux</button>
+  <button role="tab" data-tool="routes" aria-selected="false">Routes</button>
+  <button role="tab" data-tool="batiments" aria-selected="false">Bâtiments</button>
+  <button role="tab" data-tool="terrains" aria-selected="false" disabled title="Pas encore d'outil dédié">Terrains</button>
+  <button role="tab" data-tool="maptest" aria-selected="false">Ressources</button>
+  <button role="tab" data-tool="villageois" aria-selected="false">Habitants</button>
+  <button role="tab" data-tool="arbres" aria-selected="false">Végétation</button>
+  <button role="tab" data-tool="vehicules" aria-selected="false">Véhicules</button>
+</nav>
 <main>
-  <iframe id="jeu" title="Carte globale" data-src="index.html"></iframe>
-  <iframe id="carte" title="Éditeur de carte" data-src="editeur-carte.html"></iframe>
-  <iframe id="batiments" title="Éditeur de bâtiments" data-src="editeur-batiments.html"></iframe>
-  <iframe id="maptest" title="Map test" data-src="map-test.html"></iframe>
+  <iframe id="testjeu" title="Test jeu" data-src="region.html?test=1&region=153&biome=tempere&river=petite&seed=1211708&lon=-84.33&lat=41.6&tm=13&hum=1"></iframe>
+  <iframe id="carte" title="Générateur" data-src="editeur-carte.html"></iframe>
+  <iframe id="routes" title="Routes" data-src="editeur-routes.html"></iframe>
   <iframe id="animaux" title="Animaux" data-src="editeur-animaux.html"></iframe>
+  <iframe id="batiments" title="Bâtiments" data-src="editeur-batiments.html"></iframe>
+  <iframe id="maptest" title="Ressources (map test)" data-src="map-test.html"></iframe>
+  <iframe id="villageois" title="Habitants" data-src="editeur-villageois.html"></iframe>
+  <iframe id="arbres" title="Végétation" data-src="arbres-fruitiers.html"></iframe>
   <iframe id="vehicules" title="Véhicules" data-src="editeur-vehicules.html"></iframe>
-  <iframe id="villageois" title="Villageois" data-src="editeur-villageois.html"></iframe>
 </main>
 <script>
-/* Un onglet = une page existante dans un cadre (chargée à la première visite, puis gardée : on retrouve l'éditeur tel qu'on l'a laissé).
-   Les éditeurs et le jeu partagent le même stockage du navigateur : quand l'éditeur de carte envoie « applique » (bouton « Appliquer au jeu »),
-   la carte de la région est déjà enregistrée là où le jeu la lit ; il ne reste qu'à recharger le jeu. */
+/* Deux sections : TEST JEU (jouer et tester) et ÉDITION (créer, modifier, configurer). Chaque outil est une page existante dans un cadre,
+   chargée à la première visite puis gardée : on retrouve l'outil tel qu'on l'a laissé. Adresses : #testjeu, #edition/<outil>.
+   Les outils et le jeu partagent le même stockage du navigateur : « Appliquer au jeu » (éditeur de carte) enregistre la carte de la région
+   là où le jeu la lit ; il ne reste qu'à recharger le test. La carte globale est mise de côté (index.html, hors du studio). */
 const frames = Object.fromEntries([...document.querySelectorAll('iframe')].map(f => [f.id, f]));
-let jeuAJour = true;
-function show(tab) {
-  for (const b of document.querySelectorAll('nav [data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
-  for (const [id, f] of Object.entries(frames)) {
-    f.classList.toggle('on', id === tab);
-    if (id === tab && (!f.src || (id === 'jeu' && !jeuAJour))) { f.src = f.dataset.src; if (id === 'jeu') jeuAJour = true; }   // (jeu rechargé après une validation)
+const barre = document.querySelector('nav.edition'), REGION_TEST = 153;
+let testAJour = true, dernierOutil = 'carte';
+function afficher(id) {
+  for (const [k, f] of Object.entries(frames)) {
+    f.classList.toggle('on', k === id);
+    if (k === id && (!f.src || (k === 'testjeu' && !testAJour))) { f.src = f.dataset.src; if (k === 'testjeu') testAJour = true; }   // (test rechargé après « Appliquer au jeu »)
   }
-  try { history.replaceState(null, '', '#' + tab); } catch (e) {}
+}
+function show(section, outil) {
+  for (const b of document.querySelectorAll('nav.principal [data-section]')) b.setAttribute('aria-selected', String(b.dataset.section === section));
+  barre.hidden = section !== 'edition';
+  if (section === 'edition') {
+    dernierOutil = outil || dernierOutil;
+    for (const b of barre.querySelectorAll('[data-tool]')) b.setAttribute('aria-selected', String(b.dataset.tool === dernierOutil));
+    afficher(dernierOutil);
+  } else afficher('testjeu');
+  try { history.replaceState(null, '', section === 'edition' ? '#edition/' + dernierOutil : '#testjeu'); } catch (e) {}
 }
 function dire(t) { const m = document.getElementById('msg'); m.textContent = t; m.classList.add('on'); clearTimeout(dire.t); dire.t = setTimeout(() => m.classList.remove('on'), 5000); }
-document.querySelector('nav').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
+document.querySelector('nav.principal').addEventListener('click', e => { const b = e.target.closest('[data-section]'); if (b) show(b.dataset.section); });
+barre.addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if (b && !b.disabled) show('edition', b.dataset.tool); });
 addEventListener('message', e => {
   if (e.origin !== location.origin || !e.data || e.data.studio !== 'applique') return;
-  jeuAJour = false;                                      // le jeu se recharge à sa prochaine visite
-  dire('Région ' + e.data.region + ' appliquée : visible dans l\'onglet Carte globale');
+  if (e.data.region === REGION_TEST) { testAJour = false; dire('Région ' + e.data.region + ' appliquée : visible dans Test jeu'); }   // (le test se recharge à sa prochaine visite)
+  else dire('Région ' + e.data.region + ' enregistrée (le test jeu utilise la région ' + REGION_TEST + ')');
 });
-show(['jeu', 'carte', 'batiments', 'maptest', 'animaux', 'vehicules', 'villageois'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'jeu');
+const [sec, outil] = location.hash.slice(1).split('/');
+show(sec === 'edition' ? 'edition' : 'testjeu', frames[outil] && outil !== 'testjeu' ? outil : undefined);
 </script>

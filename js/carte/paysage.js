@@ -124,7 +124,8 @@ function forestNoise() {
    au bord des lacs et, plus clairsemée, le long des rivières. */
 function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
-  const fk = S.landSeed + ':' + S.biome + ':' + wk;
+  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + S.roads.map(r => r.id + ':' + JSON.stringify(r.pts)).join(';');   // (les pierres de bord de chemin suivent les routes)
+  if (MONDE_PLAT) return floraCands = [];                                       // monde plat : aucune végétation
   if (floraCands && floraSeed === fk) return floraCands;
   const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
   // essence de chaque arbre (tirée selon les parts du biome) et taille propre à l'essence :
@@ -227,10 +228,28 @@ function floraCandidates() {
       shoreRocks(a, [-u[0] / L2, -u[1] / L2], out); // vers le centre de l'île = vers la terre
     }
   }
+  /* Pierres à tailler (le camp de tailleur de pierre les récolte) : éparpillées sur toute la carte et,
+     plus nombreuses, au bord des chemins (1 à 3 pierres tous les 10 m environ, de part et d'autre).
+     Tirages à part : le reste du paysage ne change pas. */
+  { const rs = seeded(S.landSeed * 31 + 7), pierre = () => { const q = rs(); return q > .8 ? 2.6 + (q - .8) * 10 : .9 + q / .8 * 1.5; };
+    for (let n = 0; n < TW * TH / 9000; n++) out.push({ x:round2(rs() * TW), y:round2(rs() * TH), r:pierre(), kind:'rock', v:rs(), stone:1 });
+    for (const r of S.roads) { const P = smoothPts(r);
+      for (let k = 0; k < P.length - 1; k++) {
+        const a = P[k], b = P[k + 1], L = segLen(a, b) || 1, u = [(b[0] - a[0]) / L, (b[1] - a[1]) / L];
+        for (let d = rs() * 10; d < L; d += 10) {
+          if (rs() > .4) continue;
+          const side = rs() < .5 ? 1 : -1, off = r.w / 2 + 1 + rs() * 3;
+          for (let m = 1 + Math.floor(rs() * 3); m > 0; m--) {
+            const t = d + (rs() - .5) * 4, o = off + rs() * 1.5;
+            out.push({ x:round2(a[0] + u[0] * t - u[1] * o * side), y:round2(a[1] + u[1] * t + u[0] * o * side), r:pierre() * .8, kind:'rock', v:rs(), stone:1, edge:1 });
+          }
+        }
+      } }
+  }
   // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
   const inForest = f => !f.wood && !f.wet && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
   floraSeed = fk;
-  return floraCands = out.filter(f => !inForest(f));
+  return floraCands = out.filter(f => f.stone || !inForest(f));
 }
 /* Modèles d'arbres dessinés une fois (houppier bosselé, contour sombre, côté ombre en bas
    à droite, reflets en haut à gauche, ombre portée), puis posés comme des tampons.
@@ -476,7 +495,7 @@ function computeFlora() {
     staticFlora = floraCandidates().filter(f => {
       const h = f.r * .6;
       // (les arbres des îles sont au milieu de l'eau de la rivière : on ne les teste pas contre elle)
-      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.kind === 'rock' || loinDeLaMer(f)) && (f.isle || f.wet || !blocked(f)) && (f.kind !== 'tree' || f.isle || !nearWater({ x:f.x, y:f.y, r:(WATER_TREE_FREE + f.r) / .6 })); // (cailloux de berge : à moitié dans l'eau, voulu)
+      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.kind === 'rock' || loinDeLaMer(f)) && (f.isle || f.wet || f.edge || !blocked(f)) && (f.kind !== 'tree' || f.isle || !nearWater({ x:f.x, y:f.y, r:(WATER_TREE_FREE + f.r) / .6 })); // (cailloux de berge : à moitié dans l'eau, voulu)
     }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
     staticKey = key;
   }
@@ -513,7 +532,9 @@ function groundImage() {
   // un pixel par point de la grille d'altitude (HG m)
   const c = document.createElement('canvas'), w = TW / HG, h = TH / HG;
   c.width = w; c.height = h;
-  const g = c.getContext('2d'), img = g.createImageData(w, h), nz = landNoise(), look = biomeLook();
+  const g = c.getContext('2d');
+  if (MONDE_PLAT) { g.fillStyle = '#86b95a'; g.fillRect(0, 0, w, h); return groundImg = c; }   // monde plat : herbe unie
+  const img = g.createImageData(w, h), nz = landNoise(), look = biomeLook();
   const hex = s => { const m = s.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']; return m.slice(0, 3).map(x => parseInt(x, 16)); };
   const A0 = hex(look.ground), B0 = hex(look.groundDark), Pc = look.patch ? hex(look.patch) : null;
   // taches du biome (neige, dunes claires) : un bruit à part, au-delà du seuil patchAt

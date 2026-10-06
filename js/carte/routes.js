@@ -32,6 +32,19 @@ const roadType = r => ROADS.find(k => k.id === r.kind) || ROADS[1];
    croisement ou de raccord, pour que les routes continuent de se rejoindre exactement.
    Le même tracé sert au dessin, aux ponts et au découpage du cadastre. */
 const smoothCache = new Map();
+/* Un angle franc (45° ou plus) reste un angle : le tracé est coupé à ces sommets et chaque
+   morceau est lissé séparément (seuls les virages doux s'arrondissent). */
+function lisser(pts) {
+  const chunks = [[pts[0]]];
+  for (let i = 1; i < pts.length; i++) {
+    chunks[chunks.length - 1].push(pts[i]);
+    if (i < pts.length - 1) {
+      const a = Math.atan2(pts[i][1] - pts[i-1][1], pts[i][0] - pts[i-1][0]), b = Math.atan2(pts[i+1][1] - pts[i][1], pts[i+1][0] - pts[i][0]);
+      if (Math.abs(Math.atan2(Math.sin(b - a), Math.cos(b - a))) >= COIN_NET) chunks.push([pts[i]]);
+    }
+  }
+  return chunks.flatMap((c, i) => { const P = chaikin(resample(c, 24)); return i ? P.slice(1) : P; });
+}
 function chaikin(run) {
   let P = run;
   for (let it = 0; it < 4; it++) {
@@ -54,9 +67,10 @@ const HUB_R = 60, HUB_MIN_TURN = 15;
 function hubAt(r, v) {
   const ends = [];
   for (const o of S.roads) for (const first of [true, false]) {
+    if (o.libre) continue;                                                        // une route du joueur ne modifie aucune autre
     const e = first ? o.pts[0] : o.pts[o.pts.length - 1];
     if (segLen(e, v) >= 1 || (o === r && ends.some(x => x.o === o))) continue;
-    let P = chaikin(resample(o.pts, 24)); if (!first) P = P.slice().reverse();   // depuis le point, vers l'extérieur
+    let P = lisser(o.pts); if (!first) P = P.slice().reverse();   // depuis le point, vers l'extérieur
     ends.push({ o, first, P });
   }
   if (ends.length < 2) return null;
@@ -92,6 +106,7 @@ function pinEnd(out, end, t) {
   }
 }
 function smoothPts(r) {
+  if (r.libre) return r.pts;                                                       // tracé du joueur : tel quel, sans lissage ni raccord
   const key = r.id + ':' + JSON.stringify(r.pts) + ':' + S.roads.length;
   const hit = smoothCache.get(r.id);
   if (hit && hit.key === key) return hit.P;
@@ -101,7 +116,7 @@ function smoothPts(r) {
      pour que les deux chaussées se rejoignent exactement. */
   // (le tracé est d'abord redécoupé en pas de 24 m : un long tronçon droit n'étire plus
   // l'arrondi sur des centaines de mètres, chaque virage s'arrondit sur place)
-  let out = chaikin(resample(r.pts, 24)).slice();
+  let out = lisser(r.pts).slice();
   for (const first of [true, false]) {
     const end = first ? 0 : out.length - 1, v = first ? r.pts[0] : r.pts[r.pts.length - 1];
     const hub = hubAt(r, v);
@@ -147,13 +162,14 @@ function drawRoads() {
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
   const stroke = (r, color, grow) => {
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(roadType(r).surf * s, 3.6) + 2 * grow; // (au moins 3,6 px de large, même de loin)
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.lineCap = 'round'; ctx.lineJoin = 'miter'; ctx.miterLimit = 3;   // (angle franc : le coin extérieur reste vif, pas arrondi)
     for (const piece of roadPieces(r)) { polyPath(piece); ctx.stroke(); }
   };
   // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
   // les chaussées se fondent sans trait
   for (const r of bySurf) stroke(r, roadCols(r)[1], Math.max(.8, Math.min(1.4, s * .4)));
   for (const r of bySurf) stroke(r, roadCols(r)[0], 0);
+
 }
 const isOn = (type, id, st) => st && st.type === type && st.id === id;
 let zoneEdit = null;

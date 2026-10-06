@@ -7,7 +7,8 @@ let village = { nom:GAME ? `Village de la région ${GAME.region}` : 'Village', f
 try { Object.assign(village, JSON.parse(localStorage.getItem(NOM_KEY) || '{}')); } catch (e) {}
 const ONGLETS = ['route', 'construction', 'aide'];
 const OUTILS_CONSTRUCTION = ['house', 'wall', 'tower', 'gate'];
-let onglet = null, categorie = BUILD_MENUS[0].id;
+// sans camp de colon, le menu s'ouvre sur Résidentiel, où il se trouve
+let onglet = null, categorie = GAME && !S.houses.some(h => h.kind === 'camp_colon') ? 'residentiel' : BUILD_MENUS[0].id;
 const esc = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 /* ---- nom du village ---- */
@@ -79,7 +80,7 @@ function afficherCartes() {
     ? m.tools.map(([id, name]) => `<button class="carte" data-outil="${id}"><span class="vignette outil-${id}" aria-hidden="true"></span><b>${name}</b></button>`).join('')
     : m.ids.map(id => PRESETS.find(p => p.id === id)).filter(Boolean).map(p =>
       `<button class="carte" data-id="${p.id}" title="${esc(p.use)}"><canvas class="vignette" data-v="${p.id}" aria-hidden="true"></canvas>` +
-      `<b>${p.name}</b><span>${p.f} × ${p.d} cases${p.cap ? ` · ${p.cap} hab.` : ''}</span></button>`).join('');
+      `<b>${p.name}</b><span>${p.f} × ${p.d} cases${p.cap ? ` · ${p.cap} hab.` : ''}</span>${p.cout ? `<span class="cout">${coutTexte(p.cout)}</span>` : ''}</button>`).join('');
   peindreVignettes([...$('cartes').querySelectorAll('canvas[data-v]')]);
   syncBarre();
 }

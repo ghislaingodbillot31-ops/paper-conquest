@@ -48,13 +48,13 @@ function drawDecor() {
   drawWater();
   drawMouths();
   drawDeposits();
-  drawZones();
   drawRoads();
   drawBridges();
   drawWalls();
   const list = floraNear(x0 - 40, y0 - 40, x1 + 40, y1 + 40);   // (houppiers et ombres qui débordent)
   drawWoods(ctx, list.filter(f => f.wood), view.s, view.ox, view.oy);
   for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  drawZones();                                                  // (quadrillage noir par-dessus les arbres : il reste lisible en forêt)
   drawFruitiers();
   if (typeof drawRessources === 'function') drawRessources();   // (repères de la map test : par-dessus les arbres)
   drawBorder();

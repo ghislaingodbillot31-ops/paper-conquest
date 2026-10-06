@@ -1,7 +1,7 @@
 :root{
   --desk:#d6ddd9; --sheet:#f5f7f2; --ground:#edf1e2; --panel:#e9eee9;
   --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
-  --zone:#3c8a5c; --zone-fill:rgba(255,252,232,.30); --zone-line:rgba(255,253,240,.9); --verge:transparent;
+  --zone:#3c8a5c; --zone-fill:rgba(0,0,0,.04); --zone-line:rgba(0,0,0,.75); --verge:transparent;
   --house:#8b8869; --house-edge:#585840; --roof-line:rgba(88,88,64,.5);
   --earth:#c9bd98; --earth-edge:#8e8455; --gravel:#d3cbb0; --gravel-edge:#8e8455; --paving:#cfc6a7; --paving-edge:#8e8455;
   --wall:#a39b8b; --wall-edge:#3f3a32;
@@ -18,7 +18,7 @@
   :root:not([data-theme="light"]){
     --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
     --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
-    --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45);
+    --zone:#5cc48a; --zone-fill:rgba(0,0,0,.06); --zone-line:rgba(0,0,0,.8);
     --accent:#f08a4c; --bad:#ef5a4c;
     --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
     color-scheme:dark;
@@ -27,7 +27,7 @@
 :root[data-theme="dark"]{
   --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
   --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
-  --zone:#5cc48a; --zone-fill:rgba(225,235,215,.10); --zone-line:rgba(225,235,215,.45);
+  --zone:#5cc48a; --zone-fill:rgba(0,0,0,.06); --zone-line:rgba(0,0,0,.8);
   --accent:#f08a4c; --bad:#ef5a4c;
   --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
   color-scheme:dark;
@@ -210,3 +210,19 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
   .capitale .zoom{bottom:auto; top:74px; right:10px}
   .fiche{top:auto; bottom:calc(66px + env(safe-area-inset-bottom, 0px)); max-height:45%}
 }
+
+/* fenêtre d'événement (arrivants) : sur le côté gauche de la carte */
+.evenement{position:fixed; top:74px; left:14px; width:min(260px, calc(100vw - 28px)); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px}
+.evenement h2{font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0 0 6px}
+.evenement p{margin:0 0 10px; font-size:14px}
+.evenement .row{display:flex; gap:8px}
+
+/* stock du village (coin haut gauche) et coût sur les cartes de construction */
+.stock{position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:14px; display:flex; gap:12px; flex-wrap:wrap; max-width:calc(50vw - 160px); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:7px 12px; font-size:13px}
+.stock b{font-variant-numeric:tabular-nums}
+.carte .cout{display:block; color:var(--hud-soft); font-size:11px}
+
+/* réglage de l'heure (Test jeu) : coin bas gauche */
+.reglage-heure{position:fixed; left:14px; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:6px; width:230px; background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:8px 12px 10px; font-size:13px}
+.reglage-heure label{display:flex; flex-direction:column; gap:4px}
+.reglage-heure b{font-weight:500; color:var(--hud-soft); font-size:12px}

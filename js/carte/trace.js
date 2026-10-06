@@ -18,13 +18,42 @@ function snapToRoads(x, y, list = S.roads) {
    Muraille : elle part d'une porte (posée au préalable sur une route) ou d'une muraille
    existante, jamais d'un point libre ; elle se termine en recliquant sur son premier
    point ou en rejoignant une autre porte. */
+/* Route : un point par clic (Entrée pour construire), toujours par pas de 30° (aucun tracé libre).
+   Départ : un point d'ancrage (il y en a tous les 8 m sur chaque route, toujours visibles) ; la seule route
+   possible sans ancrage est la toute première. Premier tronçon : les 30° se comptent depuis la route d'accroche,
+   si bien que le raccord à 90° (ou à tout multiple de 30° de la route) est toujours possible. Ensuite : 30° absolus.
+   Arrivée : près d'une route, le tronçon est prolongé, dans sa direction arrondie, jusqu'à la route (raccord). */
+const TRONCON = CELL;                                                       // pas de longueur d'un tronçon de route (m) : une case
+// Départ et arrivée seulement sur un point d'ancrage (règle du 06/10) : plus de raccord n'importe où sur une chaussée.
+// Les points intermédiaires restent libres (30°, nombre entier de cases).
+function pointRoute() {
+  const mag = Math.max(14 / view.s, CELL * .6);                             // aimant : l'ancrage le plus proche dans 14 px (au moins 0,6 case)
+  if (!draft) {
+    const an = nearestAnchor(cursor, roadAnchors(), mag);
+    if (an) return { pt:an.pt.slice(), kind:'anchor', parent:{ w:an.w, dir:an.dir } };
+    return S.roads.length ? { pt:cursor.slice(), kind:'none' } : { pt:[Math.round(cursor[0]*2)/2, Math.round(cursor[1]*2)/2], kind:'free' };
+  }
+  const last = draft.pts[draft.pts.length - 1], L = segLen(last, cursor), raw = Math.atan2(cursor[1] - last[1], cursor[0] - last[0]);
+  const base = draft.pts.length === 1 && draft.parent ? Math.atan2(draft.parent.dir[1], draft.parent.dir[0]) : 0;
+  const ang = base + Math.round((raw - base) / ANG_ROUTE) * ANG_ROUTE, dir = [Math.cos(ang), Math.sin(ang)];
+  // arrivée : un point d'ancrage à portée du curseur ; on préfère celui qu'un pas de 30° atteint (à 2° près), sinon le plus proche
+  if (L > CELL) {
+    const proches = roadAnchors().filter(p => segLen(p.pt, cursor) < mag && segLen(p.pt, last) > CELL * .5).sort((p, q) => segLen(p.pt, cursor) - segLen(q.pt, cursor));
+    const dev = p => { const d = Math.atan2(p.pt[1] - last[1], p.pt[0] - last[0]) - base, k = Math.round(d / ANG_ROUTE); return Math.abs(d - k * ANG_ROUTE); };
+    const pick = proches.find(p => dev(p) < 2 * Math.PI / 180) || proches[0];
+    if (pick) return { pt:pick.pt.slice(), kind:'edge', ang:Math.atan2(pick.pt[1] - last[1], pick.pt[0] - last[0]) };
+  }
+  const Lf = Math.max(TRONCON, Math.round(L / TRONCON) * TRONCON);          // distance fixe : un tronçon libre fait un nombre entier de cases
+  return { pt:[round2(last[0] + dir[0] * Lf), round2(last[1] + dir[1] * Lf)], kind:'free', ang };
+}
 function tracePoint(isWall) {
   if (!cursor) return null;
+  if (!isWall) return pointRoute();
   const list = isWall ? S.walls : S.roads;
   const hit = snapToRoads(cursor[0], cursor[1], list);
   const free = () => ({ pt:[Math.round(cursor[0]*2)/2, Math.round(cursor[1]*2)/2], kind:'free' });
   if (!draft) {
-    const a = nearestAnchor(cursor, isWall ? Z.wallAnchors : Z.anchors);
+    const a = nearestAnchor(cursor, Z.wallAnchors);
     if (a) return { pt:a.pt.slice(), kind:'anchor', parent:{ w:a.w, dir:a.dir } };
     // première route du plan : départ libre ; sinon une route part toujours d'une route
     return !isWall && !S.roads.length ? free() : { pt:cursor.slice(), kind:'none' };
@@ -98,18 +127,17 @@ function wallIssue(a, b) {
   return null;
 }
 const linePoint = () => tracePoint(tool === 'wall');
-function nearestAnchor(p, list = Z.anchors) {
-  const tol = Math.max(18 / view.s, CELL * .6);
+function nearestAnchor(p, list = Z.anchors, rad) {
+  const tol = rad || Math.max(18 / view.s, CELL * .6);
   let best = null, bd = tol;
   for (const a of list) { const d = segLen(a.pt, p); if (d < bd) { bd = d; best = a; } }
   return best;
 }
 // intersection de la demi-droite (o, dir) avec le tronçon de route le plus proche du curseur
-function junctionOnRay(o, dir, near, list = S.roads) {
-  const tol = 14 / view.s;
+function junctionOnRay(o, dir, near, list = S.roads, tol = 14 / view.s) {
   let best = null, bd = Infinity;
-  for (const r of list) for (let i = 0; i < r.pts.length - 1; i++) {
-    const a = r.pts[i], b = r.pts[i+1], e = [b[0]-a[0], b[1]-a[1]];
+  for (const rd of list) { const Q = list === S.roads ? smoothPts(rd) : rd.pts; for (let i = 0; i < Q.length - 1; i++) {
+    const a = Q[i], b = Q[i+1], e = [b[0]-a[0], b[1]-a[1]];
     const den = dir[0]*e[1] - dir[1]*e[0];
     if (Math.abs(den) < 1e-9) continue;
     const w = [a[0]-o[0], a[1]-o[1]];
@@ -117,7 +145,7 @@ function junctionOnRay(o, dir, near, list = S.roads) {
     if (t <= .3 || u < -1e-6 || u > 1 + 1e-6) continue;
     const p = [o[0] + dir[0]*t, o[1] + dir[1]*t], d = segLen(p, near);
     if (d < tol && d < bd) { bd = d; best = [round2(p[0]), round2(p[1])]; }
-  }
+  } }
   return best;
 }
 function drawDraft() {
@@ -140,35 +168,38 @@ function drawDraft() {
       const info = sp.close ? 'fermer l\'enceinte'
         : sp.lattice ? `${Math.abs(sp.lattice[0])} × ${Math.abs(sp.lattice[1])} cases` : sp.gap
         ? `${sp.cells} cases d'écart${sp.cells === 2 * DEPTH ? ' (2 zones pleines)' : sp.cells === DEPTH ? ' (1 zone pleine)' : ''}`
-        : sp.kind === 'edge' ? 'raccord' : sp.cells ? `${sp.cells} cases` : `${Math.floor(d / CELL + 1e-6)} cases`;
+        : sp.kind === 'edge' ? 'raccord' : isWall ? `${Math.floor(d / CELL + 1e-6)} cases` : `${Math.round(d / TRONCON)} cases`;
       // pente du tronçon (routes) : la limite est ROAD_MAX_SLOPE
       const slope = isWall ? '' : ` · pente ${Math.round(maxGrade(last, sp.pt) * 100)} %`;
-      haloText(`${fmt(d)} m · ${deg}° · ${info}${slope}`, X + 10, Y - 8, ok ? Col.ink : Col.bad, Col.sheet);
+      haloText(`${fmt(d)} m · ${deg}°${info ? ' · ' + info : ''}${slope}`, X + 10, Y - 8, ok ? Col.ink : Col.bad, Col.sheet);
       if (!ok) haloText(isWall ? wallIssue(last, sp.pt) : roadIssue(last, sp.pt, draft.w), X + 10, Y + 8, Col.bad, Col.sheet);
     }
   }
-  if (!draft) {
+  if (isWall ? !draft : true) {
     // accroches visibles tant qu'aucun tracé n'est commencé
     // (vue de loin : les points de milieu de case, tous les 8 m, formeraient un trait orange
     // continu qui cache la carte — on ne montre alors que les bouts et les portes)
     ctx.fillStyle = Col.accent; ctx.globalAlpha = .7;
     const [ax0, ay0] = toW(0, 0), [ax1, ay1] = toW(W, H);
-    for (const a of isWall ? Z.wallAnchors : Z.anchors) {
-      if (a.kind === 'anchor' && view.s < 1.5) continue;
+    const list = isWall ? Z.wallAnchors : roadAnchors(), pas = isWall ? 1 : Math.max(1, Math.ceil(16 / (CELL * view.s)));   // (routes : toujours visibles, éclaircis de loin)
+    for (const [n, a] of list.entries()) {
+      if (isWall && a.kind === 'anchor' && view.s < 1.5) continue;
+      if (!isWall && !a.bout && n % pas && !(draft && sp && segLen(a.pt, sp.pt) < CELL * 2)) continue;   // (le bout d'une route est toujours montré)
       if (a.pt[0] < ax0 || a.pt[0] > ax1 || a.pt[1] < ay0 || a.pt[1] > ay1) continue;
       const [X, Y] = toS(...a.pt);
-      ctx.beginPath(); ctx.arc(X, Y, a.kind === 'gate' ? 6 : a.kind === 'end' ? 4 : 2.5, 0, Math.PI * 2); ctx.fill();
+      ctx.beginPath(); ctx.arc(X, Y, a.kind === 'gate' ? 6 : a.kind === 'end' || a.bout ? 4.5 : isWall ? 2.5 : 3, 0, Math.PI * 2); ctx.fill();
     }
     ctx.globalAlpha = 1;
   }
   if (sp && sp.kind === 'none') {
     const [X, Y] = toS(...sp.pt);
     ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
-    const msg = !isWall ? 'Partez d\'un point sur une route existante'
+    const msg = !isWall ? 'Partez d\'un point d\'ancrage (points orange) d\'une route'
       : S.gates.length ? 'Partez d\'une porte ou d\'une muraille (points orange)' : 'Posez d\'abord une porte sur une route (outil Porte)';
     haloText(msg, X + 12, Y - 8, Col.bad, Col.sheet);
   } else if (sp) {
     const [X, Y] = toS(...sp.pt);
+    if (sp.kind !== 'free') { ctx.beginPath(); ctx.arc(X, Y, 12, 0, Math.PI * 2); ctx.globalAlpha = .25; ctx.fillStyle = Col.accent; ctx.fill(); ctx.globalAlpha = 1; }   // aimant accroché
     ctx.beginPath(); ctx.arc(X, Y, sp.kind === 'free' ? 3 : 7, 0, Math.PI * 2);
     ctx.strokeStyle = Col.accent; ctx.lineWidth = 2; ctx.stroke();
   }

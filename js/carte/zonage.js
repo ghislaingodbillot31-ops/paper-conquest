@@ -3,9 +3,32 @@
    sur DEPTH cases de profondeur, alignée sur la route. Une case disparaît si elle
    touche une route ou une case d'une route plus ancienne ; les cases derrière
    une case disparue disparaissent aussi (la zone reste collée à la route). */
+/* Le quadrillage ne longe que les tronçons droits d'une route : à chaque bout, la route continue
+   tout droit (2° près), s'arrête ou tourne franchement (COIN_NET, un angle reste un angle). Un
+   virage doux est lissé en courbe : pas de cases. */
+const DROITE_TOL = 2 * Math.PI / 180;
+function tronconDroit(r, k) {
+  if (r.libre) return true;                                    // tracé du joueur : segments droits
+  const ang = i => Math.atan2(r.pts[i+1][1] - r.pts[i][1], r.pts[i+1][0] - r.pts[i][0]);
+  const virage = i => Math.abs(Math.atan2(Math.sin(ang(i) - ang(i-1)), Math.cos(ang(i) - ang(i-1))));
+  const net = i => i <= 0 || i >= r.pts.length - 1 || virage(i) <= DROITE_TOL || virage(i) >= COIN_NET;
+  return net(k) && net(k + 1);
+}
 let Z = { cells:[], geos:new Map(), anchors:[], wallAnchors:[], wallNodes:[], gateSpots:[], water:{ river:[], lake:[] } };
+/* Le quadrillage est peint dans les tuiles du décor, qui ne sont repeintes que là où l'on dit qu'elles ont changé :
+   toute case apparue ou disparue (une route ajoutée, supprimée, une colonne coupée ou rallongée) est donc repeinte,
+   même loin de la route modifiée — sinon des cases fantômes restent à l'écran. */
+function repeindreGrille(anciennes, neuves) {
+  if (typeof markDirty !== 'function' || !anciennes || (!anciennes.length && !neuves.length)) return;
+  const cle = c => Math.round(c.c[0] * 2) + ',' + Math.round(c.c[1] * 2), a = new Set(anciennes.map(cle)), b = new Set(neuves.map(cle)), pts = [];
+  for (const c of anciennes) if (!b.has(cle(c))) pts.push([c.bb[0], c.bb[1]], [c.bb[2], c.bb[3]]);
+  for (const c of neuves) if (!a.has(cle(c))) pts.push([c.bb[0], c.bb[1]], [c.bb[2], c.bb[3]]);
+  if (!pts.length) return;
+  const r = bbox(pts);
+  markDirty([r[0] - 4, r[1] - 4, r[2] + 4, r[3] + 4]);
+}
 function computeZones() {
-  const foot = [];
+  const foot = [], anciennes = Z.cells;
   for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
     const P = segRect(r.pts[k], r.pts[k+1], r.w); foot.push({ P, bb:bbox(P) });
   }
@@ -18,33 +41,38 @@ function computeZones() {
   // l'eau ne se bâtit pas
   const water = waterPolys();
   foot.push(...water.river, ...water.lake);
-  const cells = [], geos = new Map();
+  const cells = [], geos = new Map(), seaux = new Map(), SEAU = 16;
+  const indexe = c => { for (let gx = Math.floor(c.bb[0] / SEAU); gx <= Math.floor(c.bb[2] / SEAU); gx++) for (let gy = Math.floor(c.bb[1] / SEAU); gy <= Math.floor(c.bb[3] / SEAU); gy++) { const k = gx + ',' + gy; if (!seaux.has(k)) seaux.set(k, []); seaux.get(k).push(c); } };
+  const voisines = bb => { const out = new Set(); for (let gx = Math.floor(bb[0] / SEAU); gx <= Math.floor(bb[2] / SEAU); gx++) for (let gy = Math.floor(bb[1] / SEAU); gy <= Math.floor(bb[3] / SEAU); gy++) for (const c of seaux.get(gx + ',' + gy) || []) if (bbHit(bb, c.bb)) out.add(c); return [...out]; };
+  /* Chaque route reçoit sa bande de DEPTH (4) cases, alignée sur son tracé : les cases qui touchent la route la suivent
+     toujours, même en biais. Une case disparaît si elle touche une route, l'eau, une pente raide ou une case plus ancienne ;
+     celles qui suivent dans sa colonne disparaissent aussi. */
+  const essaie = (geo, i, j) => {
+    const { off, t0:T0, P } = geo, s0 = off + i*CELL, t0 = T0 + j*CELL, e = .15;
+    const poly = [P(s0, t0), P(s0+CELL, t0), P(s0+CELL, t0+CELL), P(s0, t0+CELL)];
+    const test = [P(s0+e, t0+e), P(s0+CELL-e, t0+e), P(s0+CELL-e, t0+CELL-e), P(s0+e, t0+CELL-e)];
+    const bb = bbox(poly);
+    if (!(poly.every(p => inTerrain(p) && dansRegion(p)) && !tooSteep(poly))) return { terrain:true };   // pas de case sur l'eau, la pente raide, hors région
+    if (foot.some(f => bbHit(bb, f.bb) && polysOverlap(test, f.P)) || voisines(bb).some(c => polysOverlap(test, c.poly))) return { bloque:true };
+    return { cell:{ poly, bb, geo, i, j, c:P(s0 + CELL/2, t0 + CELL/2), occ:null } };
+  };
   for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
-    const { a, u, parts } = segLayout(r, k);
-    parts.forEach(({ off, n }, pi) => { for (const side of [1, -1]) {
-      const nv = [-u[1] * side, u[0] * side];
-      const geo = { road:r.id, seg:k, side, a, u, n:nv, off, t0:r.w / 2, cols:n, cells:[],
-                    ang:Math.atan2(u[1], u[0]) * 180 / Math.PI };
-      const P = (s, t) => [a[0] + u[0]*s + nv[0]*t, a[1] + u[1]*s + nv[1]*t];
-      geo.P = P;
-      for (let i = 0; i < n; i++) {
-        const col = [];
-        for (let j = 0; j < DEPTH; j++) {
-          const s0 = off + i*CELL, t0 = geo.t0 + j*CELL, e = .15;
-          const poly = [P(s0, t0), P(s0+CELL, t0), P(s0+CELL, t0+CELL), P(s0, t0+CELL)];
-          const test = [P(s0+e, t0+e), P(s0+CELL-e, t0+e), P(s0+CELL-e, t0+CELL-e), P(s0+e, t0+CELL-e)];
-          const bb = bbox(poly);
-          let ok = poly.every(p => inTerrain(p) && dansRegion(p)) && !tooSteep(poly); // pas de case sur une pente raide
-          if (ok) for (const f of foot) if (bbHit(bb, f.bb) && polysOverlap(test, f.P)) { ok = false; break; }
-          if (ok) for (const c of cells) if (bbHit(bb, c.bb) && polysOverlap(test, c.poly)) { ok = false; break; }
-          if (!ok) break;
-          const cell = { poly, bb, geo, i, j, c:P(s0 + CELL/2, t0 + CELL/2), occ:null };
-          cells.push(cell); col.push(cell);
+    if (!tronconDroit(r, k)) continue;
+    for (const side of [1, -1]) { const { a, u, parts } = segLayout(r, k, side);   // (par côté : un raccord en T ne coupe que le côté où arrive l'autre route)
+      parts.forEach(({ off, n }, pi) => {
+        const nv = [-u[1] * side, u[0] * side];
+        const geo = { road:r.id, seg:k, side, a, u, n:nv, off, t0:r.w / 2, cols:n, cells:[],
+                      ang:Math.atan2(u[1], u[0]) * 180 / Math.PI };
+        geo.P = (s, t) => [a[0] + u[0]*s + nv[0]*t, a[1] + u[1]*s + nv[1]*t];
+        for (let i = 0; i < n; i++) {
+          const col = [];
+          for (let j = 0; j < DEPTH; j++) { const x = essaie(geo, i, j); if (!x.cell) break; col.push(x.cell); }
+          for (const cell of col) { cells.push(cell); indexe(cell); }
+          geo.cells.push(col);
         }
-        geo.cells.push(col);
-      }
-      geos.set(`${r.id}:${k}:${pi}:${side}`, geo);
-    } });
+        geos.set(`${r.id}:${k}:${pi}:${side}`, geo);
+      });
+    }
   }
   // points d'accroche pour démarrer une route : le milieu de chaque case le long
   // de chaque tronçon (une branche ne mange qu'une colonne de cases) et les bouts de route
@@ -98,12 +126,13 @@ function computeZones() {
   const towerNodes = wallNodes.filter(q => !S.gates.some(g => segLen([g.x, g.y], q) < CELL));
   Z = { cells, geos, anchors, wallAnchors, hash, wallNodes:towerNodes, water };
   computeOcc();
+  repeindreGrille(anciennes, cells);
 }
 /* Découpage d'un tronçon en cases, comme Cities: Skylines : le tronçon est coupé
    par chaque route qui le rejoint ou le croise, et chaque portion est remplie de cases
    à partir du bord du carrefour. Deux routes parallèles reliées par les mêmes branches
    ont donc leurs colonnes de cases exactement face à face. */
-function segLayout(r, k) {
+function segLayout(r, k, side = 0) {
   const a = r.pts[k], b = r.pts[k+1], L = segLen(a, b) || 1;
   const u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L];
   const e = [b[0]-a[0], b[1]-a[1]];
@@ -126,6 +155,12 @@ function segLayout(r, k) {
       const tol = .05 / L, tolO = .05 / (segLen(c, d) || 1);
       if (t < -tol || t > 1 + tol || v < -tolO || v > 1 + tolO) continue;
       const sin = Math.abs(den) / (L * (segLen(c, d) || 1));
+      // raccord en T (le bout de l'autre route arrive sur celle-ci) : seul le côté où elle se trouve est coupé
+      if (side) {
+        const nv = [-u[1] * side, u[0] * side], p = [a[0] + e[0] * t, a[1] + e[1] * t];
+        const outward = i === 0 && segLen(p, c) < 1.5 ? f : i === o.pts.length - 2 && segLen(p, d) < 1.5 ? [-f[0], -f[1]] : null;   // direction de l'autre route en s'éloignant du raccord
+        if (outward && outward[0] * nv[0] + outward[1] * nv[1] <= 0) continue;
+      }
       const ext = (o.w / 2) / Math.max(sin, .2), s = t * L;
       cuts.push([s - ext, s + ext]);
     }
@@ -274,4 +309,29 @@ function crossesWallAtGates(a, b) {
     if (c && !S.gates.some(g => segLen([g.x, g.y], c) < 1)) return false;
   }
   return true;
+}
+
+/* Points d'ancrage des routes (construction de route) : une route neuve part d'un de ces points et s'y
+   termine ; il y en a tous les CELL m le long du tracé réellement dessiné de CHAQUE route, bouts compris.
+   Calculés à la demande (le tracé lissé n'existe qu'une fois routes.js chargé), refaits quand le décor change. */
+let ancrages = { v:-1, S:null, list:[] };
+function roadAnchors() {
+  if (ancrages.v === sceneV && ancrages.S === S) return ancrages.list;
+  const list = [];
+  for (const r of S.roads) {
+    const P = smoothPts(r), L = []; let tot = 0;
+    for (let i = 1; i < P.length; i++) { L.push(tot); tot += segLen(P[i - 1], P[i]); }
+    for (let s = 0, i = 0; s <= tot + 1e-6; s += CELL) {
+      while (i < P.length - 2 && L[i + 1] < s) i++;
+      const a = P[i], b = P[i + 1], d = segLen(a, b) || 1, t = Math.min(1, Math.max(0, (s - L[i]) / d)), u = [(b[0] - a[0]) / d, (b[1] - a[1]) / d];
+      list.push({ pt:[round2(a[0] + (b[0] - a[0]) * t), round2(a[1] + (b[1] - a[1]) * t)], w:r.w, dir:u, line:r.id, bout:s === 0 });
+    }
+    {                                                         // le bout de la route est toujours un point d'ancrage (même hors d'un multiple de 8 m)
+      const n = P.length, a = P[n - 2], b = P[n - 1], d = segLen(a, b) || 1;
+      if (!list.length || segLen(list[list.length - 1].pt, b) > .5) list.push({ pt:[round2(b[0]), round2(b[1])], w:r.w, dir:[(b[0] - a[0]) / d, (b[1] - a[1]) / d], line:r.id, bout:true });
+      else list[list.length - 1].bout = true;
+    }
+  }
+  ancrages = { v:sceneV, S, list };
+  return list;
 }

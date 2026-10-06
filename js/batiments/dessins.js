@@ -108,6 +108,20 @@ const BUILD_DRAW = {
     chimneyLT(h, -7.4, 18.1, .6); chimneyLT(h, 1.6, 18.1, .6);
     towerLT(h, 8.3, 17.6, 3.1, SLATE);                                                             // tour
   },
+  /* Camp de colon (3 × 3 cases) : clairière de terre battue, feu de camp, deux abris de chaume,
+     chariot, caisses, sacs, tonneaux et bois fendu */
+  camp_colon: h => {
+    const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 5 + h.y * 7) + 12);
+    pathS(lpts(h, softRect(-w2 + .5, .5, w2 - .5, L - .5, 2.8, .7, rnd))); ctx.fillStyle = '#c4b28a'; ctx.fill();
+    tuftsLT(h, -w2 + 1, 1, w2 - 1, L - 1, 90, false);
+    firePitLT(h, 0, 12, .9);
+    thatchLT(h, -10.5, 2.5, -4.5, 9, 'u', STRAW); thatchLT(h, 4.5, 2.5, 10.5, 9, 'u', OLD_STRAW);
+    cartLT(h, -7.5, 15);
+    crateLT(h, 6.2, 15.5, .5); crateLT(h, 7.3, 15.9, .45); crateLT(h, 6.6, 16.8, .42);
+    for (const [u, t] of [[3.6, 11.4], [4.4, 12.2]]) sackLT(h, u, t, .4);
+    barrelLT(h, -2.6, 18.6, .45); barrelLT(h, -1.6, 19.1, .42);
+    cordwoodLT(h, 3.6, 18.4, 9, 20.4);
+  },
   /* Puits (1 case) : margelle de pierre, treuil et corde, dallage autour, auge et seaux */
   puits: h => {
     const L = h.l, c = L / 2, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 3) + 4);

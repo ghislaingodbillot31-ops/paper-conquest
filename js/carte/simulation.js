@@ -4,12 +4,15 @@
    disparaît définitivement), rapporte le bois au bâtiment et le stocke, puis repart,
    jusqu'à ce que la zone soit vide. Temps accéléré pour qu'on voie le travail. */
 const LUMBER = { camp_bucherons:"bois d'œuvre", loge_bucheron:'bois de chauffage' };
+const TAILLEURS = { tailleur_pierre:'pierre' };   // récolte de pierres (kind:'rock') au lieu d'arbres : elles vont au stock du village
+const rocksInZone = z => flora.filter(f => f.kind === 'rock' && (f.x - z.x) ** 2 + (f.y - z.y) ** 2 <= z.r * z.r);
 const WALK = 8, CUT_TIME = 2.5, DROP_TIME = .8; // m/s sur route (moitié hors route, deplacements.js) et secondes (accélérés)
 const workers = new Map();
 let floraVersion = 0;
 const zoneKeyOf = z => z ? `${z.x},${z.y},${z.r}` : '';
 const treesInZone = z => flora.filter(f => f.kind === 'tree' && (f.x - z.x) ** 2 + (f.y - z.y) ** 2 <= z.r * z.r);
 const WORKER_STATE = { idle:'cherche un arbre', go:'en route vers un arbre', cut:'abat un arbre', back:'rapporte le bois', drop:'range le bois', done:'zone épuisée' };
+const STONE_STATE = { idle:'cherche une pierre', go:'en route vers une pierre', cut:'taille une pierre', back:'rapporte la pierre', drop:'range la pierre', done:'plus de pierre dans la zone' };
 /* ---------- forestiers : replantation ----------
    L'habitant d'une hutte de forestier va planter un jeune plant à un endroit libre de sa
    zone (pas d'arbre à moins de 4 m, ni eau, ni route, ni bâtiment), revient, recommence,
@@ -74,7 +77,7 @@ function simTick(dt) {
     const job = jobOf(h);
     if (job) { active = stepJob(h, job, dt) || active; continue; }
     if (h.kind === 'hutte_forestier' && h.zone) { stepForester(h, dt); active = true; continue; }
-    if (!LUMBER[h.kind] || !h.zone) { workers.delete(h.id); continue; }
+    if (!(LUMBER[h.kind] || TAILLEURS[h.kind]) || !h.zone) { workers.delete(h.id); continue; }
     let w = workers.get(h.id);
     // nouvelle zone, ou végétation recalculée (annuler…) : l'habitant repart du bâtiment
     if (!w || w.zone !== zoneKeyOf(h.zone) || w.version !== floraVersion) {
@@ -88,17 +91,20 @@ function simTick(dt) {
     if (w.state === 'idle' || w.state === 'done') {
       if (w.carry) { w.state = 'back'; }
       else {
-        const t = treesInZone(h.zone).filter(f => !taken.has(treeKey(f))).sort((a, b) => (a.x - h.x) ** 2 + (a.y - h.y) ** 2 - ((b.x - h.x) ** 2 + (b.y - h.y) ** 2))[0];
+        const t = (TAILLEURS[h.kind] ? rocksInZone : treesInZone)(h.zone).filter(f => !taken.has(treeKey(f))).sort((a, b) => (a.x - h.x) ** 2 + (a.y - h.y) ** 2 - ((b.x - h.x) ** 2 + (b.y - h.y) ** 2))[0];
         if (t) { w.target = t; taken.add(treeKey(t)); w.state = 'go'; } else w.state = 'done';
       }
     } else if (w.state === 'go') {
       if (walkTo(w.target.x, w.target.y)) { w.state = 'cut'; w.t = CUT_TIME; }
     } else if (w.state === 'cut') {
-      if ((w.t -= dt) <= 0) { cutTree(w.target); w.target = null; w.carry = true; w.state = 'back'; }
+      if ((w.t -= dt) <= 0) { w.yield = Math.max(1, Math.round(w.target.r)); cutTree(w.target); w.target = null; w.carry = true; w.state = 'back'; }
     } else if (w.state === 'back') {
       if (walkTo(h.x, h.y)) { w.state = 'drop'; w.t = DROP_TIME; }
     } else if (w.state === 'drop') {
-      if ((w.t -= dt) <= 0) { w.carry = false; h.stock = (h.stock || 0) + 1; save(); w.state = 'idle'; }
+      if ((w.t -= dt) <= 0) {
+        w.carry = false; const n = TAILLEURS[h.kind] ? w.yield || 1 : 1; h.stock = (h.stock || 0) + n;
+        if (TAILLEURS[h.kind]) { const st = S.stock || (S.stock = {}); st.pierre = (st.pierre || 0) + n; }
+        save(); w.state = 'idle'; }
     }
     if (w.state !== before && isOn('house', h.id, sel)) panelDirty = true;
   }
@@ -303,10 +309,11 @@ function drawWorkers() {
     // ce qu'il porte : bûche, gerbe de grain, laine, sac de farine, pains
     if (w.carry) { ctx.fillStyle = Col[w.carry === true ? 'earth-edge' : w.carry]; ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = .8; ctx.fillRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); ctx.strokeRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); }
   }
+  if (typeof arrivantsDessin === 'function') arrivantsDessin();
   // stock au-dessus de chaque bâtiment qui produit
   if (s > .9) for (const h of S.houses) {
     const J = jobOf(h), store = J && J.type === 'collect';
-    const product = LUMBER[h.kind] ? 'bois' : J && J.type !== 'relay' && J.type !== 'sell' ? J.product : null;
+    const product = LUMBER[h.kind] ? 'bois' : TAILLEURS[h.kind] ? 'pierre' : J && J.type !== 'relay' && J.type !== 'sell' ? J.product : null;
     if (!product) continue;
     const top = Math.min(...corners(h).map(p => p[1])), [X] = toS(h.x, h.y);
     ctx.font = '600 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
@@ -321,6 +328,7 @@ function simLoop(ts) {
   S.simTime = (S.simTime || 0) + dt; // horloge de simulation (croissance des plants)
   const grew = growSaplings();
   const faune = typeof fauneStep === 'function' && fauneStep(dt), nav = typeof bateauxStep === 'function' && bateauxStep(dt), marche = typeof marcheStep === 'function' && marcheStep(dt);
+  if (typeof arrivantsStep === 'function') arrivantsStep(dt);
   if (simTick(dt) || grew || faune || nav || marche) requestDraw();
   requestAnimationFrame(simLoop);
 }
@@ -346,7 +354,7 @@ function drawWorkZones() {
     circle(a.z, col, .15, [8, 5], 2); link(a.h, a.z, col);
     const [X, Y] = toS(a.z.x, a.z.y - a.z.r);
     ctx.font = '600 15px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    const info = a.b.need === 'forest' || a.b.id === 'hutte_forestier' ? ` · ${treesInZone(a.z).length} arbres` : '';
+    const info = a.b.need === 'forest' || a.b.id === 'hutte_forestier' ? ` · ${treesInZone(a.z).length} arbres` : a.b.need === 'rock' ? ` · ${rocksInZone(a.z).length} pierres` : '';
     haloText(a.why || `Zone de travail · rayon ${a.z.r} m${info}`, X, Y - 4, a.why ? Col.bad : Col.ink, Col.sheet);
   }
 }

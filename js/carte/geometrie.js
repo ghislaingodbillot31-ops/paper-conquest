@@ -2,10 +2,10 @@ const ROADS = [
   // toute route occupe exactement une case de large (w = CELL) : une branche prend
   // une colonne de cases pile, et deux routes parallèles sont à un nombre entier de cases.
   // `surf` = largeur de la chaussée dessinée ; le reste de la bande est du bas-côté.
-  // les trois revêtements ont la même chaussée de 6 m ; seul le matériau change
-  { id:'terre',   name:'Terre',   w:CELL, surf:6 },
-  { id:'gravier', name:'Gravier', w:CELL, surf:6 },
-  { id:'pave',    name:'Pavé',    w:CELL, surf:6 },
+  // les trois revêtements ont la même chaussée, large d'une case exactement ; seul le matériau change
+  { id:'terre',   name:'Terre',   w:CELL, surf:CELL },
+  { id:'gravier', name:'Gravier', w:CELL, surf:CELL },
+  { id:'pave',    name:'Pavé',    w:CELL, surf:CELL },
 ];
 const typeName = (f, d) => (PRESETS.find(p => p.f === f && p.d === d) || { name:'Sur mesure' }).name;
 

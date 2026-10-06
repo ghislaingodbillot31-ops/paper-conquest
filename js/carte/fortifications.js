@@ -100,7 +100,7 @@ function addRoadPoint() {
     return;
   }
   if (!draft) {
-    if (sp.kind === 'none') { flash('Une nouvelle route doit partir d\'une route existante : cliquez sur un point orange', true); return; }
+    if (sp.kind === 'none') { flash('Une route part d\'un point d\'ancrage : cliquez sur un point orange', true); return; }
     if (!roadSegOk(sp.pt, sp.pt, roadKind.w)) { flash('Une route ne peut pas partir d\'un bâtiment', true); return; }
     draft = { type:'road', pts:[sp.pt], w:roadKind.w, kind:roadKind.id, parent:sp.parent || null };
   } else {
@@ -128,7 +128,7 @@ function finishDraft() {
   }
   if (draft.pts.length >= 2) {
     commit();
-    const r = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:draft.pts };
+    const r = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:draft.pts, libre:true };
     S.roads.push(r);
     draft = null; changed(true);
     flash(`${{ terre:'Route en terre', gravier:'Route en gravier', pave:'Route pavée' }[r.kind]} de ${fmt(roadLen(r))} m ajoutée`);
@@ -155,6 +155,7 @@ function swap() {
 }
 function deleteSel() {
   const o = findSel(); if (!o) return;
+  if (sel.type === 'road' && routeFixe(o)) { flash('Route commerciale : elle ne peut pas être supprimée', true); return; }
   commit();
   const key = COLL[sel.type];
   S[key] = S[key].filter(x => x.id !== o.id); // les bâtiments restent en place

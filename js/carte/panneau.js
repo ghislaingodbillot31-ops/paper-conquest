@@ -47,7 +47,6 @@ $('road-kinds').addEventListener('click', e => {
   if (tool !== 'road') setTool('road'); else { renderTool(); requestDraw(); }
 });
 document.querySelectorAll('[data-tool]').forEach(b => b.addEventListener('click', () => setTool(b.dataset.tool)));
-$('snap-len').addEventListener('change', e => { snapLen = e.target.checked; requestDraw(); });
 $('finish-road').addEventListener('click', finishDraft);
 $('undo-point').addEventListener('click', removeLastPoint);
 $('cancel-road').addEventListener('click', () => { draft = null; requestDraw(); });
@@ -246,13 +245,16 @@ function renderSel() {
       ${b ? `<dt>Rôle</dt><dd>${b.use}</dd>` : ''}
       ${b && b.cap ? `<dt>Habitants</dt><dd>${b.cap} au plus</dd>` : ''}
       ${b && b.radius && !b.zone ? `<dt>Portée</dt><dd>${b.radius} m autour</dd>` : ''}
-      ${b && b.zone ? `<dt>Zone de travail</dt><dd>${o.zone ? `rayon ${o.zone.r} m, à ${fmt(segLen([o.x, o.y], [o.zone.x, o.zone.y]), 0)} m${b.need === 'forest' || b.id === 'hutte_forestier' ? ` · ${treesInZone(o.zone).length} arbres` : ''}` : '<b style="color:var(--bad)">à définir</b>'}</dd>` : ''}
+      ${b && b.zone ? `<dt>Zone de travail</dt><dd>${o.zone ? `rayon ${o.zone.r} m, à ${fmt(segLen([o.x, o.y], [o.zone.x, o.zone.y]), 0)} m${b.need === 'forest' || b.id === 'hutte_forestier' ? ` · ${treesInZone(o.zone).length} arbres` : b.need === 'rock' ? ` · ${rocksInZone(o.zone).length} pierres` : ''}` : '<b style="color:var(--bad)">à définir</b>'}</dd>` : ''}
       ${o.kind === 'hutte_forestier' && o.zone ? `<dt>Plants en terre</dt><dd>${(S.planted || []).filter(s => segLen([s.x, s.y], [o.zone.x, o.zone.y]) <= o.zone.r).length} (arbres au bout de ${GROW} s)</dd>
       <dt>Plantés en tout</dt><dd>${o.stock || 0}</dd>
       <dt>Forestier</dt><dd>${FORESTER_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
       ${LUMBER[o.kind] && o.zone ? `<dt>Arbres dans la zone</dt><dd>${treesInZone(o.zone).length}</dd>
       <dt>Stock</dt><dd>${o.stock || 0} ${LUMBER[o.kind]}</dd>
       <dt>Bûcheron</dt><dd>${WORKER_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
+      ${TAILLEURS[o.kind] && o.zone ? `<dt>Pierres dans la zone</dt><dd>${rocksInZone(o.zone).length}</dd>
+      <dt>Récolté</dt><dd>${o.stock || 0} pierre</dd>
+      <dt>Tailleur</dt><dd>${STONE_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
       ${(J => J ? jobSheet(o, J) : '')(jobOf(o))}
       ${b && b.limit ? `<dt>Limite</dt><dd>${S.houses.filter(x => x.kind === b.id).length} / ${b.limit} sur la région</dd>` : ''}
       <dt>Cases</dt><dd>${o.f} × ${o.d} (façade × profondeur) · ${o.w} × ${o.l} m</dd></dl>
@@ -284,18 +286,18 @@ function renderSel() {
       <dt>Revêtement</dt><dd>${roadType(o).name}</dd>
       <dt>Largeur</dt><dd>${fmt(roadType(o).surf)} m de chaussée · emprise 1 case (${o.w} m)</dd>
       <dt>Tronçons</dt><dd>${o.pts.length - 1}</dd></dl>
-      <div class="row">
+      ${routeFixe(o) ? '<p class="muted">Route commerciale : ni supprimable ni modifiable. Vous pouvez vous y rattacher.</p>' : `<div class="row">
         <label for="skind">Revêtement<select id="skind">${ROADS.map(r => `<option value="${r.id}"${r.id === o.kind ? ' selected' : ''}>${r.name}</option>`).join('')}</select></label>
         <button id="sdel" class="danger" style="margin-left:auto;align-self:flex-end">Supprimer</button>
       </div>
-      <p class="muted" style="margin-top:8px">Supprimer la route laisse les bâtiments en place ; seules ses cases libres disparaissent.</p>`;
-    $('skind').addEventListener('change', e => {
+      <p class="muted" style="margin-top:8px">Supprimer la route laisse les bâtiments en place ; seules ses cases libres disparaissent.</p>`}`;
+    if ($('skind')) $('skind').addEventListener('change', e => {
       const k = ROADS.find(r => r.id === e.target.value);
       // l'emprise reste d'une case : changer de type ne déplace ni cases ni bâtiments
       commit(); o.w = k.w; o.kind = k.id; changed(true);
     });
   }
-  $('sdel').addEventListener('click', deleteSel);
+  if ($('sdel')) $('sdel').addEventListener('click', deleteSel);
   if ($('sup')) $('sup').addEventListener('click', () => { commit(); o.lvl = Math.min(3, lvlOf(o) + 1); changed(false); flash(`Amélioré : ${FORT_LEVELS[sel.type][o.lvl - 1].toLowerCase()}`); });
 }
 function updateStatus() {
@@ -310,13 +312,15 @@ function updateStatus() {
   const html =
     `<span>${c}</span><span>Trésor <b>${fmt(S.gold, 0)}</b> Or</span>` +
     `<span><b>${S.houses.length}</b> bâtiments · logements pour <b>${cap}</b> habitants</span>` +
+    (typeof popVillage === 'function' ? `<span><b>${arrivants.attente}</b> en attente au camp</span>` : '') +
     `<span><b>${free}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
     `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
     `<span>1 case = 8 × 8 m</span>`;
   // la barre d'état n'est réécrite que si son texte change (pas de mise en page à chaque image)
-  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; $('villageois').textContent = fmt(cap, 0); }
+  if (typeof afficherStock === 'function') afficherStock();
+  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; $('villageois').textContent = fmt(typeof popVillage === 'function' ? popVillage() : cap, 0); }
 }
 let lastStatus = '';
 const freeCells = { v:-1, n:0 };
 // carte d'essai enregistrée avec une ancienne version des formes (fleuves, côtes) : régénérée une fois avec le générateur à jour (même région)
-if (typeof MAPTEST !== 'undefined' && ((S.forme && S.forme.id && S.forme.v !== FORMES_V) || S.echelle !== ECHELLE_TERRAIN)) { if (S.forme && S.forme.id) chargeForme(S.forme.id); newRegion($('biome').value, S.landSeed); }
+if (PAGE === 'carte' && ((S.forme && S.forme.id && S.forme.v !== FORMES_V) || S.echelle !== ECHELLE_TERRAIN)) { if (S.forme && S.forme.id) chargeForme(S.forme.id); newRegion($('biome').value, S.landSeed); }

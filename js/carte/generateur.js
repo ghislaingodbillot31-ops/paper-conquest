@@ -412,16 +412,24 @@ try {
   if (PAGE !== 'batiments' && o && Array.isArray(o.houses) && Array.isArray(o.roads)) {
     if (o.forme && !GAME) chargeForme(o.forme.id);                                  // éditeur : la région choisie
     // région du jeu : un plan d'avant les formes réelles (rectangle) est remplacé par la vraie forme
-    if (!(GAME && FORME && !(o.forme && o.forme.v === FORMES_V))) { S = normalize(o); computeZones(); if (typeof carveRivieres === 'function') try { carveRivieres(); } catch (e) { console.warn('carve', e); } } // (portes recalées au démarrage)
+    if (!(GAME && FORME && (!(o.forme && o.forme.v === FORMES_V) || o.echelle !== ECHELLE_TERRAIN))) {   // (plan d'une autre échelle de terrain : région régénérée)
+      S = normalize(o); computeZones(); if (typeof carveRivieres === 'function') try { carveRivieres(); } catch (e) { console.warn('carve', e); } } // (portes recalées au démarrage)
   }
 } catch (e) {}
 if (!S) { if (PAGE === 'batiments') { S = normalize({ nextId:1 }); computeZones(); } // éditeur de bâtiments : pas de région
+  else if (MONDE_PLAT) {                                              // éditeur de routes : quelques routes pour travailler dessus (tracé du joueur : segments droits)
+    const R = (id, kind, pts) => ({ id, kind, w:CELL, pts, libre:true });
+    S = normalize({ echelle:ECHELLE_TERRAIN, nextId:200, biome:'tempere', landSeed:1, reliefSeed:1, houses:[], walls:[], towers:[], gates:[],
+      roads:[ R(1, 'pave', [[400, 1200], [2800, 1200]]), R(2, 'gravier', [[1600, 400], [1600, 2000]]),
+              R(3, 'terre', [[800, 1400], [1200, 1400], [1200, 1800], [800, 1800], [800, 1400]]), R(4, 'terre', [[2000, 1200], [2346.41, 1000]]) ] });
+    computeZones();
+  }
   else if (GAME) generateRegion(BIOMES[GAME.biome] ? GAME.biome : 'tempere', GAME.seed, GAME.river); // région du jeu : générée d'après son climat
   else { if (PAGE === 'carte' && typeof MAPTEST === 'undefined') { try { chargeForme(+localStorage.getItem('editeurCarte.forme') || 1); } catch (e) {} }   // éditeur : la dernière région choisie (sinon la n° 1), plus le terrain d'essai
     generateRegion('tempere', 20260929); } }                          // première ouverture : une région de plaine tempérée
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
 
 let tool = 'select', preset = PRESETS[0], custom = null, swapped = false, roadKind = ROADS[1], yardKind = 'potager';
-let snapLen = true;
+let snapLen = true;   // (murailles seulement : longueur en cases entières)
 let sel = null, hover = null, cursor = null, draft = null, drag = null, pinch = null, spaceDown = false;
 const undoStack = [], pointers = new Map();
