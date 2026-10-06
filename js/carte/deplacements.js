@@ -4,10 +4,9 @@
    destination (le plus proche parmi les points qu'elle permet d'atteindre), et ne finit à pied qu'à partir de là. Il ne coupe à
    travers champs que s'il n'y a pas de route, si la route la plus proche est plus loin que sa destination, ou si la route ne le
    ferait avancer que de moins de 2 cases.
-   Hors route, on marche deux fois moins vite. */
+   Les bâtiments ne se traversent jamais (voir plus bas : portes et contournements). Hors route, on marche deux fois moins vite. */
 const VITESSE_TERRE = .5;                 // hors route : moitié de la vitesse sur route
 const RACCORD = 2;                        // deux points de routes à moins de 2 m : carrefour
-const ROUTE_MIN = 2 * CELL;               // en deçà de 16 m à faire sur la route, on va tout droit
 let reseau = null;
 // Réseau des routes : les points du tracé lissé (celui qui est dessiné), reliés le long de
 // chaque route, et d'une route à l'autre là où elles se touchent (raccords, croisements).
@@ -45,11 +44,11 @@ function procheRoute(R, p) {
 // point de route ATTEIGNABLE le plus proche de sa destination, puis finit hors chemin jusqu'à la destination. Valable pour tous
 // les habitants (marcher() sert aux ouvriers de tous les bâtiments). Il ne va tout droit que s'il n'y a pas de route, si la route
 // la plus proche est plus loin que la destination elle-même, ou si la route ne le ferait avancer que de moins de 2 cases.
-function trajet(A, B) {
-  const direct = [{ p:B, route:false }], R = reseauRoutes();
+function trajetExterieur(A, B) {
+  const hors = (P, Q) => contourner(P, Q).map(p => ({ p, route:false }));      // un tronçon hors route : droit, ou autour des bâtiments
+  const direct = hors(A, B), R = reseauRoutes();
   if (!R.segs.length) return direct;
   const pa = procheRoute(R, A);
-  if (pa.d > segLen(A, B)) return direct;                    // la route est plus loin que la destination
   // plus courts chemins depuis le point d'entrée vers tout le réseau (Dijkstra)
   const n = R.N.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), tas = [];
   const pousser = (i, d) => { tas.push([d, i]); let k = tas.length - 1; while (k) { const m = (k - 1) >> 1; if (tas[m][0] <= tas[k][0]) break; [tas[m], tas[k]] = [tas[k], tas[m]]; k = m; } };
@@ -66,11 +65,56 @@ function trajet(A, B) {
     const ci = dist[i] + segLen(R.N[i], t.q), cj = dist[j] + segLen(R.N[j], t.q), c = meme ? segLen(pa.q, t.q) : Math.min(ci, cj);
     if (!best || t.d < best.d - .5 || (Math.abs(t.d - best.d) <= .5 && c < best.c)) best = { d:t.d, q:t.q, c, i, j, meme, via:ci <= cj ? i : j };
   }
-  if (!best || segLen(pa.q, best.q) < ROUTE_MIN) return direct;     // la route ne mène nulle part (ou à moins de 2 cases)
-  if (best.meme) return [{ p:pa.q, route:false }, { p:best.q, route:true }, { p:B, route:false }];
+  if (!best) return direct;
+  if (best.meme) return [...hors(A, pa.q), { p:best.q, route:true }, ...hors(best.q, B)];
   const noeuds = [];
   for (let k = best.via; k >= 0; k = prev[k]) noeuds.unshift(R.N[k]);
-  return [{ p:pa.q, route:false }, ...noeuds.map(p => ({ p, route:true })), { p:best.q, route:true }, { p:B, route:false }];
+  return [...hors(A, pa.q), ...noeuds.map(p => ({ p, route:true })), { p:best.q, route:true }, ...hors(best.q, B)];
+}
+/* ---------- bâtiments : jamais traversés ----------
+   Un habitant sort de son bâtiment par un point de son pourtour (le plus proche de la route), marche dehors (routes d'abord) et entre
+   dans sa destination par un point de son pourtour. Hors route, il contourne tous les bâtiments (graphe de visibilité sur leurs coins). */
+const MARGE_BAT = 1.2;
+const batimentSous = p => S.houses.find(h => inPoly(p, corners(h))) || null;
+// point du pourtour du bâtiment h le plus proche de T, poussé de 0,8 m vers l'extérieur
+function porte(h, T) {
+  const C = corners(h); let best = null, bd = Infinity;
+  for (let i = 0; i < C.length; i++) { const t = ptSeg(T, C[i], C[(i + 1) % C.length]); if (t.d < bd) { bd = t.d; best = t.q; } }
+  const L = segLen(best, [h.x, h.y]) || 1;
+  return [round2(best[0] + (best[0] - h.x) / L * .8), round2(best[1] + (best[1] - h.y) / L * .8)];
+}
+const croise = (a, b, C) => inPoly(a, C) || inPoly(b, C) || C.some((c, i) => segCross(a, b, c, C[(i + 1) % C.length]));
+// points de passage de P à Q hors route : [Q], ou un détour par les coins des bâtiments qui barrent la ligne droite
+function contourner(P, Q) {
+  const bb = bbox([P, Q]), m = 40, obst = S.houses.filter(h => { const c = corners(h), b = bbox(c); return b[2] > bb[0] - m && b[0] < bb[2] + m && b[3] > bb[1] - m && b[1] < bb[3] + m; }).map(h => ({ C:corners(h), h }));
+  const gene = obst.filter(o => croise(P, Q, o.C));
+  if (!gene.length) return [Q];
+  const nodes = [P, Q];
+  for (const o of obst) for (const c of o.C) { const L = segLen(c, [o.h.x, o.h.y]) || 1; nodes.push([c[0] + (c[0] - o.h.x) / L * MARGE_BAT, c[1] + (c[1] - o.h.y) / L * MARGE_BAT]); }
+  const libre = (a, b) => !obst.some(o => croise(a, b, o.C));
+  const n = nodes.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), done = new Uint8Array(n); dist[0] = 0;
+  for (;;) {
+    let u = -1; for (let i = 0; i < n; i++) if (!done[i] && dist[i] < Infinity && (u < 0 || dist[i] < dist[u])) u = i;
+    if (u < 0 || u === 1) break;
+    done[u] = 1;
+    for (let v = 0; v < n; v++) if (!done[v]) { const w = segLen(nodes[u], nodes[v]); if (dist[u] + w < dist[v] && libre(nodes[u], nodes[v])) { dist[v] = dist[u] + w; prev[v] = u; } }
+  }
+  if (!isFinite(dist[1])) return [Q];                                   // aucun détour trouvé : tout droit
+  const out = []; for (let k = 1; k !== 0; k = prev[k]) out.unshift(nodes[k]);
+  return out;
+}
+// Trajet de A à B : liste d'étapes { p:[x, y], route } (route : l'étape se parcourt sur la route)
+function trajet(A, B) {
+  const bA = batimentSous(A), bB = batimentSous(B), R = reseauRoutes();
+  let depart = A, arrivee = B; const debut = [], fin = [];
+  if (bA) {                                                              // sortie : par la porte la plus proche de la route (ou de la destination)
+    const T = R.segs.length ? procheRoute(R, A).q : B;
+    depart = porte(bA, T); debut.push({ p:depart, route:false });
+  }
+  if (bB && bB !== bA) {                                                 // entrée : par la porte tournée vers d'où l'on vient
+    arrivee = porte(bB, depart); fin.push({ p:B, route:false });
+  } else if (bB) return [{ p:B, route:false }];                     // même bâtiment : on y reste
+  return [...debut, ...trajetExterieur(depart, arrivee), ...fin];
 }
 // Fait avancer l'habitant w vers (tx, ty) pendant dt secondes, à la vitesse v sur route
 // (v × VITESSE_TERRE hors route). Renvoie true à l'arrivée.

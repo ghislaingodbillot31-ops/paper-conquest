@@ -71,7 +71,7 @@ function poissonsStep(dt) {
   if (change && sel && sel.type === 'lake') majLac();
   return false;
 }
-function pecher(lk, n = PECHE_LOT) {
+function pecher(lk, n = PECHE_LOT, versStock = true) {
   const f = poissonsLac(lk); if (!f || f.vide) return 0;
   let pris = 0;
   for (let i = 0; i < n; i++) {
@@ -82,7 +82,7 @@ function pecher(lk, n = PECHE_LOT) {
     if (f.sp[e] < 1) { f.sp[e] = 0; continue; }
     f.sp[e] -= 1;                                                          // le filet prend tout : un poisson non comestible est rejeté, mort
     if (!comestible(e)) continue;
-    pris++; const st = S.stock || (S.stock = {}); st.poisson = (st.poisson || 0) + RATION;
+    pris++; if (versStock) { const st = S.stock || (S.stock = {}); st.poisson = (st.poisson || 0) + RATION; }
   }
   for (const k in f.sp) if (f.sp[k] < 1) f.sp[k] = 0;
   if (totalPoissons(f) < 1) { f.vide = true; for (const k in f.sp) f.sp[k] = 0; }   // plus un poisson : l'étang est vide
@@ -130,15 +130,59 @@ function hitLake(x, y) {
   return null;
 }
 
-// pêcheur : l'étang le plus intéressant (beaucoup de poissons, pas trop loin) parmi tous ceux où l'on peut encore pêcher
-function lacPourPecher(h) {
-  let best = null, bs = 0;
+/* ---------- le pêcheur ----------
+   Le matin il quitte son habitation et gagne un lac ou une rivière accessible. Au bord de l'eau il déploie sa canne et pose son seau,
+   puis pêche jusqu'à avoir pris PECHE_JOUR (5) poissons comestibles. Il range alors son matériel et retourne au village ; ses poissons
+   n'entrent au stock du village qu'à son retour. La rivière ne s'épuise pas ; un lac, si (voir pecher). La nuit : repos (simulation.js). */
+const PECHE_JOUR = 5, PECHE_RAYON = 1000;
+function pointsDEau(h) {                                                   // tous les lacs et rivières accessibles, avec leur rive
+  const spots = [];
   for (const lk of S.lakes) {
     const f = poissonsLac(lk); if (!f || f.vide || totalPoissons(f) < 1) continue;
-    const q = riveDuLac(lk, h), sc = totalPoissons(f) / (1 + segLen(q, [h.x, h.y]) / 300);
-    if (sc > bs) { bs = sc; best = lk; }
+    const rive = riveDuLac(lk, h), P = lakeShape(lk); let eau = null, bd = Infinity;
+    for (let i = 0; i < P.length; i++) { const t = ptSeg(rive, P[i], P[(i + 1) % P.length]); if (t.d < bd) { bd = t.d; eau = t.q; } }
+    const d = segLen(rive, [h.x, h.y]); if (d <= PECHE_RAYON) spots.push({ kind:'lac', lk, rive, eau, score:totalPoissons(f) / (1 + d / 300) });
   }
-  return best;
+  for (const rv of S.rivers) {
+    let best = null, bd = Infinity;
+    for (let i = 0; i < rv.pts.length - 1; i++) { const t = ptSeg([h.x, h.y], rv.pts[i], rv.pts[i + 1]); if (t.d < bd) { bd = t.d; best = { q:t.q, i }; } }
+    if (!best || bd > PECHE_RAYON) continue;
+    const L = segLen(best.q, [h.x, h.y]) || 1, demi = (rv.w0 + (rv.w1 - rv.w0) * best.i / Math.max(1, rv.pts.length - 1)) / 2 + 1.5;
+    spots.push({ kind:'riviere', rv, rive:[best.q[0] + (h.x - best.q[0]) / L * demi, best.q[1] + (h.y - best.q[1]) / L * demi], eau:best.q, score:120 / (1 + bd / 300) });
+  }
+  return spots.sort((a, b) => b.score - a.score);
+}
+// un coup de ligne : 1 si un poisson comestible est pris
+function coupDeLigne(spot) {
+  if (spot.kind === 'lac') return pecher(spot.lk, 1, false);
+  return Math.random() < .7 ? 1 : 0;
+}
+function stepPecheur(h, job, w, dt) {
+  const before = w.state, vite = WALK * (hasOxen(h) ? 1.5 : 1), marche = (x, y) => marcher(w, x, y, vite, dt);
+  switch (w.state) {
+    case 'idle': case 'wait': {
+      if ((w.t = (w.t || 0) - dt) > 0) break;
+      const sp = pointsDEau(h)[0]; if (!sp) { w.state = 'wait'; w.t = 1; break; }
+      w.spot = sp; w.panier = 0; w.state = 'go'; break;
+    }
+    case 'go':
+      if (marche(w.spot.rive[0], w.spot.rive[1])) { w.ang = Math.atan2(w.spot.eau[1] - w.y, w.spot.eau[0] - w.x); w.state = 'install'; w.t = 3; }   // face à l'eau
+      break;
+    case 'install': if ((w.t -= dt) <= 0) { w.state = 'peche'; w.t = job.work; } break;
+    case 'peche':
+      if ((w.t -= dt) > 0) break;
+      w.panier += coupDeLigne(w.spot);
+      if (w.panier >= PECHE_JOUR || (w.spot.kind === 'lac' && (w.spot.lk.fish.vide || totalPoissons(w.spot.lk.fish) < 1))) { w.state = 'range'; w.t = 2.5; } else w.t = job.work;
+      break;
+    case 'range': if ((w.t -= dt) <= 0) { w.carry = w.panier ? CARRY.poisson : null; w.state = 'back'; } break;
+    case 'back': if (marche(h.x, h.y)) { w.state = 'drop'; w.t = DROP_TIME; } break;
+    case 'drop':
+      if ((w.t -= dt) > 0) break;
+      if (w.panier) { const st = S.stock || (S.stock = {}); st.poisson = (st.poisson || 0) + RATION * w.panier; save(); }   // les poissons entrent au stock à son retour
+      w.panier = 0; w.carry = null; w.state = 'idle'; w.t = 0; break;
+  }
+  if (w.state !== before && isOn('house', h.id, sel) && !zoneEdit) renderSel();
+  return true;
 }
 // point de la rive le plus proche du bâtiment, à 2 m de l'eau côté bâtiment
 function riveDuLac(lk, h) {

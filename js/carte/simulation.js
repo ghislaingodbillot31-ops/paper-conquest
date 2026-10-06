@@ -70,10 +70,45 @@ function cutTree(f) {
   floraIdx = null;
   invalidateTiles(f.x, f.y, f.wood ? 110 : 12); // le dégradé du bois change autour de la clairière
 }
+/* ---------- jour et nuit ----------
+   Le jour, de l'aube au crépuscule du lieu (js/saisons.js), les habitants travaillent. La nuit, ils ne travaillent pas : chacun rentre se
+   reposer dans son habitation (le n° de villageois du bâtiment où il travaille, voir logements()) ou, un sur trois, va à la taverne s'il
+   y en a une. Au matin ils ressortent et reprennent leur journée depuis le début. */
+function estNuit() {
+  if (typeof soleil !== 'function') return false;
+  const h = heureCarte(), so = soleil(REGION_METEO.lat, METEO.doy, h);
+  if (so.polaire) return so.polaire === 'nuit';
+  return h < so.lever || h >= so.coucher;
+}
+// où dort l'habitant du bâtiment h : la taverne (un sur trois), sinon son logement, sinon son lieu de travail
+function lieuDeRepos(h) {
+  const taverne = S.houses.find(o => o.kind === 'taverne');
+  if (taverne && (h.id * 7) % 3 === 0) return [taverne.x, taverne.y];
+  if (typeof logements === 'function') {
+    const trav = S.houses.filter(o => workers.has(o.id)).sort((a, b) => a.id - b.id), n = trav.indexOf(h) + 1, L = logements();
+    const maison = L.maisons.find(([, occ]) => occ.includes(n));
+    if (maison) return [maison[0].x, maison[0].y];
+    const camp = campColon(); if (camp && L.camp.includes(n)) return [camp.x, camp.y];
+  }
+  return [h.x, h.y];
+}
+// vrai tant que l'habitant du bâtiment h se repose ou rentre se reposer (le travail du jour est alors suspendu)
+function reposNuit(h, dt) {
+  const w = workers.get(h.id); if (!w || w.passive) return false;
+  if (!estNuit()) {
+    if (w.nuit) { w.nuit = null; w.dedans = false; w.chemin = null; w.state = 'idle'; w.t = 0; w.carry = false; w.target = null; w.panier = 0; }   // le matin : il ressort et commence sa journée
+    return false;
+  }
+  if (!w.nuit) { w.nuit = 'go'; w.carry = false; w.target = null; w.chemin = null; w.repos = lieuDeRepos(h); }
+  if (w.nuit === 'go' && marcher(w, w.repos[0], w.repos[1], WALK, dt)) { w.nuit = 'dedans'; w.dedans = true; }
+  return w.nuit === 'go';                                                // (vrai : il marche encore, il faut redessiner)
+}
 function simTick(dt) {
   let active = false, panelDirty = false;
   const taken = new Set([...workers.values()].map(w => w.target && treeKey(w.target)).filter(Boolean));
   for (const h of S.houses) {
+    if (workers.has(h.id) && !workers.get(h.id).passive && estNuit()) { if (reposNuit(h, dt)) active = true; continue; }   // la nuit : pas de travail
+    if (workers.has(h.id) && workers.get(h.id).nuit) reposNuit(h, dt);                                                    // le matin : il ressort
     const job = jobOf(h);
     if (job) { active = stepJob(h, job, dt) || active; continue; }
     if (h.kind === 'hutte_forestier' && h.zone) { stepForester(h, dt); active = true; continue; }
@@ -177,7 +212,7 @@ function jobLabel(b, w, job = b && b.job) {
     wait:w && w.full ? `plein (${job.cap})` : 'rien à ramasser à portée' }[st] || '';
   if (job.type === 'sell') return { idle:'se prépare', go:'va chercher des marchandises', take:'charge', back:'rapporte au comptoir', drop:'vend aux marchands',
     wait:'rien à vendre (granges et entrepôts vides)' }[st] || '';
-  if (job.type === 'fish') return { idle:'se prépare', go:"va au bord de l'eau", work:'pêche', back:'rapporte le poisson', drop:'range', wait:'aucun étang poissonneux' }[st] || '';
+  if (job.type === 'fish') return { idle:'se prépare', go:"part pêcher (lac ou rivière)", install:'installe sa canne et son seau', peche:`pêche (${w && w.panier || 0} / ${typeof PECHE_JOUR === 'number' ? PECHE_JOUR : 5})`, range:'range son matériel', back:'retourne au village', drop:'verse ses poissons au stock', wait:'aucun point d\'eau poissonneux' }[st] || '';
   if (job.type === 'relay') return { idle:'prépare les mulets', go:'mène les mulets aux confins de la région', work:'troc avec les régions voisines (à venir)',
     back:'revient avec les mulets', drop:'dételle' }[st] || '';
   return '';
@@ -200,7 +235,7 @@ function jobSheet(o, J) {
   } else if (J.type === 'sell') {
     rows.push(['Ventes', `${o.sold || 0} Or gagnés`]);
   } else if (J.type === 'fish') {
-    rows.push(['Zone de travail', `tous les points d'eau du village (${S.lakes.length} étang${S.lakes.length > 1 ? 's' : ''})`], ['Poissons pêchés', 'versés au stock du village']);
+    rows.push(['Zone de travail', `tous les lacs et rivières du village (${S.lakes.length} étang${S.lakes.length > 1 ? 's' : ''}, ${S.rivers.length} cours d'eau)`], ['Poissons pêchés', `${typeof PECHE_JOUR === 'number' ? PECHE_JOUR : 5} par sortie, versés au stock à son retour`]);
   } else if (J.type !== 'relay') {
     rows.push(['Stock', `${o.stock || 0} ${J.product}${J.cap ? ` (${J.cap} au plus)` : ''}`]);
   }
@@ -221,6 +256,7 @@ function stepJob(h, job, dt) {
     w = { x:h.x, y:h.y, state:'idle', i:0, job:true, jobType:job.type, jobProduct:job.product, passive:job.type === 'passive' };
     workers.set(h.id, w);
   }
+  if (job.type === 'fish') return typeof stepPecheur === 'function' ? stepPecheur(h, job, w, dt) : false;   // le pêcheur : poissons.js
   const before = w.state;
   const speed = WALK * (hasOxen(h) ? 1.5 : 1);
   const walkTo = (tx, ty) => marcher(w, tx, ty, speed, dt);
@@ -254,10 +290,6 @@ function stepJob(h, job, dt) {
         store.inv[p] -= 1; w.load = p; w.dest = [store.x, store.y]; w.state = 'go';
       } else if (job.type === 'relay') {
         w.dest = regionExit(h); w.state = 'go';
-      } else if (job.type === 'fish') {                       // pêcheur : n'importe quel point d'eau du village où il reste du poisson
-        const lk = typeof lacPourPecher === 'function' ? lacPourPecher(h) : null;
-        if (!lk) { waitOne(); break; }
-        w.lac = lk.id; w.dest = riveDuLac(lk, h); w.state = 'go';
       }
       break;
     }
@@ -265,7 +297,6 @@ function stepJob(h, job, dt) {
       if (!walkTo(...w.dest)) break;
       if (job.type === 'site') { w.state = 'work'; w.t = job.work; }
       else if (job.type === 'relay') { w.state = 'work'; w.t = 4; }
-      else if (job.type === 'fish') { w.state = 'work'; w.t = job.work; }
       else { w.state = 'take'; w.t = .8; }
       break;
     case 'take':
@@ -275,7 +306,6 @@ function stepJob(h, job, dt) {
       if ((w.t -= dt) > 0) break;
       if (job.type === 'site') { w.carry = CARRY[job.product] || 'stall-b'; w.state = 'back'; }
       else if (job.type === 'relay') { w.state = 'back'; }
-      else if (job.type === 'fish') { const lk = S.lakes.find(l => l.id === w.lac), n = lk ? pecher(lk, 1) : 0; w.carry = n ? CARRY.poisson : null; w.state = 'back'; }   // le poisson va directement au stock du village
       else { h.stock = (h.stock || 0) + 1; save(); w.state = 'idle'; w.t = 0; } // fabrication terminée
       break;
     case 'back':
@@ -303,7 +333,7 @@ function drawWorkers() {
     ctx.fillStyle = Col.bush; ctx.fill(); ctx.strokeStyle = Col['tree-dark']; ctx.lineWidth = .8; ctx.stroke();
   }
   for (const [id, w] of workers) {
-    if (w.passive) continue; // production sans déplacement
+    if (w.passive || w.dedans) continue; // production sans déplacement ; ou habitant rentré dans son logement
     const [X, Y] = toS(w.x, w.y), r = Math.max(3.5, .9 * s);
     persos.push([w.x, w.y]); ctx.globalAlpha = voileBois(w.x, w.y);     // sous les arbres (voir canopeeSur)
     if (w.state === 'cut') { // coups de hache : anneau qui pulse
@@ -313,7 +343,14 @@ function drawWorkers() {
     const hs = typeof VILLAGEOIS !== 'undefined' && findById('house', id), vk = hs && villageoisDe(hs.kind), V = vk && VILLAGEOIS[vk], Ls = V ? Math.max(V.T * s * 2.2, 8) : 0;       // (un peu plus grands que nature : à 8 px par mètre, un homme ne ferait que 4 px)
     if (V && s > .5) {                                                                              // villageois du métier du bâtiment, tourné dans le sens de la marche
       if (w.px !== undefined && Math.hypot(w.x - w.px, w.y - w.py) > .02) w.ang = Math.atan2(w.y - w.py, w.x - w.px);
-      w.px = w.x; w.py = w.y; peintVillageois(vk, X, Y, Ls, w.ang || 0);
+      w.px = w.x; w.py = w.y;
+      const pose = vk === 'pecheur' && (w.state === 'install' || w.state === 'peche' || w.state === 'range'), V0 = VILLAGEOIS.pecheur.outil;
+      if (pose) VILLAGEOIS.pecheur.outil = { f:'canne', c:'#8a6238' };                                  // canne déployée au bord de l'eau
+      peintVillageois(vk, X, Y, Ls, w.ang || 0);
+      if (pose) { VILLAGEOIS.pecheur.outil = V0;
+        const bx = X + Math.cos((w.ang || 0) + 1.9) * Ls * .8, by = Y + Math.sin((w.ang || 0) + 1.9) * Ls * .8, br = Math.max(2.2, s * .45);      // seau posé à côté de lui
+        ctx.beginPath(); ctx.ellipse(bx, by, br, br, 0, 0, Math.PI * 2); ctx.fillStyle = '#8a6a3a'; ctx.fill(); ctx.strokeStyle = VI_INK; ctx.lineWidth = 1; ctx.stroke();
+        ctx.beginPath(); ctx.ellipse(bx, by, br * .6, br * .6, 0, 0, Math.PI * 2); ctx.fillStyle = '#3a6a9a'; ctx.fill(); }
     } else { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
       ctx.fillStyle = Col.accent; ctx.fill(); ctx.strokeStyle = Col.sheet; ctx.lineWidth = 1.5; ctx.stroke(); }
     // ce qu'il porte : bûche, gerbe de grain, laine, sac de farine, pains

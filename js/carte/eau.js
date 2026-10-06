@@ -361,30 +361,37 @@ function makeLake(cx, cy, R, p1, p2) {
 }
 
 /* ---------- végétation des étangs ----------
-   Autour de chaque étang, toujours la même (graine du paysage + numéro de l'étang ; indépendante des routes du joueur) :
-   - nénuphars : larges feuilles rondes (parfois une fleur) à 2 à 14 m de la rive, dans l'eau ;
-   - roseaux et joncs : touffes de tiges (massettes brunes) sur la rive, par bandes ;
-   - plantes de berge : petites touffes de feuilles à 2 à 7 m de l'eau.
+   Autour de chaque étang, toujours la même (graine du paysage + numéro de l'étang ; indépendante des routes du joueur), répartie
+   naturellement : un champ de densité (bruit, taches de ~25 m) décide où elle est dense ou absente — certaines zones restent
+   complètement dégagées — et chaque élément garde un espacement minimum avec ses voisins (jamais l'un sur l'autre).
+   - nénuphars : feuilles rondes échancrées (rayon 0,6 à 1,3 m), orientées au hasard, parfois une fleur ; dans l'eau, à 1,5 à 16 m de la rive ;
+   - roseaux et joncs : touffes de tiges (massettes brunes) sur la rive, plus serrées par endroits ;
+   - plantes de berge : petites touffes de feuilles à 2 à 8 m de l'eau.
    Peints sous les routes (drawDecor) : une route ne passe jamais sous la végétation. */
 const plantesEau = new WeakMap();
 function plantesDuLac(lk, idx) {
   let L = plantesEau.get(lk); if (L) return L;
   L = [];
-  const P = lakeShape(lk), rnd = seeded(S.landSeed * 13 + idx * 7 + 5), base = S.roads.filter(r => !r.libre);
-  const prochRoute = q => base.some(r => { const Q = r.pts; for (let i = 0; i < Q.length - 1; i++) if (ptSeg(q, Q[i], Q[i + 1]).d < 12) return true; return false; });
-  let band = rnd() < .6, run = 0;
-  for (let i = 0; i < P.length; i++) {
-    const a = P[i], b = P[(i + 1) % P.length], Ls = segLen(a, b) || 1, u = [(b[0] - a[0]) / Ls, (b[1] - a[1]) / Ls];
-    let n = [-u[1], u[0]]; if (inPoly([a[0] + n[0] * 1.5, a[1] + n[1] * 1.5], P)) n = [-n[0], -n[1]];          // normale vers l'extérieur
-    for (let d = 0; d < Ls; d += 3) {
-      run += 3; if (run > 18 + rnd() * 30) { band = rnd() < .6; run = 0; }
-      const q = [a[0] + u[0] * d, a[1] + u[1] * d], at = (o, t = 0) => [round2(q[0] + n[0] * o + u[0] * t), round2(q[1] + n[1] * o + u[1] * t)];
-      if (band && rnd() < .8) { const p = at(-.5 + rnd() * 2, (rnd() - .5) * 2.4); if (!prochRoute(p)) L.push({ k:'reed', p, v:rnd(), n:4 + Math.floor(rnd() * 5) }); }
-      else if (rnd() < .25) { const p = at(2 + rnd() * 5, (rnd() - .5) * 3); if (!prochRoute(p) && !inPoly(p, P)) L.push({ k:'plant', p, v:rnd(), n:5 + Math.floor(rnd() * 3) }); }
-      if (rnd() < .3) for (let m = 1 + Math.floor(rnd() * 3); m > 0; m--) {
-        const p = at(-(2 + rnd() * 12), (rnd() - .5) * 5);
-        if (inPoly(p, P)) L.push({ k:'lily', p, v:rnd(), r:.7 + rnd() * .6, a:rnd() * 6.28 });
-      }
+  const P = lakeShape(lk), rnd = seeded(S.landSeed * 13 + idx * 7 + 5), dens = valueNoise(S.landSeed * 7 + idx * 31 + 11), base = S.roads.filter(r => !r.libre);
+  const bb = bbox(P), marge = 10, B = [bb[0] - marge, bb[1] - marge, bb[2] + marge, bb[3] + marge];
+  const rive = q => { let d = Infinity; for (let i = 0; i < P.length; i++) { const t = ptSeg(q, P[i], P[(i + 1) % P.length]).d; if (t < d) d = t; } return d; };
+  const proche = q => base.some(r => { const Q = r.pts; for (let i = 0; i < Q.length - 1; i++) if (ptSeg(q, Q[i], Q[i + 1]).d < 12) return true; return false; });
+  const lisse = t => t * t * (3 - 2 * t), champ = (q, k, echelle) => lisse(Math.max(0, Math.min(1, (dens(q[0] / echelle + k * 37, q[1] / echelle) - .3) / .4)));   // 0 = dégagé, 1 = dense
+  const grille = new Map(), G = 4;
+  const libre = (q, R) => { const gx = Math.floor(q[0] / G), gy = Math.floor(q[1] / G), m = Math.ceil(4 / G) + 1; for (let i = -m; i <= m; i++) for (let j = -m; j <= m; j++) for (const o of grille.get((gx + i) + ',' + (gy + j)) || []) if (segLen(o.p, q) < o.R + R) return false; return true; };
+  const pose = (f, R) => { L.push(f); const k = Math.floor(f.p[0] / G) + ',' + Math.floor(f.p[1] / G); if (!grille.has(k)) grille.set(k, []); grille.get(k).push({ p:f.p, R }); };
+  const essais = Math.round(Math.max(1500, (B[2] - B[0]) * (B[3] - B[1]) / 6));
+  for (let t = 0; t < essais; t++) {
+    const q = [round2(B[0] + rnd() * (B[2] - B[0])), round2(B[1] + rnd() * (B[3] - B[1]))], inside = inPoly(q, P), d = rive(q), u = rnd(), acc = rnd();
+    if (inside && d >= 1.5 && d <= 16) {                                             // nénuphar
+      const r = .6 + rnd() * .7, forte = champ(q, 1, 28);
+      if (acc < forte * .85 && libre(q, r + .5) && !proche(q)) pose({ k:'lily', p:q, v:rnd(), r, a:rnd() * 6.28 }, r + .5);
+    } else if (!inside && d <= 2.2) {                                                // roseaux
+      const forte = champ(q, 2, 22);
+      if (acc < forte * .9 && libre(q, 1.3) && !proche(q)) pose({ k:'reed', p:q, v:rnd(), n:3 + Math.floor(rnd() * 3 + forte * 4) }, 1.3);
+    } else if (!inside && d > 2.2 && d <= 8) {                                       // plante de berge
+      const forte = champ(q, 3, 30);
+      if (acc < forte * .5 && u < .6 && libre(q, 1.6) && !proche(q)) pose({ k:'plant', p:q, v:rnd(), n:5 + Math.floor(rnd() * 3) }, 1.6);
     }
   }
   plantesEau.set(lk, L);
