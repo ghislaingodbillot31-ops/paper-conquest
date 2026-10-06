@@ -124,7 +124,8 @@ function forestNoise() {
    au bord des lacs et, plus clairsemée, le long des rivières. */
 function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
-  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + S.roads.map(r => r.id + ':' + JSON.stringify(r.pts)).join(';');   // (les pierres de bord de chemin suivent les routes)
+  const base = S.roads.filter(r => !r.libre);   // routes de base : les seules dont dépend la végétation fixe ; celles du joueur ne la font qu'effacer (computeFlora)
+  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';');
   if (MONDE_PLAT) return floraCands = [];                                       // monde plat : aucune végétation
   if (floraCands && floraSeed === fk) return floraCands;
   const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
@@ -201,7 +202,7 @@ function floraCandidates() {
   }
   /* Rochers et cailloux de berge : par petits groupes (1 à 5 pierres, 0,4 à 2 m) le long des
      lacs, des rivières et autour des îles, certains à moitié dans l'eau ; jamais sur un pont. */
-  const nearRoad = q => S.roads.some(r => r.pts.slice(1).some((e, j) => ptSeg(q, r.pts[j], e).d < 14));
+  const nearRoad = q => base.some(r => r.pts.slice(1).some((e, j) => ptSeg(q, r.pts[j], e).d < 14));
   const shoreRocks = (a, b, out_) => { // a : point de berge ; b : direction vers la terre (unitaire)
     if (nearRoad(a)) return;
     const k = 1 + Math.floor(rnd() * 5);
@@ -230,10 +231,12 @@ function floraCandidates() {
   }
   /* Pierres à tailler (le camp de tailleur de pierre les récolte) : éparpillées sur toute la carte et,
      plus nombreuses, au bord des chemins (1 à 3 pierres tous les 10 m environ, de part et d'autre).
-     Tirages à part : le reste du paysage ne change pas. */
-  { const rs = seeded(S.landSeed * 31 + 7), pierre = () => { const q = rs(); return q > .8 ? 2.6 + (q - .8) * 10 : .9 + q / .8 * 1.5; };
-    for (let n = 0; n < TW * TH / 9000; n++) out.push({ x:round2(rs() * TW), y:round2(rs() * TH), r:pierre(), kind:'rock', v:rs(), stone:1 });
-    for (const r of S.roads) { const P = smoothPts(r);
+     Tirages à part (une graine par route de base) : le reste du paysage ne change pas, et rien ne bouge quand le joueur ajoute ou
+     supprime une route. */
+  { const pierre = rs => { const q = rs(); return q > .8 ? 2.6 + (q - .8) * 10 : .9 + q / .8 * 1.5; };
+    const r0 = seeded(S.landSeed * 31 + 7);
+    for (let n = 0; n < TW * TH / 9000; n++) out.push({ x:round2(r0() * TW), y:round2(r0() * TH), r:pierre(r0), kind:'rock', v:r0(), stone:1 });
+    for (const r of base) { const P = smoothPts(r), rs = seeded(S.landSeed * 31 + 7 + r.id * 101);
       for (let k = 0; k < P.length - 1; k++) {
         const a = P[k], b = P[k + 1], L = segLen(a, b) || 1, u = [(b[0] - a[0]) / L, (b[1] - a[1]) / L];
         for (let d = rs() * 10; d < L; d += 10) {
@@ -241,7 +244,7 @@ function floraCandidates() {
           const side = rs() < .5 ? 1 : -1, off = r.w / 2 + 1 + rs() * 3;
           for (let m = 1 + Math.floor(rs() * 3); m > 0; m--) {
             const t = d + (rs() - .5) * 4, o = off + rs() * 1.5;
-            out.push({ x:round2(a[0] + u[0] * t - u[1] * o * side), y:round2(a[1] + u[1] * t + u[0] * o * side), r:pierre() * .8, kind:'rock', v:rs(), stone:1, edge:1 });
+            out.push({ x:round2(a[0] + u[0] * t - u[1] * o * side), y:round2(a[1] + u[1] * t + u[0] * o * side), r:pierre(rs) * .8, kind:'rock', v:rs(), stone:1, edge:1 });
           }
         }
       } }
