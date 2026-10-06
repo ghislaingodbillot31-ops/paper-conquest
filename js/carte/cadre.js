@@ -7,7 +7,7 @@ function drawSpots(list) {
 function hint(text) {
   if (!cursor) return;
   const [X, Y] = toS(...cursor);
-  ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+  ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
   haloText(text, X + 12, Y - 8, Col.bad, Col.sheet);
 }
 // sol du terrain (dans les tuiles du décor) : nappes claires et foncées, puis brins d'herbe quand on zoome
@@ -28,7 +28,7 @@ function drawFrameMarks() {
   ctx.strokeStyle = Col.ink; ctx.lineWidth = 1.5; ctx.strokeRect(tx, ty, TW*s, TH*s);
   // graduations en mètres sur le cadre seulement
   const step = [8, 16, 40, 80, 200, 400].find(v => v * s >= 38) || 400;
-  ctx.font = '400 10px "IBM Plex Mono", monospace'; ctx.strokeStyle = Col.ink; ctx.lineWidth = 1;
+  ctx.font = '400 12px "IBM Plex Mono", monospace'; ctx.strokeStyle = Col.ink; ctx.lineWidth = 1;
   ctx.beginPath();
   for (let x = 0; x <= TW; x += step) { const X = Math.round(x*s + view.ox) + .5; ctx.moveTo(X, ty); ctx.lineTo(X, ty + 5); }
   for (let y = 0; y <= TH; y += step) { const Y = Math.round(y*s + view.oy) + .5; ctx.moveTo(tx, Y); ctx.lineTo(tx + 5, Y); }
@@ -45,13 +45,13 @@ function drawScale() {
   ctx.fillStyle = Col.ink; ctx.fillRect(x, y, L / 2, 6);
   ctx.fillStyle = Col.sheet; ctx.fillRect(x + L / 2, y, L / 2, 6);
   ctx.strokeStyle = Col.ink; ctx.lineWidth = 1; ctx.strokeRect(x + .5, y + .5, L, 6);
-  ctx.font = '400 10px "IBM Plex Mono", monospace'; ctx.textBaseline = 'bottom';
+  ctx.font = '400 12px "IBM Plex Mono", monospace'; ctx.textBaseline = 'bottom';
   ctx.textAlign = 'left'; haloText('0', x, y - 2, Col.ink, Col.sheet);
   ctx.textAlign = 'center'; haloText(fmt(m / 2), x + L / 2, y - 2, Col.ink, Col.sheet);
   haloText(`${m} m`, x + L, y - 2, Col.ink, Col.sheet);
   const nx = W - 26, ny = 38;
   ctx.beginPath(); ctx.moveTo(nx, ny - 16); ctx.lineTo(nx + 7, ny + 6); ctx.lineTo(nx, ny + 1); ctx.lineTo(nx - 7, ny + 6); ctx.closePath();
   ctx.fillStyle = Col.ink; ctx.fill();
-  ctx.font = '600 12px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   ctx.fillText('N', nx, ny - 18);
 }

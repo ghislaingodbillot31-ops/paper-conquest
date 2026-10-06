@@ -4,15 +4,15 @@
    et des autres gisements. Un gisement : { kind, c:[x, y], r (rayon en m), pts (contour), seed } ; peint comme un affleurement de roche
    parsemé de blocs de minerai (drawDeposits, appelé par drawDecor). */
 const GISEMENTS = {
-  fer:     { nom:'Fer',                   couleur:'#9c4a2e', clair:'#c9754f' },
-  sel:     { nom:'Sel',                   couleur:'#e8e4da', clair:'#ffffff' },
-  cuivre:  { nom:'Cuivre',                couleur:'#2f9a8a', clair:'#c7783c' },
-  plomb:   { nom:'Plomb',                 couleur:'#5d6874', clair:'#8f9aa6' },
-  etain:   { nom:'Étain',                 couleur:'#9fa9aa', clair:'#d3dadb' },
-  alun:    { nom:'Alun',                  couleur:'#d8cfae', clair:'#f2ecd2' },
-  argent:  { nom:'Argent',                couleur:'#b7bfc7', clair:'#f0f3f6' },
-  or:      { nom:'Minerai d’or',          couleur:'#d9a521', clair:'#ffe27a' },
-  ambre:   { nom:'Ambre de la Baltique',  couleur:'#d6861a', clair:'#ffc861' },
+  fer:     { nom:'Fer',                   couleur:'#9c4a2e', clair:'#c9754f', roche:['#a8806a', '#6e4a3c'] },
+  sel:     { nom:'Sel',                   couleur:'#e8e4da', clair:'#ffffff', roche:['#f0ede6', '#b9b4a6'] },
+  cuivre:  { nom:'Cuivre',                couleur:'#2f9a8a', clair:'#c7783c', roche:['#9c8a76', '#5f5246'] },
+  plomb:   { nom:'Plomb',                 couleur:'#5d6874', clair:'#8f9aa6', roche:['#8a929c', '#525a64'] },
+  etain:   { nom:'Étain',                 couleur:'#9fa9aa', clair:'#d3dadb', roche:['#aeb5b6', '#6f7778'] },
+  alun:    { nom:'Alun',                  couleur:'#d8cfae', clair:'#f2ecd2', roche:['#e2dabb', '#a79f80'] },
+  argent:  { nom:'Argent',                couleur:'#b7bfc7', clair:'#f0f3f6', roche:['#b9bfc6', '#7a828b'] },
+  or:      { nom:'Minerai d’or',          couleur:'#d9a521', clair:'#ffe27a', roche:['#a89a82', '#6d604b'] },
+  ambre:   { nom:'Ambre de la Baltique',  couleur:'#d6861a', clair:'#ffc861', roche:['#a8895c', '#6e5638'] },
 };
 // pose les gisements (une fois chacun) ; à appeler quand la carte (routes, eau) est calculée
 function placeDeposits(seed) {
@@ -43,9 +43,8 @@ function placeDeposits(seed) {
   return out;
 }
 /* Un gisement se peint comme un chaos de pierres : de grosses roches à facettes (une face claire dessus, une face sombre dessous, contour sombre, ombre
-   au sol), des cailloux, des blocs empilés, bien espacés, parsemés d'éclats et de veines de la couleur du minerai ; quelques roches prennent la teinte du
+   au sol), des cailloux, des blocs empilés, bien espacés, ornés de quelques cristaux de minerai (posés sur la face claire) ; quelques roches prennent la teinte du
    minerai. Les pierres viennent de la graine du gisement (toujours les mêmes) ; leur forme est calculée une fois par gisement. */
-const ROCHES = [['#7a9aa3', '#4b6872'], ['#8f94a2', '#5d6372'], ['#a39390', '#6c5a58'], ['#84928a', '#56655e'], ['#aeaaa2', '#77726a'], ['#96737a', '#62454c'], ['#6c8794', '#41596a']];
 const rochesCache = new Map();
 function rochesDe(d) {
   const key = d.seed + ':' + d.r, hit = rochesCache.get(key); if (hit) return hit;
@@ -62,31 +61,32 @@ function rochesDe(d) {
     const walk = (from, to) => { const o = [V[from]]; for (let j = from; j !== to;) { j = (j + 1) % k; o.push(V[j]); } return o; };
     let haut = walk(li, ri), bas = walk(ri, li);
     if (haut.reduce((s2, v) => s2 + v[1], 0) / haut.length > bas.reduce((s2, v) => s2 + v[1], 0) / bas.length) [haut, bas] = [bas, haut];   // la face du haut est la plus claire
-    let pal = ROCHES[Math.floor(rnd() * ROCHES.length)];
+    let pal = g.roche;                                                                                // roche et minerai : couleurs fixes pour chaque minerai
     if (rnd() < .18) pal = [mix(g.couleur, '#ffffff', .15), mix(g.couleur, '#000000', .35)];          // une roche teintée du minerai
-    const eclats = [], ne = size < 2.5 ? 0 : 3 + Math.floor(rnd() * 7);
-    for (let j = 0; j < ne; j++) { const ea = rnd() * 6.28, er = Math.sqrt(rnd()) * .62; eclats.push([Math.cos(ea) * er, Math.sin(ea) * er * hy - .1, .1 + rnd() * .12, rnd() < .5]); }
-    rocks.push({ x, y, size, haut, bas, clair:pal[0], sombre:pal[1], eclats, veine:size > 3 && rnd() < .4 ? [rnd() * .6 - .5, rnd() * .6 - .3, rnd() * .6 - .1, rnd() * .6 - .1] : null, fissure:size > 5 && rnd() < .6 });
+    const eclats = [], ne = size < 5 ? 0 : size < 9 ? 1 : 2 + Math.floor(rnd() * 2);                  // quelques cristaux, posés sur la face claire (jamais en dehors)
+    const cen = [haut.reduce((q, v) => q + v[0], 0) / haut.length, haut.reduce((q, v) => q + v[1], 0) / haut.length];
+    const dedans = p => { let in2 = false; for (let i = 0, j = haut.length - 1; i < haut.length; j = i++) { const A = haut[i], B = haut[j]; if ((A[1] > p[1]) !== (B[1] > p[1]) && p[0] < (B[0] - A[0]) * (p[1] - A[1]) / (B[1] - A[1]) + A[0]) in2 = !in2; } return in2; };
+    for (let j = 0, tries = 0; j < ne && tries < 40; tries++) {
+      const p = [cen[0] + (rnd() - .5) * 1.4, cen[1] + (rnd() - .5) * 1.0], er = .17 + rnd() * .1;
+      if (!dedans([cen[0] + (p[0] - cen[0]) / .55, cen[1] + (p[1] - cen[1]) / .55]) || eclats.some(e => Math.hypot(e[0] - p[0], e[1] - p[1]) < (e[2] + er) * 1.6)) continue;
+      eclats.push([p[0], p[1], er]); j++;
+    }
+    rocks.push({ x, y, size, haut, bas, clair:pal[0], sombre:pal[1], eclats, fissure:size > 5 && rnd() < .6 });
   }
   rocks.sort((p, q) => p.y - q.y);                                                                   // du nord au sud : les plus au sud recouvrent
-  const eclatsSol = [];                                                                              // quelques éclats de minerai posés à terre
-  for (let j = 0; j < n; j++) { const a = rnd() * 6.28, rr = Math.sqrt(rnd()) * d.r; eclatsSol.push([d.c[0] + Math.cos(a) * rr, d.c[1] + Math.sin(a) * rr, .5 + rnd() * .9, rnd() * 6.28]); }
-  const res = { rocks, eclatsSol }; rochesCache.set(key, res); return res;
+  const res = { rocks }; rochesCache.set(key, res); return res;
 }
 function drawDeposits() {
   const list = S.deposits || [], s = view.s, [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H), mini = 3.4 / s;   // (à grande distance, une pierre ne descend pas sous ~3 px)
   for (const d of list) {
     if (d.c[0] + d.r * 1.3 < wx0 || d.c[0] - d.r * 1.3 > wx1 || d.c[1] + d.r * 1.3 < wy0 || d.c[1] - d.r * 1.3 > wy1) continue;
     const g = GISEMENTS[d.kind]; if (!g) continue;
-    const { rocks, eclatsSol } = rochesDe(d), path = (pts, x, y, z) => { pts.forEach((v, i) => { const [X, Y] = toS(x + v[0] * z, y + v[1] * z); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); };
+    const { rocks } = rochesDe(d), path = (pts, x, y, z) => { pts.forEach((v, i) => { const [X, Y] = toS(x + v[0] * z, y + v[1] * z); i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); }); };
     ctx.lineJoin = 'round';
     for (const o of rocks) {                                                                         // ombres au sol
       const z = Math.max(o.size, mini), [X, Y] = toS(o.x + z * .18, o.y + z * .34);
       ctx.beginPath(); ctx.ellipse(X, Y, z * s * .95, z * s * .42, 0, 0, Math.PI * 2); ctx.fillStyle = 'rgba(30,26,20,.28)'; ctx.fill();
     }
-    ctx.fillStyle = g.clair;                                                                         // éclats de minerai à terre
-    for (const [x, y, z, rot] of eclatsSol) { const [X, Y] = toS(x, y), w = Math.max(1.3, z * s);
-      ctx.save(); ctx.translate(X, Y); ctx.rotate(rot); ctx.fillStyle = g.couleur; ctx.fillRect(-w, -w * .6, w * 2, w * 1.2); ctx.fillStyle = g.clair; ctx.fillRect(-w, -w * .6, w * .8, w * .4); ctx.restore(); }
     for (const o of rocks) {
       const z = Math.max(o.size, mini), lw = Math.max(.8, Math.min(1.8, z * s * .09));
       ctx.beginPath(); path(o.bas, o.x, o.y, z); ctx.closePath(); ctx.fillStyle = o.sombre; ctx.fill();   // face sombre
@@ -94,13 +94,14 @@ function drawDeposits() {
       ctx.beginPath(); path(o.haut.concat(o.bas), o.x, o.y, z); ctx.closePath(); ctx.strokeStyle = 'rgba(35,38,48,.75)'; ctx.lineWidth = lw; ctx.stroke();
       if (z * s < 4) continue;                                                                       // trop petit pour les détails
       if (o.fissure) { const [X1, Y1] = toS(o.x - z * .3, o.y - z * .1), [X2, Y2] = toS(o.x + z * .05, o.y + z * .25); ctx.beginPath(); ctx.moveTo(X1, Y1); ctx.lineTo((X1 + X2) / 2 + 2, (Y1 + Y2) / 2 - 1); ctx.lineTo(X2, Y2); ctx.strokeStyle = 'rgba(35,38,48,.55)'; ctx.lineWidth = Math.max(.8, lw * .7); ctx.stroke(); }
-      if (o.veine) { const [a, b, c2, e] = o.veine, [X1, Y1] = toS(o.x + a * z, o.y + b * z), [X2, Y2] = toS(o.x + c2 * z, o.y + e * z); ctx.beginPath(); ctx.moveTo(X1, Y1); ctx.lineTo(X2, Y2); ctx.strokeStyle = g.clair; ctx.globalAlpha = .85; ctx.lineWidth = Math.max(1, z * s * .06); ctx.stroke(); ctx.globalAlpha = 1; }
-      for (const [ex, ey, er, clair] of o.eclats) {                                                  // éclats de minerai dans la roche
-        const [X, Y] = toS(o.x + ex * z, o.y + ey * z), rr = Math.max(.9, er * z * s * .55);
-        ctx.fillStyle = clair ? g.clair : g.couleur; ctx.beginPath(); ctx.arc(X, Y, rr, 0, Math.PI * 2); ctx.fill();
+      for (const [ex, ey, er] of o.eclats) {                                                         // cristaux de minerai : losange à deux faces
+        const [X, Y] = toS(o.x + ex * z, o.y + ey * z), w = Math.max(1.6, er * z * s), h = w * 1.35;
+        ctx.beginPath(); ctx.moveTo(X, Y - h); ctx.lineTo(X - w, Y); ctx.lineTo(X, Y + h * .7); ctx.closePath(); ctx.fillStyle = g.clair; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(X, Y - h); ctx.lineTo(X + w, Y); ctx.lineTo(X, Y + h * .7); ctx.closePath(); ctx.fillStyle = g.couleur; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(X, Y - h); ctx.lineTo(X + w, Y); ctx.lineTo(X, Y + h * .7); ctx.lineTo(X - w, Y); ctx.closePath(); ctx.strokeStyle = 'rgba(35,38,48,.7)'; ctx.lineWidth = Math.max(.7, lw * .6); ctx.stroke();
       }
     }
-    if (s > .1) { ctx.font = '600 ' + Math.round(Math.max(11, Math.min(16, s * 14))) + 'px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    { ctx.font = '600 18px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
       const [X, Y] = toS(d.c[0], d.c[1] - d.r * .75); haloText(g.nom, X, Y, Col.ink, Col.sheet); }
   }
 }

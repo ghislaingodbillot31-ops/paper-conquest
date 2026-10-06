@@ -294,8 +294,12 @@ function drawWorkers() {
       ctx.beginPath(); ctx.arc(X, Y, r * (1.8 + .6 * Math.sin(now * 12)), 0, Math.PI * 2);
       ctx.strokeStyle = Col.accent; ctx.lineWidth = 1.5; ctx.stroke();
     }
-    ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
-    ctx.fillStyle = Col.accent; ctx.fill(); ctx.strokeStyle = Col.sheet; ctx.lineWidth = 1.5; ctx.stroke();
+    const hs = typeof VILLAGEOIS !== 'undefined' && findById('house', id), vk = hs && villageoisDe(hs.kind), V = vk && VILLAGEOIS[vk], Ls = V ? Math.max(V.T * s * 2.2, 8) : 0;       // (un peu plus grands que nature : à 8 px par mètre, un homme ne ferait que 4 px)
+    if (V && s > .5) {                                                                              // villageois du métier du bâtiment, tourné dans le sens de la marche
+      if (w.px !== undefined && Math.hypot(w.x - w.px, w.y - w.py) > .02) w.ang = Math.atan2(w.y - w.py, w.x - w.px);
+      w.px = w.x; w.py = w.y; peintVillageois(vk, X, Y, Ls, w.ang || 0);
+    } else { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
+      ctx.fillStyle = Col.accent; ctx.fill(); ctx.strokeStyle = Col.sheet; ctx.lineWidth = 1.5; ctx.stroke(); }
     // ce qu'il porte : bûche, gerbe de grain, laine, sac de farine, pains
     if (w.carry) { ctx.fillStyle = Col[w.carry === true ? 'earth-edge' : w.carry]; ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = .8; ctx.fillRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); ctx.strokeRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); }
   }
@@ -305,7 +309,7 @@ function drawWorkers() {
     const product = LUMBER[h.kind] ? 'bois' : J && J.type !== 'relay' && J.type !== 'sell' ? J.product : null;
     if (!product) continue;
     const top = Math.min(...corners(h).map(p => p[1])), [X] = toS(h.x, h.y);
-    ctx.font = '600 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.font = '600 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     haloText(store ? `${invTotal(h)} / ${J.cap}` : `${h.stock || 0} ${product}`, X, top * s + view.oy - 4, Col.ink, Col.sheet);
   }
 }
@@ -316,7 +320,8 @@ function simLoop(ts) {
   lastTs = ts;
   S.simTime = (S.simTime || 0) + dt; // horloge de simulation (croissance des plants)
   const grew = growSaplings();
-  if (simTick(dt) || grew) requestDraw();
+  const faune = typeof fauneStep === 'function' && fauneStep(dt), nav = typeof bateauxStep === 'function' && bateauxStep(dt), marche = typeof marcheStep === 'function' && marcheStep(dt);
+  if (simTick(dt) || grew || faune || nav || marche) requestDraw();
   requestAnimationFrame(simLoop);
 }
 function drawWorkZones() {
@@ -340,7 +345,7 @@ function drawWorkZones() {
     const col = a.why ? Col.bad : Col.accent;
     circle(a.z, col, .15, [8, 5], 2); link(a.h, a.z, col);
     const [X, Y] = toS(a.z.x, a.z.y - a.z.r);
-    ctx.font = '600 12px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.font = '600 15px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     const info = a.b.need === 'forest' || a.b.id === 'hutte_forestier' ? ` · ${treesInZone(a.z).length} arbres` : '';
     haloText(a.why || `Zone de travail · rayon ${a.z.r} m${info}`, X, Y - 4, a.why ? Col.bad : Col.ink, Col.sheet);
   }

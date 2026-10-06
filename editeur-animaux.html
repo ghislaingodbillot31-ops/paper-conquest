@@ -1,0 +1,169 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Animaux</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#14212b; --bar:#1d2d3a; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
+  * { box-sizing:border-box }
+  html, body { height:100%; margin:0; background:var(--bg); color:var(--ink); font:500 14px/1.3 system-ui, sans-serif }
+  body { display:flex }
+  #liste { flex:1; min-width:0; overflow:auto }
+  header { padding:18px 24px 4px }
+  h1 { margin:0; font:700 30px "Barlow Condensed", sans-serif; letter-spacing:.04em }
+  header p { margin:4px 0 0; color:var(--soft) }
+  h2 { margin:26px 24px 10px; font:700 22px "Barlow Condensed", sans-serif; letter-spacing:.05em; color:var(--on); text-transform:uppercase }
+  h2 small { color:var(--soft); font:500 14px system-ui, sans-serif; text-transform:none; letter-spacing:0; margin-left:8px }
+  .grille { display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px; padding:0 24px 12px }
+  figure { margin:0; background:#f6efdc; border:2px solid #b9a98a; border-radius:10px; overflow:hidden; color:#2f2a24; text-align:center; cursor:pointer; position:relative }
+  figure:hover { border-color:var(--on) }
+  figure.on { border-color:#d64541; box-shadow:0 0 0 2px #d6454188 }
+  figure.modif::after { content:"modifié"; position:absolute; top:6px; right:8px; font-size:11px; color:#a8601c; font-weight:700 }
+  canvas { display:block; width:100%; height:auto; aspect-ratio:230 / 340 }
+  figcaption { padding:0 8px 10px }
+  figcaption b { display:block; font:700 21px "Barlow Condensed", sans-serif }
+  figcaption span { color:#6b5f4a; font-size:12px }
+  #editeur { width:380px; flex:none; background:var(--bar); border-left:1px solid #0006; overflow:auto; padding:14px 16px 30px }
+  #editeur h3 { margin:0 0 8px; font:700 26px "Barlow Condensed", sans-serif; letter-spacing:.04em }
+  #apercu { width:100%; height:auto; aspect-ratio:330 / 340; background:#f6efdc; border-radius:10px; display:block }
+  .style { position:absolute; top:20px; right:410px; color:var(--soft); display:flex; gap:16px }
+  .style select { background:#0003; color:var(--ink); border:1px solid #fff3; border-radius:5px; padding:4px 6px; margin-left:6px }
+  #aide { color:var(--soft); margin:6px 0 0 }
+  details { margin-top:10px; border-top:1px solid #ffffff18; padding-top:6px }
+  summary { cursor:pointer; color:var(--on); font-weight:700; padding:4px 0 }
+  .ligne { display:grid; grid-template-columns:130px 1fr 44px; align-items:center; gap:8px; margin:5px 0 }
+  .ligne label { color:var(--soft) }
+  .ligne input[type=range] { width:100%; accent-color:var(--on) }
+  .ligne output { text-align:right; color:var(--ink); font-variant-numeric:tabular-nums; font-size:12px }
+  .ligne input[type=color] { width:44px; height:26px; padding:0; border:1px solid #fff3; background:none; border-radius:4px }
+  .ligne select { grid-column:2 / 4; background:#0003; color:var(--ink); border:1px solid #fff3; border-radius:5px; padding:4px }
+  .ligne.c { grid-template-columns:130px 44px 1fr }
+  .ligne.k { grid-template-columns:130px 1fr }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px }
+  button { background:#0004; color:var(--ink); border:1px solid #fff3; border-radius:6px; padding:7px 12px; font:inherit; cursor:pointer }
+  button:hover { border-color:var(--on); color:var(--on) }
+  #msg { color:var(--on); margin-top:8px; min-height:18px }
+  @media (max-width:900px) { body { flex-direction:column } #editeur { width:auto; border-left:0; border-top:1px solid #0006 } }
+</style>
+<div id="liste">
+  <header><h1>Animaux</h1><div class="style"><label>Taille <select id="echelle"><option value="reelle">Réelle (même échelle)</option><option value="ajustee">Ajustée à la carte</option></select></label><label>Style <select id="style"><option value="lisse">Lisse</option><option value="low-poly">Low-poly</option></select></label></div><p id="total"></p><p>Clique un animal pour le modifier : les réglages sont enregistrés dans ce navigateur et appliqués partout (carte, map test).</p></header>
+  <main id="main"></main>
+</div>
+<aside id="editeur"><p id="aide">Choisis un animal dans la liste.</p></aside>
+<script src="js/jeu/ressources.js"></script>
+<script src="js/carte/animaux.js"></script>
+<script>
+/* Tous les animaux terrestres côte à côte, par catégorie (les dessins de js/carte/animaux.js, ceux de la carte) + un éditeur : un clic sur un animal
+   ouvre ses réglages (taille, proportions, couleurs, oreilles, queue, cornes, motifs…) ; ce qu'on change est enregistré (clé animaux.v1) et lu par
+   animaux.js : la carte et la map test reprennent les modifications au prochain chargement. */
+const CATS = [['elevage', 'Élevage'], ['faune', 'Faune sauvage'], ['predateur', 'Prédateurs']];
+const W0 = 230, H0 = 340, dpr = Math.max(2, window.devicePixelRatio || 1);
+let ctx;                                                      // (le contexte global que peintAnimal utilise : celui de la carte qu'on peint)
+const cartes = {};
+// peint un animal centré dans le canevas cv (logique w × h), à la taille maximale qui rentre
+let ECHELLE_REELLE = true, PXM = 40;                                    // PXM : pixels par mètre (le plus grand animal remplit la carte)
+function peint(k, cv, w, h, base, carte) {
+  ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  const a = ANIMAUX[k], [ar, av] = animalEtendue(k), L = carte && ECHELLE_REELLE ? a.T * PXM : Math.min(base * (.5 + .5 * Math.min(a.T, 2) / 1.2), (h - 36) / (ar + av), (w - 20) / (a.t === 'quad' || !a.t ? .95 : .7));
+  peintAnimal(k, w / 2, h / 2 - (av - ar) / 2 * L, L, Math.PI / 2);                  // (tête vers le bas, comme sur les références)
+}
+const modifie = k => JSON.stringify(ANIMAUX[k]) !== JSON.stringify(ANIMAUX_DEFAUT[k]);
+function sauve() {
+  const o = {}; for (const k in ANIMAUX) if (modifie(k)) o[k] = ANIMAUX[k];
+  try { localStorage.setItem('animaux.v1', JSON.stringify(o)); } catch (e) {}
+}
+function rafraichit(k) {
+  peint(k, cartes[k].cv, W0, H0, 190, true); cartes[k].fig.classList.toggle('modif', modifie(k));
+  if (choisi === k) peint(k, document.getElementById('apercu'), 330, 340, 250);
+  sauve();
+}
+
+// ---- échelle : réelle (px par mètre commun à tous les animaux) ou ajustée ----
+PXM = Math.min(...Object.keys(ANIMAUX).map(k => { const [ar, av] = animalEtendue(k); return (H0 - 36) / ((ar + av) * ANIMAUX[k].T); }));
+document.getElementById('echelle').addEventListener('change', e => { ECHELLE_REELLE = e.target.value === 'reelle'; for (const k in cartes) peint(k, cartes[k].cv, W0, H0, 190, true); });
+
+// ---- style : lisse ou low-poly ----
+const selStyle = document.getElementById('style'); selStyle.value = ANIMAL_STYLE;
+selStyle.addEventListener('change', () => {
+  ANIMAL_STYLE = selStyle.value; try { localStorage.setItem('animaux.style', ANIMAL_STYLE); } catch (e) {}
+  for (const k in cartes) peint(k, cartes[k].cv, W0, H0, 190, true);
+  if (choisi) peint(choisi, document.getElementById('apercu'), 330, 340, 250);
+});
+
+// ---- la liste ----
+const main = document.getElementById('main');
+let total = 0, choisi = null;
+for (const [cat, titre] of CATS) {
+  const clefs = animalsOf(cat).filter(k => ANIMAUX[k]);
+  total += clefs.length;
+  main.insertAdjacentHTML('beforeend', `<h2>${titre}<small>${clefs.length} espèces</small></h2><div class="grille" id="g-${cat}"></div>`);
+  const grille = document.getElementById('g-' + cat);
+  for (const k of clefs) {
+    const fig = document.createElement('figure'), cv = document.createElement('canvas');
+    cv.width = W0 * dpr; cv.height = H0 * dpr;
+    fig.append(cv); fig.insertAdjacentHTML('beforeend', `<figcaption><b>${LAND_ANIMALS[k].name}</b><span>tronc ${ANIMAUX[k].T} m · ${LAND_ANIMALS[k].uses}</span></figcaption>`); grille.append(fig);
+    cartes[k] = { fig, cv }; fig.addEventListener('click', () => choisis(k)); peint(k, cv, W0, H0, 190, true); fig.classList.toggle('modif', modifie(k));
+  }
+}
+document.getElementById('total').textContent = total + ' animaux terrestres · vue de dessus';
+
+// ---- l'éditeur ----
+const O = (...l) => l.map(x => Array.isArray(x) ? x : [x, x]);
+const OREILLES = O(['', 'par défaut'], 'pointe', 'long', 'rond', 'grand', 'penche', 'horiz', 'tuft', ['aucune', 'aucune']);
+const SCHEMA_QUAD = [
+  ['Corps', [['r', 'T', 'Taille réelle (m)', .15, 4, .05], ['r', 'w', 'Largeur du corps', .08, .6, .01], ['r', 'nl', 'Longueur du cou', 0, .4, .01], ['r', 'hl', 'Longueur de tête', .1, .4, .01], ['r', 'hw', 'Largeur de tête', .06, .3, .01],
+    ['c', 'c', 'Couleur du corps'], ['c', 'hcol', 'Couleur de la tête', 'c'], ['c', 'd', 'Pattes'], ['c', 'm', 'Museau', 'd'], ['k', 'laine', 'Pelage laineux (boucles)'], ['s', 'pattes', 'Pattes', O(['', 'cachées (défaut)'], ['sabots', 'petits bouts'], ['ovales', 'ovales (anciennes)'])]]],
+  ['Oreilles', [['s', 'ear', 'Forme', OREILLES], ['r', 'es', 'Taille (grandes)', .5, 1.4, .05], ['c', 'ec', 'Couleur', 'hcol']]],
+  ['Queue', [['s', 'queue', 'Forme', O('fin', 'touffe', 'fournie', 'court', 'longue', 'epaisse', 'palette', 'anneaux', 'boucle', 'aucune')], ['c', 'qc', 'Couleur', 'c'], ['c', 'qt', 'Bout de queue', 'qc'], ['c', 'qd', 'Rayures / bout', 'd']]],
+  ['Cornes, bois, défenses', [['s', 'corne', 'Cornes', O(['', 'aucune'], 'cornes', 'bouc', 'lyre', 'droites', 'bois', 'palme', 'rhino')], ['r', 'hs', 'Taille', .4, 2, .05], ['r', 'tines', 'Pointes (bois)', 1, 6, 1], ['c', 'hc', 'Couleur', 'c'],
+    ['s', 'defense', 'Défenses', O(['', 'aucune'], 'courte', 'longue')], ['r', 'trompe', 'Trompe', 0, 1, .5]]],
+  ['Pelage', [['s', 'deco', 'Motif', O(['', 'aucun'], 'rayures', 'taches', 'rosettes', 'plaques', 'dos', 'flancs', 'croupe', 'selle')], ['c', 'dc', 'Couleur du motif', 'd'], ['k', 'big', 'Grandes rosettes'],
+    ['s', 'mane', 'Crinière', O(['', 'aucune'], 'bande', 'lion', 'hirsute')], ['c', 'mc', 'Couleur crinière', 'd'],
+    ['s', 'bosses', 'Bosses', O(['0', 'aucune'], '1', '2')], ['c', 'bc', 'Couleur bosses', 'c']]],
+];
+const SCHEMA_OISEAU = [
+  ['Corps', [['r', 'T', 'Taille réelle (m)', .3, 2.5, .05], ['r', 'w', 'Largeur du corps', .3, .6, .01], ['r', 'nl', 'Longueur du cou', 0, .45, .01], ['c', 'c', 'Corps'], ['c', 'wc', 'Ailes'], ['c', 'wd', 'Plumes des ailes'],
+    ['c', 'nc', 'Cou'], ['c', 'hc', 'Tête'], ['c', 'bk', 'Bec']]],
+  ['Queue et tête', [['s', 'tail', 'Queue', O('plume', 'eventail', 'aucune')], ['c', 'tc', 'Couleur queue'], ['c', 'td', 'Bout des plumes'], ['k', 'wattle', 'Caroncule rouge'], ['k', 'casque', 'Casque']]],
+];
+const SCHEMA_CROCO = [['Corps', [['r', 'T', 'Taille réelle (m)', 1, 4, .05], ['c', 'c', 'Corps'], ['c', 'd', 'Pattes et museau']]]];
+const val = (a, key, repli) => a[key] != null ? a[key] : repli ? val(a, repli) : undefined;
+function champ(k, [t, key, nom, x, y, pas]) {
+  const a = ANIMAUX[k], div = document.createElement('div');
+  const maj = v => { if (v === '' || v === undefined || v === false) delete a[key]; else a[key] = v; rafraichit(k); };
+  if (t === 'r') {
+    div.className = 'ligne'; const v = a[key] != null ? a[key] : ({ es:1, hs:1, tines:3, trompe:0 }[key] ?? a[key] ?? (x + y) / 2);
+    div.innerHTML = `<label>${nom}</label><input type="range" min="${x}" max="${y}" step="${pas}" value="${v}"><output>${v}</output>`;
+    const inp = div.querySelector('input'), out = div.querySelector('output');
+    inp.addEventListener('input', () => { out.textContent = inp.value; maj(+inp.value); });
+  } else if (t === 'c') {
+    div.className = 'ligne c'; const v = val(a, key, x) || '#888888';
+    div.innerHTML = `<label>${nom}</label><input type="color" value="${v}">`;
+    div.querySelector('input').addEventListener('input', e => maj(e.target.value));
+  } else if (t === 's') {
+    div.className = 'ligne'; const cur = key === 'bosses' ? String((a.bosse || []).length) : a[key] || '';
+    div.innerHTML = `<label>${nom}</label><select>${x.map(([v, l]) => `<option value="${v}"${v === cur ? ' selected' : ''}>${l}</option>`).join('')}</select>`;
+    div.querySelector('select').addEventListener('change', e => {
+      const v = e.target.value;
+      if (key === 'bosses') { const n = +v; if (!n) delete a.bosse; else a.bosse = n === 1 ? [[.02, .17, .17]] : [[-.14, .13, .15], [.16, .13, .15]]; if (!a.bc) a.bc = '#' + [1, 3, 5].map(i => Math.min(255, parseInt(a.c.substr(i, 2), 16) + 24).toString(16).padStart(2, '0')).join(''); rafraichit(k); }
+      else maj(v);
+    });
+  } else {
+    div.className = 'ligne k'; div.innerHTML = `<label>${nom}</label><input type="checkbox"${a[key] ? ' checked' : ''}>`;
+    div.querySelector('input').addEventListener('change', e => maj(e.target.checked ? 1 : false));
+  }
+  return div;
+}
+const enJs = o => JSON.stringify(o).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'");
+function choisis(k) {
+  choisi = k; for (const id in cartes) cartes[id].fig.classList.toggle('on', id === k);
+  const a = ANIMAUX[k], schema = a.t === 'oiseau' ? SCHEMA_OISEAU : a.t === 'croco' ? SCHEMA_CROCO : SCHEMA_QUAD, ed = document.getElementById('editeur');
+  ed.innerHTML = `<h3>${LAND_ANIMALS[k].name}</h3><canvas id="apercu" width="${330 * dpr}" height="${340 * dpr}"></canvas><div class="btns"><button id="b-reinit">Rétablir l'original</button><button id="b-copie">Copier le code</button></div><div id="msg"></div>`;
+  schema.forEach(([titre, champs], i) => { const d = document.createElement('details'); d.open = i === 0; d.innerHTML = `<summary>${titre}</summary>`; for (const c of champs) d.append(champ(k, c)); ed.append(d); });
+  peint(k, document.getElementById('apercu'), 330, 340, 250);
+  const dire = t => { document.getElementById('msg').textContent = t; };
+  document.getElementById('b-reinit').addEventListener('click', () => { ANIMAUX[k] = JSON.parse(JSON.stringify(ANIMAUX_DEFAUT[k])); rafraichit(k); choisis(k); dire('Dessin d\'origine rétabli'); });
+  document.getElementById('b-copie').addEventListener('click', () => { navigator.clipboard.writeText(k + ': ' + enJs(ANIMAUX[k]) + ',').then(() => dire('Code copié (à coller dans ANIMAUX, js/carte/animaux.js)'), () => dire('Copie impossible')); });
+}
+</script>

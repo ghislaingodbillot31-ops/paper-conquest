@@ -49,12 +49,12 @@ function drawWater() {
   const jun = riverJunctions();
   const discs = (grow, k = 1) => {
     const path = new Path2D();
-    for (const [x, y, rr] of jun) {                                  // jonctions : un disque un peu plus large que les deux cours, les coins s'arrondissent
+    if (!(FORME && FORME.terresDessin)) for (const [x, y, rr] of jun) {                                  // jonctions : un disque un peu plus large que les deux cours, les coins s'arrondissent
       if (x + rr < wx0 || x - rr > wx1 || y + rr < wy0 || y - rr > wy1) continue;
       const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(Math.max(rr * k * s, 1.3) + grow, .01);
       path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
     }
-    for (const rv of S.rivers) for (const [x, y, r] of bandDiscs(rv, k)) {
+    if (!(FORME && FORME.terresDessin)) for (const rv of S.rivers) for (const [x, y, r] of bandDiscs(rv, k)) {      // (fleuves creusés dans la terre : c'est la mer qui les peint, forme.js)
       if (x + r < wx0 || x - r > wx1 || y + r < wy0 || y - r > wy1) continue;
       const X = x * s + view.ox, Y = y * s + view.oy, R = Math.max(Math.max(r * s, 1.3) + grow, .01); // (petite rivière visible même de loin)
       path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
@@ -73,12 +73,13 @@ function drawWater() {
   const foam = Math.max(1.2, Math.min(3, s * .9));
   ctx.fillStyle = WATER_FOAM; ctx.fill(discs(0));
   // eau d'une seule teinte (dégradé retiré à la demande de l'utilisateur, 29/09)
-  const bw = Math.max(1, Math.min(2.2 * s, 6));                                       // largeur d'une bande de dégradé (px)
-  for (let i = 1; i <= WATER_BANDS; i++) { ctx.fillStyle = mixWater(water, .1 * (WATER_BANDS - i + 1)); ctx.fill(discs(-foam - bw * (i - 1))); } // du plus large (le plus clair) au plus étroit
-  ctx.fillStyle = water; ctx.fill(discs(-foam - bw * WATER_BANDS));
+  // rivières et lacs : exactement l'eau de la mer (mêmes bandes, mêmes teintes, voir seaBands, forme.js) : un fleuve se fond dans la mer sans raccord
+  const bw = Math.max(2, Math.min(5 * s, 14));                                        // largeur d'une bande de dégradé (px)
+  for (let i = 1; i <= WATER_BANDS + 1; i++) { ctx.fillStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.fill(discs(-foam - bw * (i - 1))); } // du plus large (le plus clair) au plus étroit
+  ctx.fillStyle = water; ctx.fill(discs(-foam - bw * (WATER_BANDS + 1)));
   for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.fill(); }
   for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); ctx.lineJoin = 'round';
-    for (let i = WATER_BANDS; i >= 1; i--) { ctx.strokeStyle = mixWater(water, .1 * (WATER_BANDS - i + 1)); ctx.lineWidth = 2 * (foam + bw * i); ctx.stroke(); }
+    for (let i = WATER_BANDS + 1; i >= 1; i--) { ctx.strokeStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.lineWidth = 2 * (foam + bw * i); ctx.stroke(); }
     ctx.restore(); }
   for (const lk of S.lakes) { // lacs : le même liseré, tracé à l'intérieur du bord, puis la berge sombre
     ctx.save(); shape(lakeShape(lk), true); ctx.clip();
@@ -89,13 +90,14 @@ function drawWater() {
   const look = biomeLook();
   for (const rv of S.rivers) for (const is of riverIsles(rv)) {
     if (is.bb[2] < wx0 || is.bb[0] > wx1 || is.bb[3] < wy0 || is.bb[1] > wy1) continue;
+    if (FORME && !surTerre([(is.bb[0] + is.bb[2]) / 2, (is.bb[1] + is.bb[3]) / 2])) continue;   // (île à l'embouchure, en mer : pas d'île)
     shape(is.P, true); ctx.lineWidth = edge * 2; ctx.stroke();
     ctx.fillStyle = '#e4d7a6'; ctx.fill();
     shape(is.inner, true); // cœur herbeux : toujours à l'intérieur de l'île, même courbe
     ctx.fillStyle = look.ground; ctx.fill();
   }
-  // fil du courant
-  if (s > 1.5) {
+  // (le fil du courant en pointillés est supprimé : la mer n'en a pas)
+  if (false) {
     ctx.setLineDash([6, 10]); ctx.globalAlpha = .45; ctx.lineWidth = 1;
     for (const rv of S.rivers) { shape(rv.pts, false); ctx.stroke(); }
     ctx.setLineDash([]); ctx.globalAlpha = 1;

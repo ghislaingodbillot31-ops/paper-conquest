@@ -1,6 +1,6 @@
 // Terrain d'une carte de region (m). 2000 x 1500 etait trop petit : une region de ~500 km tenait en 2 km.
 // Meme valeur dans outils/build-formes.js (a regenerer apres tout changement).
-const ECHELLE_TERRAIN = 3;
+const ECHELLE_TERRAIN = 2.4;                      // (3 jusqu'au 06/10 : 6000 × 4500 m, jugé trop grand ; les formes de data/regions/formes.json restent à l'échelle 3, voir ECHELLE_FORMES)
 const TW = 2000 * ECHELLE_TERRAIN, TH = 1500 * ECHELLE_TERRAIN;
 const CELL = 8, DEPTH = 4;
 // muraille : même emprise qu'une route (une case), maçonnerie de 6 m au centre ;

@@ -136,7 +136,7 @@ function drawDraft() {
       let deg = Math.round(-Math.atan2(sp.pt[1] - last[1], sp.pt[0] - last[0]) * 180 / Math.PI);
       if (deg < 0) deg += 360;
       const [X, Y] = toS(...sp.pt);
-      ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+      ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
       const info = sp.close ? 'fermer l\'enceinte'
         : sp.lattice ? `${Math.abs(sp.lattice[0])} × ${Math.abs(sp.lattice[1])} cases` : sp.gap
         ? `${sp.cells} cases d'écart${sp.cells === 2 * DEPTH ? ' (2 zones pleines)' : sp.cells === DEPTH ? ' (1 zone pleine)' : ''}`
@@ -163,7 +163,7 @@ function drawDraft() {
   }
   if (sp && sp.kind === 'none') {
     const [X, Y] = toS(...sp.pt);
-    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     const msg = !isWall ? 'Partez d\'un point sur une route existante'
       : S.gates.length ? 'Partez d\'une porte ou d\'une muraille (points orange)' : 'Posez d\'abord une porte sur une route (outil Porte)';
     haloText(msg, X + 12, Y - 8, Col.bad, Col.sheet);

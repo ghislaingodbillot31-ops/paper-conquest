@@ -10,6 +10,10 @@ const CAT_TEST = [
   { id:'predateur',nom:'Prédateurs',           items:() => animalsOf('predateur'),                 disque:'#b5483f', defaut:'🐺' },
   { id:'poisson',  nom:'Poissons d’eau douce', items:() => FRESH_FISH,                             disque:'#3f7fc4', defaut:'🐟' },
   { id:'mer',      nom:'Poissons de mer',      items:() => Object.keys(SEA_FISH),                  disque:'#2f5fa8', defaut:'🐠' },
+  { id:'villageois', nom:'Villageois',           items:() => Object.keys(VILLAGEOIS),               disque:'#c8a050', defaut:'🧑' },
+  { id:'chariot',  nom:'Chariots et charrettes', items:() => Object.keys(CHARIOTS),                 disque:'#9a6a3a', defaut:'🛒' },
+  { id:'bateau',   nom:'Bateaux (sur l’eau)',    items:() => Object.keys(VEHICULES),                 disque:'#3f7fc4', defaut:'⛵' },
+  { id:'fruitier', nom:'Arbres fruitiers',     items:() => Object.keys(FRUITIERS),                 disque:'#6a8741', defaut:'🍎' },
   { id:'culture',  nom:'Cultures et bois',     items:() => CROPS,                                  disque:'#a89a3f', defaut:'🌾' },
 ];
 const GLYPHES = { cheval:'🐴', ane:'🫏', vache:'🐄', zebu:'🐂', buffle:'🐃', yak:'🐃', mouton:'🐑', chevre:'🐐', chevre_cachemire:'🐐', cochon:'🐖', chameau:'🐫',
@@ -18,7 +22,7 @@ const GLYPHES = { cheval:'🐴', ane:'🫏', vache:'🐄', zebu:'🐂', buffle:'
   lion:'🦁', tigre:'🐅', leopard:'🐆', jaguar:'🐆', guepard:'🐆', renard:'🦊', castor:'🦫', crocodile:'🐊', hyene:'🐺', lynx:'🐱', puma:'🐆',
   ble:'🌾', orge:'🌾', seigle:'🌾', avoine:'🌾', lin:'🌸', chanvre:'🌿', bois:'🌲', bois_chauffage:'🪵', pierre:'🪨', poivre:'🌶️', safran:'🌷',
   baleine:'🐋', phoque:'🦭', requin:'🦈', thon:'🐟' };
-const nomTest = (cat, key) => (cat === 'mer' ? SEA_FISH[key] : (RESOURCES[key] || {}).name) || key;
+const nomTest = (cat, key) => (cat === 'villageois' ? VILLAGEOIS[key].nom : cat === 'chariot' ? CHARIOTS[key].nom : cat === 'bateau' ? VEHICULES[key].nom : cat === 'fruitier' ? FRUITIERS[key].nom : cat === 'mer' ? SEA_FISH[key] : (RESOURCES[key] || {}).name) || key;
 const glypheTest = (cat, key) => GLYPHES[key] || CAT_TEST.find(c => c.id === cat).defaut;
 
 // ---- génération : tout ce qu'on crée, une fois ----
@@ -27,13 +31,13 @@ function placeTestResources(seed) {
   const eau = [...(Z.water.river || []), ...(Z.water.lake || [])];
   const surEau = (p, r) => eau.length && hitsAny([[p[0] - r, p[1] - r], [p[0] + r, p[1] - r], [p[0] + r, p[1] + r], [p[0] - r, p[1] + r]], eau);
   // animaux et cultures : quatre massifs (un par catégorie terrestre), hors de l'eau et des routes
-  const massifs = { elevage:[1500, 1200], faune:[4300, 1300], predateur:[4200, 3300], culture:[1500, 3300] }, cible = [];
+  const e = TW / 6000, massifs = { elevage:[1500 * e, 1200 * e], faune:[4300 * e, 1300 * e], predateur:[4200 * e, 3300 * e], culture:[1500 * e, 3300 * e] }, cible = [];   // (positions réglées pour 6000 × 4500 m)
   for (const cat of ['elevage', 'faune', 'predateur', 'culture']) {
-    const items = CAT_TEST.find(c => c.id === cat).items(), [cx, cy] = massifs[cat], R = 260 + Math.sqrt(items.length) * 120;
-    for (const key of items) for (let t = 0; t < 200; t++) {
-      const a = rnd() * 6.283, r = Math.sqrt(rnd()) * R, p = [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
-      if (p[0] < M || p[1] < M || p[0] > TW - M || p[1] > TH - M || surEau(p, 25) || distToRoads(p) < 25) continue;
-      if (out.some(o => Math.hypot(o.x - p[0], o.y - p[1]) < 110)) continue;
+    const items = CAT_TEST.find(c => c.id === cat).items(), [cx, cy] = massifs[cat], R = 260 + Math.sqrt(items.length) * (FAUNE_CATS.has(cat) ? 190 : 120);
+    for (const key of items) for (let t = 0; t < 800; t++) {
+      const a = rnd() * 6.283, r = Math.sqrt(rnd()) * R, p = FORME ? [M + rnd() * (TW - 2 * M), M + rnd() * (TH - 2 * M)] : [cx + Math.cos(a) * r, cy + Math.sin(a) * r];   // (forme réelle : n'importe où dans la région)
+      if (!dansRegion(p) || p[0] < M || p[1] < M || p[0] > TW - M || p[1] > TH - M || surEau(p, 25) || distToRoads(p) < 25) continue;
+      if (out.some(o => Math.hypot(o.x - p[0], o.y - p[1]) < (FAUNE_CATS.has(cat) && FAUNE_CATS.has(o.cat) ? 230 : 110))) continue;
       add(cat, key, p); break;
     }
   }
@@ -54,13 +58,14 @@ function drawRessources() {
   const list = S.ressources || [], s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 40 / s;
   const rayon = Math.max(8, Math.min(17, s * 10));
   for (const r of list) {
+    if (r.cat === 'fruitier' || (FAUNE_CATS.has(r.cat) && tool !== 'ressource' && tool !== 'gomme')) continue;                                             // (peints par drawFruitiers : arbres.js)
     if (r.x < x0 - m || r.x > x1 + m || r.y < y0 - m || r.y > y1 + m) continue;
     const [X, Y] = toS(r.x, r.y), c = CAT_TEST.find(k => k.id === r.cat);
     ctx.beginPath(); ctx.arc(X, Y, rayon, 0, Math.PI * 2); ctx.fillStyle = c.disque; ctx.globalAlpha = .88; ctx.fill(); ctx.globalAlpha = 1;
     ctx.lineWidth = 1.5; ctx.strokeStyle = '#fffdf3'; ctx.stroke();
     ctx.font = Math.round(rayon * 1.15) + 'px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
     ctx.fillText(glypheTest(r.cat, r.key), X, Y + 1);
-    if (s > .3) { ctx.font = '600 11px "Barlow Condensed", sans-serif'; ctx.textBaseline = 'top'; haloText(nomTest(r.cat, r.key), X, Y + rayon + 2, Col.ink, Col.sheet); }
+    if (s > .3) { ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textBaseline = 'top'; haloText(nomTest(r.cat, r.key), X, Y + rayon + 2, Col.ink, Col.sheet); }
   }
 }
 // fantôme de l'élément choisi sous le curseur (outil « Placer ») ou cercle de la gomme
@@ -79,6 +84,9 @@ const rafraichit = (x, y, r = 130) => { touchScene(); markDirty([x - r, y - r, x
 function placeTest(p) {
   if (!inTerrain(p)) return;
   const { cat, key } = choixTest(); if (!key) return;
+  if (cat === 'bateau') { placeBateau(p, key); return; }
+  if (cat === 'villageois') { placeVillageois(p, key); return; }
+  if (cat === 'chariot') { placeChariot(p, key); return; }
   commit();
   if (cat === 'gisement') {                                                       // un gisement : un affleurement de 70 m de rayon
     const r = 70, ph = [p[0] * .013, p[1] * .017], pts = [];
@@ -92,6 +100,8 @@ function effaceTest(p) {
   let best = null, bd = seuil;
   for (const r of S.ressources) { const d = Math.hypot(r.x - p[0], r.y - p[1]); if (d < bd) { bd = d; best = { list:S.ressources, o:r, nom:nomTest(r.cat, r.key), x:r.x, y:r.y }; } }
   for (const d of S.deposits) { const dd = Math.hypot(d.c[0] - p[0], d.c[1] - p[1]) - d.r; if (dd < bd) { bd = dd; best = { list:S.deposits, o:d, nom:(GISEMENTS[d.kind] || {}).nom, x:d.c[0], y:d.c[1], r:d.r + 60 }; } }
+  for (const b of S.bateaux || []) { const d = Math.hypot(b.x - p[0], b.y - p[1]) - VEHICULES[b.kind].T * .4; if (d < bd) { bd = d; best = { list:S.bateaux, o:b, nom:VEHICULES[b.kind].nom, x:b.x, y:b.y, r:VEHICULES[b.kind].T + 60 }; } }
+  { const h = marcheAu(p); if (h) { const d = 0; if (d < bd) { bd = d; best = { list:h.type === 'v' ? S.villageois : S.chariots, o:h.o, nom:h.type === 'v' ? VILLAGEOIS[h.o.kind].nom : CHARIOTS[h.o.kind].nom, x:h.o.x, y:h.o.y, r:60 }; } } }
   if (!best) { flash('Rien à supprimer ici', true); return; }
   commit(); best.list.splice(best.list.indexOf(best.o), 1); rafraichit(best.x, best.y, best.r || 130); flash(best.nom + ' supprimé');
 }
@@ -108,10 +118,11 @@ $('test-item').addEventListener('change', () => setTool('ressource'));
 remplitItems();
 $('test-clear').addEventListener('click', () => {
   if (!S.ressources.length && !S.deposits.length) return;
-  commit(); S.ressources = []; S.deposits = []; touchScene(); markAllDirty(); save(); requestDraw(); flash('Tout est supprimé (Ctrl+Z pour annuler)');
+  commit(); S.ressources = []; S.deposits = []; S.bateaux = []; S.villageois = []; S.chariots = []; touchScene(); markAllDirty(); save(); requestDraw(); flash('Tout est supprimé (Ctrl+Z pour annuler)');
 });
 $('test-regen').addEventListener('click', () => { commit(); generateRegion('tempere', 1 + Math.floor(Math.random() * 2147483000), 'auto'); sel = null; draft = null; changed(true); fit(); flash('Map test régénérée (Ctrl+Z pour annuler)'); });
 
 fixeHeure(12);   // la map test s'ouvre en plein jour (curseur « Heure » pour tester la nuit)
 // première ouverture : la map test reçoit tout ce que le jeu connaît (les cartes enregistrées avant gardent ce qu'elles ont)
 if (!S.testInit) { S.ressources = placeTestResources(S.landSeed); S.testInit = true; save(); }
+if (S.fruitiersInit !== 2) { S.ressources = S.ressources.filter(r => r.cat !== 'fruitier'); S.ressources.push(...placeFruitiers(S.landSeed, Object.keys(FRUITIERS))); S.fruitiersInit = 2; touchScene(); save(); }   // (cartes enregistrées avant les arbres fruitiers, ou avec les anciens bosquets de 3 : on replante)

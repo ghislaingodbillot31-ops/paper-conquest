@@ -24,10 +24,12 @@
       <div class="row" style="margin-top:8px">
         <button data-tool="ressource" aria-pressed="false">Placer</button>
         <button data-tool="gomme" aria-pressed="false">Gomme</button>
+        <button data-tool="naviguer" aria-pressed="false">Déplacer un bateau</button>
+        <button data-tool="marcher" aria-pressed="false">Déplacer villageois / chariot</button>
         <button id="test-clear" class="danger">Tout supprimer</button>
         <button id="test-regen">Régénérer la map test</button>
       </div>
-      <p class="muted" style="margin-top:6px">Choisissez un élément, puis « Placer » et cliquez sur la carte. « Gomme » : cliquez un élément pour le supprimer. Ctrl+Z annule. Cette carte est enregistrée à part et n'est jamais envoyée au jeu.</p>
+      <p class="muted" style="margin-top:6px">Choisissez un élément, puis « Placer » et cliquez sur la carte (les bateaux se posent sur l'eau ; « Déplacer un bateau » : cliquez un bateau, puis l'eau où il doit aller). « Gomme » : cliquez un élément pour le supprimer. Ctrl+Z annule. Cette carte est enregistrée à part et n'est jamais envoyée au jeu.</p>
     </section>
 
     <section>
@@ -134,6 +136,9 @@
 <script src="js/carte/paysage.js"></script>
 <script src="js/carte/zonage.js"></script>
 <script src="js/carte/gisements.js"></script>
+<script src="js/carte/arbres.js"></script>
+<script src="js/carte/animaux.js"></script>
+<script src="js/carte/villageois.js"></script>
 <script src="js/carte/generateur.js"></script>
 <script src="js/carte/vue.js"></script>
 <script src="js/batiments/atelier.js"></script>
@@ -154,7 +159,12 @@
 <script src="js/carte/pointeur.js"></script>
 <script src="js/carte/panneau.js"></script>
 <script src="js/jeu/ressources.js"></script>
+<script src="js/carte/faune.js"></script>
+<script src="js/carte/vehicules.js"></script>
+<script src="js/carte/chariots.js"></script>
 <script src="js/carte/ressources-test.js"></script>
+<script src="js/carte/navigation.js"></script>
+<script src="js/carte/terrestres.js"></script>
 <script src="js/carte/demarrage.js"></script>
 </body>
 </html>

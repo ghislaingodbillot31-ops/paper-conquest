@@ -25,6 +25,9 @@
   <button role="tab" data-tab="carte" aria-selected="false">Éditeur de carte</button>
   <button role="tab" data-tab="batiments" aria-selected="false">Éditeur de bâtiments</button>
   <button role="tab" data-tab="maptest" aria-selected="false">Map test</button>
+  <button role="tab" data-tab="animaux" aria-selected="false">Animaux</button>
+  <button role="tab" data-tab="vehicules" aria-selected="false">Véhicules</button>
+  <button role="tab" data-tab="villageois" aria-selected="false">Villageois</button>
   <span id="msg" role="status"></span>
 </nav>
 <main>
@@ -32,6 +35,9 @@
   <iframe id="carte" title="Éditeur de carte" data-src="editeur-carte.html"></iframe>
   <iframe id="batiments" title="Éditeur de bâtiments" data-src="editeur-batiments.html"></iframe>
   <iframe id="maptest" title="Map test" data-src="map-test.html"></iframe>
+  <iframe id="animaux" title="Animaux" data-src="editeur-animaux.html"></iframe>
+  <iframe id="vehicules" title="Véhicules" data-src="editeur-vehicules.html"></iframe>
+  <iframe id="villageois" title="Villageois" data-src="editeur-villageois.html"></iframe>
 </main>
 <script>
 /* Un onglet = une page existante dans un cadre (chargée à la première visite, puis gardée : on retrouve l'éditeur tel qu'on l'a laissé).
@@ -54,5 +60,5 @@ addEventListener('message', e => {
   jeuAJour = false;                                      // le jeu se recharge à sa prochaine visite
   dire('Région ' + e.data.region + ' appliquée : visible dans l\'onglet Carte globale');
 });
-show(['jeu', 'carte', 'batiments', 'maptest'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'jeu');
+show(['jeu', 'carte', 'batiments', 'maptest', 'animaux', 'vehicules', 'villageois'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'jeu');
 </script>

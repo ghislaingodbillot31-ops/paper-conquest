@@ -5,7 +5,7 @@
    les vrais fleuves, les vrais lacs et les vraies routes vers les capitales voisines.
    Sans forme (éditeur sans région choisie, page d'essai), le terrain reste un rectangle. */
 let FORME = null, FORME_ID = null, FORMES = null, masque = null;
-const FORMES_V = 4;                                  // monter pour que les cartes de région déjà enregistrées soient régénérées par le générateur à jour
+const FORMES_V = 6;                                  // monter pour que les cartes de région déjà enregistrées soient régénérées par le générateur à jour
 // à chaque nouvelle version, les cartes de région enregistrées (et le plan de l'éditeur) sont supprimées : elles repartent du générateur à jour
 try { if (localStorage.getItem('regionsGenV') !== String(FORMES_V)) {
   Object.keys(localStorage).filter(k => k.startsWith('paperConquestRegionMap.') || k === 'editeurCarte.v1').forEach(k => localStorage.removeItem(k));
@@ -18,6 +18,12 @@ function chargeForme(id) {
   try {
     if (!FORMES) { const x = new XMLHttpRequest(); x.open('GET', 'data/regions/formes.json', false); x.send(); if (x.status === 200 || x.status === 0) FORMES = JSON.parse(x.responseText); }
     FORME = (FORMES && FORMES.regions[id]) || null;
+    // le fichier est à l'échelle ECHELLE_FORMES (3) ; le terrain a maintenant ECHELLE_TERRAIN : toutes les coordonnées sont ramenées à la bonne taille (copie, le fichier lu reste intact)
+    if (FORME && !FORME.k && FORMES.terrain && Math.abs(TW - FORMES.terrain[0]) > 1) {
+      const k = TW / FORMES.terrain[0], sc = v => Array.isArray(v) ? (v.length === 2 && typeof v[0] === 'number' ? [Math.round(v[0] * k * 100) / 100, Math.round(v[1] * k * 100) / 100] : v.map(sc)) : v;
+      const o = {}; for (const key in FORME) o[key] = key === 'echelle' ? FORME[key] : key === 'capitale' ? sc(FORME[key]) : Array.isArray(FORME[key]) ? FORME[key].map(it => it && it.pts ? { ...it, pts:sc(it.pts) } : sc(it)) : FORME[key];
+      o.k = k; FORME = o;
+    }
   } catch (e) { console.warn('Forme de la région indisponible', e); }
   return FORME;
 }
@@ -80,19 +86,30 @@ const CLASSE_FLEUVE = { 1:'fleuve', 2:'riviere' };               // (les autres 
 function genereDepuisForme(biome, seed) {
   const F = FORME, rnd = seeded(seed * 31 + 7), cap = F.capitale.slice();
   S = {
-    nextId:200, houses:[], walls:[], towers:[], gates:[], roads:[], rivers:[], lakes:[],
+    echelle:ECHELLE_TERRAIN, nextId:200, houses:[], walls:[], towers:[], gates:[], roads:[], rivers:[], lakes:[],
     biome, riverMode:'reel', landSeed:seed, reliefSeed:537, roadStyle:'reel',
     gold:5000, cut:[], planted:[], grown:[], simTime:0, bourg:[cap], forme:{ id:FORME_ID, v:FORMES_V },
   };
   // fleuves réels : tracé lissé, un point tous les 4 m ; largeur selon la taille du vrai fleuve
   F.fleuves.forEach((f, k) => {
     const cls = CLASSE_FLEUVE[f.cls] || 'petite', RC = RIVER_CLASS[cls];
-    const all = resample(chaikinOpen(resample(f.pts, 12), 3), 4);
+    F.fl = F.fl || [];
+    let all = F.fl[k] ? F.fl[k].pts : resample(chaikinOpen(resample(f.pts, 12), 3), 4), bouche = F.fl[k] ? F.fl[k].bouche : null;
     if (all.length < 4) return;
+    // le fleuve s'arrête à la côte (le tracé réel se prolonge en mer et longe le rivage : tronçons parasites)
+    if (!F.fl[k]) {
+      const mer = all.findIndex(p => inTerrain(p) && !surTerre(p));
+      if (mer >= 0 && mer < 8 && all.slice(0, mer + 1).every(inTerrain)) { F.fl[k] = { pts:[], drop:true }; return; }
+      if (mer >= 8) { all = all.slice(0, mer + 3); bouche = mer - 1; }           // dernier point sur la terre
+      F.fl[k] = { pts:all, bouche };
+    }
+    if (F.fl[k].drop) return;
     const rv = { pts:all, w0:RC.w0, w1:RC.w1, cls, nom:f.n };
+    if (bouche != null) rv.bouche = bouche;
     rv.isles = placeIsles(rv, seeded(seed * 13 + 5 + k * 10));
     S.rivers.push(rv);
   });
+  carveRivieres();                                                  // les fleuves remplacent la terre par la mer (voir plus bas)
   // lacs réels : contour régulier (un point tous les 10 m, 160 au plus), centre = barycentre
   for (const ring of F.lacs) {
     let per = 0; for (let i = 0; i < ring.length; i++) per += segLen(ring[i], ring[(i + 1) % ring.length]);
@@ -131,6 +148,7 @@ function genereDepuisForme(biome, seed) {
   for (const lk of lacs) { S.lakes.push(lk); if (!lacLibre(lk)) S.lakes.pop(); }
   computeZones();
   S.deposits = placeDeposits(seed);
+  S.ressources = placeFruitiers(seed, fruitiersDuBiome(S.biome, seed));      // (les arbres fruitiers d'origine de ce biome)
 }
 /* Une vraie route, mise à l'échelle, frôle ou suit souvent un fleuve (la vallée du Nil…) : on
    l'écarte des berges (demi-largeur + 28 m), en gardant la rive où elle est. Quand elle change
@@ -180,28 +198,68 @@ function seaBands(coast, foam, edge) {
   ctx.lineJoin = 'round';
   for (let i = WATER_BANDS + 1; i >= 1; i--) { ctx.strokeStyle = mixWater(sea0, .09 * (WATER_BANDS + 2 - i)); ctx.lineWidth = (foam + edge + bw * i) * 2; ctx.stroke(coast); }
 }
-// embouchures : le trait de côte (écume, berge) ne coupe pas la rivière. Autour de chaque disque de rivière posé sur la
-// côte, on repeint la mer sans liseré, sur la largeur exacte de la rivière : l'eau de la rivière rejoint celle de la mer.
-function drawMouths() {
-  if (!FORME || !S.rivers.length) return;
-  const s = view.s, mouth = new Path2D(); let any = false;
-  for (const rv of S.rivers) for (const [x, y, r] of bandDiscs(rv, 1)) {
-    const R = r + 3;
-    if (SEA_DIRS.every(([dx, dy]) => surTerre([x + dx * R, y + dy * R]))) continue;      // loin de la mer
-    const X = x * s + view.ox, Y = y * s + view.oy, rr = Math.max(r * s, 1.3) + 1;
-    mouth.moveTo(X + rr, Y); mouth.arc(X, Y, rr, 0, Math.PI * 2); any = true;
+/* Fleuves = mer. Comme sur le globe (regions-water.topojson), la terre est CREUSÉE à la place de chaque fleuve : le contour des terres de DESSIN (FORME.terresDessin)
+   passe de chaque côté du fleuve, et la mer se peint là, avec son rivage, son écume et son dégradé : un fleuve et la mer ne font qu'une seule eau, sans raccord.
+   Les îles de fleuve restent de la terre. Le masque terre/mer (surTerre, routes, bateaux, forêts) garde l'ancien contour (FORME.terres) : on peut toujours franchir un fleuve
+   par un pont. Méthode : la terre et les fleuves sont tracés dans une image de 2 m par pixel, puis le contour de la terre en est extrait (marching squares), simplifié et lissé. */
+function carveRivieres() {
+  if (!FORME) return;
+  const key = FORME_ID + ':' + S.rivers.map(r => r.pts.length + ',' + r.pts[0] + ',' + r.w0 + ',' + r.w1 + ',' + (r.isles || []).length).join('|');
+  if (FORME.carveKey === key) return;
+  FORME.carveKey = key;
+  if (!S.rivers.length) { FORME.terresDessin = null; return; }
+  const P = 2, w = Math.ceil(TW / P), h = Math.ceil(TH / P), c = document.createElement('canvas'); c.width = w; c.height = h;
+  const g = c.getContext('2d', { willReadFrequently:true }), poly = (rings, k) => { const p = new Path2D(); for (const r of rings) { p.moveTo(r[0][0] / k, r[0][1] / k); for (const q of r) p.lineTo(q[0] / k, q[1] / k); p.closePath(); } return p; };
+  g.fillStyle = '#000'; g.fillRect(0, 0, w, h); g.fillStyle = '#fff'; g.fill(poly(FORME.terres, P), 'evenodd');          // terre en blanc
+  g.fillStyle = '#000';
+  for (const rv of S.rivers) for (const [x, y, r] of riverDiscs(rv)) { g.beginPath(); g.arc(x / P, y / P, Math.max(.5, r / P), 0, Math.PI * 2); g.fill(); }   // fleuves : disques le long du cours
+  g.fillStyle = '#fff';
+  for (const rv of S.rivers) for (const is of riverIsles(rv)) if (surTerre([(is.bb[0] + is.bb[2]) / 2, (is.bb[1] + is.bb[3]) / 2])) g.fill(poly([is.P], P));                                    // les îles restent de la terre
+  const d = g.getImageData(0, 0, w, h).data, PN = 3, W2 = w + 2 * PN, H2 = h + 2 * PN, m = new Uint8Array(W2 * H2);
+  for (let j = 1; j < H2 - 1; j++) for (let i = 1; i < W2 - 1; i++) { const ii = Math.max(0, Math.min(w - 1, i - PN)), jj = Math.max(0, Math.min(h - 1, j - PN)); m[j * W2 + i] = d[(jj * w + ii) * 4] > 127 ? 1 : 0; }   // (bords prolongés de 2 pixels, puis un cadre vide : les contours se ferment hors du terrain, aucun rivage le long du cadre)
+  // marching squares : un segment par case de 2 × 2 échantillons, entre milieux d'arêtes (clés entières en demi-pixels)
+  const next = new Map(), key2 = (x, y) => x * 100003 + y;
+  const add = (x1, y1, x2, y2) => { const a = key2(x1, y1); (next.get(a) || next.set(a, []).get(a)).push([x2, y2]); const b = key2(x2, y2); (next.get(b) || next.set(b, []).get(b)).push([x1, y1]); };
+  for (let j = 0; j < H2 - 1; j++) for (let i = 0; i < W2 - 1; i++) {
+    const a = m[j * W2 + i], b = m[j * W2 + i + 1], cc = m[(j + 1) * W2 + i + 1], dd = m[(j + 1) * W2 + i], code = a | b << 1 | cc << 2 | dd << 3;
+    if (code === 0 || code === 15) continue;
+    const X = 2 * i, Y = 2 * j, T = [X + 1, Y], R = [X + 2, Y + 1], B = [X + 1, Y + 2], L = [X, Y + 1], seg = (p, q) => add(p[0], p[1], q[0], q[1]);
+    switch (code) {
+      case 1: case 14: seg(L, T); break; case 2: case 13: seg(T, R); break; case 3: case 12: seg(L, R); break; case 4: case 11: seg(R, B); break;
+      case 6: case 9: seg(T, B); break; case 7: case 8: seg(L, B); break; case 5: seg(L, T); seg(R, B); break; case 10: seg(T, R); seg(L, B); break;
+    }
   }
-  if (!any) return;
-  const sea = cadreEtAnneaux(FORME.terres), coast = cheminAnneaux(FORME.terres), foam = Math.max(1.2, Math.min(3, s * .9)), edge = 1.5;
-  ctx.save(); ctx.clip(mouth); ctx.clip(sea, 'evenodd');
-  ctx.fillStyle = biomeLook().water || Col.water; ctx.fill(sea, 'evenodd');
-  seaBands(coast, foam, edge);
-  ctx.restore();
+  // chaînage des segments en anneaux fermés
+  const rings = [], used = new Set();
+  for (const [k0, nb] of next) {
+    if (used.has(k0)) continue;
+    const x0 = Math.floor(k0 / 100003), y0 = k0 - x0 * 100003, ring = [[x0, y0]]; used.add(k0);
+    let cur = [x0, y0], prev = null;
+    for (let guard = 0; guard < 4e6; guard++) {
+      const opts = next.get(key2(cur[0], cur[1])), nx = opts.find(o => !prev || o[0] !== prev[0] || o[1] !== prev[1]) || opts[0];
+      if (!nx || key2(nx[0], nx[1]) === k0) break;
+      const kk = key2(nx[0], nx[1]); if (used.has(kk)) break; used.add(kk); ring.push(nx); prev = cur; cur = nx;
+    }
+    if (ring.length > 8) rings.push(ring);
+  }
+  // en mètres ; simplification (Douglas-Peucker, 0,9 m) puis deux passes de lissage : plus d'escalier de pixels
+  const dp = (pts, eps) => {
+    const out = [], stack = [[0, pts.length - 1]], keep = new Uint8Array(pts.length); keep[0] = keep[pts.length - 1] = 1;
+    while (stack.length) { const [a, b] = stack.pop(); let md = 0, mi = -1; const A = pts[a], B = pts[b], L = Math.hypot(B[0] - A[0], B[1] - A[1]) || 1;
+      for (let i = a + 1; i < b; i++) { const dd = Math.abs((B[0] - A[0]) * (A[1] - pts[i][1]) - (A[0] - pts[i][0]) * (B[1] - A[1])) / L; if (dd > md) { md = dd; mi = i; } }
+      if (mi >= 0 && md > eps) { keep[mi] = 1; stack.push([a, mi], [mi, b]); } }
+    for (let i = 0; i < pts.length; i++) if (keep[i]) out.push(pts[i]);
+    return out;
+  };
+  const chaikin = P2 => { const o = []; for (let i = 0; i < P2.length; i++) { const a = P2[i], b = P2[(i + 1) % P2.length]; o.push([a[0] * .75 + b[0] * .25, a[1] * .75 + b[1] * .25], [a[0] * .25 + b[0] * .75, a[1] * .25 + b[1] * .75]); } return o; };
+  FORME.terresDessin = rings.map(r => { let q = r.map(([x, y]) => [(x / 2 - PN + .5) * P, (y / 2 - PN + .5) * P]); q = dp(q, .9); if (q.length < 4) return null; return chaikin(chaikin(q)).map(p => [round2(p[0]), round2(p[1])]); }).filter(r => { if (!r) return false; let A = 0; for (let i = 0; i < r.length; i++) { const p = r[i], q = r[(i + 1) % r.length]; A += p[0] * q[1] - q[0] * p[1]; } return Math.abs(A) / 2 > 120; });   // (on jette les miettes : îlots et trous de moins de 120 m²)
 }
+
+function drawMouths() {}                                             // (les fleuves sont creusés dans le contour des terres : rien à repeindre)
 // mer : tout le cadre hors des terres ; rivage : liseré d'écume côté mer, puis la berge
 function drawSea() {
   if (!FORME) return;
-  const sea = cadreEtAnneaux(FORME.terres), coast = cheminAnneaux(FORME.terres), s = view.s;
+  const dessin = FORME.terresDessin || FORME.terres, sea = cadreEtAnneaux(dessin), coast = cheminAnneaux(dessin), s = view.s;
   const foam = Math.max(1.2, Math.min(3, s * .9)), edge = 1.5;
   const [tx, ty] = toS(0, 0);
   ctx.save(); ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip();       // (rien hors du terrain)
@@ -214,10 +272,32 @@ function drawSea() {
   ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = edge * 2; ctx.lineJoin = 'round'; ctx.stroke(coast);
   ctx.restore();
 }
+// frontière de la région, sans les tronçons qui longent la mer (la mer n'est pas un voisin) : suites de points, calculées une fois par région
+let frontCache = { id:null, runs:null };
+const surRiviere = p => Z.water.river.some(q => p[0] >= q.bb[0] && p[0] <= q.bb[2] && p[1] >= q.bb[1] && p[1] <= q.bb[3] && inPoly(p, q.P));
+function frontiereTerrestre() {
+  const ck = FORME_ID + ':' + Z.water.river.length + ':' + S.landSeed;
+  if (frontCache.id === ck && frontCache.runs) return frontCache.runs;
+  const runs = [];
+  for (const ring of FORME.region) {
+    let run = [];
+    for (let i = 0; i < ring.length; i++) {
+      const a = ring[i], b = ring[(i + 1) % ring.length], n = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 6));
+      for (let t = 0; t < n; t++) {
+        const p = [a[0] + (b[0] - a[0]) * t / n, a[1] + (b[1] - a[1]) * t / n];
+        if (surRiviere(p) || SEA_DIRS.some(([dx, dy]) => !surTerre([p[0] + dx * 8, p[1] + dy * 8]))) { if (run.length > 1) runs.push(run); run = []; } else run.push(p);
+      }
+    }
+    if (run.length > 1) runs.push(run);
+  }
+  frontCache = { id:ck, runs };
+  return runs;
+}
 // hors de la région : terres voisines voilées (on n'y construit pas), frontière en pointillés
 function drawBorder() {
   if (!FORME) return;
-  const out = cadreEtAnneaux(FORME.region), land = cheminAnneaux(FORME.terres), front = cheminAnneaux(FORME.region);
+  const out = cadreEtAnneaux(FORME.region), land = cheminAnneaux(FORME.terresDessin || FORME.terres), front = new Path2D();
+  for (const run of frontiereTerrestre()) run.forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? front.lineTo(X, Y) : front.moveTo(X, Y); });
   ctx.save(); ctx.clip(land, 'evenodd');
   ctx.globalAlpha = .45; ctx.fillStyle = Col.sheet; ctx.fill(out, 'evenodd');
   ctx.restore();
@@ -226,4 +306,4 @@ function drawBorder() {
   ctx.restore();
 }
 // les rivières ne se dessinent que sur la terre (à leur embouchure, la mer prend le relais)
-function clipTerre() { if (FORME) ctx.clip(cheminAnneaux(FORME.terres), 'evenodd'); }
+function clipTerre() { if (FORME) ctx.clip(cheminAnneaux(FORME.terresDessin || FORME.terres), 'evenodd'); }

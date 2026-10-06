@@ -86,7 +86,7 @@ function drawHouse(h, mode) {
   }
   if (mode === 'selected' || mode === 'ghost' || mode === 'bad') {
     const top = Math.min(...C.map(p => p[1])), [X] = toS(h.x, h.y);
-    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     const name = h.type && buildingOf(h) ? `${h.type} · ` : '';
     haloText(`${name}${h.f} × ${h.d} cases`, X, top * s + view.oy - 6, mode === 'bad' ? Col.bad : Col.ink, Col.sheet);
   }

@@ -40,11 +40,14 @@ function draw() {
   if (g) drawHouse(g, g.ok ? 'ghost' : 'bad');
   else if (tool === 'house' && cursor && inTerrain(cursor) && !(drag && drag.kind === 'pan')) {
     const [X, Y] = toS(...cursor);
-    ctx.font = '500 11px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
+    ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     haloText('Hors zone : approchez d\'une route', X + 12, Y - 8, Col.bad, Col.sheet);
   }
   if (drag && drag.kind === 'house' && drag.preview) drawHouse(drag.preview, drag.preview.ok ? 'ghost' : 'bad');
   drawWorkZones();
+  if (typeof drawFaune === 'function') drawFaune();
+  if (typeof drawBateaux === 'function') drawBateaux();
+  if (typeof drawTerrestres === 'function') drawTerrestres();
   drawWorkers();
   drawDraft();
   drawScale();

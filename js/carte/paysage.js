@@ -460,7 +460,7 @@ let staticFlora = [], staticKey = null;
 function computeFlora() {
   touchScene();
   const key = JSON.stringify([S.landSeed, S.biome, S.roads.map(r => r.pts), S.walls.map(w => w.pts), S.towers.map(t => [t.x, t.y]),
-    S.gates.map(g => [g.x, g.y, g.a]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => l.c), (S.deposits || []).map(d => [d.kind, d.c, d.r])]);
+    S.gates.map(g => [g.x, g.y, g.a]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => l.c), (S.deposits || []).map(d => [d.kind, d.c, d.r]), (S.ressources || []).filter(r => r.cat === 'fruitier').map(r => [r.key, r.x, r.y])]);
   const full = key !== staticKey;
   if (full) {
     const polys = [], add = P => polys.push({ P, bb:bbox(P) });
@@ -468,6 +468,7 @@ function computeFlora() {
     for (const r of S.roads) { const q = smoothPts(r); for (let k = 0; k < q.length - 1; k++) add(segRect(q[k], q[k+1], r.w)); }
     for (const o of S.walls) for (let k = 0; k < o.pts.length - 1; k++) add(segRect(o.pts[k], o.pts[k+1], o.w));
     for (const d of S.deposits || []) add(d.pts);                                  // (ni arbres ni rochers sur un gisement)
+    for (const r of S.ressources || []) if (r.cat === 'fruitier') { const h = ARBRE_R * 1.3; add([[r.x - h, r.y - h], [r.x + h, r.y - h], [r.x + h, r.y + h], [r.x - h, r.y + h]]); }   // (ni arbres ni rochers sous un arbre fruitier)
     S.towers.forEach(t => add(towerPoly(t)));
     S.gates.forEach(g => add(gatePoly(g)));
     polys.push(...Z.water.river, ...Z.water.lake);

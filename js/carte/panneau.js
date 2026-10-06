@@ -318,3 +318,5 @@ function updateStatus() {
 }
 let lastStatus = '';
 const freeCells = { v:-1, n:0 };
+// carte d'essai enregistrée avec une ancienne version des formes (fleuves, côtes) : régénérée une fois avec le générateur à jour (même région)
+if (typeof MAPTEST !== 'undefined' && ((S.forme && S.forme.id && S.forme.v !== FORMES_V) || S.echelle !== ECHELLE_TERRAIN)) { if (S.forme && S.forme.id) chargeForme(S.forme.id); newRegion($('biome').value, S.landSeed); }

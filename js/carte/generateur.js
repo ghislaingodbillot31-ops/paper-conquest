@@ -289,7 +289,7 @@ function generateRegion(biome, seed, riverMode = 'auto') {
   const B = BIOMES[biome] || BIOMES.tempere, rnd = seeded(seed * 31 + 7);
   const mr = mainRoad(rnd), road = mr.pts;
   S = {
-    nextId:200, houses:[], walls:[], towers:[], gates:[],
+    echelle:ECHELLE_TERRAIN, nextId:200, houses:[], walls:[], towers:[], gates:[],
     roads:[{ id:1, kind:'pave', w:CELL, pts:road }],
     rivers:[], lakes:[], biome, riverMode, landSeed:seed, reliefSeed:537, roadStyle:mr.style,
     gold:5000, cut:[], planted:[], grown:[], simTime:0, ressources:[],
@@ -379,7 +379,8 @@ function generateRegion(biome, seed, riverMode = 'auto') {
   }
   computeZones();
   S.deposits = placeDeposits(seed);
-  if (typeof placeTestResources === 'function') { S.ressources = placeTestResources(seed); S.testInit = true; }   // (map-test.html : animaux, poissons, cultures)
+  if (typeof placeTestResources === 'function') { S.ressources = placeTestResources(seed); S.testInit = true; S.ressources.push(...placeFruitiers(seed, Object.keys(FRUITIERS))); S.fruitiersInit = 2; }   // (map-test.html : animaux, poissons, cultures, tous les arbres fruitiers)
+  else S.ressources = placeFruitiers(seed, fruitiersDuBiome(S.biome, seed));
 }
 let S;
 // les plans enregistrés avant les fortifications n'ont pas ces listes
@@ -411,7 +412,7 @@ try {
   if (PAGE !== 'batiments' && o && Array.isArray(o.houses) && Array.isArray(o.roads)) {
     if (o.forme && !GAME) chargeForme(o.forme.id);                                  // éditeur : la région choisie
     // région du jeu : un plan d'avant les formes réelles (rectangle) est remplacé par la vraie forme
-    if (!(GAME && FORME && !(o.forme && o.forme.v === FORMES_V))) { S = normalize(o); computeZones(); } // (portes recalées au démarrage)
+    if (!(GAME && FORME && !(o.forme && o.forme.v === FORMES_V))) { S = normalize(o); computeZones(); if (typeof carveRivieres === 'function') try { carveRivieres(); } catch (e) { console.warn('carve', e); } } // (portes recalées au démarrage)
   }
 } catch (e) {}
 if (!S) { if (PAGE === 'batiments') { S = normalize({ nextId:1 }); computeZones(); } // éditeur de bâtiments : pas de région
