@@ -121,6 +121,18 @@ const BUILD_DRAW = {
     barrelLT(h, -2.6, 18.6, .45); barrelLT(h, -1.6, 19.1, .42);
     cordwoodLT(h, 3.6, 18.4, 9, 20.4);
   },
+  /* Cabane de pêche (2 × 2 cases) : cabane de chaume, séchoir à poissons, filet tendu, tonneaux, panier et caisse */
+  cabane_peche: h => {
+    const w2 = h.w / 2, L = h.l;
+    thatchLT(h, -5.6, 2.4, .2, 8.6, 'u', STRAW);                                                     // cabane
+    dryRackLT(h, -6, -1, 12.2, ['#a9b6be', '#8c9ea8', '#bcc7cd'], 6);                               // poissons qui sèchent
+    ctx.strokeStyle = 'rgba(70,60,45,.7)'; ctx.lineWidth = lw(.05); ctx.beginPath();                  // filet tendu entre deux piquets
+    for (let k = 0; k <= 6; k++) { ctx.moveTo(...LP(h, 2 + k * .9, 2.6)); ctx.lineTo(...LP(h, 2 + k * .9, 7.4)); }
+    for (let k = 0; k <= 5; k++) { ctx.moveTo(...LP(h, 2, 2.6 + k * .96)); ctx.lineTo(...LP(h, 7.4, 2.6 + k * .96)); }
+    ctx.stroke();
+    barrelLT(h, 4.6, 10.4, .45); barrelLT(h, 5.6, 11, .42);
+    basketLT(h, 1.6, 10.6, .45, ['#b08a4a', '#8a6a34']); crateLT(h, -3.4, 13.2, .45);
+  },
   /* Puits (1 case) : margelle de pierre, treuil et corde, dallage autour, auge et seaux */
   puits: h => {
     const L = h.l, c = L / 2, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 3) + 4);

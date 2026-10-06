@@ -125,7 +125,7 @@ const RAW = ['bois', 'laine', 'peaux'];                 // matières premières 
 const RAW_KEEP = 4;
 const VALUE = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'planches':4, 'laine':3, 'peaux':3, 'pièces en bois':5,
   'arcs et flèches':8, 'vêtements':8, 'chaussures':6, 'bière':4, 'outils et armes':10, 'armures':14 };
-const CARRY = { 'grain':'stall-b', 'laine':'sheep', 'farine':'sheep', 'pain':'earth-edge', 'bois':'earth-edge', 'planches':'f-fallow', 'légumes':'f-alfalfa',
+const CARRY = { 'poisson':'sheep', 'grain':'stall-b', 'laine':'sheep', 'farine':'sheep', 'pain':'earth-edge', 'bois':'earth-edge', 'planches':'f-fallow', 'légumes':'f-alfalfa',
   'œufs':'sheep', 'pommes':'stall-a', 'peaux':'ore-clay', 'marchandises':'stall-a', 'Or':'stall-b' };
 // ce que produit un bâtiment (pour le trouver comme source) et son identifiant de producteur
 const producerId = h => (buildingOf(h) || {}).yard ? yardOf(h) : h.kind;
@@ -177,6 +177,7 @@ function jobLabel(b, w, job = b && b.job) {
     wait:w && w.full ? `plein (${job.cap})` : 'rien à ramasser à portée' }[st] || '';
   if (job.type === 'sell') return { idle:'se prépare', go:'va chercher des marchandises', take:'charge', back:'rapporte au comptoir', drop:'vend aux marchands',
     wait:'rien à vendre (granges et entrepôts vides)' }[st] || '';
+  if (job.type === 'fish') return { idle:'se prépare', go:"va au bord de l'eau", work:'pêche', back:'rapporte le poisson', drop:'range', wait:'aucun étang poissonneux' }[st] || '';
   if (job.type === 'relay') return { idle:'prépare les mulets', go:'mène les mulets aux confins de la région', work:'troc avec les régions voisines (à venir)',
     back:'revient avec les mulets', drop:'dételle' }[st] || '';
   return '';
@@ -198,6 +199,8 @@ function jobSheet(o, J) {
     rows.push(['Stock', `${invTotal(o)} / ${J.cap}`], ['Contenu', inv || 'vide']);
   } else if (J.type === 'sell') {
     rows.push(['Ventes', `${o.sold || 0} Or gagnés`]);
+  } else if (J.type === 'fish') {
+    rows.push(['Zone de travail', `tous les points d'eau du village (${S.lakes.length} étang${S.lakes.length > 1 ? 's' : ''})`], ['Poissons pêchés', 'versés au stock du village']);
   } else if (J.type !== 'relay') {
     rows.push(['Stock', `${o.stock || 0} ${J.product}${J.cap ? ` (${J.cap} au plus)` : ''}`]);
   }
@@ -251,6 +254,10 @@ function stepJob(h, job, dt) {
         store.inv[p] -= 1; w.load = p; w.dest = [store.x, store.y]; w.state = 'go';
       } else if (job.type === 'relay') {
         w.dest = regionExit(h); w.state = 'go';
+      } else if (job.type === 'fish') {                       // pêcheur : n'importe quel point d'eau du village où il reste du poisson
+        const lk = typeof lacPourPecher === 'function' ? lacPourPecher(h) : null;
+        if (!lk) { waitOne(); break; }
+        w.lac = lk.id; w.dest = riveDuLac(lk, h); w.state = 'go';
       }
       break;
     }
@@ -258,6 +265,7 @@ function stepJob(h, job, dt) {
       if (!walkTo(...w.dest)) break;
       if (job.type === 'site') { w.state = 'work'; w.t = job.work; }
       else if (job.type === 'relay') { w.state = 'work'; w.t = 4; }
+      else if (job.type === 'fish') { w.state = 'work'; w.t = job.work; }
       else { w.state = 'take'; w.t = .8; }
       break;
     case 'take':
@@ -267,6 +275,7 @@ function stepJob(h, job, dt) {
       if ((w.t -= dt) > 0) break;
       if (job.type === 'site') { w.carry = CARRY[job.product] || 'stall-b'; w.state = 'back'; }
       else if (job.type === 'relay') { w.state = 'back'; }
+      else if (job.type === 'fish') { const lk = S.lakes.find(l => l.id === w.lac), n = lk ? pecher(lk, 1) : 0; w.carry = n ? CARRY.poisson : null; w.state = 'back'; }   // le poisson va directement au stock du village
       else { h.stock = (h.stock || 0) + 1; save(); w.state = 'idle'; w.t = 0; } // fabrication terminée
       break;
     case 'back':

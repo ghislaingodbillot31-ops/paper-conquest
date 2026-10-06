@@ -19,13 +19,18 @@ const capaciteMaisons = () => S.houses.reduce((s, h) => h.kind === 'camp_colon' 
 const capaciteVillage = () => campColon() ? CAMP_PLACES + capaciteMaisons() : 0;
 const placesLibres = () => Math.max(0, capaciteVillage() - popVillage());
 const logesAuCamp = () => campColon() ? Math.min(CAMP_PLACES, Math.max(0, popVillage() - capaciteMaisons())) : 0;   // ceux que les maisons ne logent pas
-// habitants d'un logement : ils prennent les maisons dans l'ordre de construction, le camp garde le reste
-function occupation(h) {
-  if (h.kind === 'camp_colon') return logesAuCamp();
-  const cap = (buildingOf(h) || {}).cap || 0; let reste = popVillage();
-  for (const o of S.houses.slice().sort((x, y) => x.id - y.id)) { if (o.kind === 'camp_colon') continue; const c = (buildingOf(o) || {}).cap || 0; const k = Math.min(c, reste); if (o === h) return Math.min(cap, k); reste -= k; }
-  return 0;
+// Chaque villageois (n° 1, 2, 3…) a un logement attribué : les maisons dans l'ordre de construction, puis le camp (5 au plus) ; au-delà : sans abri.
+function logements() {
+  const L = [], maisons = S.houses.filter(h => h.kind !== 'camp_colon').sort((x, y) => x.id - y.id);
+  let n = 1; const total = popVillage();
+  for (const h of maisons) { const cap = (buildingOf(h) || {}).cap || 0, occ = []; while (occ.length < cap && n <= total) occ.push(n++); L.push([h, occ]); }
+  const camp = campColon(), auCamp = []; while (camp && auCamp.length < CAMP_PLACES && n <= total) auCamp.push(n++);
+  return { maisons:L, camp:auCamp, sansAbri:Math.max(0, total - (n - 1)) };
 }
+const occupants = h => { const l = logements(); return h.kind === 'camp_colon' ? l.camp : ((l.maisons.find(x => x[0] === h) || [0, []])[1]); };
+const listeOcc = o => o.length ? 'n° ' + o.join(', ') : 'personne';
+// habitants d'un logement : ils prennent les maisons dans l'ordre de construction, le camp garde le reste
+const occupation = h => occupants(h).length;
 
 const COTES = ['du nord', 'du sud', "de l'est", "de l'ouest"];
 const evt = document.createElement('aside');

@@ -359,3 +359,64 @@ function makeLake(cx, cy, R, p1, p2) {
   }
   return { c:[cx, cy], pts };
 }
+
+/* ---------- végétation des étangs ----------
+   Autour de chaque étang, toujours la même (graine du paysage + numéro de l'étang ; indépendante des routes du joueur) :
+   - nénuphars : larges feuilles rondes (parfois une fleur) à 2 à 14 m de la rive, dans l'eau ;
+   - roseaux et joncs : touffes de tiges (massettes brunes) sur la rive, par bandes ;
+   - plantes de berge : petites touffes de feuilles à 2 à 7 m de l'eau.
+   Peints sous les routes (drawDecor) : une route ne passe jamais sous la végétation. */
+const plantesEau = new WeakMap();
+function plantesDuLac(lk, idx) {
+  let L = plantesEau.get(lk); if (L) return L;
+  L = [];
+  const P = lakeShape(lk), rnd = seeded(S.landSeed * 13 + idx * 7 + 5), base = S.roads.filter(r => !r.libre);
+  const prochRoute = q => base.some(r => { const Q = r.pts; for (let i = 0; i < Q.length - 1; i++) if (ptSeg(q, Q[i], Q[i + 1]).d < 12) return true; return false; });
+  let band = rnd() < .6, run = 0;
+  for (let i = 0; i < P.length; i++) {
+    const a = P[i], b = P[(i + 1) % P.length], Ls = segLen(a, b) || 1, u = [(b[0] - a[0]) / Ls, (b[1] - a[1]) / Ls];
+    let n = [-u[1], u[0]]; if (inPoly([a[0] + n[0] * 1.5, a[1] + n[1] * 1.5], P)) n = [-n[0], -n[1]];          // normale vers l'extérieur
+    for (let d = 0; d < Ls; d += 3) {
+      run += 3; if (run > 18 + rnd() * 30) { band = rnd() < .6; run = 0; }
+      const q = [a[0] + u[0] * d, a[1] + u[1] * d], at = (o, t = 0) => [round2(q[0] + n[0] * o + u[0] * t), round2(q[1] + n[1] * o + u[1] * t)];
+      if (band && rnd() < .8) { const p = at(-.5 + rnd() * 2, (rnd() - .5) * 2.4); if (!prochRoute(p)) L.push({ k:'reed', p, v:rnd(), n:4 + Math.floor(rnd() * 5) }); }
+      else if (rnd() < .25) { const p = at(2 + rnd() * 5, (rnd() - .5) * 3); if (!prochRoute(p) && !inPoly(p, P)) L.push({ k:'plant', p, v:rnd(), n:5 + Math.floor(rnd() * 3) }); }
+      if (rnd() < .3) for (let m = 1 + Math.floor(rnd() * 3); m > 0; m--) {
+        const p = at(-(2 + rnd() * 12), (rnd() - .5) * 5);
+        if (inPoly(p, P)) L.push({ k:'lily', p, v:rnd(), r:.7 + rnd() * .6, a:rnd() * 6.28 });
+      }
+    }
+  }
+  plantesEau.set(lk, L);
+  return L;
+}
+function drawPlantesEau() {
+  if (!S.lakes.length || view.s < .6) return;
+  const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
+  S.lakes.forEach((lk, idx) => {
+    for (const f of plantesDuLac(lk, idx)) {
+      const [X0, Y0] = f.p; if (X0 < x0 - 6 || X0 > x1 + 6 || Y0 < y0 - 6 || Y0 > y1 + 6) continue;
+      const [X, Y] = toS(X0, Y0);
+      if (f.k === 'lily') {                                                         // nénuphar : feuille ronde échancrée, fleur
+        const R = f.r * s;
+        ctx.save(); ctx.translate(X, Y); ctx.rotate(f.a);
+        ctx.beginPath(); ctx.moveTo(0, 0); ctx.arc(0, 0, R, .35, Math.PI * 2 - .15); ctx.closePath();
+        ctx.fillStyle = f.v < .5 ? '#5d9a45' : '#4f8c3c'; ctx.fill(); ctx.strokeStyle = 'rgba(30,70,30,.8)'; ctx.lineWidth = Math.max(.7, s * .08); ctx.stroke();
+        ctx.restore();
+        if (f.v > .72 && s > 1.6) { ctx.beginPath(); ctx.arc(X + R * .1, Y - R * .1, Math.max(1.5, R * .35), 0, Math.PI * 2); ctx.fillStyle = '#f4cfdb'; ctx.fill(); ctx.beginPath(); ctx.arc(X + R * .1, Y - R * .1, Math.max(.8, R * .14), 0, Math.PI * 2); ctx.fillStyle = '#e8a23a'; ctx.fill(); }
+      } else if (f.k === 'reed') {                                                  // roseaux : tiges, massettes brunes
+        const rnd = seeded(Math.round(X0 * 7 + Y0 * 13)); ctx.lineCap = 'round';
+        for (let k = 0; k < f.n; k++) {
+          const a = rnd() * 6.28, l = (.9 + rnd() * .9) * s, ex = X + Math.cos(a) * l * .45, ey = Y + Math.sin(a) * l * .45;
+          ctx.strokeStyle = k % 2 ? '#6f8a36' : '#8da04a'; ctx.lineWidth = Math.max(.9, s * .1);
+          ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(ex, ey); ctx.stroke();
+          if (rnd() < .35 && s > 1.2) { ctx.fillStyle = '#5a3a22'; ctx.beginPath(); ctx.ellipse(ex, ey, Math.max(1, s * .1), Math.max(1.4, s * .22), a, 0, Math.PI * 2); ctx.fill(); }
+        }
+      } else {                                                                      // plante de berge : touffe de feuilles
+        const rnd = seeded(Math.round(X0 * 11 + Y0 * 3)); ctx.lineCap = 'round';
+        for (let k = 0; k < f.n; k++) { const a = k / f.n * 6.28 + rnd(), l = (.5 + rnd() * .6) * s; ctx.strokeStyle = '#6aa04a'; ctx.lineWidth = Math.max(.9, s * .13); ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(a) * l, Y + Math.sin(a) * l); ctx.stroke(); }
+        if (f.v > .8 && s > 1.4) { ctx.fillStyle = '#f2d85a'; ctx.beginPath(); ctx.arc(X, Y, Math.max(1, s * .14), 0, Math.PI * 2); ctx.fill(); }
+      }
+    }
+  });
+}

@@ -47,6 +47,7 @@ function drawDecor() {
   drawContours();
   drawWater();
   drawMouths();
+  drawPlantesEau();                                             // nénuphars, roseaux et plantes de berge (sous les routes)
   drawDeposits();
   drawRoads();
   drawBridges();

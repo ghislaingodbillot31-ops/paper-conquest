@@ -36,6 +36,9 @@ const PRESETS = [
     use:'Récolte des baies, puis des herbes une fois améliorée' },
   { id:'rucher', zone:true,         cat:'res', name:'Rucher',            f:1, d:1, turn:true, radius:50, limit:2,
     use:'Produit du miel (2 ruchers au plus par région)' },
+  { id:'cabane_peche', cat:'res', name:'Cabane de pêche', f:2, d:2, turn:true, ownShadow:true, need:'water',
+    job:{ type:'fish', work:4, product:'poisson' },
+    use:"Le pêcheur travaille sur tous les points d'eau du village (étangs), sans zone à définir : il faut au moins un étang" },
   { id:'tailleur_pierre', zone:true, cat:'res', name:'Camp de tailleur de pierre', f:2, d:2, turn:true, radius:40, need:'rock',
     use:'Récolte les pierres de sa zone de travail (3 pierres au moins) et les verse au stock du village' },
   { id:'fosse_miniere', zone:true, cat:'res', name:'Fosse minière',     f:2, d:2, turn:true, radius:40,
@@ -62,6 +65,7 @@ function needIssue(b, h) {
   // en partie (pas dans les éditeurs) : le camp de colon ouvre la construction
   if (GAME && b.id !== 'camp_colon' && !S.houses.some(o => o.kind === 'camp_colon')) return "Posez d'abord le camp de colon";
   if (GAME && h.id === undefined && b.cout) { const m = manque(b.cout); if (m) return m; }   // (un bâtiment déjà posé qu'on déplace ne repaie pas)
+  if (b.need === 'water' && !(S.lakes || []).length) return "Aucun point d'eau dans ce village";
   if (b.limit && S.houses.filter(o => o.kind === b.id && o.id !== h.id).length >= b.limit) return `${b.limit} ${b.name.toLowerCase()}s au plus par région`;
   return null;
 }
@@ -124,7 +128,7 @@ const COUTS = {
   maison:{ bois:10 }, maison_cour:{ bois:25 }, grande_maison:{ bois:40, planches:10 }, manoir:{ bois:60, planches:40, pierre:30 },
   puits:{ pierre:15 }, marche:{ bois:40, planches:10 }, taverne:{ bois:35, planches:15 }, eglise:{ bois:60, planches:30, pierre:20 }, cimetiere:{ pierre:10 },
   camp_bucherons:{ bois:15 }, loge_bucheron:{ bois:8 }, hutte_forestier:{ bois:6 }, camp_chasse:{ bois:12 }, hutte_cueillette:{ bois:8 }, rucher:{ bois:5 },
-  tailleur_pierre:{ bois:15 }, fosse_miniere:{ bois:25 }, scierie:{ bois:40, pierre:10 },
+  tailleur_pierre:{ bois:15 }, cabane_peche:{ bois:20 }, fosse_miniere:{ bois:25 }, scierie:{ bois:40, pierre:10 },
   grange:{ bois:30 }, entrepot:{ bois:40, planches:10 }, relais:{ bois:20 }, poteau:{ bois:5 }, comptoir:{ bois:30, planches:10 }, comptoir_betail:{ bois:40 },
   ferme:{ bois:30 }, bergerie:{ bois:25 }, moulin:{ bois:30, pierre:15 }, four:{ bois:5, pierre:20 },
 };
@@ -143,7 +147,7 @@ const buildingOf = h => PRESETS.find(p => p.id === h.kind) || null;
    l'ordre d'affichage. Un bâtiment absent de ces listes n'est pas proposé au joueur.
    Défense : les outils de fortification (muraille, tour, porte), pas des bâtiments. */
 const BUILD_MENUS = [
-  { id:'recolte',     name:'Récolte',     ids:['camp_bucherons', 'loge_bucheron', 'hutte_forestier', 'camp_chasse', 'hutte_cueillette', 'rucher', 'tailleur_pierre', 'fosse_miniere'] },
+  { id:'recolte',     name:'Récolte',     ids:['camp_bucherons', 'loge_bucheron', 'hutte_forestier', 'camp_chasse', 'hutte_cueillette', 'rucher', 'cabane_peche', 'tailleur_pierre', 'fosse_miniere'] },
   { id:'stockage',    name:'Stockage',    ids:['grange', 'entrepot', 'relais', 'poteau', 'comptoir', 'comptoir_betail'] },
   { id:'residentiel', name:'Résidentiel', ids:['camp_colon', 'maison', 'maison_cour', 'grande_maison', 'manoir', 'marche', 'taverne', 'eglise'] },
   { id:'agriculture', name:'Agriculture', ids:['ferme', 'bergerie'] },

@@ -23,7 +23,7 @@ const VILLAGEOIS = {
 const VILLAGEOIS_DEFAUT = JSON.parse(JSON.stringify(VILLAGEOIS));
 try { const o = JSON.parse(localStorage.getItem('villageois.v1') || '{}'); for (const k in o) if (VILLAGEOIS[k]) VILLAGEOIS[k] = { ...VILLAGEOIS_DEFAUT[k], ...o[k], chapeau:{ ...VILLAGEOIS_DEFAUT[k].chapeau, ...(o[k].chapeau || {}) }, outil:{ ...VILLAGEOIS_DEFAUT[k].outil, ...(o[k].outil || {}) } }; } catch (e) {}
 // le métier d'un villageois d'après le bâtiment où il travaille (bâtiment inconnu : villageois simple)
-const VILLAGEOIS_DE = { camp_colon:'villageois', camp_bucherons:'bucheron', loge_bucheron:'bucheron', hutte_forestier:'forestier', scierie:'menuisier', menuisier:'menuisier', pecherie:'pecheur', camp_chasse:'soldat', hutte_cueillette:'villageois',
+const VILLAGEOIS_DE = { cabane_peche:'pecheur', camp_colon:'villageois', camp_bucherons:'bucheron', loge_bucheron:'bucheron', hutte_forestier:'forestier', scierie:'menuisier', menuisier:'menuisier', pecherie:'pecheur', camp_chasse:'soldat', hutte_cueillette:'villageois',
   rucher:'villageois', tailleur_pierre:'mineur', fosse_miniere:'mineur', ferme:'paysan', recolte:'paysan', agriculture:'paysan', bergerie:'berger', moulin:'boulanger', four:'boulanger', boulangerie:'boulanger',
   forgeron:'forgeron', armurier:'forgeron', fonderie:'forgeron', tailleur:'tailleur', cordonnier:'tailleur', marche:'marchand', comptoir:'marchand', comptoir_betail:'marchand', relais:'marchand',
   entrepot:'marchand', grange:'paysan', defense:'soldat', maison:'villageois', maison_cour:'villageois', potager:'paysan', poulailler:'paysan', verger:'paysan', chevres:'berger', brasserie:'villageois' };

@@ -244,7 +244,7 @@ function renderSel() {
     body.innerHTML = `
       <dl class="kv"><dt>Bâtiment</dt><dd>${o.type}</dd>
       ${b ? `<dt>Rôle</dt><dd>${b.use}</dd>` : ''}
-      ${b && b.cap ? `<dt>Habitants</dt><dd>${typeof occupation === 'function' ? occupation(o) + ' / ' + b.cap : b.cap + ' au plus'}</dd>` : ''}
+      ${b && b.cap ? `<dt>Habitants</dt><dd>${typeof occupation === 'function' ? occupation(o) + ' / ' + b.cap : b.cap + ' au plus'}</dd>${typeof occupants === 'function' ? `<dt>Villageois logés</dt><dd>${listeOcc(occupants(o))}</dd>` : ''}` : ''}
       ${b && b.radius && !b.zone ? `<dt>Portée</dt><dd>${b.radius} m autour</dd>` : ''}
       ${b && b.zone ? `<dt>Zone de travail</dt><dd>${o.zone ? `rayon ${o.zone.r} m, à ${fmt(segLen([o.x, o.y], [o.zone.x, o.zone.y]), 0)} m${b.need === 'forest' || b.id === 'hutte_forestier' ? ` · ${treesInZone(o.zone).length} arbres` : b.need === 'rock' ? ` · ${rocksInZone(o.zone).length} pierres` : ''}` : '<b style="color:var(--bad)">à définir</b>'}</dd>` : ''}
       ${o.kind === 'hutte_forestier' && o.zone ? `<dt>Plants en terre</dt><dd>${(S.planted || []).filter(s => segLen([s.x, s.y], [o.zone.x, o.zone.y]) <= o.zone.r).length} (arbres au bout de ${GROW} s)</dd>
@@ -313,7 +313,7 @@ function updateStatus() {
   const html =
     `<span>${c}</span><span>Trésor <b>${fmt(S.gold, 0)}</b> Or</span>` +
     `<span><b>${S.houses.length}</b> bâtiments · logements pour <b>${cap}</b> habitants</span>` +
-    (typeof popVillage === 'function' ? `<span>habitants <b>${popVillage()}</b> · places disponibles <b>${placesLibres()}</b></span>` : '') +
+    (typeof popVillage === 'function' ? `<span>habitants <b>${popVillage()}</b> · places disponibles <b>${placesLibres()}</b>${logements().sansAbri ? ` · <b>${logements().sansAbri}</b> sans abri` : ''}</span>` : '') +
     `<span><b>${free}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
     `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
     `<span>1 case = 8 × 8 m</span>`;

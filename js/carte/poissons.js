@@ -129,3 +129,21 @@ function hitLake(x, y) {
   for (const lk of S.lakes) { const P = lakeShape(lk); if (inPoly([x, y], P)) return lk; }
   return null;
 }
+
+// pêcheur : l'étang le plus intéressant (beaucoup de poissons, pas trop loin) parmi tous ceux où l'on peut encore pêcher
+function lacPourPecher(h) {
+  let best = null, bs = 0;
+  for (const lk of S.lakes) {
+    const f = poissonsLac(lk); if (!f || f.vide || totalPoissons(f) < 1) continue;
+    const q = riveDuLac(lk, h), sc = totalPoissons(f) / (1 + segLen(q, [h.x, h.y]) / 300);
+    if (sc > bs) { bs = sc; best = lk; }
+  }
+  return best;
+}
+// point de la rive le plus proche du bâtiment, à 2 m de l'eau côté bâtiment
+function riveDuLac(lk, h) {
+  const P = lakeShape(lk); let best = null, bd = Infinity;
+  for (let i = 0; i < P.length; i++) { const t = ptSeg([h.x, h.y], P[i], P[(i + 1) % P.length]); if (t.d < bd) { bd = t.d; best = t.q; } }
+  const L = segLen(best, [h.x, h.y]) || 1;
+  return [best[0] + (h.x - best[0]) / L * 2, best[1] + (h.y - best[1]) / L * 2];
+}

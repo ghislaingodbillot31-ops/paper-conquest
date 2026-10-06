@@ -142,6 +142,7 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .bandeau-pop{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft)}
 .bandeau-pop svg{width:20px; height:20px; fill:var(--hud-ink)}
 .bandeau-pop .sep{margin-left:4px}
+.bandeau-pop, .bandeau-stock{white-space:nowrap}
 .bandeau-stock{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); cursor:help}
 .bandeau-stock b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
 .bandeau-pop b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
@@ -215,13 +216,13 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 }
 
 /* fenêtre d'événement (arrivants) : sur le côté gauche de la carte */
-.evenement{position:fixed; top:74px; left:14px; width:min(260px, calc(100vw - 28px)); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px}
+.evenement{position:fixed; top:146px; left:14px; width:min(260px, calc(100vw - 28px)); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px}
 .evenement h2{font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0 0 6px}
 .evenement p{margin:0 0 10px; font-size:14px}
 .evenement .row{display:flex; gap:8px}
 
 /* stock du village (coin haut gauche) et coût sur les cartes de construction */
-.stock{position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:14px; display:flex; gap:12px; flex-wrap:wrap; max-width:calc(50vw - 160px); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:7px 12px; font-size:13px}
+.stock{position:fixed; top:calc(66px + env(safe-area-inset-top, 0px)); left:14px; display:flex; gap:12px; flex-wrap:wrap; max-width:calc(50vw - 160px); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:7px 12px; font-size:13px}
 .stock b{font-variant-numeric:tabular-nums}
 .carte .cout{display:block; color:var(--hud-soft); font-size:11px}
 
