@@ -6,7 +6,7 @@ const BUILD_DRAW = {
   scierie: h => {
     const w2 = h.w / 2, L = h.l, s = view.s;
     const yard = lpts(h, [[-w2 + .3, .3], [w2 - .3, .3], [w2 - .3, L - .3], [-w2 + .3, L - .3]]);
-    pathS(yard); ctx.fillStyle = WOOD.yard; ctx.fill();                                          // cour
+    /* sol : celui du terrain */                                          // cour
     if (s > 1.5) { const rnd = seeded(Math.round(h.x * 7 + h.y * 13)); ctx.fillStyle = WOOD.speck; for (let k = 0; k < 90; k++) { const [X, Y] = LP(h, -w2 + 1 + rnd() * (h.w - 2), 1 + rnd() * (L - 2)); ctx.beginPath(); ctx.arc(X, Y, Math.max(.5, .12 * s), 0, Math.PI * 2); ctx.fill(); } }
     wattleLT(h, -w2 + .4, .4, w2 - .4, L - .4, -3.2, 3.2);
     planksLT(h, -11.1, 2, -9.3, 9);                                                               // planches refendues qui sèchent
@@ -27,7 +27,7 @@ const BUILD_DRAW = {
      pierre et sentier, carré de potager devant, bois fendu contre le pignon. */
   maison: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 3 + h.y * 7) + 5);
-    pathS(lpts(h, softRect(-w2 + .3, .3, w2 - .3, L - .3, .8, .2, rnd))); ctx.fillStyle = WOOD.yard; ctx.fill(); // courtil
+    /* sol : celui du terrain */ // courtil
     if (s > 3) { ctx.fillStyle = 'rgba(110,130,70,.35)'; for (let k = 0; k < 30; k++) { const u = -w2 + .6 + rnd() * (h.w - 1.2), t = .6 + rnd() * (L - 1.2); if (Math.abs(u - .8) < .9 && t < 2.6) continue; const [X, Y] = LP(h, u, t); ctx.fillRect(X, Y, Math.max(1, .12 * s), Math.max(1, .2 * s)); } } // touffes d'herbe
     pathS(lpts(h, [[.1, .3], [1.5, .3], [1.3, 2.2], [.3, 2.2]])); ctx.fillStyle = 'rgba(150,126,86,.45)'; ctx.fill(); // sentier
     if (s > 2) for (const [u, t, r] of [[.75, .8, .22], [.95, 1.4, .2], [.65, 1.9, .2]]) {         // pierres plates du sentier
@@ -48,9 +48,8 @@ const BUILD_DRAW = {
   maison_cour: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, yard = yardOf(h), Y0 = h._yardFrom || CELL, own = !h._yardFrom;
     const rnd = seeded(Math.round(h.x * 3 + h.y * 7) + 9), craft = EXT[yard].grp === 'Artisanat';
-    if (own) { pathS(lpts(h, softRect(-w2 + .3, .3, w2 - .3, L - .3, .8, .2, rnd))); ctx.fillStyle = WOOD.yard; ctx.fill(); } // courtil
-    const ground = yard === 'verger' ? '#b3b673' : yard === 'potager' ? '#c2ad80' : craft ? WOOD.yard : '#bba27a';
-    pathS(lpts(h, softRect(-w2 + .45, Y0 + .1, w2 - .45, L - .45, .5, .12, rnd))); ctx.fillStyle = ground; ctx.fill();
+    if (own) { /* sol : celui du terrain */ } // courtil
+    /* sol : celui du terrain */
     if (s > 3 && yard === 'verger') { ctx.fillStyle = 'rgba(90,120,55,.4)'; for (let k = 0; k < 60; k++) { const [X, Y] = LP(h, -w2 + .7 + rnd() * (h.w - 1.4), Y0 + .5 + rnd() * (L - Y0 - 1)); ctx.fillRect(X, Y, Math.max(1, .1 * s), Math.max(1, .22 * s)); } }
     yardLT(h, yard, -w2 + .6, Y0 + .4, w2 - .6, L - .6);
     if (own) {
@@ -68,7 +67,7 @@ const BUILD_DRAW = {
   camp_bucherons: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 11) + 1);
     const clear = lpts(h, softRect(-w2 + .5, .5, w2 - .5, L - .5, 2.6, .7, rnd));
-    pathS(clear); ctx.fillStyle = WOOD.yard; ctx.fill();                                          // clairière
+    /* sol : celui du terrain */                                          // clairière
     if (s > 1.5) { ctx.fillStyle = WOOD.speck; for (let k = 0; k < 50; k++) { const [X, Y] = LP(h, -w2 + 1.5 + rnd() * (h.w - 3), 1.5 + rnd() * (L - 3)); ctx.fillRect(X, Y, Math.max(1, .14 * s), Math.max(1, .14 * s)); } }
     if (s > 1.2) { ctx.strokeStyle = 'rgba(96,74,46,.35)'; ctx.lineWidth = Math.max(1, .3 * s); ctx.lineCap = 'round'; ctx.beginPath();   // ornières de débardage
       for (const e of [-.55, .55]) { ctx.moveTo(...LP(h, 1 + e, L - .3)); ctx.bezierCurveTo(...LP(h, 1.2 + e, 12), ...LP(h, .4 + e, 8), ...LP(h, .1 + e, 4.6)); }
@@ -90,7 +89,7 @@ const BUILD_DRAW = {
      flèche d'ardoise ; écurie de chaume à gauche, meule, puits de la cour, potager et verger. */
   manoir: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 3 + h.y * 11) + 21);
-    groundLT(h, -w2 + .4, .4, w2 - .4, L - .4, '#c2b48f', '#aa9b76', .5);                        // cour de terre battue
+    /* sol : celui du terrain */                        // cour de terre battue
     pathS(lpts(h, [[-1.7, .5], [1.7, .5], [1.7, 13.6], [-1.7, 13.6]])); ctx.fillStyle = '#b3aa96'; ctx.fill(); // allée pavée
     if (s > 2.2) { ctx.strokeStyle = 'rgba(70,62,50,.35)'; ctx.lineWidth = 1; ctx.beginPath();
       for (let t = .9, k = 0; t < 13.5; t += .5, k++) { ctx.moveTo(...LP(h, -1.7, t)); ctx.lineTo(...LP(h, 1.7, t)); for (let u = -1.7 + (k % 2) * .3; u < 1.7; u += .6) { ctx.moveTo(...LP(h, u, t - .5)); ctx.lineTo(...LP(h, u, t)); } }
@@ -112,7 +111,7 @@ const BUILD_DRAW = {
      chariot, caisses, sacs, tonneaux et bois fendu */
   camp_colon: h => {
     const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 5 + h.y * 7) + 12);
-    pathS(lpts(h, softRect(-w2 + .5, .5, w2 - .5, L - .5, 2.8, .7, rnd))); ctx.fillStyle = '#c4b28a'; ctx.fill();
+    /* sol : celui du terrain */
     tuftsLT(h, -w2 + 1, 1, w2 - 1, L - 1, 90, false);
     firePitLT(h, 0, 12, .9);
     thatchLT(h, -10.5, 2.5, -4.5, 9, 'u', STRAW); thatchLT(h, 4.5, 2.5, 10.5, 9, 'u', OLD_STRAW);
@@ -125,7 +124,7 @@ const BUILD_DRAW = {
   /* Puits (1 case) : margelle de pierre, treuil et corde, dallage autour, auge et seaux */
   puits: h => {
     const L = h.l, c = L / 2, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 3) + 4);
-    groundLT(h, -3.6, .4, 3.6, L - .4, '#c0ae88', '#a8966f', 1.8);                                 // terre piétinée
+    /* sol : celui du terrain */                                 // terre piétinée
     tuftsLT(h, -3.4, .5, 3.4, L - .5, 40, false);
     for (let i = 0; i < 11; i++) {                                                                // dalles autour de la margelle
       const a = i / 11 * Math.PI * 2 + rnd() * .2, R = 1.75 + rnd() * .15, cu = Math.cos(a) * R, ct = c + Math.sin(a) * R, P = [];
@@ -143,7 +142,7 @@ const BUILD_DRAW = {
      marches ; étals à auvents rayés, charrette, caisses, sacs, tonneaux et paniers */
   marche: h => {
     const w2 = h.w / 2, L = h.l, s = view.s;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, '#c6b791', '#ae9e79', 1.2);
+    /* sol : celui du terrain */
     pathS(lpts(h, [[-5.4, 6.6], [5.4, 6.6], [5.4, 17.4], [-5.4, 17.4]])); ctx.fillStyle = '#b5ab96'; ctx.fill();
     if (s > 2.2) { const rnd = seeded(Math.round(h.x + h.y) + 8); ctx.strokeStyle = 'rgba(70,62,50,.3)'; ctx.lineWidth = 1; ctx.beginPath();
       for (let t = 6.6, k = 0; t < 17.4; t += .5, k++) { ctx.moveTo(...LP(h, -5.4, t)); ctx.lineTo(...LP(h, 5.4, t)); for (let u = -5.4 + (k % 2) * .3 + rnd() * .1; u < 5.4; u += .6) { ctx.moveTo(...LP(h, u, t)); ctx.lineTo(...LP(h, u, Math.min(17.4, t + .5))); } }
@@ -167,7 +166,7 @@ const BUILD_DRAW = {
      en appentis ; derrière, la cour aux tables et bancs, tonneaux, bois, plessis */
   taverne: h => {
     const w2 = h.w / 2, L = h.l, s = view.s;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, WOOD.yard, WOOD.speck, 1);
+    /* sol : celui du terrain */
     tableLT(h, -3.8, 11.7, 3.6, ['#c9924e', '#e8dcc0', '#8a5a2e']); tableLT(h, 1.8, 13.7, 3.6, ['#e8dcc0', '#c9924e']);
     for (const [u, t] of [[5.3, 10.2], [6.3, 10.6], [5.6, 11.3], [6.6, 11.6]]) barrelLT(h, u, t, .45);
     cordwoodLT(h, 6.5, 12.6, 7.3, 15.2);
@@ -185,7 +184,7 @@ const BUILD_DRAW = {
      cimetière (tombes, croix, if) */
   eglise: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 7 + h.y * 5) + 3);
-    groundLT(h, -w2 + .4, .4, w2 - .4, L - .4, GRASS.lush, null, .6);
+    /* sol : celui du terrain */
     tuftsLT(h, -w2 + .8, .8, w2 - .8, L - .8, 260, true);
     pathS(lpts(h, [[-7.3, .5], [-4.7, .5], [-4.7, 2.6], [-7.3, 2.6]])); ctx.fillStyle = '#b8a47c'; ctx.fill(); // parvis
     pathS(lpts(h, [[-1.2, 15.4], [2.6, 15.4], [2.6, 17], [-1.2, 17]])); ctx.fillStyle = '#b8a47c'; ctx.fill(); // porte latérale
@@ -206,7 +205,7 @@ const BUILD_DRAW = {
      calvaire, rangs de tombes (croix de bois, stèles, terre fraîche), if */
   cimetiere: h => {
     const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 13 + h.y * 3) + 6);
-    groundLT(h, -w2 + .4, .4, w2 - .4, L - .4, GRASS.lush, null, .6);
+    /* sol : celui du terrain */
     tuftsLT(h, -w2 + .8, .8, w2 - .8, L - .8, 120, true);
     pathS(lpts(h, [[-.9, .5], [.9, .5], [.9, 8.4], [-.9, 8.4]])); ctx.fillStyle = '#b8a47c'; ctx.fill();
     for (const t of [2.1, 5.5, 9, 12.4]) for (const u of [-6.1, -4.3, -2.5, 2.5, 4.3, 6.1]) {
@@ -225,9 +224,9 @@ const BUILD_DRAW = {
      (même extensions que la maison avec arrière-cour) */
   grande_maison: h => {
     const w2 = h.w / 2, L = h.l, hw = 2 * CELL, yard = yardOf(h), rnd = seeded(Math.round(h.x * 3 + h.y * 7) + 12);
-    pathS(lpts(h, softRect(-w2 + .3, .3, w2 - .3, L - .3, .8, .2, rnd))); ctx.fillStyle = WOOD.yard; ctx.fill(); // courtil
+    /* sol : celui du terrain */ // courtil
     BUILD_DRAW.maison_cour({ ...h, yard, _yardFrom:hw });
-    groundLT(h, 4.2, .7, w2 - .6, hw - .5, GRASS.lush, null, .5);                                 // jardin
+    /* sol : celui du terrain */                                 // jardin
     tuftsLT(h, 4.4, .8, w2 - .8, hw - .8, 80, true);
     vegPatchLT(h, 4.8, 1.3, 7.6, 4.1); vegPatchLT(h, 8.4, 1.3, 11.2, 4.1); vegPatchLT(h, 4.8, 4.9, 7.6, 7.3);
     fruitTreeLT(h, 9.6, 7.4, 1.7); fruitTreeLT(h, 8.4, 12.4, 1.6);
@@ -244,7 +243,7 @@ const BUILD_DRAW = {
      équarri et hache, bûches fendues éparses, stères, grumes à fendre, fagots */
   loge_bucheron: h => {
     const L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 5 + h.y * 9) + 2);
-    groundLT(h, -3.6, .4, 3.6, L - .4, WOOD.yard, WOOD.speck, 1.4);
+    /* sol : celui du terrain */
     cordwoodLT(h, -3.3, 1, -2.5, 7.6); cordwoodLT(h, 2.5, 1, 3.3, 5.2);
     logPileLT(h, -1.9, 2.3, 5.6, 3, .34);
     if (s > 1.5) offcutsLT(h, .3, 3.4, 1.2, 10, 17);
@@ -258,7 +257,7 @@ const BUILD_DRAW = {
      jeunes arbres tuteurés, seau d'arrosage */
   hutte_forestier: h => {
     const L = h.l;
-    groundLT(h, -3.6, .4, 3.6, L - .4, '#bda97f', '#a38f68', 1.4);
+    /* sol : celui du terrain */
     nurseryLT(h, -3.2, .8, .4, 3.3, .45); nurseryLT(h, 1, .8, 3.3, 3.3, .75);
     for (const [u, t, r] of [[2.7, 5.1, .7], [2.5, 6.9, .6]]) { treeLT(h, u, t, r, OAK); }
     bucketLT(h, .7, 3.9);
@@ -269,7 +268,7 @@ const BUILD_DRAW = {
      cadres, séchoir à viande, gibier, butte de tir et flèches, bois et fagots */
   camp_chasse: h => {
     const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 5 + h.y * 11) + 8);
-    pathS(lpts(h, softRect(-w2 + .5, .5, w2 - .5, L - .5, 2.6, .7, rnd))); ctx.fillStyle = '#c4b28a'; ctx.fill();
+    /* sol : celui du terrain */
     tuftsLT(h, -w2 + 1, 1, w2 - 1, L - 1, 70, false);
     hideFrameLT(h, 2.6, 2.3, 1.05); hideFrameLT(h, 5.6, 2.4, 1); hideFrameLT(h, 4.1, 5.6, .95);
     dryRackLT(h, 1.2, 6.8, 9.2, ['#7a2e24', '#8e3b2c', '#6a2a22'], 6);
@@ -284,7 +283,7 @@ const BUILD_DRAW = {
      séchoirs à herbes, carré de simples, buissons à baies */
   hutte_cueillette: h => {
     const L = h.l;
-    groundLT(h, -3.6, .4, 3.6, L - .4, '#c0ad85', '#a8956e', 1.4);
+    /* sol : celui du terrain */
     tuftsLT(h, -3.4, 7, 3.4, L - .6, 50, true);
     dryRackLT(h, -3, 3, 8.1, ['#6f8a3e', '#86a04a', '#9a8f4e'], 7); dryRackLT(h, -3, 3, 9.9, ['#7d8f4a', '#5d7a38', '#a39a5a'], 7);
     vegPatchLT(h, -3.2, 11.2, -.4, 14.9);
@@ -296,7 +295,7 @@ const BUILD_DRAW = {
      abri de chaume au fond et banc à ruches, rangée de lavande */
   rucher: h => {
     const L = h.l, s = view.s;
-    groundLT(h, -3.6, .4, 3.6, L - .4, GRASS.lush, null, 1.2);
+    /* sol : celui du terrain */
     tuftsLT(h, -3.4, .6, 3.4, L - .6, 90, true);
     if (s > 1.5) { const rnd = seeded(Math.round(h.x + h.y * 3)); for (let u = -3; u < 3.1; u += .42) { const [X, Y] = LP(h, u, 1 + (rnd() - .5) * .1), r = Math.max(1, .2 * s); ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fillStyle = '#8a7fb8'; ctx.fill(); ctx.beginPath(); ctx.arc(X, Y + .1 * s, r * .8, 0, Math.PI * 2); ctx.fillStyle = '#6f8a4a'; ctx.fill(); } } // lavande
     thatchLT(h, -3.2, 5.4, 3.2, 7.5, 'u', STRAW);
@@ -309,7 +308,7 @@ const BUILD_DRAW = {
      blocs bruts, établi (banker) et bloc en cours, chèvre de levage, gravats, appentis */
   tailleur_pierre: h => {
     const w2 = h.w / 2, L = h.l, s = view.s;
-    groundLT(h, -w2 + .4, .4, w2 - .4, L - .4, '#cbc3b1', '#b2aa98', 1);
+    /* sol : celui du terrain */
     chipsLT(h, -1.6, 5.4, 2.4, 60); chipsLT(h, 3, 4, 2, 30);
     for (let r = 0; r < 3; r++) for (let c = 0; c < 3; c++) blockLT(h, -7 + c * 1.35, 1.2 + r * 1.05, -5.85 + c * 1.35, 2.05 + r * 1.05); // blocs taillés
     for (const [u, t, a, b] of [[-7.2, 8.6, 1.9, 1.4], [-4.8, 9.1, 1.5, 1.2], [-6.8, 10.5, 1.6, 1.1]]) blockLT(h, u, t, u + a, t + b, true); // blocs bruts
@@ -330,7 +329,7 @@ const BUILD_DRAW = {
      tas de minerai de fer et d'argile, déblais, brouette, bois d'étai, cabane. */
   fosse_miniere: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, cu = .5, ct = 8.2, rnd = seeded(Math.round(h.x * 3 + h.y * 11) + 77);
-    groundLT(h, -w2 + .4, .4, w2 - .4, L - .4, '#b39a78', '#9c8462', 1.4);
+    /* sol : celui du terrain */
     // contour d'un niveau : ovale allongé dans l'axe du filon (un peu penché), bords irréguliers
     const ph = [rnd() * 6.28, rnd() * 6.28, rnd() * 6.28], tilt = -.35;
     const level = (k, du = 0, dt = 0) => { const P = []; for (let i = 0; i < 40; i++) { const a = i / 40 * Math.PI * 2, q = 1 + .09 * Math.sin(3 * a + ph[0]) + .05 * Math.sin(5 * a + ph[1]) + .03 * Math.sin(9 * a + ph[2]);
@@ -383,8 +382,8 @@ const BUILD_DRAW = {
      soue à cochons, poules */
   ferme: h => {
     const w2 = h.w / 2, L = h.l, s = view.s, rnd = seeded(Math.round(h.x * 7 + h.y * 3) + 5);
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, WOOD.yard, WOOD.speck, 1);
-    groundLT(h, -11, 9.6, -6.8, 14.2, '#8f7a5a', null, .3);                                       // soue boueuse
+    /* sol : celui du terrain */
+    /* sol : celui du terrain */                                       // soue boueuse
     pensLT(h, [[[-11, 9.6], [-6.8, 9.6]], [[-6.8, 9.6], [-6.8, 14.2]], [[-6.8, 14.2], [-11, 14.2]], [[-11, 14.2], [-11, 9.6]]]);
     pigLT(h, -9.6, 11.2, .6); pigLT(h, -8.2, 12.8, 2.8);
     heapLT(h, 3.2, 12.2, 1.6, 1.1, '#5e4a33', '#735c40');                                        // fumier
@@ -402,8 +401,8 @@ const BUILD_DRAW = {
      claies tressées : moutons, râtelier à foin, abreuvoir, litière */
   bergerie: h => {
     const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 3 + h.y * 13) + 7);
-    groundLT(h, -w2 + .3, .3, w2 - .3, 10, WOOD.yard, WOOD.speck, .6);
-    groundLT(h, -w2 + .4, 9.6, w2 - .4, L - .3, '#a9a878', null, .5);                            // parc brouté
+    /* sol : celui du terrain */
+    /* sol : celui du terrain */                            // parc brouté
     tuftsLT(h, -w2 + .6, 10, w2 - .6, L - .6, 110, false);
     heapLT(h, -5.6, 21.6, 1.2, .9, '#c7b26a', '#dccb86');
     hayRackLT(h, -1.2, 15.2, 1.2, 16.2);
@@ -419,7 +418,7 @@ const BUILD_DRAW = {
      meule de rechange, charrette de sacs ; maison du meunier et son courtil au fond. */
   moulin: h => {
     const L = h.l, s = view.s, mu = .8, mt = 8.6;
-    groundLT(h, -7.6, .4, 7.6, L - .4, '#bdb78a', null, 1.4);                                    // pré
+    /* sol : celui du terrain */                                    // pré
     tuftsLT(h, -7.4, .6, 7.4, L - .6, 110, true);
     // chemin de terre de la rue à la porte, et vers la maison du meunier
     pathS(lpts(h, [[-.1, .4], [1.7, .4], [1.8, 5.1], [-.2, 5.1]])); ctx.fillStyle = '#b9a57c'; ctx.fill();
@@ -491,7 +490,7 @@ const BUILD_DRAW = {
      pains, tas de cendres */
   four: h => {
     const w2 = h.w / 2, L = h.l, s = view.s;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, WOOD.yard, WOOD.speck, 1);
+    /* sol : celui du terrain */
     heapLT(h, -6.2, 13.8, 1, .8, '#8f887c', '#a39d91');                                          // cendres
     for (const [u, t, a] of [[4.4, 2, .05], [4.6, 3.1, -.05], [4.3, 4.2, .1], [6.3, 2.6, 1.5]]) fagotLT(h, u, t, 2.2, a);
     cordwoodLT(h, 6.4, 8.6, 7.2, 14.8);
@@ -507,7 +506,7 @@ const BUILD_DRAW = {
      pavée devant ses portes ; charrette de foin, meule, sacs de grain, tonneaux */
   grange: h => {
     const w2 = h.w / 2, L = h.l;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, WOOD.yard, WOOD.speck, 1);
+    /* sol : celui du terrain */
     pathS(lpts(h, [[-3.2, .6], [1.8, .6], [1.8, 3], [-3.2, 3]])); ctx.fillStyle = '#b3aa96'; ctx.fill(); // aire devant les portes
     tuftsLT(h, 4.6, 12, 7.4, L - .6, 40, false);
     hayCartLT(h, 6, 3.2);
@@ -520,7 +519,7 @@ const BUILD_DRAW = {
      quai de chargement ; caisses, tonneaux, sacs, planches et poutres, charrette */
   entrepot: h => {
     const w2 = h.w / 2, L = h.l;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, '#c8bfa9', '#b1a791', .6);
+    /* sol : celui du terrain */
     for (const [u, t, a] of [[-10, 2.2, .5], [-8.9, 2.3, .45], [-10.1, 3.3, .48], [-8.8, 3.4, .5], [-9.4, 4.6, .45], [-7.6, 2.4, .42]]) crateLT(h, u, t, a);
     for (const [u, t] of [[-5.4, 2.2], [-4.4, 2.4], [-5.2, 3.2], [-4.2, 3.4], [-4.8, 4.3]]) barrelLT(h, u, t, .45);
     for (const [u, t] of [[2.2, 2.1], [3, 2.4], [2.4, 3.2], [3.2, 3.5], [2.6, 4.3]]) sackLT(h, u, t, .38);
@@ -535,7 +534,7 @@ const BUILD_DRAW = {
      mulets à la barre d'attache, abreuvoir, bâts et ballots, clôture de perches */
   relais: h => {
     const w2 = h.w / 2, L = h.l;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, WOOD.yard, WOOD.speck, 1);
+    /* sol : celui du terrain */
     heapLT(h, -5.6, 13.6, 1, .8, '#c7b26a', '#dccb86');
     sackLT(h, -2.6, 10.6, .4, '#cdbb8e'); sackLT(h, -2, 11.4, .38); crateLT(h, -1.4, 12.6, .42); crateLT(h, -2.4, 13.2, .4);
     hitchRailLT(h, 1.8, 7, 3.3);
@@ -549,7 +548,7 @@ const BUILD_DRAW = {
      joug posé, abreuvoir */
   poteau: h => {
     const L = h.l;
-    groundLT(h, -3.6, .4, 3.6, L - .4, '#b8a37c', '#a08b66', 1.8);
+    /* sol : celui du terrain */
     tuftsLT(h, -3.4, .5, 3.4, L - .5, 30, false);
     heapLT(h, 0, 2.2, 2, .7, '#c7b26a', '#dccb86');
     hitchRailLT(h, -3, 3, 3.5);
@@ -561,7 +560,7 @@ const BUILD_DRAW = {
      devant, deux étals couverts, caisses, tonneaux, sacs, ballots d'étoffe, mulet bâté */
   comptoir: h => {
     const w2 = h.w / 2, L = h.l;
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, '#c6b791', '#ae9e79', 1);
+    /* sol : celui du terrain */
     stallLT(h, -10.6, 3.8, -4.6, 7, '#e8dfc6', '#3f5d7a', ['#8a3b2e', '#3f5d7a', '#c9b27a']);
     stallLT(h, 4.6, 3.8, 10.6, 7, '#e8dfc6', '#8a3b2e', ['#b47c55', '#c9924e', '#6f8a3e']);
     barrelLT(h, -2.4, 2.4, .42); barrelLT(h, -2.6, 3.4, .4); crateLT(h, -.8, 2.2, .45); crateLT(h, .2, 2.6, .42);
@@ -575,9 +574,9 @@ const BUILD_DRAW = {
      terre, étable de chaume, râteliers et abreuvoirs */
   comptoir_betail: h => {
     const w2 = h.w / 2, L = h.l, rnd = seeded(Math.round(h.x * 9 + h.y * 7) + 3);
-    groundLT(h, -w2 + .3, .3, w2 - .3, L - .3, '#b8a47e', '#9c8762', 1);
-    groundLT(h, -11.4, 1, -.8, 12.8, '#a9a878', null, .4); groundLT(h, .8, 1, 11.4, 12.8, '#a9a878', null, .4);
-    groundLT(h, .8, 14, 11.4, 23.2, '#8f7a5a', null, .4);
+    /* sol : celui du terrain */
+    /* sol : celui du terrain */ /* sol : celui du terrain */
+    /* sol : celui du terrain */
     tuftsLT(h, -11.2, 1.2, 11.2, 12.6, 140, false);
     const box = (u0, t0, u1, t1, g0, g1) => [[[u0, t0], [g0, t0]], [[g1, t0], [u1, t0]], [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]]];
     hayRackLT(h, -10.6, 5, -9.6, 8.6); waterTroughLT(h, -3.4, 11.4, -1.4, 12.1); waterTroughLT(h, 9, 1.6, 10.8, 2.3);

@@ -545,12 +545,8 @@ const GRASS = { lush:'#aab27c', dry:'#bcb88a', blade:'rgba(96,116,62,.45)', flow
 // ajoute un polygone au chemin courant (sans beginPath) : plusieurs pièces remplies d'un coup
 const addS = P => { P.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); };
 // sol d'une parcelle : aplat au bord irrégulier, mouchetures (speck) quand on zoome
-function groundLT(h, u0, t0, u1, t1, col, speck, r = .8) {
-  const rnd = seeded(Math.round(h.x * 3 + h.y * 7 + u0 * 5 + t0 * 11) + 13), s = view.s;
-  pathS(lpts(h, softRect(u0, t0, u1, t1, r, .2, rnd))); ctx.fillStyle = col; ctx.fill();
-  if (speck && s > 1.5) { ctx.fillStyle = speck; const n = Math.round((u1 - u0) * (t1 - t0) / 5);
-    for (let k = 0; k < n; k++) { const [X, Y] = LP(h, u0 + .5 + rnd() * (u1 - u0 - 1), t0 + .5 + rnd() * (t1 - t0 - 1)); ctx.fillRect(X, Y, Math.max(1, .13 * s), Math.max(1, .13 * s)); } }
-}
+// (le sol propre aux bâtiments n'existe plus : le terrain de la région se voit tel quel ; fonction gardée pour les anciens appels)
+function groundLT() {}
 // herbe : touffes et fleurs des champs semées sur un rectangle
 function tuftsLT(h, u0, t0, u1, t1, n, flowers) {
   const s = view.s; if (s < 2) return;
