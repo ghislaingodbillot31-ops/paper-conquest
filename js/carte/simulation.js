@@ -296,6 +296,7 @@ function drawWorkers() {
   for (const [id, w] of workers) {
     if (w.passive) continue; // production sans déplacement
     const [X, Y] = toS(w.x, w.y), r = Math.max(3.5, .9 * s);
+    persos.push([w.x, w.y]); ctx.globalAlpha = voileBois(w.x, w.y);     // sous les arbres (voir canopeeSur)
     if (w.state === 'cut') { // coups de hache : anneau qui pulse
       ctx.beginPath(); ctx.arc(X, Y, r * (1.8 + .6 * Math.sin(now * 12)), 0, Math.PI * 2);
       ctx.strokeStyle = Col.accent; ctx.lineWidth = 1.5; ctx.stroke();
@@ -307,9 +308,11 @@ function drawWorkers() {
     } else { ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2);
       ctx.fillStyle = Col.accent; ctx.fill(); ctx.strokeStyle = Col.sheet; ctx.lineWidth = 1.5; ctx.stroke(); }
     // ce qu'il porte : bûche, gerbe de grain, laine, sac de farine, pains
+    ctx.globalAlpha = 1;
     if (w.carry) { ctx.fillStyle = Col[w.carry === true ? 'earth-edge' : w.carry]; ctx.strokeStyle = Col['house-edge']; ctx.lineWidth = .8; ctx.fillRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); ctx.strokeRect(X + r * .6, Y - r * 1.6, r * 2.2, r * .9); }
   }
   if (typeof arrivantsDessin === 'function') arrivantsDessin();
+  canopeeSur();                                                        // les houppiers repassent par-dessus les personnages
   // stock au-dessus de chaque bâtiment qui produit
   if (s > .9) for (const h of S.houses) {
     const J = jobOf(h), store = J && J.type === 'collect';

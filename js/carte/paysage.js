@@ -442,6 +442,22 @@ function stampTree(g, f, X, Y, s) {
   const k = Math.max(f.r * s, f.kind === 'tree' ? 2.4 : 1.4) / SPR_R;
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
+/* Les personnages passent SOUS les arbres : peints après le décor, ils sont recouverts par les houppiers qui les surplombent.
+   - persos : positions (m) des personnages peints à cette image (chaque dessin y ajoute les siens) ;
+   - voileBois : sous le massif d'une grande forêt (arbres de l'intérieur, une seule masse) on voit le personnage en transparence ;
+   - canopeeSur : les arbres isolés et de lisière dont le houppier couvre un personnage sont repeints par-dessus lui. */
+const persos = [];
+const voileBois = (x, y) => floraNear(x - 7, y - 7, x + 7, y + 7).some(f => f.wood && f.inner && (f.x - x) ** 2 + (f.y - y) ** 2 <= Math.max(f.r * 1.25, 5.8) ** 2) ? .3 : 1;
+function canopeeSur() {
+  const vus = new Set(), arbres = [];
+  for (const [x, y] of persos) for (const f of floraNear(x - 9, y - 9, x + 9, y + 9)) {
+    if (f.kind !== 'tree' || (f.wood && f.inner) || (f.x - x) ** 2 + (f.y - y) ** 2 > (f.r + 1.2) ** 2) continue;
+    const k = treeKey(f); if (!vus.has(k)) { vus.add(k); arbres.push(f); }
+  }
+  arbres.sort((a, b) => a.y - b.y);                                   // du nord au sud, comme le décor
+  for (const f of arbres) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  persos.length = 0;
+}
 const WATER_TREE_FREE = 10; // m libres entre le bord du houppier et l'eau (rivières, lacs ; îles exceptées)
 const SEA_TREE_FREE = 6; // m libres entre le bord du houppier et la mer (cartes à forme réelle)
 const SEA_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [.7, .7], [-.7, .7], [.7, -.7], [-.7, -.7]];

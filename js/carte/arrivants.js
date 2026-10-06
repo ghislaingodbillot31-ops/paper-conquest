@@ -50,7 +50,8 @@ function arrivantsDessin() {
   const V = VILLAGEOIS.villageois, Ls = Math.max(V.T * s * 2.2, 8), n = Math.min(arrivants.attente, ARR_VISIBLES);
   for (let i = 0; i < n; i++) {
     const a = i * 2.399, r = 4 + (i % 3) * 2.2, [X, Y] = toS(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-    peintVillageois('villageois', X, Y, Ls, a + Math.PI);                // face au feu
+    const wx = cx + Math.cos(a) * r, wy = cy + Math.sin(a) * r; persos.push([wx, wy]);
+    ctx.globalAlpha = voileBois(wx, wy); peintVillageois('villageois', X, Y, Ls, a + Math.PI); ctx.globalAlpha = 1;   // face au feu, sous les arbres
   }
 }
 afficherDemande();
