@@ -41,6 +41,7 @@
   <button role="tab" data-tool="maptest" aria-selected="false">Ressources</button>
   <button role="tab" data-tool="villageois" aria-selected="false">Habitants</button>
   <button role="tab" data-tool="arbres" aria-selected="false">Végétation</button>
+  <button role="tab" data-tool="baies" aria-selected="false">Arbustes à baies</button>
   <button role="tab" data-tool="vehicules" aria-selected="false">Véhicules</button>
 </nav>
 <main>
@@ -51,6 +52,7 @@
   <iframe id="batiments" title="Bâtiments" data-src="editeur-batiments.html"></iframe>
   <iframe id="maptest" title="Ressources (map test)" data-src="map-test.html"></iframe>
   <iframe id="villageois" title="Habitants" data-src="editeur-villageois.html"></iframe>
+  <iframe id="baies" title="Arbustes à baies" data-src="arbustes-baies.html"></iframe>
   <iframe id="arbres" title="Végétation" data-src="arbres-fruitiers.html"></iframe>
   <iframe id="vehicules" title="Véhicules" data-src="editeur-vehicules.html"></iframe>
 </main>
@@ -82,6 +84,7 @@ function dire(t) { const m = document.getElementById('msg'); m.textContent = t; 
 document.querySelector('nav.principal').addEventListener('click', e => { const b = e.target.closest('[data-section]'); if (b) show(b.dataset.section); });
 barre.addEventListener('click', e => { const b = e.target.closest('[data-tool]'); if (b && !b.disabled) show('edition', b.dataset.tool); });
 addEventListener('message', e => {
+  if (e.origin === location.origin && e.data && e.data.studio === 'baies') { testAJour = false; dire('Arbustes à baies mis à jour : visibles dans Test jeu'); return; }   // (le test se recharge à sa prochaine visite)
   if (e.origin !== location.origin || !e.data || e.data.studio !== 'applique') return;
   if (e.data.region === REGION_TEST) { testAJour = false; dire('Région ' + e.data.region + ' appliquée : visible dans Test jeu'); }   // (le test se recharge à sa prochaine visite)
   else dire('Région ' + e.data.region + ' enregistrée (le test jeu utilise la région ' + REGION_TEST + ')');

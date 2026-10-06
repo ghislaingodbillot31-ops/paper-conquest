@@ -334,6 +334,7 @@ function drawWorkers() {
   }
   for (const [id, w] of workers) {
     if (w.passive || w.dedans) continue; // production sans déplacement ; ou habitant rentré dans son logement
+    if (typeof batimentSous === 'function' && batimentSous([w.x, w.y])) continue;   // il entre : il atteint la porte puis disparaît à l'intérieur (jamais peint au-dessus d'un bâtiment)
     const [X, Y] = toS(w.x, w.y), r = Math.max(3.5, .9 * s);
     persos.push([w.x, w.y]); ctx.globalAlpha = voileBois(w.x, w.y);     // sous les arbres (voir canopeeSur)
     if (w.state === 'cut') { // coups de hache : anneau qui pulse

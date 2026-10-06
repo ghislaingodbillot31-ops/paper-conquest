@@ -125,7 +125,7 @@ function forestNoise() {
 function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
   const base = S.roads.filter(r => !r.libre);   // routes de base : les seules dont dépend la végétation fixe ; celles du joueur ne la font qu'effacer (computeFlora)
-  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';');
+  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';') + '|' + (typeof baiesSignature === 'function' ? baiesSignature() : '');
   if (MONDE_PLAT) return floraCands = [];                                       // monde plat : aucune végétation
   if (floraCands && floraSeed === fk) return floraCands;
   const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
@@ -249,6 +249,7 @@ function floraCandidates() {
         }
       } }
   }
+  if (typeof baiesCandidats === 'function') out.push(...baiesCandidats(fz, B));   // arbres et arbustes à baies validés, selon le climat et le terrain (baies.js)
   // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
   const inForest = f => !f.wood && !f.wet && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
   floraSeed = fk;
@@ -439,6 +440,7 @@ function drawWoods(g, list, s, ox, oy) {
 // (vue de loin : un arbre garde au moins 2,4 px de rayon, un buisson ou un rocher 1,4 px —
 // sinon ils disparaîtraient et la carte perdrait tous ses détails)
 function stampTree(g, f, X, Y, s) {
+  if (f.kind === 'baie') return stampBaie(g, f, X, Y, s);
   const k = Math.max(f.r * s, f.kind === 'tree' ? 2.4 : 1.4) / SPR_R;
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }

@@ -40,13 +40,28 @@ function fauneRocheCases() {
   for (const r of flora) if (r.kind === 'rock') { const k = Math.floor(r.x / 16) + ',' + Math.floor(r.y / 16); if (!fauneRoches.has(k)) fauneRoches.set(k, []); fauneRoches.get(k).push(r); }
   return fauneRoches;
 }
+/* L'eau : les polygones d'eau du décor, MAIS AUSSI le tracé réellement dessiné (axe des rivières avec leur demi-largeur, contour lissé des lacs),
+   avec une marge : un animal terrestre ne met jamais le pied dans l'eau, même à un raccord de polygones. */
+function fauneEau(x, y, rad = .4) {
+  const m = rad + .6;
+  for (const lst of [Z.water.river, Z.water.lake]) for (const q of lst) if (x > q.bb[0] - m && x < q.bb[2] + m && y > q.bb[1] - m && y < q.bb[3] + m && (inPoly([x, y], q.P) || q.P.some((p, i) => ptSeg([x, y], p, q.P[(i + 1) % q.P.length]).d < m))) return true;
+  for (const rv of S.rivers) { const HW = riverHW(rv); for (let i = 0; i < rv.pts.length - 1; i++) { const a = rv.pts[i], b = rv.pts[i + 1], hw = Math.max(HW[i], HW[i + 1]) + m;
+    if (x > Math.min(a[0], b[0]) - hw && x < Math.max(a[0], b[0]) + hw && y > Math.min(a[1], b[1]) - hw && y < Math.max(a[1], b[1]) + hw && ptSeg([x, y], a, b).d < Math.max(HW[i], HW[i + 1]) + m) return true; } }
+  for (const lk of S.lakes) { const P = lakeShape(lk), bb = bbox(P); if (x > bb[0] - m && x < bb[2] + m && y > bb[1] - m && y < bb[3] + m && (inPoly([x, y], P) || P.some((p, i) => ptSeg([x, y], p, P[(i + 1) % P.length]).d < m))) return true; }
+  return false;
+}
+// un animal qui se retrouve dans l'eau (carte modifiée, apparition…) est remis sur la terre ferme la plus proche
+function fauneSecours(h, a) {
+  for (let r = 2; r <= 90; r += 2) for (let k = 0; k < 16; k++) { const an = k / 16 * 6.28 + r, x = a.x + Math.cos(an) * r, y = a.y + Math.sin(an) * r; if (fauneLibre(x, y, h.p.bois, Math.max(.2, h.T * .22))) { a.x = x; a.y = y; a.v = 0; a.d = null; return true; } }
+  return false;
+}
 // rad : demi-largeur de l'animal (m). Eau, cailloux, gisements, bâtiments et (sauf bois) grandes forêts sont infranchissables ; les arbres, eux, se traversent (par-dessous : drawFaune)
 function fauneLibre(x, y, bois, rad = .4) {
   if (!inTerrain([x, y]) || !surTerre([x, y])) return false;
   const rc = fauneRocheCases(), cx = Math.floor(x / 16), cy = Math.floor(y / 16);
   for (let j = cy - 1; j <= cy + 1; j++) for (let i = cx - 1; i <= cx + 1; i++) for (const r of rc.get(i + ',' + j) || []) if (Math.hypot(r.x - x, r.y - y) < r.r * .9 + rad) return false;
   for (const d of S.deposits || []) if (Math.abs(d.c[0] - x) < d.r * 1.4 && Math.abs(d.c[1] - y) < d.r * 1.4 && inPoly([x, y], d.pts)) return false;
-  for (const lst of [Z.water.river, Z.water.lake]) for (const q of lst) if (x > q.bb[0] && x < q.bb[2] && y > q.bb[1] && y < q.bb[3] && inPoly([x, y], q.P)) return false;
+  if (fauneEau(x, y, rad)) return false;
   for (const h of S.houses) if (Math.abs(h.x - x) < 30 && Math.abs(h.y - y) < 30 && inPoly([x, y], corners(h))) return false;
   return bois || !fauneEnForet(x, y);
 }
@@ -125,6 +140,7 @@ function fauneSuite(h, c) {                                                     
   return fauneMode(h, r < .65 ? 'repos' : 'paitre', 30 + Math.random() * 60);
 }
 function fauneAnimal(h, a, c, dt) {
+  if ((a.chk = (a.chk === undefined ? Math.random() : a.chk) - dt) <= 0) { a.chk = 1.5; if (fauneEau(a.x, a.y, Math.max(.2, h.T * .22))) fauneSecours(h, a); }   // (jamais dans l'eau)
   const T = h.T, run = h.mode === 'fuite' ? 3.2 : h.chasse && h.mode === 'marcher' ? 1.7 : 1, vw = fvit(T) * (a.jeune ? .8 : 1) * (h.cat === 'predateur' ? 1.1 : 1);
   let want = a.a, v = 0, turn = 2.4;
   const dc = Math.hypot(c[0] - a.x, c[1] - a.y);
