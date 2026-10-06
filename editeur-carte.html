@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Éditeur de carte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/carte.css">
+
+<div class="app">
+  <aside class="panel" aria-label="Outils">
+    <header>
+      <h1 id="map-title">Village par zonage</h1>
+      <p class="sub" id="map-sub">Terrain de 2 000 × 1 500 m · cases de 8 m le long des routes, 4 cases de profondeur · routes d'une case de large</p>
+    </header>
+
+    <section>
+      <h2>Région</h2>
+      <div class="row">
+        <label for="biome">Biome<select id="biome"></select></label>
+        <label for="river-mode">Cours d'eau<select id="river-mode">
+          <option value="auto">Selon le biome</option>
+          <option value="petite">Petite rivière</option>
+          <option value="riviere">Rivière</option>
+          <option value="fleuve">Fleuve</option>
+          <option value="aucun">Aucun</option>
+        </select></label>
+        <button id="new-region">Nouvelle région</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <label for="forme-id">Forme réelle (n° de région du globe)<input id="forme-id" type="number" min="1" max="500" placeholder="aucune"></label>
+      </div>
+      <div style="margin-top:10px">
+        <label for="saison-jour">Jour de l'année (test des saisons)<input id="saison-jour" type="range" min="1" max="365" value="1"></label>
+        <div class="row" style="margin-top:4px;align-items:center"><span id="saison-txt" class="muted"></span><button id="saison-auj" type="button">Aujourd'hui</button></div>
+      </div>
+      <div style="margin-top:10px">
+        <label for="heure">Heure (test du jour et de la nuit)<input id="heure" type="range" min="0" max="24" step="0.25" value="12"></label>
+        <div class="row" style="margin-top:4px;align-items:center"><span id="heure-txt" class="muted"></span><button id="heure-auj" type="button">Maintenant</button></div>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="apply-game" title="Enregistre cette carte comme carte de la région dans le jeu">Appliquer au jeu</button>
+      </div>
+      <p class="muted" style="margin-top:6px">Avec un numéro, la carte prend la forme de cette région : contour, terres voisines, mer, vrais fleuves, lacs et routes. Vide : terrain rectangulaire.</p>
+      <p class="muted" style="margin-top:8px">Une grande route en serpentin traverse la région d'ouest en est. Le biome règle les lacs, la végétation et, par défaut, le cours d'eau ; le menu « Cours d'eau » peut l'imposer : petite rivière (3 à 8 m, très sinueuse), rivière (10 à 24 m) ou fleuve (34 à 56 m, grandes boucles). « Nouvelle région » tire une autre carte ; changer de biome ou de cours d'eau refait la même région.</p>
+    </section>
+
+    <section>
+      <h2>Paysage</h2>
+      <div class="row">
+        <button id="new-river">Ajouter une rivière</button>
+        <button id="new-lake">Ajouter un lac</button>
+        <button id="new-land">Nouvelle végétation</button>
+        <button id="new-relief" hidden>Nouveau relief</button>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <button id="del-river" class="danger">Retirer la dernière rivière</button>
+        <button id="del-lake" class="danger">Retirer le dernier lac</button>
+      </div>
+      <p class="muted" style="margin-top:8px">Le tracé est tiré au hasard, sans toucher vos bâtiments. La rivière s'élargit vers l'aval ; le lac reste à l'écart de la rivière. Une route franchit la rivière par un pont, mais ne passe pas sur le lac. La végétation (herbe, bois, bosquets, buissons) est générée d'après une graine et le biome ; arbres et buissons s'effacent devant l'eau, les routes, les murailles et les bâtiments. Le relief est désactivé pour le moment (terrain plat).</p>
+    </section>
+
+    <section>
+      <h2>Options d'affichage</h2>
+      <div class="stack">
+        <label class="check" for="show-grid"><input id="show-grid" type="checkbox" checked> Quadrillage (cases de zone)</label>
+        <label class="check" for="show-contours" hidden><input id="show-contours" type="checkbox" checked> Courbes de niveau (tous les 2 m)</label>
+      </div>
+      <p class="muted" style="margin-top:6px">Le quadrillage masqué reste actif : les bâtiments se calent toujours sur les cases. Touche <kbd>G</kbd>.</p>
+    </section>
+
+    <section>
+      <h2>Plan</h2>
+      <div class="row">
+        <button id="undo">Annuler l'action</button>
+        <button id="json">Exporter / importer</button>
+        <button id="clear" class="danger">Vider le plan</button>
+      </div>
+    </section>
+  </aside>
+
+  <main class="sheet">
+    <div class="canvas-wrap" id="wrap">
+      <canvas id="plan" aria-label="Plan du village avec zones le long des routes"></canvas>
+      <div class="zoom">
+        <button id="zin" aria-label="Zoomer">+</button>
+        <button id="zout" aria-label="Dézoomer">−</button>
+        <button id="zfit" aria-label="Voir tout le terrain" title="Voir tout le terrain" style="font-size:12px">⤢</button>
+        <button id="zhome" aria-label="Recentrer sur le village" title="Recentrer sur le village" style="font-size:13px">⌂</button>
+        <button id="zgrid" aria-label="Masquer le quadrillage du zonage" title="Masquer / afficher le quadrillage du zonage (G)" style="font-size:15px">▦</button>
+      </div>
+      <div class="toast" id="toast" style="opacity:0"></div>
+      <div class="overlay" id="json-dlg" hidden>
+        <div class="dialog" role="dialog" aria-label="Exporter ou importer le plan">
+          <h2 style="margin:0">Plan au format JSON</h2>
+          <p class="muted">Copiez ce texte pour garder le plan, ou collez un plan exporté puis importez-le.</p>
+          <textarea id="json-text" spellcheck="false"></textarea>
+          <div class="row">
+            <button id="json-copy">Copier</button>
+            <button id="json-import">Importer ce texte</button>
+            <button id="json-close" style="margin-left:auto">Fermer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="status" id="status"></div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
+<script>const PAGE = 'carte';</script>
+<script src="js/carte/base.js"></script>
+<script src="js/saisons.js"></script>
+<script src="js/carte/forme.js"></script>
+<script src="js/batiments/catalogue.js"></script>
+<script src="js/carte/geometrie.js"></script>
+<script src="js/carte/eau.js"></script>
+<script src="js/carte/paysage.js"></script>
+<script src="js/carte/zonage.js"></script>
+<script src="js/carte/gisements.js"></script>
+<script src="js/carte/generateur.js"></script>
+<script src="js/carte/vue.js"></script>
+<script src="js/batiments/atelier.js"></script>
+<script src="js/carte/dessin.js"></script>
+<script src="js/batiments/elements.js"></script>
+<script src="js/batiments/dessins.js"></script>
+<script src="js/carte/routes.js"></script>
+<script src="js/carte/deplacements.js"></script>
+<script src="js/carte/simulation.js"></script>
+<script src="js/carte/rendu.js"></script>
+<script src="js/carte/fortifications-dessin.js"></script>
+<script src="js/carte/cadre.js"></script>
+<script src="js/carte/trace.js"></script>
+<script src="js/carte/dessin-principal.js"></script>
+<script src="js/carte/tuiles.js"></script>
+<script src="js/carte/actions.js"></script>
+<script src="js/carte/fortifications.js"></script>
+<script src="js/carte/pointeur.js"></script>
+<script src="js/carte/panneau.js"></script>
+<script src="js/carte/demarrage.js"></script>
+</body>
+</html>

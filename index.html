@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<title>Paper Conquest 2.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
+<link rel="stylesheet" href="css/maplibre-gl.css">
+<link rel="stylesheet" href="css/jeu.css">
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-crest" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#3c3527" stroke-width="2"/><path d="M20 2 C 26 10 26 30 20 38 M20 2 C 14 10 14 30 20 38 M2 20 H38 M5 12 H35 M5 28 H35" fill="none" stroke="#3c3527" stroke-width="1.2"/></svg>
+      <div class="brand-text">
+        <h1 class="hand">Paper Conquest</h1>
+        <div class="brand-sub hand">Un monde entre vos mains</div>
+      </div>
+    </div>
+    <div class="stat-pills">
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9 9c0-1.4 1.3-2.5 3-2.5s3 1.1 3 2.5-1.3 2-3 2.5-3 1.1-3 2.5 1.3 2.5 3 2.5 3-1.1 3-2.5"/></svg>
+        <div><span class="num" id="eco-gold" title="Trésor (monnaie : Or)">0 Or</span><span class="delta" id="eco-gold-delta">+0 / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20c0-3.6 3-6 6.5-6s6.5 2.4 6.5 6"/><circle cx="18" cy="9" r="2.6"/><path d="M15.5 14.2c2.9.4 5 2.6 5 5.8"/></svg>
+        <div><span class="num">0</span><span class="delta">+0 / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M8.5 10.2h.01M15.5 10.2h.01M8 15c1 1.1 2.4 1.7 4 1.7s3-.6 4-1.7"/></svg>
+        <div><span class="num">0%</span><span class="delta">+0% / jour</span></div></div>
+      <div class="stat-pill"><svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="17" height="15" rx="2"/><path d="M3.5 9.5h17M8 3v4M16 3v4"/></svg>
+        <div><span class="num" id="topbar-date">15 mars 2027</span><span class="delta" id="topbar-time">14:32</span></div></div>
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn" title="Messages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 6l9 7 9-7"/></svg></button>
+      <button class="icon-btn" title="Notifications"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3a5 5 0 0 0-5 5v3.5L5 15h14l-2-3.5V8a5 5 0 0 0-5-5Z"/><path d="M10 18a2 2 0 0 0 4 0"/></svg></button>
+      <button class="icon-btn" title="Paramètres"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.15-1.4l2-1.5-2-3.4-2.3.9a7 7 0 0 0-2.4-1.4L14 3h-4l-.15 2.2a7 7 0 0 0-2.4 1.4l-2.3-.9-2 3.4 2 1.5A7 7 0 0 0 5 12c0 .5.05.95.15 1.4l-2 1.5 2 3.4 2.3-.9a7 7 0 0 0 2.4 1.4L10 21h4l.15-2.2a7 7 0 0 0 2.4-1.4l2.3.9 2-3.4-2-1.5c.1-.45.15-.9.15-1.4Z"/></svg></button>
+      <button class="icon-btn" title="Quitter"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v9"/><path d="M6.5 6.5a8 8 0 1 0 11 0"/></svg></button>
+    </div>
+  </header>
+
+  <nav class="sidebar" id="sidebar"></nav>
+
+  <main class="workspace">
+
+    <section class="view" data-view="carte">
+      <div class="carte-row">
+        <div class="carte-main">
+          <div class="card map-card">
+            <div class="map-ribbon hand" id="map-ribbon">📍 Choisissez votre région de départ</div>
+            <div class="map-wrap">
+              <div id="map"></div>
+              <div class="map-hint hand">🖱️ Glisser pour déplacer la carte · molette pour zoomer</div>
+              <div class="boat-hint" id="boat-hint" hidden></div>
+              <div class="build-bar" id="build-bar" hidden>
+                <span id="build-bar-text"></span>
+                <button class="boat-btn build-ok" id="build-confirm" type="button" hidden>Construire</button>
+                <button class="boat-btn" id="build-cancel" type="button">Annuler</button>
+              </div>
+              <div class="dev-panel">
+                <button class="dev-tab" id="dev-tab" aria-expanded="false" aria-controls="dev-filters">DÉVELOPPEUR</button>
+                <div class="dev-filters" id="dev-filters" hidden>
+                  <div id="dev-filter-list"></div>
+                  <div class="dev-section">
+                    <label class="dev-section-title" for="dev-resource">Ressources</label>
+                    <div class="res-tabs" role="tablist" aria-label="Type de ressources">
+                      <button class="res-tab" type="button" role="tab" data-restab="naturel" aria-selected="true">Minerais et gisements</button>
+                      <button class="res-tab" type="button" role="tab" data-restab="sol" aria-selected="false">Sol / Qualité</button>
+                      <button class="res-tab" type="button" role="tab" data-restab="peche" aria-selected="false">Pêche</button>
+                      <button class="res-tab" type="button" role="tab" data-restab="animaux" aria-selected="false">Animaux</button>
+                    </div>
+                    <select class="dev-select" id="dev-resource" disabled><option>Calcul en cours…</option></select>
+                    <div id="dev-resource-info"></div>
+                  </div>
+                  <button class="dev-reset" id="dev-reset" type="button">Réinitialiser la partie</button>
+                </div>
+              </div>
+              <div class="map-loading" id="map-loading">
+                <div class="map-loading-spinner"></div>
+                <div class="hand">Chargement de la carte du monde&hellip;</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <aside class="region-panel card" id="region-panel"></aside>
+      </div>
+    </section>
+
+    <section class="view" data-view="capitale" hidden>
+      <div class="card capital-view">
+        <div class="capital-head">
+          <h2 class="hand" id="capview-title">Capitale</h2>
+          <label class="cap-switch" id="capview-switch" hidden>Capitale de la région <select id="capview-select"></select></label>
+        </div>
+        <div class="capital-tabs" id="capview-tabs" role="tablist"></div>
+        <div class="capital-body" id="capview-body"></div>
+        <div class="cap-retour">
+          <button type="button" id="cap-globe" title="Revenir à la carte">← Carte</button>
+          <button type="button" id="cap-gestion" title="Stocks, caravanes, voyages, plan de la région">Gestion</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<div class="capital-modal" id="capital-modal" hidden>
+  <div class="capital-panel" role="dialog" aria-modal="true" aria-labelledby="capital-title">
+    <div class="capital-head"><h2 class="hand" id="capital-title">Capitale</h2><button class="capital-close" id="capital-close" type="button" aria-label="Fermer">✕</button></div>
+    <div class="capital-tabs" id="capital-tabs" role="tablist"></div>
+    <div class="capital-body" id="capital-body"></div>
+  </div>
+</div>
+
+<script src="js/saisons.js"></script>
+<script src="js/jeu/interface.js"></script>
+<script src="js/jeu/globe.js"></script>
+<script src="js/jeu/donnees-regions.js"></script>
+<script src="js/jeu/routes.js"></script>
+<script src="js/jeu/bateaux.js"></script>
+<script src="js/jeu/caravane.js"></script>
+<script src="js/jeu/ressources.js"></script>
+<script src="js/jeu/faune.js"></script>
+<script src="js/jeu/peche.js"></script>
+<script src="js/jeu/eau.js"></script>
+<script src="js/jeu/developpeur.js"></script>
+<script src="js/jeu/regions.js"></script>
+<script src="js/jeu/capitale.js"></script>
+<script src="js/jeu/construction.js"></script>
+<script src="js/jeu/carte-region.js"></script>
+<script src="js/jeu/economie.js"></script>
+<script src="js/jeu/tableaux.js"></script>

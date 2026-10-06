@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Paper Conquest Studio</title>
+<style>
+  :root { --bg:#14212b; --bar:#1d2d3a; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
+  * { box-sizing:border-box }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font:500 15px/1.3 system-ui, sans-serif }
+  body { display:flex; flex-direction:column }
+  nav { display:flex; align-items:center; gap:4px; padding:6px 12px; background:var(--bar); border-bottom:1px solid #0006 }
+  nav b { margin-right:14px; letter-spacing:.04em }
+  nav button { background:none; border:0; color:var(--soft); padding:8px 14px; border-radius:6px; font:inherit; cursor:pointer }
+  nav button:hover { color:var(--ink) }
+  nav button[aria-selected="true"] { background:#0004; color:var(--on) }
+  #msg { margin-left:auto; color:var(--on); font-size:14px; opacity:0; transition:opacity .3s }
+  #msg.on { opacity:1 }
+  main { flex:1; position:relative; min-height:0 }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--bg); display:none }
+  iframe.on { display:block }
+</style>
+<nav role="tablist" aria-label="Outils">
+  <b>Paper Conquest</b>
+  <button role="tab" data-tab="jeu" aria-selected="true">Carte globale</button>
+  <button role="tab" data-tab="carte" aria-selected="false">Éditeur de carte</button>
+  <button role="tab" data-tab="batiments" aria-selected="false">Éditeur de bâtiments</button>
+  <button role="tab" data-tab="maptest" aria-selected="false">Map test</button>
+  <span id="msg" role="status"></span>
+</nav>
+<main>
+  <iframe id="jeu" title="Carte globale" data-src="index.html"></iframe>
+  <iframe id="carte" title="Éditeur de carte" data-src="editeur-carte.html"></iframe>
+  <iframe id="batiments" title="Éditeur de bâtiments" data-src="editeur-batiments.html"></iframe>
+  <iframe id="maptest" title="Map test" data-src="map-test.html"></iframe>
+</main>
+<script>
+/* Un onglet = une page existante dans un cadre (chargée à la première visite, puis gardée : on retrouve l'éditeur tel qu'on l'a laissé).
+   Les éditeurs et le jeu partagent le même stockage du navigateur : quand l'éditeur de carte envoie « applique » (bouton « Appliquer au jeu »),
+   la carte de la région est déjà enregistrée là où le jeu la lit ; il ne reste qu'à recharger le jeu. */
+const frames = Object.fromEntries([...document.querySelectorAll('iframe')].map(f => [f.id, f]));
+let jeuAJour = true;
+function show(tab) {
+  for (const b of document.querySelectorAll('nav [data-tab]')) b.setAttribute('aria-selected', String(b.dataset.tab === tab));
+  for (const [id, f] of Object.entries(frames)) {
+    f.classList.toggle('on', id === tab);
+    if (id === tab && (!f.src || (id === 'jeu' && !jeuAJour))) { f.src = f.dataset.src; if (id === 'jeu') jeuAJour = true; }   // (jeu rechargé après une validation)
+  }
+  try { history.replaceState(null, '', '#' + tab); } catch (e) {}
+}
+function dire(t) { const m = document.getElementById('msg'); m.textContent = t; m.classList.add('on'); clearTimeout(dire.t); dire.t = setTimeout(() => m.classList.remove('on'), 5000); }
+document.querySelector('nav').addEventListener('click', e => { const b = e.target.closest('[data-tab]'); if (b) show(b.dataset.tab); });
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data || e.data.studio !== 'applique') return;
+  jeuAJour = false;                                      // le jeu se recharge à sa prochaine visite
+  dire('Région ' + e.data.region + ' appliquée : visible dans l\'onglet Carte globale');
+});
+show(['jeu', 'carte', 'batiments', 'maptest'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'jeu');
+</script>

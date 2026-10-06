@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><title>capture</title>
+<!-- banc d'essai : charge region.html?region=N dans un cadre, recadre sur la capitale (ou box=x0,y0,x1,y1), et retient l'evenement load
+     (image lente sur le port 9000, outils/_lent.js) pour que firefox --screenshot attende la fin du dessin. Usage : outils/_cap.html?region=340&r=700 -->
+<body style="margin:0;background:#000"><iframe id="f" style="width:100vw;height:100vh;border:0"></iframe><pre id="err" style="position:fixed;left:8px;bottom:8px;max-width:90vw;margin:0;padding:6px;background:#300;color:#fcc;font:12px monospace;z-index:9;display:none"></pre><img src="http://localhost:9000/slow" style="display:none">
+<script>
+const q = new URLSearchParams(location.search), f = document.getElementById('f');
+f.src = '/region.html?region=' + q.get('region') + (q.get('seed') ? '&seed=' + q.get('seed') : '') + (q.get('biome') ? '&biome=' + q.get('biome') : '');
+f.onload = () => setTimeout(() => {
+  const w = f.contentWindow, r = +q.get('r') || 700;
+  const b = q.get('box') ? q.get('box').split(',').map(Number) : (c => [c[0] - r * 1.4, c[1] - r, c[0] + r * 1.4, c[1] + r])(w.eval('S.bourg[0]'));
+  const show = e => { const p = document.getElementById('err'); p.style.display = 'block'; p.textContent += (e && e.stack || e) + ' | '; };
+  try { w.eval('fit(' + JSON.stringify(b) + '); markAllDirty(); requestDraw();'); } catch (e) { show(e); }
+  // (la boucle d'affichage de la page ne tourne pas dans un cadre invisible : on peint le decor nous-memes, par-dessus)
+  try { w.eval("const c = document.createElement('canvas'); c.width = W; c.height = H; c.style.cssText = 'position:fixed;left:0;top:0;z-index:5'; paintWith(c.getContext('2d'), W, H, view.s, view.ox, view.oy, drawDecor); document.body.appendChild(c);"); } catch (e) { show('PAINT: ' + (e.stack || e)); }
+}, 2500);
+</script>

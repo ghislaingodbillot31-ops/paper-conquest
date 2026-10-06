@@ -1,0 +1,7 @@
+node_modules/
+# sauvegardes d'avant chaque regeneration de donnees (gardees sur le disque, pas dans l'historique)
+outils/*.avant-*
+# captures et journaux de controle
+outils/_*.png
+outils/_*.log
+graphify-out/cache/

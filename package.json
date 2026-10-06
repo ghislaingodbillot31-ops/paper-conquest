@@ -1,0 +1,20 @@
+{
+  "name": "paper-conquest-2.0",
+  "version": "1.0.0",
+  "description": "Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, pas de framework). Identité visuelle \"papier & crayon\" posée sur un vrai globe interactif [MapLibre GL](https://maplibre.org/) : 500 régions compactes, individuellement sélectionnables, chacune avec sa propre carte générée (campagne, routes, bâtiments, fortifications).",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
+    "@turf/turf": "^7.4.0",
+    "topojson-client": "^3.1.0",
+    "topojson-server": "^3.0.1",
+    "topojson-simplify": "^3.0.3"
+  }
+}

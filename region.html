@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Carte de la région</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="css/carte.css">
+
+<!-- Capitale : la carte occupe tout l'écran ; bandeau en haut, onglets en bas, panneaux posés sur la carte -->
+<body class="capitale">
+<div class="canvas-wrap" id="wrap">
+  <canvas id="plan" aria-label="Carte du village"></canvas>
+</div>
+
+<header class="bandeau" aria-label="Village">
+  <div class="bandeau-pop" title="Villageois (logements du village)">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><circle cx="16.5" cy="9" r="2.6"/><path d="M3 20c0-3.6 2.7-6 6-6s6 2.4 6 6zM14.2 20c.1-2.3-.6-4.1-1.9-5.4 1.2-.7 2.6-.9 4.2-.6 2.7.5 4.5 2.6 4.5 6z"/></svg>
+    <b id="villageois">0</b><span>villageois</span>
+  </div>
+  <div class="bandeau-nom" id="nom-zone">
+    <h1 id="nom-village">Village</h1>
+    <button id="nom-edit" class="nom-btn" title="Renommer le village (une seule fois)" aria-label="Renommer le village (une seule fois)">✎</button>
+  </div>
+</header>
+
+<div class="zoom" aria-label="Vue">
+  <button id="zin" aria-label="Zoomer" title="Zoomer">+</button>
+  <button id="zout" aria-label="Dézoomer" title="Dézoomer">−</button>
+  <button id="zhome" aria-label="Recentrer sur le village" title="Recentrer sur le village" style="font-size:13px">⌂</button>
+  <button id="zfit" aria-label="Voir toute la région" title="Voir toute la région" style="font-size:12px">⤢</button>
+  <button id="zgrid" aria-label="Masquer le quadrillage" title="Masquer / afficher le quadrillage (G)" style="font-size:15px">▦</button>
+  <button id="undo" aria-label="Annuler l'action" title="Annuler l'action (Ctrl+Z)" style="font-size:15px">↶</button>
+</div>
+
+<aside class="fiche" id="fiche" aria-label="Sélection" hidden>
+  <div class="fiche-tete"><h2>Sélection</h2><button id="fiche-close" aria-label="Fermer">✕</button></div>
+  <div id="sel-body"></div>
+</aside>
+
+<div class="toast" id="toast" style="opacity:0"></div>
+
+<!-- panneaux des onglets, au-dessus de la barre du bas -->
+<section class="tiroir" id="tiroir-route" aria-label="Routes" hidden>
+  <h2>Routes · choisissez un chemin puis tracez-le sur la carte</h2>
+  <div class="chemins" id="road-kinds"></div>
+  <div id="road-opts" class="tiroir-opts" hidden>
+    <p class="muted">Partez d'un point orange d'une route existante. <b>Clic gauche</b> : poser un point · <b>Clic droit</b> : retirer le dernier · <b>Entrée</b> : valider.</p>
+    <div class="row">
+      <button id="finish-road">Valider la route</button>
+      <button id="undo-point">Retirer le dernier point</button>
+      <button id="cancel-road">Abandonner</button>
+      <label class="check" for="snap-len"><input id="snap-len" type="checkbox" checked> Longueur en multiples de 8 m</label>
+    </div>
+  </div>
+</section>
+
+<section class="tiroir" id="tiroir-construction" aria-label="Construction" hidden>
+  <div class="categories" id="categories" role="tablist" aria-label="Catégories de bâtiments"></div>
+  <div class="cartes" id="cartes"></div>
+  <div id="house-opts" class="tiroir-opts" hidden>
+    <p class="muted" id="build-info"></p>
+    <div class="row">
+      <button id="swap">Pivoter (R)</button>
+      <span class="row" id="yard-row" hidden><label for="yard">Arrière-cour<select id="yard"></select></label></span>
+    </div>
+  </div>
+  <div id="wall-opts" class="tiroir-opts" hidden>
+    <p class="muted">Posez d'abord une porte sur une route, puis partez de cette porte ou d'une muraille. <b>Clic gauche</b> : poser un point · <b>Clic droit</b> : retirer le dernier · <b>Entrée</b> : valider.</p>
+    <div class="row">
+      <button id="finish-wall">Valider la muraille</button>
+      <button id="undo-wall-point">Retirer le dernier point</button>
+      <button id="cancel-wall">Abandonner</button>
+    </div>
+  </div>
+  <p id="tower-opts" class="muted tiroir-opts" hidden>Une tour se pose sur un point orange : angle ou bout de muraille, ou croisement de deux murailles.</p>
+  <p id="gate-opts" class="muted tiroir-opts" hidden>Une porte se pose sur un point orange de route. Les murailles partent ensuite de la porte.</p>
+</section>
+
+<section class="tiroir" id="tiroir-aide" aria-label="Aide" hidden>
+  <h2>Aide</h2>
+  <div class="aide">
+    <div>
+      <h3>Construire</h3>
+      <ul>
+        <li><b>Route</b> : choisissez un chemin (terre, gravier ou pavé), puis tracez-le à partir d'une route existante.</li>
+        <li><b>Construction</b> : choisissez une catégorie puis un bâtiment ; il se pose sur les cases vertes le long des routes.</li>
+        <li>Cliquez un bâtiment posé pour le déplacer, le pivoter, l'améliorer ou le supprimer.</li>
+        <li>Les bâtiments de récolte ont une zone de travail à définir après la pose.</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Raccourcis</h3>
+      <ul>
+        <li><kbd>R</kbd> pivoter · <kbd>G</kbd> quadrillage · <kbd>Suppr</kbd> supprimer</li>
+        <li><kbd>Entrée</kbd> valider un tracé · <kbd>Échap</kbd> quitter le mode placement</li>
+        <li>En mode placement, les onglets restent libres : on peut changer de bâtiment ou ouvrir l'Aide sans quitter le placement.</li>
+        <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> annuler</li>
+        <li>Molette : zoom · glisser dans le vide : déplacer la vue</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Plan</h3>
+      <label class="check" for="show-grid"><input id="show-grid" type="checkbox" checked> Quadrillage des cases</label>
+      <div class="row" style="margin-top:8px"><button id="clear" class="danger">Vider le plan</button></div>
+    </div>
+  </div>
+</section>
+
+<nav class="onglets" aria-label="Menus">
+  <button data-onglet="route" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3c-1 6 5 7 4 18M16 3c1 5-3 7-2 11" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Route</button>
+  <button data-onglet="construction" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11 12 4l9 7M5.5 9.5V20h13V9.5M10 20v-5h4v5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg>Construction</button>
+  <button data-onglet="aide" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.7.3-1 .9-1 1.7M12 17h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>Aide</button>
+</nav>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pixi.js/7.4.3/pixi.min.js"></script>
+<script>const PAGE = 'region';</script>
+<script src="js/carte/base.js"></script>
+<script src="js/saisons.js"></script>
+<script src="js/carte/forme.js"></script>
+<script src="js/batiments/catalogue.js"></script>
+<script src="js/carte/geometrie.js"></script>
+<script src="js/carte/eau.js"></script>
+<script src="js/carte/paysage.js"></script>
+<script src="js/carte/zonage.js"></script>
+<script src="js/carte/gisements.js"></script>
+<script src="js/carte/generateur.js"></script>
+<script src="js/carte/vue.js"></script>
+<script src="js/batiments/atelier.js"></script>
+<script src="js/carte/dessin.js"></script>
+<script src="js/batiments/elements.js"></script>
+<script src="js/batiments/dessins.js"></script>
+<script src="js/carte/routes.js"></script>
+<script src="js/carte/deplacements.js"></script>
+<script src="js/carte/simulation.js"></script>
+<script src="js/carte/rendu.js"></script>
+<script src="js/carte/fortifications-dessin.js"></script>
+<script src="js/carte/cadre.js"></script>
+<script src="js/carte/trace.js"></script>
+<script src="js/carte/dessin-principal.js"></script>
+<script src="js/carte/tuiles.js"></script>
+<script src="js/carte/actions.js"></script>
+<script src="js/carte/fortifications.js"></script>
+<script src="js/carte/pointeur.js"></script>
+<script src="js/carte/panneau.js"></script>
+<script src="js/carte/capitale.js"></script>
+<script src="js/carte/demarrage.js"></script>
+</body>
+</html>
