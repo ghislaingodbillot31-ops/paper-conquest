@@ -64,7 +64,7 @@ let stockTexte = '';
 function afficherStock() {
   const st = S.stock || {}, show = !!(GAME && campColon());
   stockBox.hidden = !show; if (!show) return;
-  const nourriture = ['légumes', 'pain', 'pommes', 'œufs'].reduce((s, k) => s + (st[k] || 0), 0);
+  const nourriture = ['légumes', 'pain', 'pommes', 'œufs', 'poisson'].reduce((s, k) => s + (st[k] || 0), 0);
   const html = [['Bois', st.bois], ['Planches', st.planches], ['Pierre', st.pierre], ['Nourriture', nourriture]]
     .map(([n, q]) => `<span>${n} <b>${Math.max(0, Math.round(q || 0))}</b></span>`).join('');
   if (html !== stockTexte) { stockTexte = html; stockBox.innerHTML = html; }

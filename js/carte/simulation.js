@@ -332,6 +332,7 @@ function simLoop(ts) {
   const grew = growSaplings();
   const faune = typeof fauneStep === 'function' && fauneStep(dt), nav = typeof bateauxStep === 'function' && bateauxStep(dt), marche = typeof marcheStep === 'function' && marcheStep(dt);
   if (typeof arrivantsStep === 'function') arrivantsStep(dt);
+  if (typeof poissonsStep === 'function') poissonsStep(dt);
   if (simTick(dt) || grew || faune || nav || marche) requestDraw();
   requestAnimationFrame(simLoop);
 }

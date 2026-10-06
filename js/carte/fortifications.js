@@ -69,7 +69,7 @@ function hitWall(x, y) {
 }
 // objet sous le curseur, du plus petit au plus grand
 function hitAny(x, y) {
-  for (const [type, fn] of [['tower', hitTower], ['gate', hitGate], ['house', hitHouse], ['wall', hitWall], ['road', hitRoad]]) {
+  for (const [type, fn] of [['tower', hitTower], ['gate', hitGate], ['house', hitHouse], ['wall', hitWall], ['road', hitRoad], ...(typeof hitLake === 'function' ? [['lake', hitLake]] : [])]) {
     const o = fn(x, y); if (o) return { type, id:o.id };
   }
   return null;
@@ -155,6 +155,7 @@ function swap() {
 }
 function deleteSel() {
   const o = findSel(); if (!o) return;
+  if (sel.type === 'lake') { flash('Un étang ne se supprime pas', true); return; }
   if (sel.type === 'road' && routeFixe(o)) { flash('Route commerciale : elle ne peut pas être supprimée', true); return; }
   commit();
   const key = COLL[sel.type];

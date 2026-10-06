@@ -226,3 +226,10 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .reglage-heure{position:fixed; left:14px; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:6px; width:230px; background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:8px 12px 10px; font-size:13px}
 .reglage-heure label{display:flex; flex-direction:column; gap:4px}
 .reglage-heure b{font-weight:500; color:var(--hud-soft); font-size:12px}
+
+/* fiche d'un étang : barre de population et tableau des espèces */
+.lac-barre{height:8px; background:var(--hud-edge); border-radius:4px; overflow:hidden; margin:2px 0 8px; opacity:.9}
+.lac-barre i{display:block; height:100%; width:0; background:var(--accent, #d9b25f); transition:width .4s}
+.lac-tab{width:100%; border-collapse:collapse; font-size:12px}
+.lac-tab td{padding:2px 4px; vertical-align:middle}
+.lac-tab button{padding:1px 6px; font-size:11px}

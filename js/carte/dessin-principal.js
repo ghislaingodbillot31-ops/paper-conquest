@@ -12,6 +12,7 @@ function drawHighlights() {
     if (st.type === 'house') drawHouse(o, mode);
     else if (st.type === 'gate') drawGate(o, mode);
     else if (st.type === 'tower') drawTower(o, mode);
+    else if (st.type === 'lake') { const P = lakeShape(o); ctx.setLineDash([6, 5]); strokeLine([...P, P[0]], mode === 'selected' ? 2.5 : 1.5, Col.accent); ctx.setLineDash([]); }
     else { ctx.setLineDash([6, 5]); strokeLine(st.type === 'road' ? smoothPts(o) : o.pts, mode === 'selected' ? 2 : 1.5, Col.accent); ctx.setLineDash([]); }
   }
 }

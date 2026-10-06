@@ -13,7 +13,7 @@ function undo() {
   if (sel && !findSel()) sel = null;
   draft = null; changed(true);
 }
-const COLL = { house:'houses', road:'roads', wall:'walls', tower:'towers', gate:'gates' };
+const COLL = { house:'houses', road:'roads', wall:'walls', tower:'towers', gate:'gates', lake:'lakes' };
 const findById = (t, id) => (S[COLL[t]] || []).find(o => o.id === id) || null;
 const findSel = () => !sel ? null : findById(sel.type, sel.id);
 let toastT;

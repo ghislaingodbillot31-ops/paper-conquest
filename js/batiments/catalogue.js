@@ -65,7 +65,7 @@ function needIssue(b, h) {
   if (b.limit && S.houses.filter(o => o.kind === b.id && o.id !== h.id).length >= b.limit) return `${b.limit} ${b.name.toLowerCase()}s au plus par région`;
   return null;
 }
-const FOOD_LIST = ['légumes', 'œufs', 'pommes', 'pain'];
+const FOOD_LIST = ['légumes', 'œufs', 'pommes', 'pain', 'poisson'];
 const NONFOOD_LIST = ['bois', 'planches', 'laine', 'peaux', 'pièces en bois', 'arcs et flèches', 'vêtements', 'chaussures', 'bière', 'outils et armes', 'armures'];
 /* Extensions d'arrière-cour : une par cour (maison avec arrière-cour, maison avec cour et
    jardin). Production passive, ou atelier qui va chercher sa matière chez un producteur. */

@@ -213,6 +213,7 @@ function renderSel() {
   const o = findSel(), body = $('sel-body');
   $('fiche').hidden = !o; // capitale : la fiche de sélection ne s'affiche que s'il y a une sélection
   if (!o) { body.innerHTML = '<p class="muted">Cliquez un bâtiment pour le déplacer, le pivoter ou le supprimer. Cliquez une route pour changer son type. Cliquez une muraille, une tour ou une porte pour la supprimer.</p>'; return; }
+  if (sel.type === 'lake' && typeof rendreLac === 'function') { rendreLac(body, o); return; }   // étang : poissons (poissons.js)
   const del = '<button id="sdel" class="danger">Supprimer</button>';
   const fortRow = (type, o) => { const L = lvlOf(o), names = FORT_LEVELS[type];
     return { dl:`<dt>Niveau</dt><dd>${L} / 3 · ${names[L - 1]}</dd>`, btn:L < 3 ? `<button id="sup">Améliorer en ${names[L].toLowerCase()}</button>` : '' }; };
