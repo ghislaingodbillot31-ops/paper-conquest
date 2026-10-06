@@ -133,7 +133,7 @@ const STOCK_DEPART = { bois:150, planches:20, pierre:40, légumes:40, pain:30, p
 const coutTexte = cout => Object.entries(cout || {}).map(([k, q]) => q + ' ' + k).join(', ');
 // ce qui manque au village pour payer ce coût (texte), ou null
 function manque(cout) {
-  const st = S.stock || {};
+  const st = typeof stockVillage === 'function' ? stockVillage() : (S.stock || {});   // tout le stock du village
   const m = Object.entries(cout || {}).filter(([k, q]) => (st[k] || 0) < q).map(([k, q]) => (q - (st[k] || 0)) + ' ' + k);
   return m.length ? 'Il manque ' + m.join(', ') : null;
 }

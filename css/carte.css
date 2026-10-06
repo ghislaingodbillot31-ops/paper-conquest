@@ -142,6 +142,8 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .bandeau-pop{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft)}
 .bandeau-pop svg{width:20px; height:20px; fill:var(--hud-ink)}
 .bandeau-pop .sep{margin-left:4px}
+.bandeau-stock{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); cursor:help}
+.bandeau-stock b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
 .bandeau-pop b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
 .bandeau-nom{display:flex; align-items:center; gap:6px; padding:4px 10px 4px 18px; min-width:0}
 .bandeau-nom h1{margin:0; font:700 22px/1.1 "Barlow Condensed",sans-serif; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}

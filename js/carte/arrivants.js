@@ -75,14 +75,41 @@ function arrivantsDessin() {
 }
 afficherDemande();
 
-/* ---- stock du village : bois, planches, pierre et nourriture, en haut à gauche ---- */
+/* ---- stock du village ----
+   Le stock = TOUT ce qui est disponible dans le village : le stock central (S.stock : départ du camp, pierre du tailleur, poisson),
+   plus ce que les bâtiments ont produit et pas encore déplacé (bois des camps de bûcherons, planches de la scierie, grain, œufs…)
+   et le contenu des granges et entrepôts. Il se recalcule à chaque image : produit, consommé, utilisé ou ajouté, il suit.
+   (Le compteur « récolté » du tailleur de pierre et celui du forestier ne comptent pas : la pierre est déjà dans S.stock.) */
+const surStockCentral = h => TAILLEURS[h.kind] || h.kind === 'hutte_forestier';
+function stockVillage() {
+  const t = {};
+  for (const [k, q] of Object.entries(S.stock || {})) if (q > 0) t[k] = q;
+  for (const h of S.houses) {
+    for (const [k, q] of Object.entries(h.inv || {})) if (q > 0) t[k] = (t[k] || 0) + q;
+    const p = surStockCentral(h) ? null : productOf(h);
+    if (p && (h.stock || 0) > 0) t[p] = (t[p] || 0) + h.stock;
+  }
+  return t;
+}
+// paie q unités de la ressource k : d'abord le stock central, puis ce que les bâtiments ont produit ou rangé
+function retirerDuStock(k, q) {
+  const st = S.stock || (S.stock = {}), c = Math.min(q, st[k] || 0); st[k] = (st[k] || 0) - c; q -= c;
+  for (const h of S.houses) {
+    if (q <= 0) break;
+    if (h.inv && h.inv[k] > 0) { const x = Math.min(q, h.inv[k]); h.inv[k] -= x; q -= x; }
+    if (q > 0 && !surStockCentral(h) && productOf(h) === k && (h.stock || 0) > 0) { const x = Math.min(q, h.stock); h.stock -= x; q -= x; }
+  }
+}
+/* ---- boîte du stock (haut à gauche) : bois, planches, pierre et nourriture ---- */
 const stockBox = document.createElement('aside');
 stockBox.className = 'stock'; stockBox.hidden = true; stockBox.setAttribute('aria-label', 'Stock du village');
 document.body.appendChild(stockBox);
 let stockTexte = '';
 function afficherStock() {
-  const st = S.stock || {}, show = !!(GAME && campColon());
+  const st = stockVillage(), show = !!(GAME && campColon());
   stockBox.hidden = !show; if (!show) return;
+  const total = Object.values(st).reduce((s, n) => s + n, 0), el = document.getElementById('stock-total');
+  if (el) { el.textContent = Math.floor(total); el.parentNode.title = 'Tout ce qui est disponible dans le village :\n' + (Object.entries(st).filter(([, q]) => q >= 1).sort((a, b) => b[1] - a[1]).map(([k, q]) => k + ' : ' + Math.floor(q)).join('\n') || 'rien'); }
   const nourriture = ['légumes', 'pain', 'pommes', 'œufs', 'poisson'].reduce((s, k) => s + (st[k] || 0), 0);
   const html = [['Bois', st.bois], ['Planches', st.planches], ['Pierre', st.pierre], ['Nourriture', nourriture]]
     .map(([n, q]) => `<span>${n} <b>${Math.max(0, Math.round(q || 0))}</b></span>`).join('');

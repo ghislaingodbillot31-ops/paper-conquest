@@ -44,8 +44,8 @@ function placeHouse() {
   const { ok, why, ...h } = g;
   S.houses.push({ id:S.nextId++, ...h });
   if (GAME) {                                                              // ressources du village : le bâtiment se paie, le camp de colon apporte le stock de départ
-    const st = S.stock || (S.stock = {});
-    for (const [k, q] of Object.entries(preset.cout || {})) st[k] = (st[k] || 0) - q;
+    const st = S.stock = S.stock || {};
+    for (const [k, q] of Object.entries(preset.cout || {})) retirerDuStock(k, q);
     if (preset.id === 'camp_colon') for (const [k, q] of Object.entries(STOCK_DEPART)) st[k] = (st[k] || 0) + q;
   }
   changed(false);
