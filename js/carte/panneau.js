@@ -13,7 +13,7 @@ function renderTool() {
   $('swap').setAttribute('aria-pressed', swapped);
   $('swap').disabled = !preset.turn;
   $('yard-row').hidden = !preset.yard;
-  $('build-info').innerHTML = `<b>${preset.name}</b> · ${preset.f} × ${preset.d} cases (${preset.f * CELL} × ${preset.d * CELL} m)<br>${preset.use}` +
+  $('build-info').innerHTML = `<b>${preset.name}</b> · ${preset.f} × ${preset.d} cases (${preset.f * CELL} × ${preset.d * CELL} m)` +
       (preset.unique ? '<br>Un seul par village.' : '') + (preset.turn ? '' : '<br>Orientation fixe : façade sur la rue.');
   for (const b of $('road-kinds').children) b.setAttribute('aria-pressed', tool === 'road' && b.dataset.id === roadKind.id);
   cv.style.cursor = tool === 'select' ? 'default' : 'crosshair';
@@ -33,7 +33,7 @@ $('presets').innerHTML =
   '<h3 class="group">Ressources</h3>' + PRESETS.filter(p => p.cat === 'res').map(presetBtn).join('');
 $('yard').innerHTML = extOptions(yardKind);
 $('yard').addEventListener('change', e => { yardKind = e.target.value; requestDraw(); });
-$('road-kinds').innerHTML = ROADS.map(r => `<button data-id="${r.id}" id="kind-${r.id}">${r.name}<kbd>${{ terre:'battue', gravier:'empierré', pave:'pierre' }[r.id]}</kbd></button>`).join('');
+$('road-kinds').innerHTML = ROADS.map(r => `<button data-id="${r.id}" id="kind-${r.id}">${r.name}<kbd>${{ terre:'battue', gravier:'empierré', pave:'pierre', chemin:'piéton' }[r.id]}</kbd></button>`).join('');
 $('presets').addEventListener('click', e => {
   const b = e.target.closest('[data-id]'); if (!b) return;
   preset = PRESETS.find(p => p.id === b.dataset.id); custom = null; swapped = false;
@@ -139,10 +139,10 @@ $('apply-game').addEventListener('click', () => {
 const majHeure = () => { const h = heureCarte(), s = soleil(REGION_METEO.lat, METEO.doy, h); majNuit(); $('heure').value = h;
   $('heure-txt').textContent = libelleHeure(h) + ' · ' + (s.polaire ? (s.polaire === 'jour' ? 'jour polaire' : 'nuit polaire') : 'lever ' + libelleHeure(s.lever) + ', coucher ' + libelleHeure(s.coucher)); };
 $('heure').addEventListener('input', e => { fixeHeure(+e.target.value); majHeure(); });
-$('heure-auj').addEventListener('click', () => { HEURE_FIXE = null; majHeure(); });
+$('heure-auj').addEventListener('click', () => { HEURE_FIXE = null; sauveReglageTemps(); majHeure(); });
 const majSaison = () => { majHeure(); $('saison-jour').value = METEO.doy; $('saison-txt').textContent = libelleDate(METEO.doy) + ' · ' + decritMeteo(METEO); markAllDirty(); requestDraw(); };
-$('saison-jour').addEventListener('input', e => { fixeJour(+e.target.value); majSaison(); });
-$('saison-auj').addEventListener('click', () => { fixeJour(aujourdhui(), true); majSaison(); });
+$('saison-jour').addEventListener('input', e => { fixeJour(+e.target.value); sauveReglageTemps(); majSaison(); });
+$('saison-auj').addEventListener('click', () => { fixeJour(aujourdhui(), true); sauveReglageTemps(); majSaison(); });
 let listeRegions = null;
 async function chargeClimat(id) {
   Object.assign(REGION_METEO, { lon:null, lat:48, tm:10, hum:.7 });
@@ -211,7 +211,11 @@ $('json-import').addEventListener('click', () => {
 
 function renderSel() {
   const o = findSel(), body = $('sel-body');
-  $('fiche').hidden = !o; // capitale : la fiche de sélection ne s'affiche que s'il y a une sélection
+  $('fiche').classList.toggle('bat-fiche', !!o && sel.type === 'house' && typeof renderBatiment === 'function');
+  const stats = !o && typeof rendreStats === 'function';                                   // capitale : le panneau de droite est permanent ; sans sélection, il montre les statistiques du village (stats.js)
+  $('fiche').hidden = !o && !stats;
+  if ($('fiche-close')) $('fiche-close').hidden = !o; const h2 = $('fiche').querySelector('h2'); if (h2) h2.textContent = o ? 'Sélection' : 'Statistiques';
+  if (stats) { rendreStats(body); return; }
   if (!o) { body.innerHTML = '<p class="muted">Cliquez un bâtiment pour le déplacer, le pivoter ou le supprimer. Cliquez une route pour changer son type. Cliquez une muraille, une tour ou une porte pour la supprimer.</p>'; return; }
   if (sel.type === 'lake' && typeof rendreLac === 'function') { rendreLac(body, o); return; }   // étang : poissons (poissons.js)
   const del = '<button id="sdel" class="danger">Supprimer</button>';
@@ -236,6 +240,8 @@ function renderSel() {
       <dl class="kv"><dt>Porte</dt><dd>passage de ${WALL_SURF} m à travers la fortification</dd>${fortRow('gate', o).dl}
       <dt>Route</dt><dd>${r ? roadType(r).name : 'aucune (une route peut partir d\'ici)'}</dd></dl>
       <div class="row">${fortRow('gate', o).btn}${del}</div>`;
+  } else if (sel.type === 'house' && typeof renderBatiment === 'function') {                       // capitale : fiche « papier » du bâtiment (gestion.js)
+    renderBatiment(body, o); return;
   } else if (sel.type === 'house') {
     const b = buildingOf(o);
     const yardSel = b && b.yard
@@ -246,32 +252,33 @@ function renderSel() {
       ${b ? `<dt>Rôle</dt><dd>${b.use}</dd>` : ''}
       ${b && b.cap ? `<dt>Habitants</dt><dd>${typeof occupation === 'function' ? occupation(o) + ' / ' + b.cap : b.cap + ' au plus'}</dd>${typeof occupants === 'function' ? `<dt>Villageois logés</dt><dd>${listeOcc(occupants(o))}</dd>` : ''}` : ''}
       ${b && b.radius && !b.zone ? `<dt>Portée</dt><dd>${b.radius} m autour</dd>` : ''}
-      ${b && b.zone ? `<dt>Zone de travail</dt><dd>${o.zone ? `rayon ${o.zone.r} m, à ${fmt(segLen([o.x, o.y], [o.zone.x, o.zone.y]), 0)} m${b.need === 'forest' || b.id === 'hutte_forestier' ? ` · ${treesInZone(o.zone).length} arbres` : b.need === 'rock' ? ` · ${rocksInZone(o.zone).length} pierres` : ''}` : '<b style="color:var(--bad)">à définir</b>'}</dd>` : ''}
+      ${b && b.zone ? `<dt>Zone de travail</dt><dd>${o.zone ? `rayon ${o.zone.r} m, à ${fmt(segLen([o.x, o.y], [o.zone.x, o.zone.y]), 0)} m${b.need === 'game' ? ` · ${gibierZone(o.zone).length} animaux sauvages` : ''}${b.need === 'forest' || b.id === 'hutte_forestier' ? ` · ${treesInZone(o.zone).length} arbres` : b.need === 'fruit' ? ` · ${plantesZone(o.zone).length} plantes fruitières` : b.need === 'rock' ? ` · ${rocksInZone(o.zone).length} pierres` : ''}` : '<b style="color:var(--bad)">à définir</b>'}</dd>` : ''}
       ${o.kind === 'hutte_forestier' && o.zone ? `<dt>Plants en terre</dt><dd>${(S.planted || []).filter(s => segLen([s.x, s.y], [o.zone.x, o.zone.y]) <= o.zone.r).length} (arbres au bout de ${GROW} s)</dd>
       <dt>Plantés en tout</dt><dd>${o.stock || 0}</dd>
-      <dt>Forestier</dt><dd>${FORESTER_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
+      <dt>Forestier</dt><dd>${foresterEtat(o, workers.get(o.id))}</dd>` : ''}
       ${LUMBER[o.kind] && o.zone ? `<dt>Arbres dans la zone</dt><dd>${treesInZone(o.zone).length}</dd>
-      <dt>Stock</dt><dd>${o.stock || 0} ${LUMBER[o.kind]}</dd>
+      <dt>Stock</dt><dd>${o.stock || 0} / ${stockMax(o)} ${LUMBER[o.kind]}</dd>
       <dt>Bûcheron</dt><dd>${WORKER_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
       ${TAILLEURS[o.kind] && o.zone ? `<dt>Pierres dans la zone</dt><dd>${rocksInZone(o.zone).length}</dd>
-      <dt>Récolté</dt><dd>${o.stock || 0} pierre</dd>
+      <dt>Stock</dt><dd>${o.stock || 0} / ${stockMax(o)} pierre</dd>
       <dt>Tailleur</dt><dd>${STONE_STATE[(workers.get(o.id) || { state:'idle' }).state]}</dd>` : ''}
       ${(J => J ? jobSheet(o, J) : '')(jobOf(o))}
       ${b && b.limit ? `<dt>Limite</dt><dd>${S.houses.filter(x => x.kind === b.id).length} / ${b.limit} sur la région</dd>` : ''}
       <dt>Cases</dt><dd>${o.f} × ${o.d} (façade × profondeur) · ${o.w} × ${o.l} m</dd></dl>
       ${yardSel}
       <div class="row">
-        ${!b || b.turn ? '<button id="srot">Pivoter</button>' : ''}
+        <button id="smove">Déplacer</button>${!b || b.turn ? '<button id="srot">Pivoter</button>' : ''}
         <button id="sdel" class="danger" style="margin-left:auto">Supprimer</button>
       </div>`;
+    $('smove').addEventListener('click', () => { deplacer = { id:o.id }; zoneEdit = null; flash('Cliquez sur la carte pour poser le bâtiment · Échap pour annuler'); requestDraw(); });
     if ($('srot')) $('srot').addEventListener('click', swap);
-    if ($('syard')) $('syard').addEventListener('change', e => { commit(); o.yard = e.target.value; changed(false); });
+    if ($('syard')) $('syard').addEventListener('change', e => { commit(); o.yard = e.target.value; delete o.commande; changed(false); });
     // zone de travail : bouton pour la définir / la déplacer, et réglage du rayon pendant la pose
     if (b && b.zone) {
       const box = document.createElement('div');
       box.style.marginTop = '10px';
       box.innerHTML = zoneEdit && zoneEdit.id === o.id
-        ? `<p class="muted" style="margin:0 0 6px">Cliquez sur la carte pour poser le centre de la zone (à ${ZONE_REACH} m au plus du bâtiment, sur votre domaine). <kbd>Échap</kbd> pour annuler.</p>
+        ? `<p class="muted" style="margin:0 0 6px">Cliquez sur la carte pour poser le centre de la zone (à n'importe quelle distance du bâtiment, sur votre domaine). <kbd>Échap</kbd> pour annuler.</p>
            <label class="check" for="zone-r" style="flex-direction:column;align-items:stretch">Rayon : <b id="zone-r-val">${zoneEdit.r} m</b>
            <input id="zone-r" type="range" min="${ZONE_MIN_R}" max="${b.radius}" step="5" value="${zoneEdit.r}"></label>
            <div class="row" style="margin-top:6px"><button id="zone-cancel">Annuler</button></div>`
@@ -285,7 +292,7 @@ function renderSel() {
     body.innerHTML = `
       <dl class="kv"><dt>Longueur</dt><dd>${fmt(roadLen(o))} m</dd>
       <dt>Revêtement</dt><dd>${roadType(o).name}</dd>
-      <dt>Largeur</dt><dd>${fmt(roadType(o).surf)} m de chaussée · emprise 1 case (${o.w} m)</dd>
+      <dt>Largeur</dt><dd>${fmt(roadType(o).surf)} m de chaussée · emprise ${o.w < CELL ? '½ case' : '1 case'} (${o.w} m)${roadType(o).pieton ? ' · piétons seulement, rien ne se construit au bord' : ''}</dd>
       <dt>Tronçons</dt><dd>${o.pts.length - 1}</dd></dl>
       ${routeFixe(o) ? '<p class="muted">Route commerciale : ni supprimable ni modifiable. Vous pouvez vous y rattacher.</p>' : `<div class="row">
         <label for="skind">Revêtement<select id="skind">${ROADS.map(r => `<option value="${r.id}"${r.id === o.kind ? ' selected' : ''}>${r.name}</option>`).join('')}</select></label>

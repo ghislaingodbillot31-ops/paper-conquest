@@ -57,7 +57,7 @@ function computeZones() {
     return { cell:{ poly, bb, geo, i, j, c:P(s0 + CELL/2, t0 + CELL/2), occ:null } };
   };
   for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
-    if (!tronconDroit(r, k)) continue;
+    if (r.kind === 'chemin' || !tronconDroit(r, k)) continue;      // (un chemin n'a pas de cases constructibles sur ses bords)
     for (const side of [1, -1]) { const { a, u, parts } = segLayout(r, k, side);   // (par côté : un raccord en T ne coupe que le côté où arrive l'autre route)
       parts.forEach(({ off, n }, pi) => {
         const nv = [-u[1] * side, u[0] * side];
@@ -80,6 +80,7 @@ function computeZones() {
   const anchorsOf = list => {
     const out = [];
     for (const r of list) {
+      if (r.kind === 'chemin') continue;
       const last = r.pts.length - 2;
       for (let k = 0; k <= last; k++) {
         const { a, u, parts } = segLayout(r, k);
@@ -186,6 +187,7 @@ function segLayout(r, k, side = 0) {
 }
 function computeOcc() {
   for (const c of Z.cells) c.occ = null;
+  for (const ch of S.champs || []) { const bb = bbox(ch.pts); for (const c of Z.cells) if (bbHit(bb, c.bb) && inPoly(c.c, ch.pts)) c.occ = 'champ'; }   // un champ n'est pas constructible
   for (const h of S.houses) {
     const C = corners(h), bb = bbox(C);
     for (const c of Z.cells) if (bbHit(bb, c.bb) && inPoly(c.c, C)) c.occ = h.id;
@@ -239,6 +241,15 @@ function placeAt(p, f, d, ignoreId, turn) {
   if (hit) return hit;
   const i0 = cell.i - Math.floor((f-1)/2), j0 = Math.max(0, cell.j - Math.floor((d-1)/2));
   return { ...footprint(geo, i0, j0, f, d), ok:false };
+}
+/* Fosse minière : posée librement sur un gisement, hors du quadrillage des routes ; son centre doit être dans la zone de pépites, sans toucher un bâtiment ni une route. */
+function placeSurGisement(p, f, d, ignoreId) {
+  const x = round2(Math.round(p[0])), y = round2(Math.round(p[1])), g = { x, y, a:0, w:f * CELL, l:d * CELL, f, d, front:1, ok:true };
+  if (!(S.deposits || []).some(q => segLen(q.c, [x, y]) <= q.r)) return Object.assign(g, { ok:false, why:'À poser sur un gisement (zone de pépites)' });
+  const C = shrunk(g);
+  if (S.houses.some(o => o.id !== ignoreId && polysOverlap(C, corners(o)))) return Object.assign(g, { ok:false, why:'Un bâtiment occupe déjà cet endroit' });
+  if (S.roads.some(r => r.pts.slice(1).some((q, i) => ptSeg([x, y], r.pts[i], q).d < r.w / 2 + g.w * .7))) return Object.assign(g, { ok:false, why:"Trop près d'une route" });
+  return g;
 }
 const roadSegOk = (a, b, w) => !roadIssue(a, b, w);
 // raison pour laquelle un tronçon de route est impossible, ou null

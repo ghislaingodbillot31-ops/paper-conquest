@@ -39,7 +39,7 @@ Tout ce qui décrit les 500 régions du globe est ici. Le jeu lit ces fichiers a
 | `relief.montagne`, `volcan`, `bouclier` | 0 à 1 : présence de chaînes jeunes, de volcans, de vieux massifs |
 | `sol.fertilite` | 0 à 1 |
 | `sol.qualite` | 0 stérile, 1 pauvre, 2 moyen, 3 fertile, 4 très fertile |
-| `ressources` | Minerais présents et leur abondance |
+| `ressources` | Minerais présents et leur abondance ; `pierre` = carrière de pierre (extraction illimitée avec une fosse minière), présente dans les régions qui ont de la pierre (`agriculture.pierre`), au même niveau |
 | `agriculture` | Cultures, bois et pierre, et leur rendement |
 | `animaux.zone` | Numéro de la zone dans `zones-animales.json` (à partir de 0), ou `null` |
 | `animaux.elevage`, `faune`, `predateurs` | Espèces présentes et leur abondance |

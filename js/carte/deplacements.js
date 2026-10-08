@@ -6,7 +6,26 @@
    ferait avancer que de moins de 2 cases.
    Les bâtiments ne se traversent jamais (voir plus bas : portes et contournements). Hors route, on marche deux fois moins vite. */
 const VITESSE_TERRE = .5;                 // hors route : moitié de la vitesse sur route
-const RACCORD = 2;                        // deux points de routes à moins de 2 m : carrefour
+const RACCORD = 2;
+/* Sens de circulation : on circule à DROITE (sens de la marche). Sur une route, les personnages suivent la voie de droite, à VOIE m de l'axe (au plus le quart de la largeur de la chaussée) ;
+   les deux sens se croisent donc sur deux voies. Vaut pour toutes les routes (de base et tracées par le joueur) : calculé d'après le tracé, rien à mettre à jour sur les routes déjà posées. */
+const VOIE = 2;
+function surVoie(pts, larg) {
+  const P = [], W = [];                                                            // points quasi confondus (raccord de deux routes) : un seul
+  pts.forEach((p, i) => { if (!P.length || segLen(p, P[P.length - 1]) > 1.2) { P.push(p); W.push(larg[i]); } });
+  const n = P.length; if (n < 2) return P.slice();
+  const N = []; for (let i = 0; i < n - 1; i++) { const dx = P[i + 1][0] - P[i][0], dy = P[i + 1][1] - P[i][1], L = Math.hypot(dx, dy) || 1; N.push([-dy / L, dx / L]); }   // normale à droite de chaque tronçon (axe y vers le bas)
+  return P.map((p, i) => {
+    const o = Math.min(VOIE, (W[i] || 8) / 4); let m;
+    if (i === 0) m = N[0]; else if (i === n - 1) m = N[n - 2];
+    else {                                                                         // angle : la voie tourne avec la route (joint en onglet, pas de détour par le bord)
+      const a = N[i - 1], b = N[i], c = 1 + a[0] * b[0] + a[1] * b[1]; m = c > .25 ? [(a[0] + b[0]) / c, (a[1] + b[1]) / c] : [a[0] + b[0], a[1] + b[1]];
+      const l = Math.hypot(m[0], m[1]); if (l > 2) m = [m[0] / l * 2, m[1] / l * 2];
+    }
+    return [round2(p[0] + m[0] * o), round2(p[1] + m[1] * o)];
+  });
+}
+const SAUT_DIRECT = 16;                   // en dessous de cette distance (m, 2 cases) on ne prend pas la route (tous les autres trajets passent par la route)                        // deux points de routes à moins de 2 m : carrefour
 let reseau = null;
 // Réseau des routes : les points du tracé lissé (celui qui est dessiné), reliés le long de
 // chaque route, et d'une route à l'autre là où elles se touchent (raccords, croisements).
@@ -21,6 +40,7 @@ function reseauRoutes() {
     const P = smoothPts(r), i0 = N.length;
     P.forEach(p => { N.push(p); adj.push([]); roadOf.push(ri); });
     for (let k = i0; k < N.length - 1; k++) { link(k, k + 1); segs.push([k, k + 1]); }
+    if (N.length - i0 > 3 && segLen(N[i0], N[N.length - 1]) < RACCORD * 2) link(i0, N.length - 1);   // route qui se referme sur elle-même (zone fermée : champs)
   });
   // carrefours : grille de 4 m, on relie les points de routes différentes très proches
   const grid = new Map(), cell = p => Math.floor(p[0] / 4) + ',' + Math.floor(p[1] / 4);
@@ -31,12 +51,12 @@ function reseauRoutes() {
       for (const j of grid.get((cx + dx) + ',' + (cy + dy)) || [])
         if (j > i && roadOf[j] !== roadOf[i] && segLen(p, N[j]) < RACCORD) link(i, j);
   });
-  return (reseau = { key, v:sceneV, S, N, adj, segs });
+  return (reseau = { key, v:sceneV, S, N, adj, segs, roadOf });
 }
 // point de route le plus proche d'un lieu
-function procheRoute(R, p) {
+function procheRoute(R, p, vehicule) {                                                       // vehicule : sans les chemins (réservés aux piétons)
   let best = null;
-  for (const [a, b] of R.segs) { const t = ptSeg(p, R.N[a], R.N[b]); if (!best || t.d < best.d) best = { d:t.d, q:t.q, a, b }; }
+  for (const [a, b] of R.segs) { if (vehicule && (ROADS.find(k => k.id === (S.roads[R.roadOf[a]] || {}).kind) || {}).pieton) continue; const t = ptSeg(p, R.N[a], R.N[b]); if (!best || t.d < best.d) best = { d:t.d, q:t.q, a, b }; }
   return best;
 }
 // Trajet de A à B : liste d'étapes { p:[x, y], route } (route : l'étape se parcourt sur la route).
@@ -47,7 +67,7 @@ function procheRoute(R, p) {
 function trajetExterieur(A, B) {
   const hors = (P, Q) => contourner(P, Q).map(p => ({ p, route:false }));      // un tronçon hors route : droit, ou autour des bâtiments
   const direct = hors(A, B), R = reseauRoutes();
-  if (!R.segs.length) return direct;
+  if (!R.segs.length || segLen(A, B) <= SAUT_DIRECT) return direct;                  // petit déplacement (d'un arbre à l'autre, de l'arbre à la charrette) : tout droit, pas de détour par la route
   const pa = procheRoute(R, A);
   // plus courts chemins depuis le point d'entrée vers tout le réseau (Dijkstra)
   const n = R.N.length, dist = new Float64Array(n).fill(Infinity), prev = new Int32Array(n).fill(-1), tas = [];
@@ -66,10 +86,15 @@ function trajetExterieur(A, B) {
     if (!best || t.d < best.d - .5 || (Math.abs(t.d - best.d) <= .5 && c < best.c)) best = { d:t.d, q:t.q, c, i, j, meme, via:ci <= cj ? i : j };
   }
   if (!best) return direct;
-  if (best.meme) return [...hors(A, pa.q), { p:best.q, route:true }, ...hors(best.q, B)];
-  const noeuds = [];
-  for (let k = best.via; k >= 0; k = prev[k]) noeuds.unshift(R.N[k]);
-  return [...hors(A, pa.q), ...noeuds.map(p => ({ p, route:true })), { p:best.q, route:true }, ...hors(best.q, B)];
+  if (best.meme) { const w0 = (S.roads[R.roadOf[pa.a]] || {}).w, v = surVoie([pa.q, best.q], [w0, w0]); return [...hors(A, v[0]), { p:v[v.length - 1], route:true }, ...hors(v[v.length - 1], B)]; }   // (de la porte tout droit à la voie de droite, et de la voie à la porte)
+  const idx = [];
+  for (let k = best.via; k >= 0; k = prev[k]) idx.unshift(k);
+  const autreEntree = idx[0] === pa.a ? pa.b : idx[0] === pa.b ? pa.a : null;
+  if (autreEntree !== null && idx.length > 1 && idx[1] === autreEntree) idx.shift();                    // le départ est entre ces deux noeuds : pas de retour au noeud
+  const autreSortie = best.via === best.i ? best.j : best.i;
+  if (idx.length > 1 && idx[idx.length - 2] === autreSortie) idx.pop();                               // on arrive par l'autre bout du tronçon : pas de détour par le noeud
+  const larg = k => (S.roads[R.roadOf[k]] || {}).w, voie = surVoie([pa.q, ...idx.map(k => R.N[k]), best.q], [larg(pa.a), ...idx.map(larg), larg(best.i)]);   // sur la voie de droite, du point d'entrée au point de sortie
+  return [...hors(A, voie[0]), ...voie.map(p => ({ p, route:true })), ...hors(voie[voie.length - 1], B)];
 }
 /* ---------- bâtiments : jamais traversés ----------
    Un habitant sort de son bâtiment par un point de son pourtour (le plus proche de la route), marche dehors (routes d'abord) et entre
@@ -130,6 +155,7 @@ function marcher(w, tx, ty, v, dt) {
     else { w.x += (p[0] - w.x) / d * vit * t; w.y += (p[1] - w.y) / d * vit * t; t = 0; }
   }
   w.surRoute = E.length ? E[0].route : false;
+  if (E.length && !E[0].route) { w.horsT = (w.horsT || 0) + dt; w.horsBut = [Math.round(tx), Math.round(ty)]; w.horsEtat = w.state; }   // (diagnostic : temps passé hors route, voir le profil de demarrage.js)
   if (E.length) return false;
   w.chemin = null; return true;
 }

@@ -43,9 +43,10 @@
   <button role="tab" data-tool="arbres" aria-selected="false">Végétation</button>
   <button role="tab" data-tool="baies" aria-selected="false">Arbustes à baies</button>
   <button role="tab" data-tool="vehicules" aria-selected="false">Véhicules</button>
+  <button role="tab" data-tool="arbre" aria-selected="false">Arbre des ressources</button>
 </nav>
 <main>
-  <iframe id="testjeu" title="Test jeu" data-src="region.html?test=1&region=153&biome=tempere&river=petite&seed=1211708&lon=-84.33&lat=41.6&tm=13&hum=1"></iframe>
+  <iframe id="testjeu" title="Test jeu" data-src="region.html?test=1&region=123&biome=tempere&river=riviere&seed=974138&lon=-0.31&lat=48.16&tm=8&hum=1"></iframe>
   <iframe id="carte" title="Générateur" data-src="editeur-carte.html"></iframe>
   <iframe id="routes" title="Routes" data-src="editeur-routes.html"></iframe>
   <iframe id="animaux" title="Animaux" data-src="editeur-animaux.html"></iframe>
@@ -55,6 +56,7 @@
   <iframe id="baies" title="Arbustes à baies" data-src="arbustes-baies.html"></iframe>
   <iframe id="arbres" title="Végétation" data-src="arbres-fruitiers.html"></iframe>
   <iframe id="vehicules" title="Véhicules" data-src="editeur-vehicules.html"></iframe>
+  <iframe id="arbre" title="Arbre des ressources" data-src="arbre-ressources.html"></iframe>
 </main>
 <script>
 /* Deux sections : TEST JEU (jouer et tester) et ÉDITION (créer, modifier, configurer). Chaque outil est une page existante dans un cadre,
@@ -62,7 +64,7 @@
    Les outils et le jeu partagent le même stockage du navigateur : « Appliquer au jeu » (éditeur de carte) enregistre la carte de la région
    là où le jeu la lit ; il ne reste qu'à recharger le test. La carte globale est mise de côté (index.html, hors du studio). */
 const frames = Object.fromEntries([...document.querySelectorAll('iframe')].map(f => [f.id, f]));
-const barre = document.querySelector('nav.edition'), REGION_TEST = 153;
+const barre = document.querySelector('nav.edition'), REGION_TEST = 123;
 let testAJour = true, dernierOutil = 'carte';
 function afficher(id) {
   for (const [k, f] of Object.entries(frames)) {

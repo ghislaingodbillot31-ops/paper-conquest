@@ -1,3 +1,5 @@
+/* Graine du dessin d'un bâtiment : propre au bâtiment (son numéro) et JAMAIS sa position ni son angle — déplacé ou tourné, un bâtiment garde exactement la même forme (cour, touffes, planches, bêtes…). */
+const sid = h => h && h.id > 0 ? h.id : 1;
 /* ---------- dessin des bâtiments du catalogue ----------
    Repère local : u le long de la façade (−w/2 … w/2), t en profondeur depuis la rue
    (0 = bord de rue, l = fond de parcelle). */
@@ -28,7 +30,7 @@ function softRect(u0, t0, u1, t1, r, jit, rnd) {
 // toit de chaume à deux pans : bord épais et arrondi, rangs de paille ondulés, brins, mousse
 // sur le pan à l'ombre, faîtage de paille liée ; ombre portée au sud-est
 function thatchLT(h, u0, t0, u1, t1, along, P) {
-  const ridgeT = along === 't', s = view.s, rnd = seeded(Math.round(u0 * 17 + t0 * 29 + h.x * 3 + h.y));
+  const ridgeT = along === 't', s = view.s, rnd = seeded(Math.round(u0 * 17 + t0 * 29 + sid(h) * 3 + sid(h) * 2));
   const out = lpts(h, softRect(u0, t0, u1, t1, Math.min(1.1, (u1 - u0) / 5), .14, rnd));
   pathS(shiftS(out, 1.5, 1.9)); ctx.fillStyle = WOOD.shadow; ctx.fill();                        // ombre portée
   const cu = (u0 + u1) / 2, ct = (t0 + t1) / 2, cS = LP(h, cu, ct);
@@ -88,7 +90,7 @@ function chimneyLT(h, cu, ct, a) {
 }
 // clôture tressée (plessis) : branchages entrelacés entre des pieux, ouverte sur [gap0, gap1]
 function wattleLT(h, u0, t0, u1, t1, gap0, gap1, extra = []) { // gap0 null : pas de portail ; extra : segments en plus (refends)
-  const s = view.s, rnd = seeded(Math.round(h.x * 3 + h.y * 5) + 7);
+  const s = view.s, rnd = seeded(Math.round(sid(h) * 3 + sid(h) * 2 * 5) + 7);
   const gate = gap0 != null, runs = [...(gate ? [[[u0, t0], [gap0, t0]], [[gap1, t0], [u1, t0]]] : [[[u0, t0], [u1, t0]]]), [[u1, t0], [u1, t1]], [[u1, t1], [u0, t1]], [[u0, t1], [u0, t0]], ...extra];
   const lines = runs.map(([a, b]) => { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), n = Math.max(2, Math.ceil(L / .6)), P = [];
     for (let i = 0; i <= n; i++) { const j = i && i < n ? (rnd() - .5) * .14 : 0; P.push([a[0] + (b[0] - a[0]) * i / n + j, a[1] + (b[1] - a[1]) * i / n + j]); } return P; });
@@ -113,7 +115,7 @@ function wattleLT(h, u0, t0, u1, t1, gap0, gap1, extra = []) { // gap0 null : pa
 // fosse de sciage de long : trou bordé de déblais, deux traverses, grume à moitié sciée,
 // scie de long à cadre plantée dans le trait, échelle, sciure au fond
 function sawPitLT(h, u0, t0, u1, t1) {
-  const s = view.s, rnd = seeded(Math.round(h.x + h.y * 7) + 3), cu = (u0 + u1) / 2;
+  const s = view.s, rnd = seeded(Math.round(sid(h) + sid(h) * 2 * 7) + 3), cu = (u0 + u1) / 2;
   pathS(lpts(h, softRect(u0 - .8, t0 - .8, u1 + .8, t1 + .8, .7, .25, rnd))); ctx.fillStyle = WOOD.spoil; ctx.fill(); // déblais
   const pit = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
   ctx.save(); pathS(pit); ctx.clip();
@@ -150,7 +152,7 @@ function beamLT(h, u0, t0, u1, t1) {
 // stère de bois fendu, rangé le long de t : bûches couchées en travers (écorce ou face fendue),
 // pieux de maintien aux deux bouts
 function cordwoodLT(h, u0, t0, u1, t1) {
-  const s = view.s, rnd = seeded(Math.round(u0 * 13 + t0 * 7 + h.x)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  const s = view.s, rnd = seeded(Math.round(u0 * 13 + t0 * 7 + sid(h))), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
   pathS(shiftS(P, .45, .6)); ctx.fillStyle = WOOD.shadow; ctx.fill();
   pathS(P); ctx.fillStyle = WOOD.barkLo; ctx.fill();
   const cols = [WOOD.bark, WOOD.barkHi, WOOD.grain, WOOD.bark, '#c9a472'];
@@ -175,7 +177,7 @@ function bucksawLT(h, cu, ct) {
 }
 // foyer : cercle de pierres, cendres, braises et bouts de bois calcinés
 function firePitLT(h, cu, ct, r) {
-  const s = view.s, rnd = seeded(Math.round(cu * 31 + ct * 17 + h.y));
+  const s = view.s, rnd = seeded(Math.round(cu * 31 + ct * 17 + sid(h) * 2));
   const ash = []; for (let i = 0; i < 12; i++) { const a = i / 12 * Math.PI * 2; ash.push([cu + Math.cos(a) * r, ct + Math.sin(a) * r]); }
   pathS(lpts(h, ash)); ctx.fillStyle = '#8f887c'; ctx.fill();
   const ember = []; for (let i = 0; i < 9; i++) { const a = i / 9 * Math.PI * 2, k = .35 + rnd() * .2; ember.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * k]); }
@@ -205,7 +207,7 @@ function fagotLT(h, cu, ct, len, a) {
 }
 // tas de branchages ébranchés : rameaux sombres entremêlés, quelques feuilles
 function branchesLT(h, cu, ct, r) {
-  const s = view.s, rnd = seeded(Math.round(cu * 41 + ct * 3 + h.x)), blob = [];
+  const s = view.s, rnd = seeded(Math.round(cu * 41 + ct * 3 + sid(h))), blob = [];
   for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, k = .75 + rnd() * .4; blob.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * .8 * k]); }
   const P = lpts(h, blob); pathS(shiftS(P, .35, .45)); ctx.fillStyle = WOOD.shadow; ctx.fill();
   pathS(P); ctx.fillStyle = '#6a6440'; ctx.fill();
@@ -226,7 +228,7 @@ function axeLT(h, cu, ct, a) {
 }
 // carré de potager : terre retournée sombre, rangs de légumes le long de u, bordure de planches
 function vegPatchLT(h, u0, t0, u1, t1) {
-  const s = view.s, rnd = seeded(Math.round(u0 * 7 + t0 * 13 + h.x + h.y)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  const s = view.s, rnd = seeded(Math.round(u0 * 7 + t0 * 13 + sid(h) + sid(h) * 2)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
   pathS(P); ctx.fillStyle = '#7d6446'; ctx.fill();
   if (s > 1.5) for (let t = t0 + .25, k = 0; t < t1 - .1; t += .4, k++) {
     ctx.strokeStyle = 'rgba(70,52,34,.6)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(...LP(h, u0 + .1, t + .2)); ctx.lineTo(...LP(h, u1 - .1, t + .2)); ctx.stroke(); // sillon
@@ -248,7 +250,7 @@ const henLT = (h, u, t, a, col) => beastLT(h, u, t, a, .34, .22, col, col, at =>
 const goatLT = (h, u, t, a, col) => beastLT(h, u, t, a, .95, .4, col, col, at => { ctx.strokeStyle = '#3b3228'; ctx.lineWidth = lw(.04); ctx.beginPath(); for (const e of [-.06, .06]) { ctx.moveTo(...LP(h, ...at(.72, e))); ctx.lineTo(...LP(h, ...at(.58, e * 2.4))); } ctx.stroke(); });
 // arbre fruitier : houppier bosselé, reflet au nord-ouest, fruits rouges
 function fruitTreeLT(h, cu, ct, r) {
-  const s = view.s, rnd = seeded(Math.round(cu * 37 + ct * 11 + h.x + h.y)), c = [], hi = [];
+  const s = view.s, rnd = seeded(Math.round(cu * 37 + ct * 11 + sid(h) + sid(h) * 2)), c = [], hi = [];
   for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, k = .86 + rnd() * .16 + .06 * Math.sin(i * 2.7); c.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * k]); hi.push([cu + Math.cos(a) * r * k * .55, ct + Math.sin(a) * r * k * .55]); }
   const C = lpts(h, c);
   pathS(shiftS(C, r * .45, r * .55)); ctx.fillStyle = 'rgba(40,44,20,.3)'; ctx.fill();
@@ -263,7 +265,7 @@ function fruitTreeLT(h, cu, ct, r) {
 }
 // tas (fumier, compost, charbon, foin…) : monticule irrégulier, crête plus claire
 function heapLT(h, cu, ct, ru, rt, col, hiCol) {
-  const rnd = seeded(Math.round(cu * 23 + ct * 29 + h.x)), P = [], Q = [];
+  const rnd = seeded(Math.round(cu * 23 + ct * 29 + sid(h))), P = [], Q = [];
   for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, k = .82 + rnd() * .3; P.push([cu + Math.cos(a) * ru * k, ct + Math.sin(a) * rt * k]); Q.push([cu - ru * .15 + Math.cos(a) * ru * .5 * k, ct - rt * .15 + Math.sin(a) * rt * .5 * k]); }
   pathS(shiftS(lpts(h, P), .3, .4)); ctx.fillStyle = WOOD.shadow; ctx.fill();
   pathS(lpts(h, P)); ctx.fillStyle = col; ctx.fill(); ctx.strokeStyle = 'rgba(40,30,18,.55)'; ctx.lineWidth = lw(.05); ctx.stroke();
@@ -333,7 +335,7 @@ function yardLT(h, kind, U0, T0, U1, T1) {
   const port = (T1 - T0) >= (U1 - U0), Wy = port ? U1 - U0 : T1 - T0, Ly = port ? T1 - T0 : U1 - U0;
   const Q = (x, y) => port ? [U0 + x, T0 + y] : [U0 + y, T0 + x];
   const R = (x0, y0, x1, y1) => { const a = Q(x0, y0), b = Q(x1, y1); return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])]; };
-  const s = view.s, rnd = seeded(Math.round(h.x * 7 + h.y * 3) + kind.length), cx = Wy / 2;
+  const s = view.s, rnd = seeded(Math.round(sid(h) * 7 + sid(h) * 2 * 3) + kind.length), cx = Wy / 2;
   const alongY = port ? 't' : 'u', alongX = port ? 'u' : 't';
   const shed = (y0, straw) => thatchLT(h, ...R(.2, y0, Wy - .2, Ly - .15), alongX, straw || STRAW);
   const craftShop = () => { const r = R(.25, Ly - 6, Wy - .25, Ly - .15); gableLT(h, ...r); return r; };
@@ -443,7 +445,7 @@ function gableLT(h, u0, t0, u1, t1, along, sh = 1) { // sh : longueur de l'ombre
     }
   });
   if (s > 1.5) { // nuances : certains rangs de bardeaux plus sombres ou plus clairs (bois patiné)
-    const rnd = seeded(Math.round((u0 + t0) * 31 + h.x));
+    const rnd = seeded(Math.round((u0 + t0) * 31 + sid(h)));
     const across = ridgeT ? [u0, u1] : [t0, t1];
     for (let v = across[0]; v < across[1] - .4; v += .8) {
       const k = rnd(); if (k > .35) continue;
@@ -546,11 +548,10 @@ const GRASS = { lush:'#aab27c', dry:'#bcb88a', blade:'rgba(96,116,62,.45)', flow
 const addS = P => { P.forEach((p, i) => i ? ctx.lineTo(...p) : ctx.moveTo(...p)); ctx.closePath(); };
 // sol d'une parcelle : aplat au bord irrégulier, mouchetures (speck) quand on zoome
 // (le sol propre aux bâtiments n'existe plus : le terrain de la région se voit tel quel ; fonction gardée pour les anciens appels)
-function groundLT() {}
 // herbe : touffes et fleurs des champs semées sur un rectangle
 function tuftsLT(h, u0, t0, u1, t1, n, flowers) {
   const s = view.s; if (s < 2) return;
-  const rnd = seeded(Math.round(u0 * 17 + t0 * 3 + h.x * 5 + h.y));
+  const rnd = seeded(Math.round(u0 * 17 + t0 * 3 + sid(h) * 5 + sid(h) * 2));
   ctx.fillStyle = GRASS.blade; for (let k = 0; k < n; k++) { const [X, Y] = LP(h, u0 + rnd() * (u1 - u0), t0 + rnd() * (t1 - t0)); ctx.fillRect(X, Y, Math.max(1, .12 * s), Math.max(1, .22 * s)); }
   if (flowers && s > 2.5) for (let k = 0; k < n / 2; k++) { const [X, Y] = LP(h, u0 + rnd() * (u1 - u0), t0 + rnd() * (t1 - t0)), e = Math.max(1, .12 * s); ctx.fillStyle = GRASS.flower[k % GRASS.flower.length]; ctx.fillRect(X - e / 2, Y - e / 2, e, e); }
 }
@@ -564,7 +565,7 @@ function stoneWallLT(h, pts, th, closed) {
   ctx.beginPath(); for (const g of segs) addS(lpts(h, quad(g, 1))); ctx.fillStyle = STONE.mid; ctx.fill('nonzero');
   ctx.beginPath(); for (const g of segs) addS(lpts(h, quad(g, .55))); ctx.fillStyle = STONE.cap; ctx.fill('nonzero');
   if (s > 2.2) { // joints : pierres de longueurs variées, rangées décalées
-    const rnd = seeded(Math.round(h.x * 11 + h.y * 5 + th * 7));
+    const rnd = seeded(Math.round(sid(h) * 11 + sid(h) * 2 * 5 + th * 7));
     ctx.strokeStyle = STONE.joint; ctx.lineWidth = 1; ctx.beginPath();
     for (const [a, b] of segs) { const L = Math.hypot(b[0] - a[0], b[1] - a[1]), du = (b[0] - a[0]) / L, dt = (b[1] - a[1]) / L;
       for (const side of [-1, 1]) for (let d = rnd() * .5; d < L; d += .45 + rnd() * .5) { const e0 = side > 0 ? 0 : -th / 2, e1 = side > 0 ? th / 2 : 0;
@@ -623,7 +624,7 @@ function blockLT(h, u0, t0, u1, t1, rough) {
 // éclats de pierre / gravats clairs épars
 function chipsLT(h, cu, ct, rad, n, col) {
   const s = view.s; if (s < 1.5) return;
-  const rnd = seeded(Math.round(cu * 7 + ct * 13 + h.x)); ctx.fillStyle = col || '#d8d2c4';
+  const rnd = seeded(Math.round(cu * 7 + ct * 13 + sid(h))); ctx.fillStyle = col || '#d8d2c4';
   for (let k = 0; k < n; k++) { const a = rnd() * Math.PI * 2, d = Math.sqrt(rnd()) * rad, [X, Y] = LP(h, cu + Math.cos(a) * d, ct + Math.sin(a) * d), e = Math.max(1, (.08 + rnd() * .1) * s); ctx.fillRect(X, Y, e, e * .8); }
 }
 // caisse de bois : planches, deux traverses
@@ -686,7 +687,7 @@ function topCrossLT(h, cu, ct, a, e, col = '#6b4f32') {
 }
 // if / arbre sombre (houppier en lobes), ou feuillu : col = [ombre, corps, reflet]
 function treeLT(h, cu, ct, r, col) {
-  const s = view.s, rnd = seeded(Math.round(cu * 53 + ct * 7 + h.x * 3)), c = [], hi = [];
+  const s = view.s, rnd = seeded(Math.round(cu * 53 + ct * 7 + sid(h) * 3)), c = [], hi = [];
   for (let i = 0; i < 18; i++) { const a = i / 18 * Math.PI * 2, k = .84 + rnd() * .2 + .07 * Math.sin(i * 2.3); c.push([cu + Math.cos(a) * r * k, ct + Math.sin(a) * r * k]); hi.push([cu + Math.cos(a) * r * k * .6, ct + Math.sin(a) * r * k * .6]); }
   const C = lpts(h, c);
   pathS(shiftS(C, r * .6, r * .8)); ctx.fillStyle = 'rgba(36,40,20,.32)'; ctx.fill();
@@ -721,7 +722,7 @@ function tableLT(h, cu, ct, len, goods) {
 }
 // étal de marché : auvent de toile rayée sur quatre perches, tréteaux et marchandises devant
 function stallLT(h, u0, t0, u1, t1, ca, cb, goods) {
-  const s = view.s, rnd = seeded(Math.round(u0 * 13 + t0 * 17 + h.x));
+  const s = view.s, rnd = seeded(Math.round(u0 * 13 + t0 * 17 + sid(h)));
   beamLT(h, u0 + .2, t0 - .9, u1 - .2, t0 - .1);                                                   // comptoir devant l'auvent
   if (s > 1.8) for (let k = 0; k < (u1 - u0) * 3; k++) { const [X, Y] = LP(h, u0 + .4 + rnd() * (u1 - u0 - .8), t0 - .7 + rnd() * .45), e = Math.max(1, .15 * s); ctx.fillStyle = goods[k % goods.length]; ctx.beginPath(); ctx.arc(X, Y, e, 0, Math.PI * 2); ctx.fill(); }
   const P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
@@ -757,7 +758,7 @@ function hayRackLT(h, u0, t0, u1, t1) {
 }
 // jeunes plants en rangs (pépinière) : terre meuble, petites touffes vertes, tuteurs
 function nurseryLT(h, u0, t0, u1, t1, step) {
-  const s = view.s, rnd = seeded(Math.round(u0 * 5 + t0 * 3 + h.y)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
+  const s = view.s, rnd = seeded(Math.round(u0 * 5 + t0 * 3 + sid(h) * 2)), P = lpts(h, [[u0, t0], [u1, t0], [u1, t1], [u0, t1]]);
   pathS(P); ctx.fillStyle = '#86694a'; ctx.fill(); ctx.strokeStyle = '#6b5236'; ctx.lineWidth = lw(.08); ctx.stroke();
   for (let t = t0 + step / 2; t < t1; t += step) for (let u = u0 + step / 2; u < u1; u += step) {
     const [X, Y] = LP(h, u + (rnd() - .5) * .1, t + (rnd() - .5) * .1), r = Math.max(1, step * (.28 + rnd() * .12) * s);

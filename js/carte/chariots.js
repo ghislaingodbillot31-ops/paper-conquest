@@ -85,6 +85,7 @@ function chCordes(hb, a) {
    braq (rad) par rapport à la caisse ; la caisse, la charge et l'essieu arrière restent dans l'axe de la caisse (cap ang). Seuls les chariots à quatre roues pivotent (la charrette à bras est rigide).
    peintChariot(clé, x, y, L, ang, braq) : (x, y) = centre de la caisse. chariotPas fait avancer l'attelage : le cheval tire le pivot dans sa direction ah, la caisse suit sa trajectoire
    (remorque : son cap tourne vers la direction du pivot, d'autant plus vite que la distance entre les essieux est courte) ; elle rend l'angle braq à dessiner. */
+let CH_SANS_PERSO = false;   // vrai : la charrette est peinte sans son tireur ni son cocher (le villageois qui travaille la tire : simulation.js)
 const CH_PIVOT = .26, CH_ARRIERE = -.3, CH_BRAQ_MAX = .75;
 function chariotPas(st, T, ah, dist) {                                   // st : { px, py (pivot, en m), ab (cap de la caisse) } ; retourne { x, y (centre de la caisse, m), ang, braq }
   st.px += Math.cos(ah) * dist; st.py += Math.sin(ah) * dist;
@@ -144,7 +145,7 @@ function peintChariot(k, x, y, L, ang = 0, braq = 0) {
   // passagers, animaux : sprites des autres feuilles, posés dans la caisse (repère monde)
   if (a.charge === 'passagers' && typeof peintVillageois === 'function') for (const [u, v, t] of [[-.28, -hb * .45, 'marchand'], [-.28, hb * .45, 'paysan'], [.06, -hb * .45, 'berger'], [.06, hb * .45, 'villageois']]) { const [X, Y] = wp(u, v); peintVillageois(t, X, Y, .58 * pxm, ang); }
   if (a.charge === 'animaux' && typeof peintAnimal === 'function' && typeof ANIMAUX !== 'undefined') for (const [u, v, t, rot] of [[-.2, -hb * .38, 'mouton', 0], [.18, hb * .35, 'mouton', Math.PI]]) { const [X, Y] = wp(u, v); peintAnimal(t, X, Y, ANIMAUX[t].T * pxm, ang + rot); }
-  if (cheval && typeof peintVillageois === 'function') { const [X, Y] = wp(.35, 0); peintVillageois('villageois', X, Y, .58 * pxm, ang); }                                   // cocher assis sur le siège
+  if (cheval && !CH_SANS_PERSO && typeof peintVillageois === 'function') { const [X, Y] = wp(.35, 0); peintVillageois('villageois', X, Y, .58 * pxm, ang); }                                   // cocher assis sur le siège
   // l'attelage : le cheval entre les brancards, ou l'homme qui tire la charrette
   const [TX, TY] = wpf(xt, 0);
   if (cheval && typeof peintAnimal === 'function' && typeof ANIMAUX !== 'undefined') {
@@ -155,5 +156,5 @@ function peintChariot(k, x, y, L, ang = 0, braq = 0) {
     chEll(xc, 0, .018, .018, '#c9a050'); ctx.lineWidth = lw; ctx.strokeStyle = CH_INK;
     for (const s of [-1, 1]) { ctx.beginPath(); ctx.moveTo(xr, s * demi); ctx.lineTo(xc, s * demi); ctx.lineWidth = .012 + lw * 1.6; ctx.stroke(); ctx.lineWidth = .012; ctx.strokeStyle = '#8a5a30'; ctx.stroke(); ctx.lineWidth = lw; ctx.strokeStyle = CH_INK; }   // traits le long du flanc
     ctx.restore();
-  } else if (!cheval && typeof peintVillageois === 'function') peintVillageois('villageois', TX, TY, .58 * pxm, ang + br);
+  } else if (!cheval && !CH_SANS_PERSO && typeof peintVillageois === 'function') peintVillageois('villageois', TX, TY, .58 * pxm, ang + br);
 }

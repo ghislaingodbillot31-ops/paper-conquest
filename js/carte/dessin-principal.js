@@ -22,6 +22,13 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (atelier.on) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
   const pending = presentScene();                         // décor (tuiles)
+  /* ORDRE : ce qui vit sous les arbres d'abord (animaux, bateaux, personnages — drawWorkers peint aussi la couche de cimes par-dessus eux), PUIS tout ce qui doit rester lisible et au-dessus des arbres : sélection, zones de travail, aperçus, noms, textes. */
+  if (typeof drawFaune === 'function') drawFaune();
+  if (typeof drawBateaux === 'function') drawBateaux();
+  if (typeof drawTerrestres === 'function') drawTerrestres();
+  if (typeof JR !== 'undefined' && JR.actif && JR.voies && typeof drawVoiesDev === 'function') drawVoiesDev();   // mode développeur : lignes de circulation
+  drawWorkers();
+  if (typeof JR !== 'undefined' && JR.actif && JR.infos && typeof drawInfosHab === 'function') drawInfosHab();   // mode développeur : satiété, soif, activité (dev.js)
   drawFrameMarks();
   drawHighlights();
   if (tool === 'tower') {
@@ -44,14 +51,15 @@ function draw() {
     ctx.font = '500 14px "IBM Plex Mono", monospace'; ctx.textAlign = 'left'; ctx.textBaseline = 'bottom';
     haloText('Hors zone : approchez d\'une route', X + 12, Y - 8, Col.bad, Col.sheet);
   }
-  if (drag && drag.kind === 'house' && drag.preview) drawHouse(drag.preview, drag.preview.ok ? 'ghost' : 'bad');
+  if (deplacer && deplacer.preview) drawHouse(deplacer.preview, deplacer.preview.ok ? 'ghost' : 'bad');
   drawWorkZones();
-  if (typeof drawFaune === 'function') drawFaune();
-  if (typeof drawBateaux === 'function') drawBateaux();
-  if (typeof drawTerrestres === 'function') drawTerrestres();
-  drawWorkers();
+  if (typeof drawChampApercu === 'function') drawChampApercu();
+  if (typeof drawCaptureCibles === 'function') drawCaptureCibles();
+  if (typeof drawEauPeche === 'function') drawEauPeche();
+  if (typeof drawFauneNoms === 'function') drawFauneNoms();
   drawDraft();
   drawScale();
   updateStatus();
+  if (typeof drawLumieres === 'function') drawLumieres();                              // nuit : voile et sources de lumière (lumieres.js)
   if (pending) requestDraw();                             // tuiles restantes : aux images suivantes
 }

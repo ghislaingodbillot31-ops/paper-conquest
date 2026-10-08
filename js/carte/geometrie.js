@@ -6,6 +6,8 @@ const ROADS = [
   { id:'terre',   name:'Terre',   w:CELL, surf:CELL },
   { id:'gravier', name:'Gravier', w:CELL, surf:CELL },
   { id:'pave',    name:'Pavé',    w:CELL, surf:CELL },
+  // chemin : réservé aux piétons (ni charrette ni chariot ne s'y garent), deux fois moins large, marron ; mêmes propriétés que la terre mais aucune case constructible sur ses bords (zonage.js)
+  { id:'chemin',  name:'Chemin',  w:CELL / 2, surf:CELL / 2, pieton:true },
 ];
 const typeName = (f, d) => (PRESETS.find(p => p.f === f && p.d === d) || { name:'Sur mesure' }).name;
 

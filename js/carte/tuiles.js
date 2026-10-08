@@ -12,7 +12,7 @@
    - Ce qui bouge (habitants, aperçu, tracés, sélection, graduations) est dessiné à chaque
      image par-dessus, sur le canevas transparent de la carte (voir draw). */
 const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16, 32, 64], TILE_MAX = 220, TILE_MS = 8;
-const tiles = new Map();                  // 'L:i:j' → { L, i, j, x0, y0, m, c, dirty:[rects], used, seen, spr }
+const tiles = new Map();                  // 'L:i:j' → { L, i, j, x0, y0, m, c (décor), cc (cimes : houppiers des arbres isolés et de lisière, transparent), dirty:[rects], used, seen, spr }
 const tileKey = (L, i, j) => L + ':' + i + ':' + j;
 let tileClock = 0, tileFrame = 0;
 
@@ -49,6 +49,7 @@ function drawDecor() {
   drawMouths();
   drawPlantesEau();                                             // nénuphars, roseaux et plantes de berge (sous les routes)
   drawDeposits();
+  if (typeof drawChamps === 'function') drawChamps();             // champs : sous les routes
   drawRoads();
   drawBridges();
   drawWalls();
@@ -64,6 +65,29 @@ function drawDecor() {
   for (const h of S.houses) if (near(h, 40)) drawHouse(h, 'normal');
   for (const t of S.towers) if (near(t, 20)) drawTower(t, 'normal');
 }
+// les cimes : les houppiers des arbres isolés et de lisière (pas l'intérieur des grands bois), seuls, sur fond transparent — peints une fois avec le décor, puis affichés par-dessus les personnages (presentCimes)
+function drawCimes() {                                                                       // même ordre que le décor : la lisière, le massif de la grande forêt PAR-DESSUS elle, puis les arbres isolés
+  const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), list = floraNear(x0 - 40, y0 - 40, x1 + 40, y1 + 40), bois = list.filter(f => f.wood);
+  for (const f of bois) if (!f.inner) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  ctx.save(); ctx.globalAlpha = .7; drawWoods(ctx, bois.filter(f => f.inner), view.s, view.ox, view.oy); ctx.restore();   // (le massif à 70 % : par-dessus le décor qui le contient déjà il n'y a aucune différence, mais un personnage dessous reste visible à 30 %)
+  for (const f of list) if (!f.wood && f.kind === 'tree') { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+}
+let cimesVues = [];
+/* Les cimes ne repassent que là où un personnage vient d'être peint (P : leurs positions en m) : par ailleurs elles sont déjà dans le décor, donc recopier toutes les tuiles de cimes à chaque image (~14 ms) ne changeait rien à l'écran.
+   La zone est découpée en carrés de 8 m alignés (jamais deux fois le même pixel) autour de chaque personnage (5 m). */
+function presentCimes(P) {
+  if (!P || !P.length) return;
+  const s = view.s, C = 8, R = 7, cases = new Set();
+  for (const [x, y] of P) for (let i = Math.floor((x - R) / C); i <= Math.floor((x + R) / C); i++) for (let j = Math.floor((y - R) / C); j <= Math.floor((y + R) / C); j++) cases.add(i + ',' + j);
+  for (const k of cases) {
+    const [i, j] = k.split(',').map(Number), x0 = i * C, y0 = j * C, x1 = x0 + C, y1 = y0 + C;
+    for (const t of cimesVues) {
+      if (!t.cc || x1 <= t.x0 || x0 >= t.x0 + t.m || y1 <= t.y0 || y0 >= t.y0 + t.m) continue;
+      const a = Math.max(x0, t.x0), b = Math.max(y0, t.y0), c = Math.min(x1, t.x0 + t.m), d = Math.min(y1, t.y0 + t.m);
+      ctx.drawImage(t.cc, (a - t.x0) * t.L, (b - t.y0) * t.L, (c - a) * t.L, (d - b) * t.L, a * s + view.ox, b * s + view.oy, (c - a) * s + (c >= t.x0 + t.m ? .6 : 0), (d - b) * s + (d >= t.y0 + t.m ? .6 : 0));
+    }
+  }
+}
 // repeint le rectangle r (m) d'une tuile
 function paintTile(t, r) {
   const L = t.L, px0 = Math.max(0, Math.floor((r[0] - t.x0) * L)), py0 = Math.max(0, Math.floor((r[1] - t.y0) * L));
@@ -74,12 +98,19 @@ function paintTile(t, r) {
   g.imageSmoothingEnabled = true;
   try { paintWith(g, px1 - px0, py1 - py0, L, -t.x0 * L - px0, -t.y0 * L - py0, drawDecor); }
   finally { g.restore(); }
+  if (t.cc) {                                                                                  // la couche de cimes du même rectangle
+    const gc = t.cc.getContext('2d');
+    gc.save(); gc.setTransform(1, 0, 0, 1, px0, py0); gc.beginPath(); gc.rect(0, 0, px1 - px0, py1 - py0); gc.clip(); gc.clearRect(0, 0, px1 - px0, py1 - py0); gc.imageSmoothingEnabled = true;
+    try { paintWith(gc, px1 - px0, py1 - py0, L, -t.x0 * L - px0, -t.y0 * L - py0, drawCimes); }
+    finally { gc.restore(); }
+  }
   if (t.spr) t.spr.texture.baseTexture.update();          // la carte graphique reprend l'image
 }
 const tileRect = t => [t.x0, t.y0, t.x0 + t.m, t.y0 + t.m];
 function newTile(L, i, j) {
   const m = TILE_PX / L, c = document.createElement('canvas'); c.width = c.height = TILE_PX;
-  const t = { L, i, j, x0:i * m, y0:j * m, m, c, dirty:[], used:++tileClock, spr:null };
+  const cc = document.createElement('canvas'); cc.width = cc.height = TILE_PX;
+  const t = { L, i, j, x0:i * m, y0:j * m, m, c, cc, dirty:[], used:++tileClock, spr:null };
   paintTile(t, tileRect(t));
   tiles.set(tileKey(L, i, j), t);
   if (tiles.size > TILE_MAX) {                                   // on libère les moins récentes (jamais la vue d'ensemble)
@@ -89,7 +120,7 @@ function newTile(L, i, j) {
   return t;
 }
 function dropTile(t) {
-  tiles.delete(tileKey(t.L, t.i, t.j));
+  tiles.delete(tileKey(t.L, t.i, t.j)); t.cc = null;
   if (t.spr) { t.spr.destroy({ texture:true, baseTexture:true }); t.spr = null; }
 }
 // repeint les rectangles en attente d'une tuile (fusionnés s'ils sont nombreux)
@@ -119,9 +150,11 @@ function sceneDiff() {
   const land = JSON.stringify([FORME_ID, S.landSeed, S.biome, S.reliefSeed, S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.isles]), S.lakes.map(l => [l.c, l.pts.length]), (S.deposits || []).map(d => [d.kind, d.c, d.r])]);
   const now = new Map(), box = new Map();
   const add = (k, o, pts, m) => { now.set(k, JSON.stringify(o)); const b = bbox(pts); box.set(k, [b[0] - m, b[1] - m, b[2] + m, b[3] + m]); };
-  for (const h of S.houses) add('h' + h.id, h, corners(h), 24);
-  for (const r of S.roads) add('r' + r.id, r, [...r.pts, ...smoothPts(r)], 48);
+  const etals = JSON.stringify(typeof etalsMarche === 'function' ? etalsMarche().map(e => [e.c, e.r]) : []);                 // (le marché est dessiné d'après ses étals permanents)
+  for (const h of S.houses) add('h' + h.id, h.kind === 'marche' ? [h, etals] : h, corners(h), 24);
+  for (const r of S.roads) add('r' + r.id, [r, smoothPts(r)], [...r.pts, ...smoothPts(r)], 48);
   for (const w of S.walls) add('w' + w.id, w, w.pts, 20);
+  for (const c of S.champs || []) add('c' + c.id, c, c.pts, 10);                      // (un champ : seulement sa zone est repeinte)
   for (const t of S.towers) add('t' + t.id, t, [[t.x, t.y]], 20);
   for (const g of S.gates) add('g' + g.id, g, [[g.x, g.y]], 20);
   if (!lastObjs || land !== lastLand) markAllDirty();
@@ -183,6 +216,7 @@ function presentScene() {
       t.used = ++tileClock; t.seen = tileFrame; shown.push(t);
     }
   }
+  cimesVues = L === .5 ? baseTiles : shown;                          // (tuiles de cimes à afficher par-dessus les personnages)
   if (GPU) {
     const { renderer, stage, world, base, cur } = GPU;
     if (renderer.width !== Math.round(W * dpr) || renderer.height !== Math.round(H * dpr)) renderer.resize(W, H);

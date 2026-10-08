@@ -6,9 +6,9 @@ const NOM_KEY = KEY + '.nom';
 let village = { nom:GAME ? `Village de la région ${GAME.region}` : 'Village', fixe:false };
 try { Object.assign(village, JSON.parse(localStorage.getItem(NOM_KEY) || '{}')); } catch (e) {}
 const ONGLETS = ['route', 'construction', 'aide'];
-const OUTILS_CONSTRUCTION = ['house', 'wall', 'tower', 'gate'];
+const OUTILS_CONSTRUCTION = ['house', 'wall', 'tower', 'gate', 'champ'];
 // sans camp de colon, le menu s'ouvre sur Résidentiel, où il se trouve
-let onglet = null, categorie = GAME && !S.houses.some(h => h.kind === 'camp_colon') ? 'residentiel' : BUILD_MENUS[0].id;
+let onglet = null, categorie = GAME && !S.fonde && !S.houses.some(h => h.kind === 'camp_colon') ? 'residentiel' : BUILD_MENUS[0].id;
 const esc = t => String(t).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
 
 /* ---- nom du village ---- */
@@ -63,6 +63,7 @@ function syncBarre() {
   const t = tool === 'road' ? 'route' : OUTILS_CONSTRUCTION.includes(tool) ? 'construction' : null;
   // outil choisi au clavier (2, 4, 5, 6) : on montre sa catégorie ; ensuite, le joueur parcourt librement les catégories
   if (neuf && tool === 'house') { const m = BUILD_MENUS.find(x => x.ids && x.ids.includes(preset.id)); if (m && m.id !== categorie) { categorie = m.id; if (onglet === 'construction') afficherCartes(); } }
+  if (neuf && tool === 'champ' && categorie !== 'agriculture') { categorie = 'agriculture'; if (onglet === 'construction') afficherCartes(); }
   if (neuf && ['wall', 'tower', 'gate'].includes(tool) && categorie !== 'defense') { categorie = 'defense'; if (onglet === 'construction') afficherCartes(); }
   if (neuf && t && !onglet) montrer(t);
   for (const b of document.querySelectorAll('[data-onglet]')) b.setAttribute('aria-pressed', String(b.dataset.onglet === onglet));
@@ -76,9 +77,8 @@ function afficherCartes() {
   const m = BUILD_MENUS.find(x => x.id === categorie) || BUILD_MENUS[0];
   $('categories').innerHTML = BUILD_MENUS.map(x =>
     `<button role="tab" data-cat="${x.id}" aria-selected="${x.id === m.id}">${x.name}</button>`).join('');
-  $('cartes').innerHTML = m.tools
-    ? m.tools.map(([id, name]) => `<button class="carte" data-outil="${id}"><span class="vignette outil-${id}" aria-hidden="true"></span><b>${name}</b></button>`).join('')
-    : m.ids.map(id => PRESETS.find(p => p.id === id)).filter(Boolean).map(p =>
+  $('cartes').innerHTML = (m.tools || []).map(([id, name]) => `<button class="carte" data-outil="${id}"><span class="vignette outil-${id}" aria-hidden="true"></span><b>${name}</b></button>`).join('') +
+    (m.ids || []).map(id => PRESETS.find(p => p.id === id)).filter(Boolean).map(p =>
       `<button class="carte" data-id="${p.id}" title="${esc(p.use)}"><canvas class="vignette" data-v="${p.id}" aria-hidden="true"></canvas>` +
       `<b>${p.name}</b><span>${p.f} × ${p.d} cases${p.cap ? ` · ${p.cap} hab.` : ''}</span>${p.cout ? `<span class="cout">${coutTexte(p.cout)}</span>` : ''}</button>`).join('');
   peindreVignettes([...$('cartes').querySelectorAll('canvas[data-v]')]);
@@ -131,3 +131,34 @@ addEventListener('keydown', e => {
 document.addEventListener('click', e => { const b = e.target.closest('button'); if (b && !b.closest('form')) b.blur(); });
 
 afficherNom();
+
+/* ---- date et heure du jeu dans le bandeau (horloge de saisons.js) ---- */
+function majDate() {
+  const el = id => document.getElementById(id);
+  if (!el('date-jour')) return;
+  const d = dateDe(JOUR_AUTO ? aujourdhui() : METEO.doy);
+  el('date-jour').textContent = d.jour + (d.jour === 1 ? 'er' : ''); el('date-mois').textContent = MOIS[d.mois]; el('date-heure').textContent = libelleHeure(heureCarte());
+}
+majDate(); setInterval(majDate, 1000);
+/* ---- travailleurs et postes libres dans le bandeau (réglages de gestion.js) ---- */
+function majTravail() {
+  const t = document.getElementById('travailleurs'); if (!t || typeof travMax !== 'function') return;
+  const postes = S.houses.reduce((s, h) => s + (h.actif === false ? 0 : travMax(h)), 0), occupes = travUtilises();
+  t.textContent = occupes; document.getElementById('postes').textContent = Math.max(0, postes - occupes);
+}
+majTravail(); setInterval(majTravail, 1000);
+
+/* ---- choix de la région (barre du haut) : la liste vient de data/regions/regions.json ; l'adresse suit la même règle que le jeu (carte-region.js) ---- */
+(function () {
+  const sel = document.getElementById('region-choix'); if (!sel || typeof GAME === 'undefined' || !GAME) return;
+  fetch('data/regions/regions.json').then(r => r.json()).then(list => {
+    const cur = GAME.region;
+    sel.innerHTML = list.map(r => `<option value="${r.id}"${r.id === cur ? ' selected' : ''}>${r.id} · ${r.pays} · ${r.climat.biome} · ${r.climat.temperature_c} °C${r.eau && r.eau.cours_eau_carte && r.eau.cours_eau_carte !== 'aucun' ? ' · ' + r.eau.cours_eau_carte : ''}</option>`).join('');
+    sel.addEventListener('change', () => {
+      const r = list.find(x => x.id === +sel.value); if (!r) return;
+      const p = new URLSearchParams({ region:r.id, biome:r.climat.biome, river:r.eau.cours_eau_carte, seed:r.id * 7919 + 101, lon:r.centre[0], lat:r.centre[1], tm:r.climat.temperature_c, hum:r.climat.humidite });
+      if (new URLSearchParams(location.search).has('test')) p.set('test', '1');
+      location.search = '?' + p.toString();
+    });
+  }).catch(() => { sel.hidden = true; });
+})();

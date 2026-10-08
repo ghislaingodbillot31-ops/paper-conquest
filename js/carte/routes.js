@@ -19,8 +19,8 @@ function makePatterns() {
   })();
 }
 // couleur unie de la chaussée et de sa bordure, selon le revêtement
-const FILL = { terre:'earth', gravier:'gravel', pave:'paving' };
-const EDGE = { terre:'earth-edge', gravier:'gravel-edge', pave:'paving-edge' };
+const FILL = { terre:'earth', gravier:'gravel', pave:'paving', chemin:'path' };
+const EDGE = { terre:'earth-edge', gravier:'gravel-edge', pave:'paving-edge', chemin:'path-edge' };
 function roadCols(r) { const k = roadType(r).id; return [Col[FILL[k]] || Col.verge, Col[EDGE[k]]]; }
 function alignPatterns() {
   const m = new DOMMatrix().translate(view.ox, view.oy).scale(view.s * TILE_M / TILE);
@@ -105,9 +105,11 @@ function pinEnd(out, end, t) {
     out[i] = [out[i][0] + dx * w, out[i][1] + dy * w];
   }
 }
+let sigRoutes = { v:-1, S:null, k:'' };
+const roadsSig = () => { if (sigRoutes.v === sceneV && sigRoutes.S === S) return sigRoutes.k; sigRoutes = { v:sceneV, S, k:S.roads.map(o => o.id + (o.libre ? 'L' : '') + JSON.stringify(o.pts)).join('|') }; return sigRoutes.k; };   // (toutes les routes, une fois par état du décor)
 function smoothPts(r) {
   if (r.libre) return r.pts;                                                       // tracé du joueur : tel quel, sans lissage ni raccord
-  const key = r.id + ':' + JSON.stringify(r.pts) + ':' + S.roads.length;
+  const key = r.id + ':' + roadsSig();
   const hit = smoothCache.get(r.id);
   if (hit && hit.key === key) return hit.P;
   /* Tout le tracé est lissé d'un bout à l'autre (seuls ses deux bouts restent fixes) : un
@@ -156,19 +158,51 @@ function roadPieces(r) {
   if (last.length > 1) pieces.push(last);
   return pieces;
 }
+/* Raccord d'un chemin sur une route : aux deux angles de la jonction, un petit congé arrondi (rayon FILET m) de la couleur du chemin efface le trait de bordure de la route et élargit l'embouchure ;
+   la chaussée de la route, dessinée après, recouvre tout ce qui est dans son emprise. */
+const FILET = 3;
+function filetsChemins(bord) {
+  const s = view.s, P = (p) => toS(p[0], p[1]);
+  for (const c of S.roads) {
+    const tc = roadType(c); if (!tc.pieton || c.pts.length < 2) continue;
+    const n = c.pts.length;
+    for (const [bout, vers] of [[c.pts[0], c.pts[1]], [c.pts[n - 1], c.pts[n - 2]]]) {
+      let best = null;
+      for (const o of S.roads) { if (o === c || roadType(o).pieton) continue; const Q = smoothPts(o); for (let i = 0; i < Q.length - 1; i++) { const t = ptSeg(bout, Q[i], Q[i + 1]); if (t.d < 1.5 && (!best || t.d < best.d)) best = { d:t.d, o, a:Q[i], b:Q[i + 1] }; } }   // (le tracé réellement dessiné ; le bout du chemin est sur l'axe de la route)
+      if (!best) continue;
+      const L = segLen(best.a, best.b) || 1, u = [(best.b[0] - best.a[0]) / L, (best.b[1] - best.a[1]) / L], dl = segLen(bout, vers) || 1, d = [(vers[0] - bout[0]) / dl, (vers[1] - bout[1]) / dl];
+      let nr = [-u[1], u[0]]; if (nr[0] * d[0] + nr[1] * d[1] < 0) nr = [-nr[0], -nr[1]];            // normale de la route, côté du chemin
+      const hw = roadType(best.o).surf / 2, cw = tc.surf / 2, foot = ptSeg(bout, best.a, best.b).q;
+      for (const sd of [1, -1]) {
+        const m = [-d[1] * sd, d[0] * sd];                                                         // côté du chemin
+        // bord du chemin : foot' + m*cw + d*t ; bord de la route : foot + nr*hw + u*τ  (intersection)
+        const px = foot[0] + nr[0] * hw - (bout[0] + m[0] * cw), py = foot[1] + nr[1] * hw - (bout[1] + m[1] * cw), den = d[0] * -u[1] - d[1] * -u[0];
+        if (Math.abs(den) < .3) continue;                                                           // (chemin presque parallèle à la route : pas de congé)
+        const t = (px * -u[1] - py * -u[0]) / den; if (Math.abs(t) > 2 * hw + 4) continue;
+        const E = [bout[0] + m[0] * cw + d[0] * t, bout[1] + m[1] * cw + d[1] * t];
+        const dirU = (m[0] * u[0] + m[1] * u[1]) >= 0 ? 1 : -1, R1 = [E[0] + u[0] * dirU * FILET, E[1] + u[1] * dirU * FILET], R2 = [E[0] + d[0] * FILET, E[1] + d[1] * FILET];
+        const e = P(E), a = P(R1), b = P(R2);
+        ctx.beginPath(); ctx.moveTo(...e); ctx.lineTo(...a); ctx.quadraticCurveTo(...e, ...b); ctx.closePath(); ctx.fillStyle = roadCols(c)[0]; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(...a); ctx.quadraticCurveTo(...e, ...b); ctx.strokeStyle = roadCols(c)[1]; ctx.lineWidth = bord; ctx.lineCap = 'butt'; ctx.stroke();
+      }
+    }
+  }
+}
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
-  const rank = r => ROADS.indexOf(roadType(r));
+  const rank = r => roadType(r).pieton ? -1 : ROADS.indexOf(roadType(r));   // (le chemin passe sous toutes les routes : sa chaussée s'arrête au bord de la grande route)
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
   const stroke = (r, color, grow) => {
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(roadType(r).surf * s, 3.6) + 2 * grow; // (au moins 3,6 px de large, même de loin)
-    ctx.lineCap = 'round'; ctx.lineJoin = 'miter'; ctx.miterLimit = 3;   // (angle franc : le coin extérieur reste vif, pas arrondi)
+    ctx.lineCap = 'round'; ctx.lineJoin = 'miter'; ctx.miterLimit = 1.6;   // (angle franc : le coin extérieur reste vif, pas arrondi)
     for (const piece of roadPieces(r)) { polyPath(piece); ctx.stroke(); }
   };
   // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
   // les chaussées se fondent sans trait
   for (const r of bySurf) stroke(r, roadCols(r)[1], Math.max(.8, Math.min(1.4, s * .4)));
-  for (const r of bySurf) stroke(r, roadCols(r)[0], 0);
+  let filets = false;
+  for (const r of bySurf) { if (!filets && !roadType(r).pieton) { filetsChemins(Math.max(.8, Math.min(1.4, s * .4))); filets = true; } stroke(r, roadCols(r)[0], 0); }   // (chemins d'abord, puis les congés de raccord, puis les routes par-dessus)
+  if (!filets) filetsChemins(Math.max(.8, Math.min(1.4, s * .4)));
 
 }
 const isOn = (type, id, st) => st && st.type === type && st.id === id;

@@ -21,7 +21,7 @@
   "19": "caravane.js",
   "20": "retirer-lacs-monde.js",
   "21": "outils.js",
-  "22": "stepForester",
+  "22": "simTick",
   "23": "vehicules.js",
   "24": "build-fishing.js",
   "25": "package.json",
@@ -46,7 +46,7 @@
   "44": "build-regions.js",
   "45": "carte/capitale.js",
   "46": "navigation.js",
-  "47": "simTick",
+  "47": "stepBucheron",
   "48": "vue.js",
   "49": "interface.js",
   "50": "build-nav-grid.js",
@@ -83,8 +83,8 @@
   "81": "cadre.js",
   "82": "cheminAnneaux",
   "83": "pointeur.js",
-  "84": "besoins",
-  "85": "wkey",
+  "84": "remplirMaison",
+  "85": "maxRes",
   "86": "developpeur.js",
   "87": "Données des régions",
   "88": "monter",
@@ -102,5 +102,6 @@
   "100": "_chaine-lacs.sh",
   "101": "_lent.js",
   "102": "niveauDe",
-  "103": "logs.js"
+  "103": "logs.js",
+  "104": "stepChasseur"
 }

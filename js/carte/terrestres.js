@@ -79,7 +79,7 @@ function voiesGraphe() {
     const k = kc(ci, cj); (H.get(k) || H.set(k, []).get(k)).push(i); });
   return voiesCache = { key:RT.key, N:{ X, Y, adj } }.N;
 }
-const voieDecalage = () => Math.min(2.2, Math.max(1.2, Math.min(...S.roads.map(r => r.w)) / 4));
+const voieDecalage = () => Math.min(2.2, Math.max(1.2, Math.min(...S.roads.filter(r => !roadType(r).pieton).map(r => r.w)) / 4));   // (les chemins piétons ne comptent pas : voies des véhicules)
 function voieChemin(A, B) {                                                    // chemin (points tous les ~4 m) de A à B, sur la voie de droite ; ou null
   const { X, Y, adj } = voiesGraphe(), n = X.length; if (!n) return null;
   const proche = (p, R) => { let b = -1, bd = R * R; for (let i = 0; i < n; i++) { const d = (X[i] - p[0]) ** 2 + (Y[i] - p[1]) ** 2; if (d < bd) { bd = d; b = i; } } return b; };
@@ -162,8 +162,9 @@ function marcheStep(dt) {
   return bouge;
 }
 function drawVoies() {                                                         // deux voies par route : celle de droite (bleue) et celle de gauche (orange) vues depuis le sens du tracé de la route
-  const off = voieDecalage(), s = view.s; ctx.save(); ctx.setLineDash([8, 7]); ctx.lineWidth = 1.5; ctx.globalAlpha = .75;
+  const s = view.s; ctx.save(); ctx.setLineDash([8, 7]); ctx.lineWidth = 1.5; ctx.globalAlpha = .75;
   for (const r of S.roads) { const P = smoothPts(r); if (P.length < 2) continue;
+    const off = Math.min(VOIE, (r.w || 8) / 4);                                          // (la voie réellement suivie par les habitants : deplacements.js, surVoie)
     for (const side of [1, -1]) { ctx.strokeStyle = '#2f6fd0'; ctx.fillStyle = '#2f6fd0'; ctx.beginPath(); const arrows = [];
       P.forEach((q, i) => { const a = P[Math.max(0, i - 1)], b = P[Math.min(P.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1, X = q[0] - dy / L * off * side, Y = q[1] + dx / L * off * side, [sx, sy] = toS(X, Y); i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy);
         if (i % 12 === 6) arrows.push([sx, sy, Math.atan2(dy * side, dx * side)]); });
@@ -172,13 +173,13 @@ function drawVoies() {                                                         /
   ctx.restore();
 }
 function drawTerrestres() {
-  if (tool === 'marcher') drawVoies();
+  if (tool === 'marcher' || (typeof JR !== 'undefined' && JR.actif && JR.voies)) drawVoies();   // (mode développeur, option « Lignes de circulation » de l'onglet)
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 20, vus = [];
   for (const o of S.chariots || []) if (o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m) vus.push(['c', o]);
   for (const o of S.villageois || []) if (o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m) vus.push(['v', o]);
   vus.sort((p, q) => p[1].y - q[1].y);
   for (const [t, o] of vus) {
-    const [X, Y] = toS(o.x, o.y), k = marcheCle(t, o), r = marcheRt.get(k);
+    const [X, Y] = toS(o.x, o.y), k = marcheCle(t, o), r = marcheRt.get(k); persos.push([o.x, o.y]);   // (les cimes repassent par-dessus : tuiles.js presentCimes)
     if (t === 'v') { const V = VILLAGEOIS[o.kind]; peintVillageois(o.kind, X, Y, Math.max(7, V.T * s * 1.2), o.a); }
     else { const a = CHARIOTS[o.kind]; peintChariot(o.kind, X, Y, Math.max(14, a.T * s), o.a, r && r.braq || 0); }
     if (k === marcheSel) { const R = t === 'c' ? Math.max(14, CHARIOTS[o.kind].T * s) * .75 : Math.max(7, VILLAGEOIS[o.kind].T * s * 1.2); ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#d64541'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R, 0, 7); ctx.stroke(); ctx.setLineDash([]);

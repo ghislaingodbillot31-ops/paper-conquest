@@ -249,11 +249,16 @@ function floraCandidates() {
         }
       } }
   }
+  /* Silex : petits amas de nodules sombres posés au sol, un peu partout (le tailleur de pierre les ramasse). Tirages à part (graine propre). */
+  { const rx = seeded(S.landSeed * 31 + 19);
+    for (let n = 0; n < TW * TH / 60000; n++) { const cx = rx() * TW, cy = rx() * TH;
+      for (let m = 3 + Math.floor(rx() * 4); m > 0; m--) out.push({ x:round2(cx + (rx() - .5) * 8), y:round2(cy + (rx() - .5) * 8), r:.45 + rx() * .35, kind:'silex', v:rx(), stone:1 }); } }
   if (typeof baiesCandidats === 'function') out.push(...baiesCandidats(fz, B));   // arbres et arbustes à baies validés, selon le climat et le terrain (baies.js)
   // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
   const inForest = f => !f.wood && !f.wet && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
   floraSeed = fk;
-  return floraCands = out.filter(f => f.stone || !inForest(f));
+  const dansBois = f => woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004;               // pierres et silex : jamais dans ni sous une forêt (rives comprises) — seuls les animaux y vivent
+  return floraCands = out.filter(f => f.kind === 'rock' || f.kind === 'silex' ? !dansBois(f) : !inForest(f));
 }
 /* Modèles d'arbres dessinés une fois (houppier bosselé, contour sombre, côté ombre en bas
    à droite, reflets en haut à gauche, ombre portée), puis posés comme des tampons.
@@ -439,27 +444,26 @@ function drawWoods(g, list, s, ox, oy) {
 // pose un modèle : houppier de rayon r (m) centré en (X, Y) écran, à l'échelle s (px / m)
 // (vue de loin : un arbre garde au moins 2,4 px de rayon, un buisson ou un rocher 1,4 px —
 // sinon ils disparaîtraient et la carte perdrait tous ses détails)
+// nodule de silex : petit polygone sombre à facettes, un reflet clair
+function stampSilex(g, f, X, Y, s) {
+  const R = Math.max(f.r * s, 1.6), rnd = seeded(Math.round(f.v * 1e6) + 3);
+  g.beginPath(); for (let i = 0; i < 6; i++) { const a = i / 6 * Math.PI * 2 + f.v * 6, q = R * (.7 + rnd() * .5), x = X + Math.cos(a) * q, y = Y + Math.sin(a) * q * .8; i ? g.lineTo(x, y) : g.moveTo(x, y); }
+  g.closePath(); g.fillStyle = '#5c5a58'; g.fill(); g.strokeStyle = '#2b2a28'; g.lineWidth = Math.max(.6, R * .16); g.stroke();
+  if (R > 2.4) { g.fillStyle = '#9d9890'; g.fillRect(X - R * .4, Y - R * .45, R * .55, R * .3); }
+}
 function stampTree(g, f, X, Y, s) {
   if (f.kind === 'baie') return stampBaie(g, f, X, Y, s);
+  if (f.kind === 'silex') return stampSilex(g, f, X, Y, s);
   const k = Math.max(f.r * s, f.kind === 'tree' ? 2.4 : 1.4) / SPR_R;
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
 /* Les personnages passent SOUS les arbres : peints après le décor, ils sont recouverts par les houppiers qui les surplombent.
    - persos : positions (m) des personnages peints à cette image (chaque dessin y ajoute les siens) ;
    - voileBois : sous le massif d'une grande forêt (arbres de l'intérieur, une seule masse) on voit le personnage en transparence ;
-   - canopeeSur : les arbres isolés et de lisière dont le houppier couvre un personnage sont repeints par-dessus lui. */
+   - canopeeSur : COUCHE DE CIMES (tuiles.js, t.cc) : les houppiers des arbres isolés et de lisière sont peints une seule fois dans une couche de tuiles à part, posée par-dessus les personnages à chaque image : aucun arbre n'est repeint quand un personnage passe dessous. */
 const persos = [];
 const voileBois = (x, y) => floraNear(x - 7, y - 7, x + 7, y + 7).some(f => f.wood && f.inner && (f.x - x) ** 2 + (f.y - y) ** 2 <= Math.max(f.r * 1.25, 5.8) ** 2) ? .3 : 1;
-function canopeeSur() {
-  const vus = new Set(), arbres = [];
-  for (const [x, y] of persos) for (const f of floraNear(x - 9, y - 9, x + 9, y + 9)) {
-    if (f.kind !== 'tree' || (f.wood && f.inner) || (f.x - x) ** 2 + (f.y - y) ** 2 > (f.r + 1.2) ** 2) continue;
-    const k = treeKey(f); if (!vus.has(k)) { vus.add(k); arbres.push(f); }
-  }
-  arbres.sort((a, b) => a.y - b.y);                                   // du nord au sud, comme le décor
-  for (const f of arbres) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
-  persos.length = 0;
-}
+function canopeeSur() { const P = persos.slice(); persos.length = 0; if (typeof presentCimes === 'function') presentCimes(P); }   // les cimes (couche de tuiles) repassent par-dessus les personnages, sans rien repeindre
 const WATER_TREE_FREE = 10; // m libres entre le bord du houppier et l'eau (rivières, lacs ; îles exceptées)
 const SEA_TREE_FREE = 6; // m libres entre le bord du houppier et la mer (cartes à forme réelle)
 const SEA_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [.7, .7], [-.7, .7], [.7, -.7], [-.7, -.7]];
@@ -526,7 +530,8 @@ function computeFlora() {
   const cut = new Set(S.cut), old = flora;
   const gsp = Object.keys(biomeLook().species)[0] || 'f'; // replantés : l'essence principale du biome
   const grown = (S.grown || []).map(g => ({ x:g.x, y:g.y, r:g.r, kind:'tree', sp:gsp, v:g.v, planted:1 }));
-  const keep = f => !(cut.size && cut.has(treeKey(f))) && !underHouse(f);
+  const sousChamp = (S.champs || []).length ? obstacleTest(S.champs.map(c => ({ P:c.pts, bb:bbox(c.pts) }))) : () => false;   // ni arbres ni rochers sur un champ
+  const keep = f => !(cut.size && cut.has(treeKey(f))) && !underHouse(f) && !sousChamp(f);
   flora = staticFlora.filter(keep);                       // déjà triée du nord au sud
   if (grown.length) flora = flora.concat(grown.filter(keep)).sort((a, b) => a.y - b.y);
   classifyWoods(); // intérieur des bois / lisière

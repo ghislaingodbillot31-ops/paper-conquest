@@ -156,6 +156,11 @@ function swap() {
 function deleteSel() {
   const o = findSel(); if (!o) return;
   if (sel.type === 'lake') { flash('Un étang ne se supprime pas', true); return; }
+  if (sel.type === 'house' && o.kind === 'camp_colon') {                                   // le camp ne se détruit que vide, et si tous les habitants ont une maison
+    const reste = Object.entries(o.inv || {}).filter(([, n]) => n >= 1).map(([k, n]) => Math.floor(n) + ' ' + k), sans = typeof popVillage === 'function' ? Math.max(0, popVillage() - capaciteMaisons()) : 0;
+    if (reste.length) { flash('Le camp de colon contient encore du matériel et des ressources (' + reste.slice(0, 4).join(', ') + (reste.length > 4 ? '…' : '') + ') : videz-le d’abord', true); return; }
+    if (sans) { flash(sans + ' habitant' + (sans > 1 ? 's n’ont' : ' n’a') + ' pas de logement : construisez des maisons avant de détruire le camp', true); return; }
+  }
   if (sel.type === 'road' && routeFixe(o)) { flash('Route commerciale : elle ne peut pas être supprimée', true); return; }
   commit();
   const key = COLL[sel.type];

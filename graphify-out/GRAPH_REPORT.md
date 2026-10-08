@@ -1,16 +1,16 @@
 # Graph Report - Paper Conquest 2.0  (2026-10-08)
 
 ## Corpus Check
-- 110 files · ~503,092 words
+- 110 files · ~506,777 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 1964 nodes · 3521 edges · 104 communities (94 shown, 10 thin omitted)
+- 1987 nodes · 3589 edges · 105 communities (95 shown, 10 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 68 edges (avg confidence: 0.85)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5cd21419`
+- Built from commit: `c3054814`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,7 +37,7 @@
 - caravane.js
 - retirer-lacs-monde.js
 - outils.js
-- stepForester
+- simTick
 - vehicules.js
 - build-fishing.js
 - package.json
@@ -62,7 +62,7 @@
 - build-regions.js
 - carte/capitale.js
 - navigation.js
-- simTick
+- stepBucheron
 - vue.js
 - interface.js
 - build-nav-grid.js
@@ -97,8 +97,8 @@
 - _croisements.js
 - Paper Conquest
 - cheminAnneaux
-- besoins
-- wkey
+- remplirMaison
+- maxRes
 - developpeur.js
 - Données des régions
 - monter
@@ -113,18 +113,19 @@
 - seaPoint
 - _chaine-lacs.sh
 - niveauDe
+- stepChasseur
 
 ## God Nodes (most connected - your core abstractions)
 1. `LP()` - 54 edges
 2. `lpts()` - 47 edges
 3. `pathS()` - 45 edges
 4. `lw()` - 45 edges
-5. `simTick()` - 43 edges
+5. `simTick()` - 44 edges
 6. `shiftS()` - 32 edges
-7. `yardLT()` - 26 edges
-8. `batHtml()` - 19 edges
+7. `yardLT()` - 27 edges
+8. `batHtml()` - 20 edges
 9. `stepJob()` - 19 edges
-10. `initBoat()` - 18 edges
+10. `sid()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `jobSites()` --indirect_call--> `pointsDeChamp()`  [INFERRED]
@@ -141,11 +142,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (104 total, 10 thin omitted)
+## Communities (105 total, 10 thin omitted)
 
 ### Community 0 - "elements.js"
 Cohesion: 0.10
-Nodes (86): addS(), anvilLT(), arrowsLT(), axeLT(), barrelLT(), barrowLT(), basketLT(), beamLT() (+78 more)
+Nodes (87): addS(), anvilLT(), arrowsLT(), axeLT(), barrelLT(), barrowLT(), basketLT(), beamLT() (+79 more)
 
 ### Community 1 - "Module build-waterways"
 Cohesion: 0.03
@@ -165,7 +166,7 @@ Nodes (48): boat, boatHint(), boatStatusText(), cancelSend(), capitalById, creat
 
 ### Community 5 - "simulation.js"
 Cohesion: 0.04
-Nodes (63): ACTIVITES, ALERTES, AMELIO, AMELIO_FONDERIE, ameliorable(), amelios(), AVEC_PORTEURS, BESOIN (+55 more)
+Nodes (68): actDe(), ACTIVITES, ALERTES, AMELIO, AMELIO_FONDERIE, ameliorable(), amelios(), AVEC_PORTEURS (+60 more)
 
 ### Community 6 - "generateur.js"
 Cohesion: 0.07
@@ -209,7 +210,7 @@ Nodes (29): before, cellKey(), coastNodes, cross(), decoded, encode(), finish(),
 
 ### Community 16 - "gestion.js"
 Cohesion: 0.11
-Nodes (41): ANIMAUX_NOM, BAT_CAT, BAT_ICONE, batHtml(), batLive(), batOnglet, batPousseHtml(), batStockHtml() (+33 more)
+Nodes (42): ANIMAUX_NOM, BAT_CAT, BAT_ICONE, batHtml(), batLive(), batOnglet, batPousseHtml(), batStockHtml() (+34 more)
 
 ### Community 17 - "animaux.js"
 Cohesion: 0.17
@@ -231,9 +232,9 @@ Nodes (20): bbox(), fautifs(), fs, gap(), [kr, kv, kl], P(), R, segD() (+12 more
 Cohesion: 0.11
 Nodes (20): CHARIOT, CHARRETTE, CORDE, efficaciteOutil(), FUSIONS, MANCHE, MATERIAUX, meilleurOutil() (+12 more)
 
-### Community 22 - "stepForester"
-Cohesion: 0.24
-Nodes (11): actDe(), croissanceAns(), foresterEtat(), forestierTick(), germinationJours(), grainesTotal(), hashEspece(), plantSpot() (+3 more)
+### Community 22 - "simTick"
+Cohesion: 0.14
+Nodes (23): approBatiment(), besoins(), courseCle(), estRepos(), finRemplissage(), foyerDe(), growSaplings(), lieuDeRepos() (+15 more)
 
 ### Community 23 - "vehicules.js"
 Cohesion: 0.22
@@ -272,8 +273,8 @@ Cohesion: 0.07
 Nodes (39): changed(), COLL, commit(), dims(), findById(), findSel(), flash(), ghost() (+31 more)
 
 ### Community 32 - "stepJob"
-Cohesion: 0.11
-Nodes (41): accepte(), alerteBat(), approBatiment(), byDist(), capCollecte(), collectable(), deficits(), dispo() (+33 more)
+Cohesion: 0.14
+Nodes (34): accepte(), alerteBat(), byDist(), capCollecte(), collectable(), dispo(), donnerSurplus(), drawWorkers() (+26 more)
 
 ### Community 33 - "tuiles.js"
 Cohesion: 0.17
@@ -312,8 +313,8 @@ Cohesion: 0.12
 Nodes (15): [a,b,c,d], ad, [D,x0,y0,x1,y1,out], fc, fs, H, HH, k (+7 more)
 
 ### Community 42 - "dev.js"
-Cohesion: 0.14
-Nodes (28): appliquerStocksDev(), articlesDe(), baseAction(), baseEnvoyer(), baseVariable(), CAP_BASE, commandesFaites, devMontrer() (+20 more)
+Cohesion: 0.11
+Nodes (36): appliquerStocksDev(), articlesDe(), baseAction(), baseEnvoyer(), baseVariable(), CAP_BASE, commandesFaites, cr() (+28 more)
 
 ### Community 43 - "regions.js"
 Cohesion: 0.21
@@ -331,9 +332,9 @@ Nodes (11): afficherCartes(), esc(), montrer(), nomForm, ONGLETS, OUTILS_CONSTRU
 Cohesion: 0.22
 Nodes (13): NAV, NAV_VIRAGE, NAV_VITESSE, navBateauAu(), navBesoin(), navChemin(), navEau(), navGrille() (+5 more)
 
-### Community 47 - "simTick"
-Cohesion: 0.17
-Nodes (27): articleDe(), boisAuSol(), boisMax(), boisPlein(), capCharge(), chargeAmelio(), charretteGaree(), cutTree() (+19 more)
+### Community 47 - "stepBucheron"
+Cohesion: 0.23
+Nodes (16): articleDe(), boisAuSol(), boisMax(), boisPlein(), capCharge(), chargeAmelio(), charretteGaree(), cutTree() (+8 more)
 
 ### Community 48 - "vue.js"
 Cohesion: 0.19
@@ -405,7 +406,7 @@ Nodes (3): fs, stub, vm
 
 ### Community 65 - "dessins.js"
 Cohesion: 0.27
-Nodes (7): bete(), BUILD_DRAW, contenuExt(), especesEnclos(), extLT(), FERME_ZONES, MINE_REP
+Nodes (6): bete(), BUILD_DRAW, contenuExt(), especesEnclos(), extLT(), MINE_REP
 
 ### Community 66 - "arbres.js"
 Cohesion: 0.33
@@ -471,13 +472,13 @@ Nodes (6): Hébergement, Paper Conquest, Régénérer les données, Structure du
 Cohesion: 0.47
 Nodes (6): cadreEtAnneaux(), cheminAnneaux(), clipTerre(), drawBorder(), drawSea(), seaBands()
 
-### Community 84 - "besoins"
-Cohesion: 0.19
-Nodes (18): alimentsDe(), assouvir(), besoins(), capVivres(), courseCle(), etalCible(), etalNourriture(), etalsMarche() (+10 more)
+### Community 84 - "remplirMaison"
+Cohesion: 0.14
+Nodes (22): alimentsDe(), assouvir(), capAliment(), capVivres(), cibleSurplus(), enKg(), etalCible(), etalNourriture() (+14 more)
 
-### Community 85 - "wkey"
-Cohesion: 0.19
-Nodes (15): aBesoinStock(), aEnStock(), alertesMaj(), besoinsFonte(), entreesDe(), intrantsFonte(), intrantsMin(), manqueFonte() (+7 more)
+### Community 85 - "maxRes"
+Cohesion: 0.17
+Nodes (20): aBesoinStock(), aEnStock(), alertesMaj(), besoinsFonte(), deficits(), entreesDe(), intrantsFonte(), intrantsMin() (+12 more)
 
 ### Community 86 - "developpeur.js"
 Cohesion: 0.50
@@ -495,8 +496,12 @@ Nodes (3): monter(), dessiner(), erreurs()
 Cohesion: 0.40
 Nodes (10): estPorteur(), estPorteurBois(), estPortHut(), horsFonte(), nbCharrettes(), nbFond(), nbPort(), nbPortHut() (+2 more)
 
+### Community 104 - "stepChasseur"
+Cohesion: 0.50
+Nodes (5): DEPECAGE(), poidsDe(), proiesDe(), stepChasseur(), utiliseFonte()
+
 ## Knowledge Gaps
-- **569 isolated node(s):** `atelier`, `PRESETS`, `FOOD_LIST`, `EXT`, `FERME_EXT` (+564 more)
+- **571 isolated node(s):** `atelier`, `PRESETS`, `FOOD_LIST`, `EXT`, `FERME_EXT` (+566 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **10 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -504,15 +509,15 @@ Nodes (10): estPorteur(), estPorteurBois(), estPortHut(), horsFonte(), nbCharret
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `jobSites()` connect `stepJob` to `champs.js`, `simulation.js`, `geometrie.js`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `inTerrain()` connect `geometrie.js` to `stepJob`, `forme.js`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `round2()` connect `geometrie.js` to `forme.js`?**
+- **Why does `inTerrain()` connect `geometrie.js` to `stepJob`, `forme.js`?**
+  _High betweenness centrality (0.006) - this node is a cross-community bridge._
+- **Why does `genereDepuisForme()` connect `forme.js` to `geometrie.js`?**
   _High betweenness centrality (0.005) - this node is a cross-community bridge._
 - **What connects `atelier`, `PRESETS`, `FOOD_LIST` to the rest of the system?**
-  _569 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _571 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `elements.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09596364608393478 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09848484848484848 - nodes in this community are weakly interconnected._
 - **Should `Module build-waterways` be split into smaller, more focused modules?**
   _Cohesion score 0.02666666666666667 - nodes in this community are weakly interconnected._
 - **Should `Module modele-regions` be split into smaller, more focused modules?**

@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Arbre des ressources</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+  :root{ --bg:#f5f7f2; --ink:#1e3a4c; --soft:#5b7080; --line:#c9d3ce; --panel:#ffffff; color-scheme:light }
+  @media (prefers-color-scheme: dark){ :root{ --bg:#122029; --ink:#d3e2eb; --soft:#8ea4b2; --line:#2c4150; --panel:#0f1a21; color-scheme:dark } }
+  *{box-sizing:border-box}
+  html,body{margin:0; height:100%; background:var(--bg); color:var(--ink); font:13px/1.35 "Barlow",system-ui,sans-serif}
+  #app{display:grid; grid-template-columns:1fr 360px; height:100%}
+  #carte{position:relative; overflow:hidden; cursor:grab}
+  #carte.drag{cursor:grabbing}
+  svg{width:100%; height:100%; display:block}
+  header{position:absolute; left:12px; top:10px; right:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap; z-index:3; pointer-events:none}
+  header > *{pointer-events:auto}
+  h1{margin:0; font:700 20px "Barlow Condensed",sans-serif; letter-spacing:.04em; background:var(--panel); padding:4px 10px; border:1px solid var(--line); border-radius:5px}
+  input[type=search]{font:inherit; padding:5px 9px; border:1px solid var(--line); border-radius:5px; background:var(--panel); color:inherit; width:200px}
+  .leg{display:flex; gap:6px; flex-wrap:wrap}
+  .leg label{display:flex; align-items:center; gap:4px; background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:2px 9px 2px 6px; cursor:pointer; font-size:12px; user-select:none}
+  .leg i{width:11px; height:11px; border-radius:3px; display:inline-block}
+  aside{border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:14px}
+  aside h2{margin:0 0 2px; font:700 22px "Barlow Condensed",sans-serif; letter-spacing:.03em}
+  aside h3{margin:14px 0 4px; font:600 12px "Barlow Condensed",sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--soft)}
+  aside ul{margin:0; padding-left:16px} aside li{margin:2px 0}
+  aside .badge{display:inline-block; padding:1px 8px; border-radius:10px; font-size:11px; color:#fff}
+  aside small{color:var(--soft)}
+  aside .rel{border:1px solid var(--line); border-radius:6px; padding:6px 8px; margin:5px 0}
+  aside .rel b{color:var(--ink)}
+  a.res{color:inherit; text-decoration:underline dotted; cursor:pointer}
+  .node rect{stroke-width:1.4; rx:6}
+  .node text{font:600 12px "Barlow",sans-serif; pointer-events:none}
+  .node{cursor:pointer}
+  .edge{fill:none; stroke:var(--soft); stroke-width:1.1; opacity:.45}
+  .dim{opacity:.12}
+  .up .edge-hl, .edge.up{stroke:#2f7d9a; stroke-width:2.2; opacity:.95}
+  .edge.down{stroke:#d2602a; stroke-width:2.2; opacity:.95}
+  .edge.sel{stroke-width:3}
+  .colh{font:700 13px "Barlow Condensed",sans-serif; letter-spacing:.12em; fill:var(--soft); text-transform:uppercase}
+  .hint{position:absolute; left:12px; bottom:10px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--soft)}
+</style>
+<body>
+<div id="app">
+  <div id="carte">
+    <header><h1>Arbre des ressources</h1><input type="search" id="q" placeholder="Chercher une ressource…"><div class="leg" id="leg"></div></header>
+    <svg id="svg"><defs><marker id="fl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#8a9aa6"/></marker>
+      <marker id="flu" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#2f7d9a"/></marker>
+      <marker id="fld" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d2602a"/></marker></defs><g id="monde"></g></svg>
+    <div class="hint">Clique une ressource : en <b style="color:#2f7d9a">bleu</b> d'où elle vient, en <b style="color:#d2602a">orange</b> à quoi elle sert. Molette : zoom · glisser : déplacer.</div>
+  </div>
+  <aside id="fiche"><h2>Arbre des ressources</h2><p>Chaque case est une ressource du jeu. Les flèches vont de ce qu'on <b>utilise</b> vers ce qu'on <b>obtient</b>, de gauche (la nature) à droite (les produits finis). Clique une case pour voir ce qui la produit et à quoi elle sert.</p>
+    <p><small>Toutes les données viennent du jeu (catalogue des bâtiments, recettes, cultures) : l'arbre se met à jour tout seul quand le jeu change.</small></p></aside>
+</div>
+<script src="js/batiments/catalogue.js"></script>
+<script src="js/batiments/outils.js"></script>
+<script src="js/batiments/cultures.js"></script>
+<script>
+/* ---------- données (tirées du jeu) ----------
+   Tables reprises à la main parce qu'elles vivent dans simulation.js (non chargé ici) : à tenir à jour si elles changent. */
+const AMELIOS = [
+  { nom:'Charrette à main (bûcherons, tailleur, grange, entrepôt)', cout:{ bois:20 } },
+  { nom:'Chariot de transport (bûcherons, tailleur, grange, entrepôt)', cout:{ bois:40, planches:20 } },
+  { nom:'Haut fourneau (fonderie : acier)', cout:{ bois:60, pierre:60, fer:20 } },
+];
+const VALEUR_OR = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'planches':4, 'laine':3, 'peaux':3, 'bière':4, 'chaussures':6, 'vêtements':8 };   // comptoir commercial
+const OUTILS_REQUIS = [   // bâtiment → outil exigé (outils.js : OUTIL_DE) + hutte de forestier selon l'activité
+  ['Camp de bûcherons', 'hache'], ['Loge de bûcheron', 'hache'], ['Camp de tailleur de pierre', 'pioche'], ['Fosse minière', 'pioche'], ['Ferme (céréales)', 'faux'],
+  ['Bergerie', 'couteau'], ['Cabane de pêche', 'canne'], ['Hutte de forestier (récolter)', 'serpe'], ['Hutte de forestier (planter)', 'pelle'],
+  ['Ferme : jardin potager', 'houe'], ['Ferme : verger', 'serpe'],
+];
+const BAT = { menuiserie:'Atelier de menuiserie', forge:'Forge', archerie:'Archerie', armurerie:'Armurerie' };
+const nomBat = id => (PRESETS.find(p => p.id === id) || {}).name || id;
+
+/* ---------- construction du graphe ---------- */
+const CATS = {
+  nature:{ nom:'Nature', c:'#5a9a4c' }, brut:{ nom:'Matières premières', c:'#a8794a' }, vivre:{ nom:'Vivres', c:'#d9a521' }, minerai:{ nom:'Minerais', c:'#8a6a58' },
+  metal:{ nom:'Métaux', c:'#5f7a96' }, transf:{ nom:'Matériaux transformés', c:'#d2602a' }, outil:{ nom:'Outils', c:'#2f7d9a' }, arme:{ nom:'Armes et munitions', c:'#b4443a' }, defense:{ nom:'Boucliers et armures', c:'#7a5aa8' },
+};
+const N = new Map(), R = [];                         // nœuds ; relations { ins, outs, via, note, tool }
+const node = (id, nom, cat, note) => { if (!N.has(id)) N.set(id, { id, nom, cat, note:[], depart:0 }); const n = N.get(id); if (note) n.note.push(note); return n; };
+const rel = (ins, outs, via, note, tool) => { R.push({ ins, outs, via, note:note || '', tool:tool || null }); };
+const VIVRES = new Set(FOOD_LIST);
+const cat = nom => VIVRES.has(nom) ? 'vivre' : ['fer', 'cuivre', 'étain', 'plomb', 'argent', 'or', 'bronze', 'acier'].includes(nom) ? 'metal' : nom.startsWith('minerai') || ['sel', 'alun', 'ambre'].includes(nom) ? 'minerai' : ['planches', 'corde', 'farine', 'bière', 'chaussures', 'vêtements'].includes(nom) ? 'transf' : 'brut';
+const r = (nom, c) => { node(nom, nom[0].toUpperCase() + nom.slice(1), c || cat(nom)); return nom; };
+
+// sources de la nature
+const FORET = node('Forêt', 'Forêt', 'nature'), CARRIERE = node('Rochers', 'Rochers et carrière', 'nature'), EAU = node('Eau', 'Lacs et rivières', 'nature'), TERRES = node('Terres', 'Terres cultivables', 'nature'),
+  PRAIRIE = node('Prairies', 'Prairies (pâturage)', 'nature'), ELEVAGE = node('Elevage', 'Animaux d’élevage', 'nature'), GISEMENTS = node('Gisements', 'Gisements de minerai', 'nature'), ARBRES = node('Arbres', 'Arbres fruitiers', 'nature');
+rel(['Forêt'], [r('bois')], 'Camp de bûcherons', '2 bois par arbre abattu, laissés au sol (tas de 20 puis transport) ; zone de travail à définir', 'hache');
+rel(['Forêt'], [r('bois de chauffage')], 'Loge de bûcheron', 'le tronc est fendu sur place : 4 bûches par arbre ; stock 100', 'hache');
+rel(['Forêt'], [r('graines')], 'Hutte de forestier (récolter)', '5 graines par arbre, 30 au plus par trajet', 'serpe');
+rel(['graines'], [r('pousses')], 'Hutte de forestier', '3 graines donnent 1 pousse, prête après la germination (45 s) ; 10 pousses au plus par trajet');
+rel(['Rochers'], [r('pierre')], 'Camp de tailleur de pierre', 'pierres de la zone de travail (3 au moins)', 'pioche');
+rel(['Eau'], [r('poisson')], 'Cabane de pêche', 'étangs et rivières du village', 'canne');
+rel(['Terres'], [r('grain')], 'Ferme', 'céréales de saison : blé, orge, avoine, seigle (voir CULTURES ET SAISONS)', 'faux');
+rel(['Prairies'], [r('laine')], 'Bergerie', 'moutons qui paissent autour', 'couteau');
+for (const [k, nom] of Object.entries(ORE)) rel(['Gisements'], [r(nom)], 'Fosse minière', 'gisement « ' + k + ' » à moins de 250 m', 'pioche');
+// fermes : extensions
+node('fruits', 'Fruits d’arbres', 'vivre'); node('légumes', 'Légumes de saison', 'vivre');
+for (const [k, e] of Object.entries(FERME_EXT)) {
+  const via = 'Ferme : ' + e.nom.toLowerCase();
+  if (e.cult === 'legume') rel(['Terres'], [r('légumes')], via, 'légumes de saison (' + Object.values(CULTURES).filter(c => c.type === 'legume').map(c => c.nom.toLowerCase()).join(', ') + ')', e.outil);
+  else if (e.cult === 'fruit') rel(['Arbres'], [r('fruits')], via, 'fruits de saison (' + Object.values(CULTURES).filter(c => c.type === 'fruit').length + ' arbres : pommes, poires, cerises…)', e.outil);
+  else rel(['Elevage'], [r(e.produit)], via, '1 toutes les ' + e.every + ' s');
+}
+rel([], [r('miel', 'brut')], 'Rucher', 'à venir : le rucher n’a pas encore de production');
+// transformations simples (jobs « fetch » du catalogue)
+for (const p of PRESETS) if (p.job && p.job.type === 'fetch') rel([r(p.job.mat)], [r(p.job.product)], p.name, 'matière prise chez un producteur à moins de ' + p.job.reach + ' m');
+// fonderie (outils.js : FUSIONS)
+for (const f of FUSIONS) rel(Object.keys(f.cout).map(x => r(x)), Object.keys(f.sort).map(x => r(x)), 'Fonderie' + (f.niv ? ' (haut fourneau)' : ''), Object.entries(f.cout).map(([k, q]) => q + ' ' + k).join(' + ') + ' → ' + Object.entries(f.sort).map(([k, q]) => q + ' ' + k).join(', '));
+// fabrication : objets (outils.js : OBJETS), un nœud par objet
+const FAM = { outil:'outil', arme:'arme', munition:'arme', bouclier:'defense', armure:'defense' };
+const TETES = ['pierre', 'cuivre', 'bronze', 'fer', 'acier'];
+node('tete', 'Têtes et lames', 'transf', 'matériau principal des outils et des armes : pierre (version primitive), cuivre, bronze, fer, acier');
+rel(TETES.map(x => r(x)), ['tete'], 'Forge / Atelier de menuiserie', 'plus le matériau est avancé, meilleurs sont l’efficacité, la durabilité et les dégâts (×1 pierre, ×1,3 cuivre, ×1,6 bronze, ×2 fer, ×2,6 acier)');
+for (const [k, o] of Object.entries(OBJETS)) {
+  const recs = RECETTES.filter(x => x.objet === k), ins = new Set(), ateliers = new Set();
+  recs.forEach(x => { Object.keys(x.cout).forEach(i => ins.add(TETES.includes(i) ? 'tete' : i)); x.ateliers.forEach(a => ateliers.add(a)); });
+  const mats = o.mats.map(m => MATERIAUX[m].label).join(', ');
+  node('o:' + k, o.nom, FAM[o.type] || 'outil', 'matériaux : ' + mats);
+  rel([...ins].map(i => i === 'tete' ? i : r(i)), ['o:' + k], [...ateliers].map(a => BAT[a] || a).join(' / '), 'matériaux : ' + mats + (o.qte ? ' · ' + o.qte + ' par fabrication' : '') + ' · dégâts de base ' + o.deg);
+}
+rel([r('bois')], [r('corde')], 'Atelier de menuiserie', '2 bois donnent 3 cordes (liant des versions primitives, arcs, cannes)');
+
+// constructions, améliorations, outils : ce à quoi servent les ressources (hors arbre : pas de flèche)
+const USAGES = new Map();       // ressource → [textes]
+const usage = (res, t) => { if (!USAGES.has(res)) USAGES.set(res, []); USAGES.get(res).push(t); };
+for (const p of PRESETS) { const c = COUTS[p.id]; if (c) for (const [k, q] of Object.entries(c)) usage(k, 'Construction : ' + p.name + ' (' + q + ')'); }
+for (const a of AMELIOS) for (const [k, q] of Object.entries(a.cout)) usage(k, 'Amélioration : ' + a.nom + ' (' + q + ')');
+for (const [k, e] of Object.entries(FERME_EXT)) for (const [res, q] of Object.entries(e.cout)) usage(res, 'Extension de ferme : ' + e.nom + ' (' + q + ')');
+for (const [bat, t] of OUTILS_REQUIS) usage('o:' + (Object.keys(OBJETS).find(k => OBJETS[k].nom.toLowerCase().startsWith(t)) || t), 'Outil requis : ' + bat);
+usage('bois', 'Combustible de la fonderie (2 par fusion, 1 pour le bronze, 3 pour l’acier)');
+usage('pousses', 'Replantation de la forêt (pelle) : les pousses sont plantées dans la zone et deviennent des arbres');
+usage('pierre', 'Outils et armes primitifs (tête en pierre)');
+for (const [k, v] of Object.entries(VALEUR_OR)) usage(k, 'Vente au comptoir commercial : ' + v + ' Or l’unité');
+for (const [k, q] of Object.entries(STOCK_DEPART)) { const id = N.has(k) ? k : null; if (id) N.get(id).depart = q; }
+for (const nom of ['pierre', 'planches', 'bois', 'corde', 'légumes', 'pain']) if (!N.has(nom)) r(nom);
+usage('légumes', 'Nourriture (la consommation par les villageois est à venir)'); usage('fruits', 'Nourriture (la consommation par les villageois est à venir)');
+usage('bière', 'Besoin de la taverne (à venir)'); usage('vêtements', 'Marché (à venir)'); usage('chaussures', 'Marché (à venir)');
+usage('œufs', 'Nourriture (la consommation par les villageois est à venir)'); usage('viande', 'Nourriture (la consommation par les villageois est à venir)'); usage('poisson', 'Nourriture (la consommation par les villageois est à venir)'); usage('pain', 'Nourriture (la consommation par les villageois est à venir)');
+// nœuds manquants créés par les relations (sécurité)
+for (const x of R) for (const id of [...x.ins, ...x.outs]) if (!N.has(id)) r(id);
+
+/* ---------- niveaux (colonnes) : du plus brut au plus fini ---------- */
+const prodDe = new Map(); for (const x of R) for (const o of x.outs) { if (!prodDe.has(o)) prodDe.set(o, []); prodDe.get(o).push(x); }
+const tier = new Map();
+const niv = (id, pile = new Set()) => {
+  if (tier.has(id)) return tier.get(id); if (pile.has(id)) return 0; pile.add(id);
+  let t = 0; for (const x of prodDe.get(id) || []) for (const i of x.ins) t = Math.max(t, niv(i, pile) + 1);
+  pile.delete(id); tier.set(id, t); return t;
+};
+for (const id of N.keys()) niv(id);
+const maxT0 = Math.max(...tier.values());
+for (const n of N.values()) if (['outil', 'arme', 'defense'].includes(n.cat)) tier.set(n.id, maxT0);   // produits finis : toujours la dernière colonne
+const maxT = Math.max(...tier.values());
+
+/* ---------- arêtes ---------- */
+const AR = new Map();
+for (const x of R) for (const a of x.ins) for (const b of x.outs) { const k = a + '→' + b; if (!AR.has(k)) AR.set(k, { a, b, vias:new Set(), notes:[] }); AR.get(k).vias.add(x.via); }
+
+/* ---------- mise en page ---------- */
+const COLW = 250, ROWH = 40, BW = 190, BH = 30, X0 = 30, Y0 = 130;
+const ordreCat = Object.keys(CATS);
+const cols = Array.from({ length:maxT + 1 }, () => []);
+for (const n of N.values()) cols[tier.get(n.id)].push(n);
+// barycentre : proche de ses parents, par catégorie
+const pos = new Map();
+cols.forEach((c, t) => {
+  c.sort((a, b) => ordreCat.indexOf(a.cat) - ordreCat.indexOf(b.cat) || a.nom.localeCompare(b.nom, 'fr'));
+  if (t) { const bary = n => { const ps = (prodDe.get(n.id) || []).flatMap(x => x.ins).map(i => pos.get(i)).filter(Boolean); return ps.length ? ps.reduce((s, p) => s + p.y, 0) / ps.length : 1e9; };
+    c.sort((a, b) => ordreCat.indexOf(a.cat) - ordreCat.indexOf(b.cat) || bary(a) - bary(b)); }
+  c.forEach((n, i) => pos.set(n.id, { x:X0 + t * COLW, y:Y0 + i * ROWH }));
+});
+const rows = Math.max(...cols.map(c => c.length));
+const NS = 'http://www.w3.org/2000/svg', el = (t, a = {}, p) => { const e = document.createElementNS(NS, t); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+const monde = document.getElementById('monde');
+const TITRES = ['Nature', 'Premiers prélèvements', 'Première transformation', 'Deuxième transformation', 'Fabrication', 'Produits finis', 'Niveau 7'];
+cols.forEach((c, t) => { const h = el('text', { x:X0 + t * COLW, y:Y0 - 22, class:'colh' }, monde); h.textContent = (TITRES[t] || 'Niveau ' + (t + 1)); });
+const gE = el('g', {}, monde), gN = el('g', {}, monde), edgeEl = new Map(), nodeEl = new Map();
+for (const e of AR.values()) {
+  const A = pos.get(e.a), B = pos.get(e.b), x1 = A.x + BW, y1 = A.y + BH / 2, x2 = B.x, y2 = B.y + BH / 2, dx = Math.max(40, (x2 - x1) / 2);
+  const p = el('path', { d:`M${x1} ${y1} C${x1 + dx} ${y1} ${x2 - dx} ${y2} ${x2} ${y2}`, class:'edge', 'marker-end':'url(#fl)' }, gE);
+  const tt = el('title', {}, p); tt.textContent = [...e.vias].join(' · ');
+  edgeEl.set(e.a + '→' + e.b, p);
+}
+for (const n of N.values()) {
+  const P = pos.get(n.id), g = el('g', { class:'node', transform:`translate(${P.x} ${P.y})` }, gN);
+  el('rect', { width:BW, height:BH, fill:CATS[n.cat].c + '30', stroke:CATS[n.cat].c }, g);
+  const t = el('text', { x:9, y:19, fill:'currentColor' }, g); t.textContent = n.nom.length > 26 ? n.nom.slice(0, 25) + '…' : n.nom;
+  g.addEventListener('click', ev => { ev.stopPropagation(); choisir(n.id); });
+  nodeEl.set(n.id, g);
+}
+const W = X0 * 2 + (maxT + 1) * COLW, H = Y0 + rows * ROWH + 40;
+/* ---------- zoom / déplacement ---------- */
+const view = { k:1, x:0, y:0 }, carte = document.getElementById('carte');
+const maj = () => monde.setAttribute('transform', `translate(${view.x} ${view.y}) scale(${view.k})`);
+{ const w = carte.clientWidth || 1000, h = carte.clientHeight || 700; view.k = Math.min(1, w / W, h / H); view.x = 4; view.y = 0; maj(); }
+carte.addEventListener('wheel', e => { e.preventDefault(); const b = carte.getBoundingClientRect(), px = e.clientX - b.left, py = e.clientY - b.top, f = Math.exp(-e.deltaY * .0015), nk = Math.min(3, Math.max(.2, view.k * f)), k = nk / view.k; view.x = px - (px - view.x) * k; view.y = py - (py - view.y) * k; view.k = nk; maj(); }, { passive:false });
+let drag = null; carte.addEventListener('pointerdown', e => { drag = { sx:e.clientX, sy:e.clientY, x:view.x, y:view.y, moved:false }; carte.classList.add('drag'); });
+addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; view.x = drag.x + dx; view.y = drag.y + dy; maj(); });
+addEventListener('pointerup', () => { if (drag && !drag.moved) choisir(null); drag = null; carte.classList.remove('drag'); });
+
+/* ---------- sélection et fiche ---------- */
+const voisins = (id, sens) => { const out = new Set(), pile = [id]; while (pile.length) { const c = pile.pop(); for (const e of AR.values()) { const [a, b] = sens === 'amont' ? [e.b, e.a] : [e.a, e.b]; if (a === c && !out.has(b)) { out.add(b); pile.push(b); } } } return out; };
+const fiche = document.getElementById('fiche'), esc = s => String(s).replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+const lien = id => `<a class="res" data-id="${esc(id)}">${esc((N.get(id) || { nom:id }).nom)}</a>`;
+function choisir(id) {
+  for (const [k, e] of edgeEl) { e.setAttribute('class', 'edge'); e.setAttribute('marker-end', 'url(#fl)'); }
+  for (const g of nodeEl.values()) g.classList.remove('dim');
+  if (!id) { fiche.innerHTML = '<h2>Arbre des ressources</h2><p>Clique une ressource pour voir ce qui la produit et à quoi elle sert.</p>'; return; }
+  const amont = voisins(id, 'amont'), aval = voisins(id, 'aval'), garde = new Set([id, ...amont, ...aval]);
+  for (const [k, g] of nodeEl) g.classList.toggle('dim', !garde.has(k));
+  for (const [k, e] of edgeEl) { const [a, b] = k.split('→'); const up = (amont.has(a) || a === id) && (amont.has(b) || b === id), down = (aval.has(a) || a === id) && (aval.has(b) || b === id);
+    e.setAttribute('class', 'edge' + (up ? ' up' : down ? ' down' : ' dim')); e.setAttribute('marker-end', up ? 'url(#flu)' : down ? 'url(#fld)' : 'url(#fl)'); }
+  const n = N.get(id), C = CATS[n.cat];
+  const prod = (prodDe.get(id) || []).map(x => `<div class="rel"><b>${esc(x.via)}</b>${x.ins.length ? ' : ' + x.ins.map(lien).join(' + ') + ' → ' + esc(n.nom) : ' → ' + esc(n.nom)}${x.tool ? '<br><small>outil requis : ' + esc(x.tool) + '</small>' : ''}${x.note ? '<br><small>' + esc(x.note) + '</small>' : ''}</div>`).join('');
+  const usesR = R.filter(x => x.ins.includes(id)).map(x => `<div class="rel"><b>${esc(x.via)}</b> : ${x.ins.map(i => i === id ? '<b>' + esc(n.nom) + '</b>' : lien(i)).join(' + ')} → ${x.outs.map(lien).join(', ')}${x.note ? '<br><small>' + esc(x.note) + '</small>' : ''}</div>`).join('');
+  const us = (USAGES.get(id) || []).map(t => `<li>${esc(t)}</li>`).join('');
+  fiche.innerHTML = `<h2>${esc(n.nom)}</h2><span class="badge" style="background:${C.c}">${C.nom}</span>${n.depart ? ` <small>· ${n.depart} au départ (camp de colon)</small>` : ''}
+    ${n.note.length ? '<p><small>' + n.note.map(esc).join(' · ') + '</small></p>' : ''}
+    <h3>Comment l'obtenir</h3>${prod || '<p><small>Source de la nature : rien à produire.</small></p>'}
+    <h3>À quoi ça sert</h3>${usesR}${us ? '<ul>' + us + '</ul>' : ''}${!usesR && !us ? '<p><small>Aucun usage dans le jeu pour le moment.</small></p>' : ''}
+    <p><small>${amont.size} ressource${amont.size > 1 ? 's' : ''} en amont · ${aval.size} en aval</small></p>`;
+  fiche.querySelectorAll('a.res').forEach(a => a.onclick = () => choisir(a.dataset.id));
+}
+/* ---------- recherche et filtres ---------- */
+document.getElementById('q').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); if (!q) { choisir(null); return; } const hit = [...N.values()].find(n => n.nom.toLowerCase().includes(q)); if (hit) { choisir(hit.id); const P = pos.get(hit.id), b = carte.getBoundingClientRect(); view.x = b.width / 2 - (P.x + BW / 2) * view.k; view.y = b.height / 2 - (P.y + BH / 2) * view.k; maj(); } });
+const leg = document.getElementById('leg'), cache = new Set();
+for (const [k, c] of Object.entries(CATS)) { const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" checked hidden><i style="background:${c.c}"></i>${c.nom}`; l.onclick = ev => { ev.preventDefault(); cache.has(k) ? cache.delete(k) : cache.add(k); l.style.opacity = cache.has(k) ? .4 : 1;
+  for (const n of N.values()) nodeEl.get(n.id).style.display = cache.has(n.cat) ? 'none' : '';
+  for (const [key, e] of edgeEl) { const [a, b] = key.split('→'); e.style.display = cache.has(N.get(a).cat) || cache.has(N.get(b).cat) ? 'none' : ''; } }; leg.appendChild(l); }
+</script>
+</body>
+</html>

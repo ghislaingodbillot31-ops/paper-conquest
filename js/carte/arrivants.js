@@ -5,18 +5,37 @@
    possession des maisons dès qu'elles existent ; le camp ne garde que ceux que les maisons ne logent pas. Tant que le nombre
    de places n'augmente pas, aucune demande n'est faite.
    État sauvegardé à part du plan (clé arrivants) : { attente (arrivants acceptés), refuses, demande:{ n, de } | null, delai }. */
+/* Plus de stock central : le stock = ce qui est dans les bâtiments. L'ancien stock central (S.stock) est rangé une fois dans le camp de colon. */
+try { if (S.stock && Object.keys(S.stock).length) { const c = S.houses.find(h => h.kind === 'camp_colon'); if (c) { c.inv = c.inv || {}; for (const [k, q] of Object.entries(S.stock)) c.inv[k] = (c.inv[k] || 0) + q; } S.stock = {}; save(); } } catch (e) {}
+/* TEST (CONSTRUCTION_GRATUITE) : un bâtiment dont l'outil manque (hache, canne à pêche…) reçoit un outil primitif, rangé dans le camp de colon, sinon une habitation, sinon le premier bâtiment.
+   Appelé au chargement, à la pose d'un bâtiment et au changement d'activité d'une hutte de forestier. À supprimer avec CONSTRUCTION_GRATUITE. */
+function offrirOutils() {
+  if (!CONSTRUCTION_GRATUITE || !S.houses.length) return;
+  const dest = S.houses.find(h => h.kind === 'camp_colon') || S.houses.find(h => (buildingOf(h) || {}).cap) || S.houses[0];
+  let ajoute = false;
+  for (const h of S.houses) {
+    const t = outilDe(h); if (!t || meilleurOutilDe(t)) continue;
+    const r = recette(t, OBJETS[t].mats.includes('primitif') ? 'primitif' : OBJETS[t].mats[0]);
+    dest.inv = dest.inv || {}; dest.inv[r.nom] = (dest.inv[r.nom] || 0) + 1; ajoute = true;
+  }
+  if (ajoute) save();
+}
+setTimeout(() => { try { offrirOutils(); } catch (e) {} }, 0);
 const ARR_KEY = KEY + '.arrivants', ARR_DELAI = [40, 70], ARR_PREMIER = 15, ARR_VISIBLES = 12;
 const arrivants = { attente:0, refuses:0, demande:null, delai:ARR_PREMIER };
 try { Object.assign(arrivants, JSON.parse(localStorage.getItem(ARR_KEY) || '{}')); } catch (e) {}
-if (!S.houses.some(h => h.kind === 'camp_colon')) Object.assign(arrivants, { attente:0, demande:null, delai:ARR_PREMIER });   // partie neuve (plan régénéré) : plus d'arrivants en attente
+if (!S.fonde && !S.houses.some(h => h.kind === 'camp_colon')) Object.assign(arrivants, { attente:0, demande:null, delai:ARR_PREMIER });   // partie neuve (plan régénéré) : plus d'arrivants en attente
 const arrSave = () => { try { localStorage.setItem(ARR_KEY, JSON.stringify(arrivants)); } catch (e) {} };
 const campColon = () => S.houses.find(h => h.kind === 'camp_colon') || null;
+/* Le camp ne sert qu'à fonder le village (stock de départ + 5 villageois). S.fonde garde sa position : une fois le camp supprimé,
+   le village existe toujours (villageois, arrivées, construction) ; les villageois sans maison restent à l'ancien emplacement. */
+function fonde() { const c = campColon(); if (c) S.fonde = { x:c.x, y:c.y }; return S.fonde || null; }
 // villageois du village : les 5 du camp + les arrivants approuvés (les autres bâtiments n'en donnent pas)
-const popVillage = () => campColon() ? CAMP_PLACES + arrivants.attente : 0;
+const popVillage = () => fonde() ? CAMP_PLACES + arrivants.attente : 0;
 const CAMP_PLACES = 5;
-// places : le camp (5) + la capacité de chaque maison construite ; libres = places - habitants
+// places : le camp (5, tant qu'il existe) + la capacité de chaque maison construite ; libres = places - habitants
 const capaciteMaisons = () => S.houses.reduce((s, h) => h.kind === 'camp_colon' ? s : s + ((buildingOf(h) || {}).cap || 0), 0);
-const capaciteVillage = () => campColon() ? CAMP_PLACES + capaciteMaisons() : 0;
+const capaciteVillage = () => fonde() ? (campColon() ? CAMP_PLACES : 0) + capaciteMaisons() : 0;
 const placesLibres = () => Math.max(0, capaciteVillage() - popVillage());
 const logesAuCamp = () => campColon() ? Math.min(CAMP_PLACES, Math.max(0, popVillage() - capaciteMaisons())) : 0;   // ceux que les maisons ne logent pas
 // Chaque villageois (n° 1, 2, 3…) a un logement attribué : les maisons dans l'ordre de construction, puis le camp (5 au plus) ; au-delà : sans abri.
@@ -39,9 +58,49 @@ evt.innerHTML = `<h2>Événement</h2><p id="evt-texte"></p>
   <div class="row"><button id="evt-ok">Approuver</button><button id="evt-non" class="danger">Refuser</button></div>`;
 document.body.appendChild(evt);
 
+/* ---- les arrivants viennent à pied ----
+   Ils apparaissent au bord de la région, au bout d'une route d'entrée (route de base, sans suite au-delà de 150 m de la capitale),
+   suivent les routes jusqu'à la mairie et s'y présentent : la fenêtre d'événement s'ouvre alors. Approuvés, ils entrent dans le village ;
+   refusés, ils repartent par où ils sont venus. Un seul groupe à la fois (non sauvegardé : un groupe en route à la fermeture est perdu). */
+let groupe = null;   // { n, de, pt:[x, y] (apparition), x, y, etat:'vers' | 'attend' | 'retour', cible, chemin }
+const mairie = () => S.houses.find(h => h.kind === 'mairie') || null;
+function pointsArrivee() {
+  const b = (S.bourg && S.bourg[0]) || [TW / 2, TH / 2], bouts = [];
+  for (const r of S.roads) { const P = smoothPts(r); if (P.length > 1) for (const p of [P[0], P[P.length - 1]]) bouts.push({ p, r, d:segLen(p, b) }); }
+  const seul = o => !S.roads.some(r => r !== o.r && smoothPts(r).some(q => segLen(o.p, q) < RACCORD * 2));
+  const bords = bouts.filter(o => !o.r.libre && o.d > 150 && seul(o));
+  return (bords.length ? bords : bouts.sort((x, y) => y.d - x.d).slice(0, 1)).map(o => o.p);
+}
+// côté de la région d'où vient un point (COTES : nord, sud, est, ouest)
+const coteDe = p => { const dx = (p[0] - TW / 2) / TW, dy = (p[1] - TH / 2) / TH; return Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? COTES[2] : COTES[3]) : (dy > 0 ? COTES[1] : COTES[0]); };
+function groupeStep(dt, m) {
+  const g = groupe;
+  if (g.etat === 'attend' && !m) { arrivants.demande = null; arrSave(); afficherDemande(); g.etat = 'retour'; }   // mairie détruite : ils repartent
+  if (g.etat === 'vers' && !m) g.etat = 'retour';
+  if (g.etat === 'vers') {
+    g.cible = g.cible || porte(m, [g.x, g.y]);                                        // ils s'arrêtent devant la porte de la mairie
+    if (marcher(g, g.cible[0], g.cible[1], WALK, dt)) { g.etat = 'attend'; arrivants.demande = { n:g.n, de:g.de }; arrSave(); afficherDemande(); }
+    return true;
+  }
+  if (g.etat === 'retour') { if (marcher(g, g.pt[0], g.pt[1], WALK, dt)) groupe = null; return true; }
+  return false;
+}
+// le groupe en marche : n villageois en file, tournés dans le sens de la marche
+function groupeDessin() {
+  const g = groupe, s = view.s;
+  if (!g || s <= .5 || typeof peintVillageois !== 'function' || batimentSous([g.x, g.y])) return;
+  if (g.px !== undefined && Math.hypot(g.x - g.px, g.y - g.py) > .02) g.ang = Math.atan2(g.y - g.py, g.x - g.px);
+  g.px = g.x; g.py = g.y;
+  const a = g.ang || 0, V = VILLAGEOIS.villageois, Ls = Math.max(V.T * s * 2.2, 8);
+  for (let i = 0; i < g.n; i++) {
+    const wx = g.x - Math.cos(a) * i * 1.6 - Math.sin(a) * (i % 2 ? .7 : -.7), wy = g.y - Math.sin(a) * i * 1.6 + Math.cos(a) * (i % 2 ? .7 : -.7), [X, Y] = toS(wx, wy);
+    persos.push([wx, wy]); ctx.globalAlpha = voileBois(wx, wy); peintVillageois('villageois', X, Y, Ls, a); ctx.globalAlpha = 1;
+  }
+}
+
 function afficherDemande() {
-  const d = arrivants.demande; evt.hidden = !d;
-  if (!d) return;
+  const d = arrivants.demande; evt.hidden = !d || !mairie();
+  if (evt.hidden) return;
   const libres = placesLibres(), ok = libres >= d.n;
   document.getElementById('evt-texte').textContent = `${d.n} villageois venus ${d.de} de la région demandent à rejoindre le village.` +
     (ok ? '' : ` Plus assez de places (${libres} libre${libres > 1 ? 's' : ''}) : construisez des habitations.`);
@@ -50,6 +109,7 @@ function afficherDemande() {
 function repondre(ok) {
   const d = arrivants.demande; if (!d) return;
   if (ok) { if (placesLibres() < d.n) { flash('Plus assez de places pour les accueillir', true); afficherDemande(); return; } arrivants.attente += d.n; flash(`${d.n} villageois accueillis`); } else arrivants.refuses += d.n;
+  if (groupe) { if (ok) groupe = null; else groupe.etat = 'retour'; }                // approuvés : ils entrent dans le village ; refusés : ils repartent
   arrivants.demande = null; arrivants.delai = ARR_DELAI[0] + Math.random() * (ARR_DELAI[1] - ARR_DELAI[0]);
   arrSave(); afficherDemande(); lastStatus = ''; updateStatus(); requestDraw();
 }
@@ -58,23 +118,28 @@ document.getElementById('evt-non').addEventListener('click', () => repondre(fals
 
 // appelé à chaque image par simLoop : décompte jusqu'à la prochaine demande (seulement une fois le camp posé)
 function arrivantsStep(dt) {
-  if (!campColon()) { if (!evt.hidden) { evt.hidden = true; } return false; }
-  if (arrivants.demande) { if (evt.hidden) afficherDemande(); if (!evt.hidden && document.getElementById('evt-ok').disabled === (placesLibres() >= arrivants.demande.n)) afficherDemande(); return false; }   // (bouton Approuver à jour si des places apparaissent)
-  if (placesLibres() < 1) return false;                     // limite d'accueil : pas de demande tant qu'il n'y a pas de place
+  if (!fonde()) { if (!evt.hidden) { evt.hidden = true; } return false; }
+  if (arrivants.demande) { if (evt.hidden) afficherDemande(); if (!evt.hidden && document.getElementById('evt-ok').disabled === (placesLibres() >= arrivants.demande.n)) afficherDemande(); }   // (bouton Approuver à jour si des places apparaissent)
+  if (groupe) return groupeStep(dt, mairie());
+  if (arrivants.demande || !mairie() || placesLibres() < 1) return false;   // limite d'accueil : pas d'arrivants sans mairie ni place
   arrivants.delai -= dt;
   if (arrivants.delai > 0) return false;
-  arrivants.demande = { n:Math.min(1 + Math.floor(Math.random() * 3), placesLibres()), de:COTES[Math.floor(Math.random() * COTES.length)] };
-  arrSave(); afficherDemande(); return false;
+  const P = pointsArrivee(); if (!P.length) return false;
+  const pt = P[Math.floor(Math.random() * P.length)];
+  groupe = { n:Math.min(1 + Math.floor(Math.random() * 3), placesLibres()), de:coteDe(pt), pt, x:pt[0], y:pt[1], etat:'vers', cible:null, chemin:null };
+  return true;
 }
 // les habitants logés au camp, groupés autour du feu
 function arrivantsDessin() {
-  const c = campColon(); if (!c || !logesAuCamp() || typeof peintVillageois !== 'function') return;
+  groupeDessin();
+  const c = campColon(), f = fonde(), nb = c ? logesAuCamp() : f ? logements().sansAbri : 0;   // camp supprimé : les sans-abri restent à son ancien emplacement
+  if (!f || !nb || typeof peintVillageois !== 'function') return;
   const s = view.s; if (s <= .5) return;
-  const pts = corners(c), cx = pts.reduce((a, p) => a + p[0], 0) / 4, cy = pts.reduce((a, p) => a + p[1], 0) / 4;
-  const V = VILLAGEOIS.villageois, Ls = Math.max(V.T * s * 2.2, 8), n = Math.min(logesAuCamp(), ARR_VISIBLES);
-  for (let i = 0; i < n; i++) {
-    const a = i * 2.399, r = 4 + (i % 3) * 2.2, [X, Y] = toS(cx + Math.cos(a) * r, cy + Math.sin(a) * r);
-    const wx = cx + Math.cos(a) * r, wy = cy + Math.sin(a) * r; persos.push([wx, wy]);
+  const pts = c && corners(c), cx = c ? pts.reduce((a, p) => a + p[0], 0) / 4 : f.x, cy = c ? pts.reduce((a, p) => a + p[1], 0) / 4 : f.y;
+  const V = VILLAGEOIS.villageois, Ls = Math.max(V.T * s * 2.2, 8), n = Math.min(nb, ARR_VISIBLES);
+  for (let i = 0; i < n; i++) {                                                                  // en cercle régulier autour du feu (rayon 3 m : hors du foyer, des abris, du chariot et des caisses), tournés vers lui
+    const a = -Math.PI / 2 + i * 2 * Math.PI / n, r = 3, p = c ? local(c, Math.cos(a) * r, (c.front || 1) * Math.sin(a) * r) : [cx + Math.cos(a) * r, cy + Math.sin(a) * r];
+    const [X, Y] = toS(p[0], p[1]), wx = p[0], wy = p[1]; persos.push([wx, wy]);
     ctx.globalAlpha = voileBois(wx, wy); peintVillageois('villageois', X, Y, Ls, a + Math.PI); ctx.globalAlpha = 1;   // face au feu, sous les arbres
   }
 }
@@ -85,12 +150,12 @@ afficherDemande();
    plus ce que les bâtiments ont produit et pas encore déplacé (bois des camps de bûcherons, planches de la scierie, grain, œufs…)
    et le contenu des granges et entrepôts. Il se recalcule à chaque image : produit, consommé, utilisé ou ajouté, il suit.
    (Le compteur « récolté » du tailleur de pierre et celui du forestier ne comptent pas : la pierre est déjà dans S.stock.) */
-const surStockCentral = h => TAILLEURS[h.kind] || h.kind === 'hutte_forestier';
+const surStockCentral = h => h.kind === 'hutte_forestier';   // (son compteur = plants mis en terre, pas du stock)
 function stockVillage() {
   const t = {};
-  for (const [k, q] of Object.entries(S.stock || {})) if (q > 0) t[k] = q;
   for (const h of S.houses) {
     for (const [k, q] of Object.entries(h.inv || {})) if (q > 0) t[k] = (t[k] || 0) + q;
+    for (const [k, q] of Object.entries(h.mat || {})) if (q > 0) t[k] = (t[k] || 0) + q;     // matières apportées à la fonderie
     const p = surStockCentral(h) ? null : productOf(h);
     if (p && (h.stock || 0) > 0) t[p] = (t[p] || 0) + h.stock;
   }
@@ -98,10 +163,10 @@ function stockVillage() {
 }
 // paie q unités de la ressource k : d'abord le stock central, puis ce que les bâtiments ont produit ou rangé
 function retirerDuStock(k, q) {
-  const st = S.stock || (S.stock = {}), c = Math.min(q, st[k] || 0); st[k] = (st[k] || 0) - c; q -= c;
   for (const h of S.houses) {
     if (q <= 0) break;
     if (h.inv && h.inv[k] > 0) { const x = Math.min(q, h.inv[k]); h.inv[k] -= x; q -= x; }
+    if (q > 0 && h.mat && h.mat[k] > 0) { const x = Math.min(q, h.mat[k]); h.mat[k] -= x; q -= x; }
     if (q > 0 && !surStockCentral(h) && productOf(h) === k && (h.stock || 0) > 0) { const x = Math.min(q, h.stock); h.stock -= x; q -= x; }
   }
 }
@@ -109,13 +174,30 @@ function retirerDuStock(k, q) {
 const stockBox = document.createElement('aside');
 stockBox.className = 'stock'; stockBox.hidden = true; stockBox.setAttribute('aria-label', 'Stock du village');
 document.body.appendChild(stockBox);
+/* où se trouve chaque article : { article: [[lieu, quantité], …] }. La réserve du village = le stock de départ du camp de colon (rien d'autre n'y entre) ;
+   tout le reste est dans un bâtiment (produit, ou ramassé par une grange / un entrepôt). */
+function stockDetail() {
+  const d = {}, rang = h => { const m = S.houses.filter(o => o.kind === h.kind).sort((a, b) => a.id - b.id); return m.length > 1 ? ' n°' + (m.indexOf(h) + 1) : ''; };
+  const add = (k, lieu, q) => { if (q >= 1) (d[k] = d[k] || []).push([lieu, Math.floor(q)]); };
+  for (const h of S.houses) {
+    for (const [k, q] of Object.entries(h.inv || {})) add(k, h.type + rang(h), q);
+    for (const [k, q] of Object.entries(h.mat || {})) add(k, h.type + rang(h), q);
+    const p = surStockCentral(h) ? null : productOf(h); if (p) add(p, h.type + rang(h), h.stock || 0);
+  }
+  return d;
+}
 let stockTexte = '';
 function afficherStock() {
-  const st = stockVillage(), show = !!(GAME && campColon());
+  const st = stockVillage(), show = !!(GAME && fonde());
   stockBox.hidden = !show; if (!show) return;
   const total = Object.values(st).reduce((s, n) => s + n, 0), el = document.getElementById('stock-total');
-  if (el) { el.textContent = Math.floor(total); el.parentNode.title = 'Tout ce qui est disponible dans le village :\n' + (Object.entries(st).filter(([, q]) => q >= 1).sort((a, b) => b[1] - a[1]).map(([k, q]) => k + ' : ' + Math.floor(q)).join('\n') || 'rien'); }
-  const nourriture = ['légumes', 'pain', 'pommes', 'œufs', 'poisson'].reduce((s, k) => s + (st[k] || 0), 0);
+  if (el) {
+    el.textContent = Math.floor(total);
+    const D = stockDetail(), L = Object.entries(D).map(([k, l]) => [k, l, l.reduce((s, x) => s + x[1], 0)]).sort((a, b) => a[0].localeCompare(b[0], 'fr')), d = document.getElementById('stock-detail');   // survol : chaque article et où il se trouve
+    const html = L.length ? L.map(([k, l, n]) => `<div class="art"><span>${k[0].toUpperCase() + k.slice(1)}</span><b>${n}</b></div>`).join('') : '<div class="vide">Le stock est vide</div>';
+    if (d && d.dataset.h !== html) { d.dataset.h = html; d.innerHTML = html; }
+  }
+  const nourriture = FOOD_LIST.reduce((s, k) => s + (st[k] || 0), 0);
   const html = [['Bois', st.bois], ['Planches', st.planches], ['Pierre', st.pierre], ['Nourriture', nourriture]]
     .map(([n, q]) => `<span>${n} <b>${Math.max(0, Math.round(q || 0))}</b></span>`).join('');
   if (html !== stockTexte) { stockTexte = html; stockBox.innerHTML = html; }

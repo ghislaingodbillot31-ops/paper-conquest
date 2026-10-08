@@ -3,7 +3,7 @@
   --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
   --zone:#3c8a5c; --zone-fill:rgba(0,0,0,.04); --zone-line:rgba(0,0,0,.75); --verge:transparent;
   --house:#8b8869; --house-edge:#585840; --roof-line:rgba(88,88,64,.5);
-  --earth:#c9bd98; --earth-edge:#8e8455; --gravel:#d3cbb0; --gravel-edge:#8e8455; --paving:#cfc6a7; --paving-edge:#8e8455;
+  --earth:#c9bd98; --earth-edge:#8e8455; --path:#9a7248; --path-edge:#5e4129; --gravel:#d3cbb0; --gravel-edge:#8e8455; --paving:#cfc6a7; --paving-edge:#8e8455;
   --wall:#a39b8b; --wall-edge:#3f3a32;
   --water:#2b4ba5; --water-edge:#14245a; --bridge:#585840;
   --grass:#dcd08a; --grass-dark:#d2c57c; --tree:#647851; --tree-dark:#56694a; --bush:#7e8a5e;
@@ -103,6 +103,17 @@ canvas{position:absolute; inset:0; touch-action:none; display:block}
 .toast.bad{background:var(--bad); color:#fff}
 .overlay{position:absolute; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:center; padding:16px}
 .dialog{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:14px; width:min(560px,100%); display:flex; flex-direction:column; gap:10px}
+.g-trav b{margin:0 6px; font-variant-numeric:tabular-nums}
+.g-ctrl-ligne{flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.g-ctrl-ligne button{padding:3px 10px}
+.g-ctrl-ligne button.on{background:var(--btn-on); color:var(--btn-on-ink)}
+.g-ctrl-ligne small{flex-basis:100%; color:var(--ink-soft)}
+.g-fab{flex-basis:100%; display:flex; flex-direction:column; gap:4px; padding-top:6px; border-top:1px dashed var(--line)}
+.g-fab select{width:100%; margin-top:2px}
+.g-ext{display:flex; flex-wrap:wrap; align-items:center; gap:6px}
+.g-ext small{flex-basis:100%; color:var(--ink-soft)}
+.g-ext select{width:auto; flex:1 1 140px}
+.g-amelio{flex-basis:100%; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding-top:6px; border-top:1px dashed var(--line)}
 .dialog textarea{width:100%; height:220px; font:12px "IBM Plex Mono",monospace; background:var(--btn); color:var(--ink); border:1px solid var(--line); border-radius:3px; padding:8px; resize:vertical}
 
 @media (max-width:760px){
@@ -129,21 +140,36 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .capitale button{background:var(--hud); color:var(--hud-ink); border-color:var(--hud-edge)}
 .capitale button[aria-pressed="true"]{background:var(--hud-on); color:var(--hud-on-ink); border-color:var(--hud-on)}
 .capitale button.danger{color:var(--bad)}
-.capitale .zoom{top:auto; left:auto; right:14px; bottom:96px}
+.capitale .zoom{top:auto; left:auto; right:calc(var(--panneau) + 14px); bottom:96px}
 .capitale .zoom button{box-shadow:var(--hud-shadow)}
-.capitale .toast{bottom:auto; top:74px}
+.capitale .toast{position:fixed; z-index:60; bottom:auto; top:calc(74px + env(safe-area-inset-top, 0px)); left:calc((100% - var(--panneau)) / 2); padding:12px 28px; font:600 24px "Barlow Condensed",sans-serif; letter-spacing:.04em; border-radius:6px; box-shadow:var(--hud-shadow); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge)}   /* messages de gérance : sous le bandeau, en grand */
+.capitale .toast.bad{background:var(--bad); color:#fff}
 
 /* bandeau du haut */
 .bandeau{
-  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:50%; transform:translateX(-50%);
+  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%);
   display:flex; align-items:stretch; background:var(--hud); color:var(--hud-ink);
-  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); max-width:calc(100% - 32px);
+  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); max-width:calc(100% - var(--panneau) - 32px);
 }
 .bandeau-pop{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft)}
 .bandeau-pop svg{width:20px; height:20px; fill:var(--hud-ink)}
 .bandeau-pop .sep{margin-left:4px}
+.bandeau-date{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); white-space:nowrap}
+.bandeau-date b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
+.bandeau-region{display:flex; align-items:center; padding:4px 10px; border-right:1px solid var(--hud-edge)}
+.bandeau-region select{max-width:210px; font:13px "Barlow",sans-serif; padding:3px 6px; border:1px solid var(--hud-edge); border-radius:4px; background:transparent; color:var(--hud-ink)}
+.bandeau-region select option{color:#111; background:#fff}
 .bandeau-pop, .bandeau-stock{white-space:nowrap}
 .bandeau-stock{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); cursor:help}
+.bandeau-stock{position:relative}
+.stock-detail{display:none; position:absolute; top:calc(100% + 6px); left:0; min-width:170px; padding:8px 12px; background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); cursor:default; z-index:5}
+.bandeau-stock:hover .stock-detail{display:block}
+.stock-detail div{display:flex; justify-content:space-between; gap:18px; padding:2px 0; font-size:13px; color:var(--hud-soft)}
+.stock-detail div b{font-size:15px}
+.stock-detail .vide{font-style:italic}
+.stock-detail .art{margin-top:6px; color:var(--hud-ink)}
+.stock-detail .art:first-child{margin-top:0}
+.stock-detail .lieu{font-size:12px; padding:0 0 0 12px}
 .bandeau-stock b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
 .bandeau-pop b{font:600 18px "Barlow Condensed",sans-serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
 .bandeau-nom{display:flex; align-items:center; gap:6px; padding:4px 10px 4px 18px; min-width:0}
@@ -159,9 +185,10 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .nom-form .muted:empty{display:none}
 
 /* fiche de sélection (à droite) */
+:root{--panneau:500px}   /* largeur du panneau de droite (permanent, toute la hauteur) */
 .fiche{
-  position:fixed; top:74px; right:14px; width:min(320px, calc(100vw - 28px)); max-height:calc(100% - 190px); overflow:auto;
-  background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px;
+  position:fixed; top:0; right:0; bottom:0; width:var(--panneau); overflow:auto; z-index:20;
+  background:var(--hud); color:var(--hud-ink); border:0; border-left:1.5px solid var(--hud-edge); border-radius:0; box-shadow:var(--hud-shadow); padding:16px 18px 16px;
 }
 .fiche-tete{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
 .fiche h2, .tiroir h2, .aide h3{font:600 12px/1 "Barlow Condensed",sans-serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0}
@@ -170,12 +197,14 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 
 /* panneau d'onglet, posé au-dessus de la barre du bas */
 .tiroir{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(66px + env(safe-area-inset-bottom, 0px)); width:max-content; max-width:min(1020px, calc(100% - 32px));
+  position:fixed; left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%); bottom:calc(66px + env(safe-area-inset-bottom, 0px)); width:max-content; max-width:min(1020px, calc(100% - var(--panneau) - 32px));
   max-height:calc(100% - 170px); overflow:auto; background:var(--hud); color:var(--hud-ink);
   border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:12px 14px;
   display:flex; flex-direction:column; gap:10px;
 }
-#tiroir-construction{width:min(1020px, calc(100% - 32px))}
+/* taille fixe : changer de catégorie ne redimensionne pas le panneau (les cartes défilent dans leur zone) */
+#tiroir-construction{width:min(1020px, calc(100% - var(--panneau) - 32px)); height:min(360px, calc(100% - 170px)); overflow:hidden}
+#tiroir-construction .cartes{flex:1 1 auto; min-height:0; align-items:flex-start; overflow-y:hidden}
 .tiroir-opts{display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--hud-edge); padding-top:8px; margin:0}
 .tiroir .row label{color:var(--hud-soft)}
 .tiroir .row label.check{flex-direction:row; margin-left:8px}
@@ -183,6 +212,7 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .chemins button{display:flex; flex-direction:column; align-items:flex-start; gap:4px; width:150px; padding:8px; text-align:left; font-weight:600}
 .chemins button::before{content:""; width:100%; height:34px; border-radius:3px; border:1px solid var(--earth-edge)}
 #kind-terre::before{background:repeating-linear-gradient(100deg, var(--earth) 0 7px, #bfb189 7px 9px)}
+#kind-chemin::before{background:linear-gradient(var(--path-edge) 0 0) center/100% 8px no-repeat, var(--sheet,#eee); border-color:var(--path-edge)}
 #kind-gravier::before{background:radial-gradient(circle at 30% 40%, #b5ad93 1.5px, transparent 2px) 0 0/7px 7px, var(--gravel)}
 #kind-pave::before{background:linear-gradient(90deg, var(--paving-edge) 1px, transparent 1px) 0 0/12px 100%, linear-gradient(var(--paving-edge) 1px, transparent 1px) 0 0/100% 9px, var(--paving)}
 .chemins kbd{font:400 11px "IBM Plex Mono",monospace; font-weight:400; opacity:.75}
@@ -203,7 +233,7 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 
 /* barre d'onglets du bas */
 .onglets{
-  position:fixed; left:50%; transform:translateX(-50%); bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  position:fixed; left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%); bottom:calc(10px + env(safe-area-inset-bottom, 0px));
   display:flex; gap:4px; padding:4px; background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:8px; box-shadow:var(--hud-shadow);
 }
 .onglets button{display:flex; align-items:center; gap:7px; padding:7px 16px; border-radius:5px; border-color:transparent; font:600 16px "Barlow Condensed",sans-serif; letter-spacing:.05em}
@@ -212,7 +242,15 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
   .onglets button{padding:7px 10px; font-size:15px}
   .bandeau-pop span{display:none}
   .capitale .zoom{bottom:auto; top:74px; right:10px}
-  .fiche{top:auto; bottom:calc(66px + env(safe-area-inset-bottom, 0px)); max-height:45%}
+}
+/* petit écran : le panneau permanent passe en bas, sur 42 % de la hauteur */
+@media (max-width:900px){
+  :root{--panneau:0px}
+  .fiche{top:auto; left:0; right:0; bottom:0; width:auto; height:42%; border-left:0; border-top:1.5px solid var(--hud-edge)}
+  .fiche.bat-fiche{width:auto}
+  .onglets{bottom:calc(42% + 8px)}
+  .tiroir{bottom:calc(42% + 62px)}
+  .capitale .zoom{right:14px; bottom:calc(42% + 62px)}
 }
 
 /* fenêtre d'événement (arrivants) : sur le côté gauche de la carte */
@@ -237,3 +275,71 @@ body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
 .lac-tab{width:100%; border-collapse:collapse; font-size:12px}
 .lac-tab td{padding:2px 4px; vertical-align:middle}
 .lac-tab button{padding:1px 6px; font-size:11px}
+
+/* fiche d'un bâtiment : largeur fixe, mêmes hauteurs de lignes et de boutons pour tous les bâtiments */
+.fiche.bat-fiche{width:var(--panneau)}
+.bat{display:flex; flex-direction:column; gap:8px}
+.bat-tete{min-height:34px}
+.bat-nom{margin:0; font:700 28px/1 "Barlow Condensed",sans-serif; letter-spacing:.06em; text-transform:uppercase}
+.bat-cat{font:600 12px "Barlow Condensed",sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft)}
+.bat-desc{margin:0; padding-bottom:8px; border-bottom:1px dashed var(--hud-edge); font-size:14px; font-style:italic; color:var(--hud-soft)}
+.bat h4{margin:6px 0 0; padding-bottom:3px; border-bottom:1px solid var(--hud-edge); font:600 12px/1 "Barlow Condensed",sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft)}
+.bat-ligne{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:34px; font-size:14px}
+.bat-ligne b{font:600 18px "Barlow Condensed",sans-serif}
+.bat-ctl{display:flex; align-items:center; gap:10px}
+.bat-ctl b{min-width:64px; text-align:center}
+.bat button{min-height:32px; padding:0 14px; border:1.5px solid var(--hud-edge); border-radius:5px 4px 6px 4px / 4px 6px 4px 5px; font:600 15px "Barlow Condensed",sans-serif; letter-spacing:.05em}
+.bat-ctl button{width:36px; padding:0; font-size:20px}
+.bat button:disabled{opacity:.4; cursor:default}
+.bat-etat{width:100%; font-size:16px !important; letter-spacing:.14em !important}
+.bat-etat.on{border-color:var(--good, #4a8a3f) !important}
+.bat-etat.off{border-color:var(--bad) !important}
+.bat-stock{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:0 22px}
+.bat-stock li{display:flex; justify-content:space-between; align-items:center; min-height:28px; border-bottom:1px dotted var(--hud-edge); font-size:14px}
+.bat-stock b{font:600 17px "Barlow Condensed",sans-serif}
+.bat-vide, .bat-aide{margin:0; font-size:14px; color:var(--hud-soft)}
+.bat-btns{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.bat-pied{margin-top:6px; padding-top:10px; border-top:1px dashed var(--hud-edge)}
+.bat-pied .danger{margin-left:auto}
+.bat-cour{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--hud-soft)}
+.bat-rayon{display:flex; flex-direction:column; gap:4px; font-size:14px}
+.bat-reglages{display:flex; flex-direction:column; gap:8px}
+.bat .kv{margin:0; font-size:13px}
+.bat .kv dd{font-size:12.5px}
+
+/* onglets INFOS / STOCK de la fiche d'un bâtiment, barre de remplissage */
+.bat-onglets{display:flex; gap:6px}
+.bat-onglets button{flex:1; letter-spacing:.14em}
+.bat-barre{height:8px; border-radius:4px; background:var(--hud-edge); overflow:hidden; opacity:.9}
+.bat-barre i{display:block; height:100%; background:var(--accent, #d9b25f)}
+
+.outil-champ{background:repeating-linear-gradient(0deg, #b9996d 0 7px, #a2805a 7px 9px) !important}
+
+.bat-onglets{flex-wrap:wrap}
+
+.bat-curseur{display:flex; align-items:center; gap:10px}
+.bat-curseur input{width:150px}
+.bat-curseur b{min-width:48px; text-align:right; font:600 17px "Barlow Condensed",sans-serif}
+
+/* production : liste des produits (défilante, lignes de hauteur fixe) et file d'attente */
+.prod-liste{max-height:250px; overflow-y:auto; border:1px solid var(--hud-edge); border-radius:4px; padding:2px 8px}
+.prod-titre{font:600 12px/1 "Barlow Condensed",sans-serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft); padding:8px 0 3px}
+.prod-ligne{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:40px; border-bottom:1px dotted var(--hud-edge)}
+.prod-nom{display:flex; flex-direction:column; font-size:14px}
+.prod-nom small{color:var(--hud-soft); font-size:12px}
+.prod-file{margin:0; padding-left:22px; font-size:14px}
+.prod-file li{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:30px; border-bottom:1px dotted var(--hud-edge)}
+.prod-file button{min-height:24px; padding:0 8px}
+.prod-avert{color:var(--bad); font-weight:700; cursor:help}
+
+.fonte-stock{font-size:14px; white-space:nowrap}
+.fonte-stock b{font:600 17px "Barlow Condensed",sans-serif}
+
+.bat button.fonte-btn{width:auto; min-width:64px; font-size:15px !important; letter-spacing:.1em !important}
+
+.stats .bat-ligne{min-height:22px; font-size:13px}
+.stats .bat-ligne b{font-size:16px}
+.stats{gap:3px}
+.stats h4{margin-top:4px}
+.jour-now{color:var(--hud-ink); background:rgba(255,255,255,.08); border-left:3px solid #e0b050; padding-left:6px; margin-left:-9px}
+.stat-case{display:flex; align-items:center; gap:8px; min-height:30px; font-size:14px}

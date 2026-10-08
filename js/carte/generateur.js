@@ -399,6 +399,8 @@ const normalize = o => {
   if (!Array.isArray(o.grown)) o.grown = [];     // plants devenus arbres
   if (!Array.isArray(o.ressources)) o.ressources = [];   // repères de la map test
   if (!Array.isArray(o.deposits)) o.deposits = [];   // gisements de minerai (plans d'avant : aucun)
+  if (!Array.isArray(o.champs)) o.champs = [];       // champs (zones entourées de routes) : plans d'avant : aucun
+  o.deposits.forEach(reduireGisement);                // (anciens grands affleurements : réduits à une petite zone de pépites)
   if (!o.reliefSeed) o.reliefSeed = 4417;  // graine du relief
   // une seule rivière / un seul lac dans les plans d'avant : on passe aux listes
   if (!Array.isArray(o.rivers)) o.rivers = o.river ? [o.river] : [];
@@ -431,5 +433,8 @@ function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e
 
 let tool = 'select', preset = PRESETS[0], custom = null, swapped = false, roadKind = ROADS[1], yardKind = 'potager';
 let snapLen = true;   // (murailles seulement : longueur en cases entières)
+let captureEdit = null;                                      // choix d'un animal à capturer pour une ferme en cours : { id, k }
+let eauEdit = null;                                          // choix du plan d'eau d'une cabane de pêche en cours : { id }
+let deplacer = null;                                         // déplacement d'un bâtiment en cours : { id, preview }
 let sel = null, hover = null, cursor = null, draft = null, drag = null, pinch = null, spaceDown = false;
 const undoStack = [], pointers = new Map();

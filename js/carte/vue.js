@@ -45,14 +45,14 @@ function zoomAt(px, py, f) {
 function resize() {
   const r = wrap.getBoundingClientRect();
   dpr = window.devicePixelRatio || 1; W = r.width; H = r.height;
-  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
+  cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr); cv.style.width = W + 'px'; cv.style.height = H + 'px';   // taille d'affichage = taille de la zone, quelle que soit la densité de pixels (sinon le canevas est affiché à W×dpr pixels CSS et se décale du décor : zoom du navigateur, écrans mis à l'échelle)
   if (!fitted && W > 0) { fitted = true; if (atelier.on) fitAtelier(); else fitContent(); }
   else if (W > 0) { view.s = Math.max(view.s, minScale()); clampView(); } // fenêtre redimensionnée
   requestDraw();
 }
 function readColors() {
   const cs = getComputedStyle(document.documentElement);
-  for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','contour','f-meadow','f-wheat','f-plough','f-fallow','f-alfalfa','f-forest','parcel-edge','veil','stall-a','stall-b','tavern','church','ore-iron','ore-clay','f-field','f-pasture','sheep','accent','bad','shadow'])
+  for (const k of ['sheet','ground','ink','ink-soft','zone','zone-fill','zone-line','verge','house','house-edge','roof-line','earth','earth-edge','path','path-edge','gravel','gravel-edge','paving','paving-edge','wall','wall-edge','water','water-edge','bridge','grass','grass-dark','tree','tree-dark','bush','contour','f-meadow','f-wheat','f-plough','f-fallow','f-alfalfa','f-forest','parcel-edge','veil','stall-a','stall-b','tavern','church','ore-iron','ore-clay','f-field','f-pasture','sheep','accent','bad','shadow'])
     Col[k] = cs.getPropertyValue('--' + k).trim();
   makePatterns(); // les motifs de revêtement suivent le thème clair / sombre
   groundImg = null; markAllDirty(); // sol, végétation et tout le décor repeints avec les nouvelles couleurs

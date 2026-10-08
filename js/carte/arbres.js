@@ -26,6 +26,7 @@ const FRUITIERS = {
   neflier:     { nom:'Néflier',     biomes:['tempere', 'mediterraneenne', 'subtropicale'], lobes:8,  f:['#648a48', '#86ac64', '#3a5630'], r:.92, fr:{ f:'rond', c:'#b8742c', c2:'#e0a45e', n:9, t:.09 } },
   sorbier:     { nom:'Sorbier',     biomes:['taiga', 'tempere', 'montagne', 'toundra_alpine'], lobes:9,  f:['#628a46', '#84ae60', '#385630'], r:.95, fr:{ f:'rond', c:'#d8401e', c2:'#f27c5a', n:16, t:.055 } },
 };
+let FRUIT_INST = null;                                        // false : l'arbre en cours de dessin n'a pas de fruits (hors saison ou déjà cueilli)
 const ARBRE_INK = '#2f2a24', ARBRE_R = 4.2;                  // rayon du houppier en mètres (× a.r)
 // les arbres d'origine d'un biome (la région en reçoit au plus 4, tirés au sort)
 function fruitiersDuBiome(biome, seed, max = 4) {
@@ -38,8 +39,8 @@ function placeFruitiers(seed, keys) {
   const rnd = seeded(seed * 23 + 11), out = [], M = 140, R = 28, fz = forestNoise(), B = biomeOf().flora, grosBois = B.forest - .1, groves = [];
   const water = [...(Z.water.river || []), ...(Z.water.lake || [])];
   const libre = c => {
-    if (c[0] < M || c[1] < M || c[0] > TW - M || c[1] > TH - M || fz(c[0], c[1]) > grosBois) return false;          // (pas dans les grandes forêts)
-    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = [c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R]; if (!dansRegion(q) || !surTerre(q)) return false; }
+    if (c[0] < M || c[1] < M || c[0] > TW - M || c[1] > TH - M || fz(c[0], c[1]) > B.forest - .004) return false;          // (jamais dans ni sous une forêt)
+    for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = [c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R]; if (!dansRegion(q) || !surTerre(q) || fz(q[0], q[1]) > B.forest - .004) return false; }
     if (!dansRegion(c) || distToRoads(c) < R + 12) return false;
     if (water.length && hitsAny([[c[0] - R, c[1] - R], [c[0] + R, c[1] - R], [c[0] + R, c[1] + R], [c[0] - R, c[1] + R]], water)) return false;
     if ((S.deposits || []).some(d => segLen(d.c, c) < d.r * 1.3 + R)) return false;
@@ -124,7 +125,7 @@ function peintArbre(a, cx, cy, R, seed) {
     ctx.restore();
     dedans = (x, y) => Math.hypot(x - cx, (y - cy) / .97) < R * .76;
   }
-  if (!detail) return;
+  if (!detail || FRUIT_INST === false || (typeof fruitsSurArbre === 'function' && !fruitsSurArbre(a))) return;             // fruits mûrs seulement à la saison (cultures.js)
   // fruits : anneaux concentriques régulièrement espacés (centre éventuel, puis anneaux), tous dans le houppier
   const fr = a.fr, D = { 6:[6], 7:[1, 6], 8:[8], 9:[1, 8], 10:[1, 9], 11:[1, 10], 12:[4, 8], 14:[4, 10], 16:[1, 5, 10] }[fr.n], rr = D.length === 1 ? [.52] : D.length === 2 ? (D[0] === 1 ? [0, .58] : [.3, .62]) : [0, .33, .64], pts = [];
   D.forEach((m, i) => { for (let j = 0; j < m; j++) { const an = -Math.PI / 2 + (j + (i % 2) * .5) / m * Math.PI * 2; pts.push([cx + Math.cos(an) * rr[i] * R, cy + Math.sin(an) * rr[i] * R]); } });
@@ -134,6 +135,7 @@ function peintArbre(a, cx, cy, R, seed) {
 function drawFruitiers() {
   const list = (S.ressources || []).filter(r => r.cat === 'fruitier' && FRUITIERS[r.key]); if (!list.length) return;
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 30, vus = list.filter(r => r.x > x0 - m && r.x < x1 + m && r.y > y0 - m && r.y < y1 + m).sort((p, q) => p.y - q.y);
-  for (const r of vus) { const a = FRUITIERS[r.key], [X, Y] = toS(r.x, r.y); peintArbre(a, X, Y, Math.max(3, ARBRE_R * (a.r || 1) * s), r.id); }
+  for (const r of vus) { const a = FRUITIERS[r.key], [X, Y] = toS(r.x, r.y); FRUIT_INST = typeof fruitsVisibles === 'function' ? fruitsVisibles(r) : null; peintArbre(a, X, Y, Math.max(3, ARBRE_R * (a.r || 1) * s), r.id); }
+  FRUIT_INST = null;
   if (s > .3) for (const r of vus) if (r.g) { const [X, Y] = toS(r.g[0], r.g[1] + 5); ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(FRUITIERS[r.key].nom, X, Y + 2, Col.ink, Col.sheet); }
 }

@@ -20,7 +20,7 @@ let toastT;
 function flash(msg, bad) {
   const t = document.getElementById('toast');
   t.textContent = msg; t.className = 'toast' + (bad ? ' bad' : ''); t.style.opacity = 1;
-  clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = 0; }, 2200);
+  clearTimeout(toastT); toastT = setTimeout(() => { t.style.opacity = 0; }, 4500);
 }
 function dims() {
   const b = custom || preset;
@@ -29,7 +29,7 @@ function dims() {
 function ghost() {
   if (tool !== 'house' || !cursor || drag && drag.kind === 'pan') return null;
   const { f, d } = dims();
-  const g = placeAt(cursor, f, d, undefined, preset.turn);
+  const g = preset.sur === 'gisement' ? placeSurGisement(cursor, f, d) : placeAt(cursor, f, d, undefined, preset.turn);
   if (!g) return null;
   Object.assign(g, { kind:preset.id, type:preset.name }, preset.yard ? { yard:yardKind } : {});
   if (g.ok && preset.unique && S.houses.some(h => h.kind === preset.id)) { g.ok = false; g.why = `Un seul ${preset.name.toLowerCase()} par village`; }
@@ -42,11 +42,11 @@ function placeHouse() {
   if (!g.ok) { flash(g.why || 'Pas assez de cases libres ici', true); return; }
   commit();
   const { ok, why, ...h } = g;
-  S.houses.push({ id:S.nextId++, ...h });
-  if (GAME) {                                                              // ressources du village : le bâtiment se paie, le camp de colon apporte le stock de départ
-    const st = S.stock = S.stock || {};
-    for (const [k, q] of Object.entries(preset.cout || {})) retirerDuStock(k, q);
-    if (preset.id === 'camp_colon') for (const [k, q] of Object.entries(STOCK_DEPART)) st[k] = (st[k] || 0) + q;
+  const nh = { id:S.nextId++, ...h }; S.houses.push(nh);
+  if (GAME) {                                                              // ressources du village : le bâtiment se paie, le camp de colon apporte le stock de départ (rangé dans le camp)
+    if (!CONSTRUCTION_GRATUITE) for (const [k, q] of Object.entries(preset.cout || {})) retirerDuStock(k, q);
+    if (preset.id === 'camp_colon') nh.inv = { ...STOCK_DEPART };
+    offrirOutils();
   }
   changed(false);
   flash(`${h.type} : construction posée`);

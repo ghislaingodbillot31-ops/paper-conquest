@@ -88,8 +88,8 @@ function placeTest(p) {
   if (cat === 'villageois') { placeVillageois(p, key); return; }
   if (cat === 'chariot') { placeChariot(p, key); return; }
   commit();
-  if (cat === 'gisement') {                                                       // un gisement : un affleurement de 70 m de rayon
-    const r = 70, ph = [p[0] * .013, p[1] * .017], pts = [];
+  if (cat === 'gisement') {                                                       // un gisement : une petite zone de pépites
+    const r = 18, ph = [p[0] * .013, p[1] * .017], pts = [];
     for (let k = 0; k < 28; k++) { const a = k / 28 * Math.PI * 2, rr = r * (1 + .22 * Math.sin(3 * a + ph[0]) + .1 * Math.sin(5 * a + ph[1])); pts.push([round2(p[0] + Math.cos(a) * rr), round2(p[1] + Math.sin(a) * rr)]); }
     S.deposits.push({ kind:key, c:[round2(p[0]), round2(p[1])], r, pts, seed:Math.floor(p[0] * 7 + p[1] * 13) % 1000000 });
   } else S.ressources.push({ id:Math.max(0, ...S.ressources.map(o => o.id)) + 1, cat, key, x:round2(p[0]), y:round2(p[1]) });
@@ -122,7 +122,7 @@ $('test-clear').addEventListener('click', () => {
 });
 $('test-regen').addEventListener('click', () => { commit(); generateRegion('tempere', 1 + Math.floor(Math.random() * 2147483000), 'auto'); sel = null; draft = null; changed(true); fit(); flash('Map test régénérée (Ctrl+Z pour annuler)'); });
 
-fixeHeure(12);   // la map test s'ouvre en plein jour (curseur « Heure » pour tester la nuit)
+HEURE_FIXE = 12 - heureSolaire(REGION_METEO.lon); majNuit();   // la map test s'ouvre en plein jour (sans enregistrer : réglage propre à cette page) (curseur « Heure » pour tester la nuit)
 // première ouverture : la map test reçoit tout ce que le jeu connaît (les cartes enregistrées avant gardent ce qu'elles ont)
 if (!S.testInit) { S.ressources = placeTestResources(S.landSeed); S.testInit = true; save(); }
 if (S.fruitiersInit !== 2) { S.ressources = S.ressources.filter(r => r.cat !== 'fruitier'); S.ressources.push(...placeFruitiers(S.landSeed, Object.keys(FRUITIERS))); S.fruitiersInit = 2; touchScene(); save(); }   // (cartes enregistrées avant les arbres fruitiers, ou avec les anciens bosquets de 3 : on replante)

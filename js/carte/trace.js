@@ -35,11 +35,12 @@ function pointRoute() {
   }
   const last = draft.pts[draft.pts.length - 1], L = segLen(last, cursor), raw = Math.atan2(cursor[1] - last[1], cursor[0] - last[0]);
   const base = draft.pts.length === 1 && draft.parent ? Math.atan2(draft.parent.dir[1], draft.parent.dir[0]) : 0;
-  const ang = base + Math.round((raw - base) / ANG_ROUTE) * ANG_ROUTE, dir = [Math.cos(ang), Math.sin(ang)];
+  const PAS = draft.kind === 'chemin' ? Math.PI / 18 : ANG_ROUTE;           // le chemin se pose tous les 10°, les routes tous les 30°
+  const ang = base + Math.round((raw - base) / PAS) * PAS, dir = [Math.cos(ang), Math.sin(ang)];
   // arrivée : un point d'ancrage à portée du curseur ; on préfère celui qu'un pas de 30° atteint (à 2° près), sinon le plus proche
   if (L > CELL) {
     const proches = roadAnchors().filter(p => segLen(p.pt, cursor) < mag && segLen(p.pt, last) > CELL * .5).sort((p, q) => segLen(p.pt, cursor) - segLen(q.pt, cursor));
-    const dev = p => { const d = Math.atan2(p.pt[1] - last[1], p.pt[0] - last[0]) - base, k = Math.round(d / ANG_ROUTE); return Math.abs(d - k * ANG_ROUTE); };
+    const dev = p => { const d = Math.atan2(p.pt[1] - last[1], p.pt[0] - last[0]) - base, k = Math.round(d / PAS); return Math.abs(d - k * PAS); };
     const pick = proches.find(p => dev(p) < 2 * Math.PI / 180) || proches[0];
     if (pick) return { pt:pick.pt.slice(), kind:'edge', ang:Math.atan2(pick.pt[1] - last[1], pick.pt[0] - last[0]) };
   }

@@ -130,7 +130,7 @@ function drawBateaux() {
   for (const b of L) {
     const a = VEHICULES[b.kind], T = a.T; if (b.x < x0 - T || b.x > x1 + T || b.y < y0 - T || b.y > y1 + T) continue;
     const r = navRt.get(b.id), [X, Y] = toS(b.x, b.y), Ls = Math.max(6, T * s), bob = r && r.v > .5 ? Math.sin(performance.now() / 260 + b.id) * .012 : 0;
-    peintBateau(b.kind, X, Y, Ls, b.a + bob);
+    persos.push([b.x, b.y]); peintBateau(b.kind, X, Y, Ls, b.a + bob);
     if (b.id === navSel) { ctx.save(); ctx.translate(X, Y); ctx.rotate(b.a); ctx.setLineDash([6, 4]); ctx.strokeStyle = '#d64541'; ctx.lineWidth = 2; ctx.strokeRect(-Ls * .6, -Math.max(Ls * a.B * .8, 8), Ls * 1.2, Math.max(Ls * a.B * 1.6, 16)); ctx.restore(); ctx.setLineDash([]); }
     if (b.id === navSel && r && r.wp.length) {                                                                    // trajet prévu et destination
       ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(214,69,65,.85)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(X, Y); for (const w of r.wp) ctx.lineTo(...toS(w[0], w[1])); ctx.stroke(); ctx.setLineDash([]);

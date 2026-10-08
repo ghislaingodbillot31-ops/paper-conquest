@@ -22,3 +22,6 @@ const GAME = (() => { try { const p = new URLSearchParams(location.search), r = 
 // éditeur de routes (editeur-routes.html déclare EDIT_ROUTES) : un monde plat et vert, sans carte ni végétation, avec son propre plan
 const MONDE_PLAT = typeof EDIT_ROUTES !== 'undefined';
 const KEY = MONDE_PLAT ? 'editeurRoutes.v1' : PAGE === 'carte' ? (typeof MAPTEST !== 'undefined' ? 'mapTest.v1' : 'editeurCarte.v1') : GAME ? 'paperConquestRegionMap.' + GAME.region : 'planVillageZonage.v11';
+/* RÉGÉNÉRATION GÉNÉRALE UNIQUE (demandée le 07/10) : toutes les régions générées (plans sauvegardés, noms de village, arrivants, drapeaux) sont effacées une seule fois ;
+   chaque région sera regénérée d'après sa forme avec les paramètres actuels (échelle du terrain, routes, végétation). À supprimer ensuite. */
+try { if (PAGE === 'region' && !localStorage.getItem('regen.tout.v1')) { for (const k of Object.keys(localStorage)) if (k.startsWith('paperConquestRegionMap.')) localStorage.removeItem(k); localStorage.setItem('regen.tout.v1', '1'); } } catch (e) {}

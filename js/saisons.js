@@ -11,15 +11,17 @@ const MOIS_JOURS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];            
 const doyDe = (jour, mois) => MOIS_JOURS.slice(0, mois).reduce((a, b) => a + b, 0) + jour;   // mois 0 à 11 ; jour 1 à 31 → 1 à 365
 function dateDe(doy) { let m = 0; while (m < 11 && doy > MOIS_JOURS[m]) { doy -= MOIS_JOURS[m]; m++; } return { jour:doy, mois:m }; }
 const libelleDate = doy => { const d = dateDe(doy); return d.jour + (d.jour === 1 ? 'er ' : ' ') + MOIS[d.mois]; };
-/* Horloge du jeu : 1 jour de jeu = 4 heures réelles (JOUR_MS), donc le temps du jeu va 6 fois plus vite que le réel (une année de jeu ≈ 61 jours réels).
+/* Horloge du jeu : 1 JOUR de jeu = 30 minutes réelles (JOUR_MS) : le temps du jeu va 48 fois plus vite que le réel (une année de jeu = 365 jours = ~7,6 jours réels). L'heure du jeu (0 à 24 h, heureCarte) suit la même horloge.
    Au tout premier lancement, elle part de la vraie date et de la vraie heure (UTC) ; son point de départ est gardé dans le navigateur (partagé par le jeu
    et les cartes), donc elle continue entre les sessions. Pour la remettre à zéro : supprimer la clé TEMPS_KEY (le reset du jeu le fait).
    tempsJeu() → { doy : jour de l'année 1 à 365, h : heure UTC du jeu 0 à 24 }. */
-const JOUR_MS = 4 * 3600 * 1000, TEMPS_KEY = 'paperConquestTemps';
+const JOUR_MS = 30 * 60 * 1000, JOUR_MS_V2 = 12 * 24 * 3600 * 1000 / 365, JOUR_MS_V1 = 4 * 3600 * 1000, TEMPS_KEY = 'paperConquestTemps';
 function doyReel() { const n = new Date(); return doyDe(Math.min(n.getUTCDate(), MOIS_JOURS[n.getUTCMonth()]), n.getUTCMonth()); }
 const TEMPS = (() => {
-  try { const t = JSON.parse(localStorage.getItem(TEMPS_KEY)); if (t && t.debut && t.j0 >= 0) return t; } catch (e) {}
-  const n = new Date(), t = { debut:Date.now(), j0:doyReel() - 1 + (n.getUTCHours() + n.getUTCMinutes() / 60) / 24 };   // (j0 : jours écoulés depuis le 1er janvier, avec la fraction du jour)
+  try { let t = JSON.parse(localStorage.getItem(TEMPS_KEY)); if (t && t.debut && t.j0 >= 0) {
+    if (t.v !== 3) { t = { debut:Date.now(), j0:t.j0 + (Date.now() - t.debut) / (t.v === 2 ? JOUR_MS_V2 : JOUR_MS_V1), v:3 }; try { localStorage.setItem(TEMPS_KEY, JSON.stringify(t)); } catch (e) {} }   // ancienne échelle (1 jour = 4 h, puis ~47 min) : on garde la date et l'heure du jeu, puis on avance à la nouvelle (1 jour = 30 min)
+    return t; } } catch (e) {}
+  const n = new Date(), t = { debut:Date.now(), j0:doyReel() - 1 + (n.getUTCHours() + n.getUTCMinutes() / 60) / 24, v:3 };   // (j0 : jours écoulés depuis le 1er janvier, avec la fraction du jour)
   try { localStorage.setItem(TEMPS_KEY, JSON.stringify(t)); } catch (e) {}
   return t;
 })();
@@ -84,17 +86,21 @@ const libelleHeure = h => { const m = Math.round(((h % 24) + 24) % 24 * 60); ret
 // voile du ciel : couleur et opacité selon la lumière (0 nuit ... 1 jour)
 function voileCiel(L) {
   if (L >= .97) return 'rgba(0,0,0,0)';
-  const crep = Math.max(0, 1 - Math.abs(L - .3) / .3), nuit = [12, 20, 56], aube = [150, 70, 60];
+  const crep = Math.max(0, 1 - Math.abs(L - .3) / .3), nuit = [6, 10, 32], aube = [150, 70, 60];
   const rgb = nuit.map((v, i) => Math.round(v + (aube[i] - v) * crep * .8));
-  return 'rgba(' + rgb.join(',') + ',' + (.62 * (1 - L) ** 1.1).toFixed(3) + ')';
+  return 'rgba(' + rgb.join(',') + ',' + (.86 * (1 - L) ** 1.1).toFixed(3) + ')';
 }
-let HEURE_FIXE = null;                                                              // null : l'heure réelle ; sinon une heure imposée (curseur de l'éditeur)
-function heureCarte() { return HEURE_FIXE ?? heureSolaire(REGION_METEO.lon); }
+let HEURE_FIXE = null;                                                              // null : l'heure réelle ; sinon un DÉCALAGE (en heures) ajouté à l'heure réelle : l'heure choisie continue de s'écouler
+function heureCarte() { const h = heureSolaire(REGION_METEO.lon); return HEURE_FIXE == null ? h : ((h + HEURE_FIXE) % 24 + 24) % 24; }
 function majNuit() {
   const el = typeof document !== 'undefined' && document.getElementById('nuit'); if (!el) return null;
   const s = soleil(REGION_METEO.lat, METEO.doy, heureCarte()); el.style.background = voileCiel(s.lumiere); return s;
 }
-function fixeHeure(h) { HEURE_FIXE = h; return majNuit(); }
+/* Réglages de l'heure et du jour (curseurs du Test jeu) : enregistrés dans le navigateur, pour qu'une mise à jour du code (rechargement de la page) ne les change pas. */
+const REGLAGE_TEMPS_CLE = 'paperConquestReglageTemps3';   // (nouvelle clé : l'ancien réglage figeait l'heure ; maintenant c'est un décalage)
+function sauveReglageTemps() { try { localStorage.setItem(REGLAGE_TEMPS_CLE, JSON.stringify({ heure:HEURE_FIXE, doy:JOUR_AUTO ? null : METEO.doy })); } catch (e) {} if (typeof baseVariable === 'function') baseVariable('variables', 'temps', { decalageHeures:HEURE_FIXE, jour:JOUR_AUTO ? null : METEO.doy }); }   // (base de données développeur : dev.js)
+function fixeHeure(h) { HEURE_FIXE = h == null ? null : h - heureSolaire(REGION_METEO.lon); sauveReglageTemps(); return majNuit(); }
+try { const r = JSON.parse(localStorage.getItem(REGLAGE_TEMPS_CLE) || 'null'); if (r) { if (r.heure != null) HEURE_FIXE = r.heure; if (r.doy != null) fixeJour(r.doy, false); } } catch (e) {}   // (au chargement : on retrouve l'heure et le jour réglés)
 if (typeof document !== 'undefined' && typeof PAGE !== 'undefined' && PAGE !== 'batiments') {
   const wrap = document.getElementById('wrap');
   if (wrap) { const v = document.createElement('div'); v.id = 'nuit'; v.setAttribute('aria-hidden', 'true');

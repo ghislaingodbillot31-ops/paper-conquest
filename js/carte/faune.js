@@ -42,7 +42,16 @@ function fauneRocheCases() {
 }
 /* L'eau : les polygones d'eau du décor, MAIS AUSSI le tracé réellement dessiné (axe des rivières avec leur demi-largeur, contour lissé des lacs),
    avec une marge : un animal terrestre ne met jamais le pied dans l'eau, même à un raccord de polygones. */
+/* Résultat gardé par case de 0,5 m (et par rayon) tant que l'eau ne change pas : un animal reste ~15 images dans la même case, et le test complet (tous les rivages, ~0,5 ms) revenait à chaque image pour chacun. */
+let eauMem = new Map(), eauCle = null;
 function fauneEau(x, y, rad = .4) {
+  const cle = sceneV + '|' + S.rivers.length + '|' + S.lakes.length + '|' + (Z.water ? Z.water.river.length + ',' + Z.water.lake.length : 0);
+  if (cle !== eauCle || eauMem.size > 300000) { eauMem = new Map(); eauCle = cle; }
+  const k = ((Math.floor(x * 2) + 1000) * 16384 + Math.floor(y * 2) + 1000) * 64 + Math.round(rad * 10), v = eauMem.get(k);
+  if (v !== undefined) return v;
+  const r = fauneEauCalc(x, y, rad); eauMem.set(k, r); return r;
+}
+function fauneEauCalc(x, y, rad) {
   const m = rad + .6;
   for (const lst of [Z.water.river, Z.water.lake]) for (const q of lst) if (x > q.bb[0] - m && x < q.bb[2] + m && y > q.bb[1] - m && y < q.bb[3] + m && (inPoly([x, y], q.P) || q.P.some((p, i) => ptSeg([x, y], p, q.P[(i + 1) % q.P.length]).d < m))) return true;
   for (const rv of S.rivers) { const HW = riverHW(rv); for (let i = 0; i < rv.pts.length - 1; i++) { const a = rv.pts[i], b = rv.pts[i + 1], hw = Math.max(HW[i], HW[i + 1]) + m;
@@ -64,6 +73,12 @@ function fauneLibre(x, y, bois, rad = .4) {
   if (fauneEau(x, y, rad)) return false;
   for (const h of S.houses) if (Math.abs(h.x - x) < 30 && Math.abs(h.y - y) < 30 && inPoly([x, y], corners(h))) return false;
   return bois || !fauneEnForet(x, y);
+}
+// vrai si l'on peut aller tout droit de (x0, y0) à (x1, y1) sans croiser d'eau ni d'obstacle (pas de 3 m) : deux points séparés par une rivière ne sont pas « directs »
+function fauneDirect(x0, y0, x1, y1, bois, rad = .4) {
+  const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3);
+  for (let i = 1; i < n; i++) if (!fauneLibre(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, bois, rad)) return false;
+  return true;
 }
 // un point de rive proche de (x, y), à moins de R mètres : sommet d'un lac ou d'un fleuve, ramené de quelques mètres vers (x, y)
 function fauneRive(x, y, R) {
@@ -106,13 +121,13 @@ function fauneCree(f) {
   const h = { f, key:f.key, cat:f.cat, p, n, T, spread, home:[f.x, f.y], mode:'paitre', t:3 + rnd() * 20, tp:null, an:[], bloque:0 };
   for (let i = 0; i < n; i++) for (let k = 0; k < 30; k++) {
     const a = rnd() * 6.28, d = Math.sqrt(rnd()) * spread, x = f.x + Math.cos(a) * d, y = f.y + Math.sin(a) * d;
-    if (!fauneLibre(x, y, p.bois) || h.an.some(o => Math.hypot(o.x - x, o.y - y) < T * 1.2)) continue;
+    if (!fauneLibre(x, y, p.bois) || !fauneDirect(f.x, f.y, x, y, p.bois) || h.an.some(o => Math.hypot(o.x - x, o.y - y) < T * 1.2)) continue;
     const jeune = f.cat !== 'predateur' && n >= 4 && rnd() < .18;
     h.an.push({ x, y, a:rnd() * 6.28, v:0, ph:rnd() * 6, s:(jeune ? .55 : .93 + rnd() * .14), jeune, t:rnd() * 6, d:null }); break;
   }
   return h.an.length ? h : null;
 }
-function fauneCentre(h) { let x = 0, y = 0; for (const a of h.an) { x += a.x; y += a.y; } return [x / h.an.length, y / h.an.length]; }
+function fauneCentre(h) { let x = 0, y = 0, n = 0; for (const a of h.an) { if (a.captif) continue; x += a.x; y += a.y; n++; } return n ? [x / n, y / n] : [h.home[0], h.home[1]]; }   // (les animaux capturés ne comptent plus)
 function fauneCible(h, c) {                                                                          // où aller : prédateur → souvent vers un troupeau ; espèce d'eau → la rive ; sinon un point du secteur
   const R = h.p.r;
   if (h.cat === 'predateur' && Math.random() < .55) {
@@ -126,7 +141,7 @@ function fauneCible(h, c) {                                                     
     let p = [c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d];
     const dh = Math.hypot(p[0] - h.home[0], p[1] - h.home[1]); if (dh > R) p = [h.home[0] + (p[0] - h.home[0]) / dh * R * .9, h.home[1] + (p[1] - h.home[1]) / dh * R * .9];
     if (h.p.eau && Math.random() < .7) p = fauneRive(p[0], p[1], R + 60) || p;
-    if (fauneLibre(p[0], p[1], h.p.bois)) return p;
+    if (fauneLibre(p[0], p[1], h.p.bois) && fauneDirect(c[0], c[1], p[0], p[1], h.p.bois)) return p;   // (pas de pâturage de l'autre côté d'une rivière : le troupeau resterait bloqué sur la rive)
   }
   return c;
 }
@@ -140,6 +155,11 @@ function fauneSuite(h, c) {                                                     
   return fauneMode(h, r < .65 ? 'repos' : 'paitre', 30 + Math.random() * 60);
 }
 function fauneAnimal(h, a, c, dt) {
+  if (a.captif) {                                                                                    // capturé : il attend le fermier, puis le suit (2 m derrière lui) jusqu'à la ferme (capture.js)
+    const f = a.captif.w; a.v = 0;
+    if (a.captif.suit && f) { const d = Math.hypot(f.x - a.x, f.y - a.y); if (d > 1.8) { const v = Math.min(d - 1.8, fvit(h.T) * 1.6 * dt); a.a = Math.atan2(f.y - a.y, f.x - a.x); a.x += Math.cos(a.a) * v; a.y += Math.sin(a.a) * v; a.ph += v * 3.2 / Math.max(.3, h.T * .4); a.v = .6; } }
+    return;
+  }
   if ((a.chk = (a.chk === undefined ? Math.random() : a.chk) - dt) <= 0) { a.chk = 1.5; if (fauneEau(a.x, a.y, Math.max(.2, h.T * .22))) fauneSecours(h, a); }   // (jamais dans l'eau)
   const T = h.T, run = h.mode === 'fuite' ? 3.2 : h.chasse && h.mode === 'marcher' ? 1.7 : 1, vw = fvit(T) * (a.jeune ? .8 : 1) * (h.cat === 'predateur' ? 1.1 : 1);
   let want = a.a, v = 0, turn = 2.4;
@@ -184,14 +204,20 @@ function fauneGroupe(h, dt) {
   for (const a of h.an) fauneAnimal(h, a, c, dt);
 }
 // pas de simulation ; renvoie vrai quand il faut redessiner (des animaux sont à l'écran, ~30 images par seconde)
+let fauneVu = -1, fauneDelai = 0;                                                      // (la liste des foyers n'est relue que si le décor a changé, ou une fois par seconde : la filtrer à chaque image coûtait ~30 ms)
 function fauneStep(dt) {
+  fauneDelai -= dt;
+  if (sceneV !== fauneVu || fauneDelai <= 0) {
+  fauneVu = sceneV; fauneDelai = 1;
   const foyers = (S.ressources || []).filter(r => FAUNE_CATS.has(r.cat) && ANIMAUX[r.key]), sig = foyers.map(r => r.id + r.key + r.x + r.y + (r.ab || '')).join('|') + S.landSeed;
   if (sig !== fauneSig) {
     fauneSig = sig; const keep = new Map(troupeaux.map(h => [h.f.id + h.f.key + h.f.x + h.f.y + (h.f.ab || ''), h]));
     troupeaux = foyers.map(f => keep.get(f.id + f.key + f.x + f.y + (f.ab || '')) || fauneCree(f)).filter(Boolean);
   }
+  }
   if (!troupeaux.length) return false;
-  for (const h of troupeaux) fauneGroupe(h, dt);
+  const [vx0, vy0] = toW(0, 0), [vx1, vy1] = toW(W, H), MV = 200;                       // (hors de la vue, un troupeau n'avance que par pas de 0,5 s : même comportement, 30 fois moins de calcul)
+  for (const h of troupeaux) { const c = h.c || h.home; if (c[0] > vx0 - MV && c[0] < vx1 + MV && c[1] > vy0 - MV && c[1] < vy1 + MV) { fauneGroupe(h, dt + (h.acc || 0)); h.acc = 0; } else if ((h.acc = (h.acc || 0) + dt) >= .5) { fauneGroupe(h, h.acc); h.acc = 0; } }
   fauneAcc += dt; if (fauneAcc < 1 / 30) return false;
   fauneAcc = 0;
   const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 30;
@@ -228,6 +254,11 @@ function drawFaune() {
     peintAnimal(h.key, X, Y, L, a.a + (a.v > .05 ? Math.sin(a.ph) * .05 : 0));
   }
   fauneSousArbres(vus);
+}
+// les noms des groupes : dessinés après la couche de cimes (draw), donc par-dessus les arbres
+function drawFauneNoms() {
+  if (!troupeaux.length) return;
+  const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
   if (s > .12) for (const h of troupeaux) {
     if (!h.c || h.c[0] < x0 - 60 || h.c[0] > x1 + 60 || h.c[1] < y0 - 60 || h.c[1] > y1 + 60) continue;
     const [X, Y] = toS(h.c[0], h.c[1] - h.spread - h.T * 1.2);

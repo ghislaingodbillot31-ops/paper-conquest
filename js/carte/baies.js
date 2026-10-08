@@ -12,12 +12,12 @@ const BAIES = {
   argousier:   { nom:'Argousier', type:'arbuste', biomes:['taiga', 'tempere', 'prairie', 'steppe_aride', 'montagne'], tm:[-4, 14], hum:[.2, .8], terrain:'sec', r:1.8, lobes:10, f:['#8fa57a', '#b4c6a0', '#566a4a'], baie:{ f:'epine', c:'#f08a1c', c2:'#ffc15a', n:24, t:.055 } },
   aronie:      { nom:'Aronie', type:'arbuste', biomes:['tempere', 'taiga', 'prairie'], tm:[0, 14], hum:[.4, 1], terrain:'humide', r:1.5, lobes:8, f:['#5f8a42', '#82ae5c', '#35562a'], baie:{ f:'grappe', c:'#2a1f3a', c2:'#6a5a8a', n:9, t:.06 } },
   baie_de_mai: { nom:'Baie de mai', type:'arbuste', biomes:['taiga', 'toundra', 'tempere', 'montagne'], tm:[-6, 12], hum:[.4, 1], terrain:'humide', r:1.4, lobes:7, f:['#6a8f4c', '#8eb468', '#3a5a2c'], baie:{ f:'ovale', c:'#3a4f8a', c2:'#7a8fc8', n:12, t:.075 } },
-  canneberge:  { nom:'Canneberge, airelle', type:'rampant', biomes:['taiga', 'toundra', 'tempere'], tm:[-6, 11], hum:[.55, 1], terrain:'humide', r:1.1, lobes:6, f:['#4a7a3c', '#6a9c52', '#2a4a24'], baie:{ f:'rond', c:'#b0182e', c2:'#e0546a', n:10, t:.09 } },
+  canneberge:  { nom:'Canneberge, airelle', type:'rampant', biomes:['taiga', 'toundra', 'tempere'], tm:[-6, 11], hum:[.55, 1], terrain:'humide', r:0.75, lobes:6, f:['#4a7a3c', '#6a9c52', '#2a4a24'], baie:{ f:'rond', c:'#b0182e', c2:'#e0546a', n:12, t:0.045 } },
   cassissier:  { nom:'Cassissier, casseille', type:'arbuste', biomes:['tempere', 'taiga', 'prairie'], tm:[0, 13], hum:[.5, 1], terrain:'lisiere', r:1.5, lobes:7, f:['#5c8a40', '#80ae5a', '#35562a'], baie:{ f:'grappe', c:'#1f1a2a', c2:'#5a4f7a', n:8, t:.065 } },
   cornouiller: { nom:'Cornouiller à fruits comestibles', type:'arbuste', biomes:['tempere', 'mediterraneenne', 'subtropicale', 'montagne'], tm:[6, 18], hum:[.3, .9], terrain:'lisiere', r:2.1, lobes:9, f:['#5a8a44', '#7eae60', '#33582c'], baie:{ f:'ovale', c:'#c0202e', c2:'#ee5c68', n:14, t:.07 } },
-  fraisier:    { nom:'Fraisier', type:'rampant', biomes:['tempere', 'taiga', 'prairie', 'mediterraneenne', 'montagne'], tm:[0, 18], hum:[.4, 1], terrain:'clairiere', r:.9, lobes:6, f:['#5a9a44', '#7cbc5c', '#2f5a2a'], baie:{ f:'fraise', c:'#e0303a', c2:'#f27a80', n:7, t:.1 } },
+  fraisier:    { nom:'Fraisier', type:'rampant', biomes:['tempere', 'taiga', 'prairie', 'mediterraneenne', 'montagne'], tm:[0, 18], hum:[.4, 1], terrain:'clairiere', r:0.55, lobes:6, f:['#5a9a44', '#7cbc5c', '#2f5a2a'], baie:{ f:'fraise', c:'#e0303a', c2:'#f27a80', n:8, t:0.055 } },
   framboisier: { nom:'Framboisier', type:'arbuste', biomes:['tempere', 'taiga', 'prairie', 'montagne'], tm:[0, 14], hum:[.45, 1], terrain:'lisiere', r:1.6, lobes:8, f:['#5f9244', '#82b860', '#33582a'], baie:{ f:'mure', c:'#c8264a', c2:'#f0607a', n:9, t:.075 } },
-  ronce_arctique: { nom:'Ronce arctique', type:'rampant', biomes:['toundra', 'taiga', 'polaire'], tm:[-10, 6], hum:[.4, 1], terrain:'humide', r:1, lobes:6, f:['#668f4c', '#88b268', '#38582c'], baie:{ f:'mure', c:'#d0305a', c2:'#f26a8c', n:6, t:.085 } },
+  ronce_arctique: { nom:'Ronce arctique', type:'rampant', biomes:['toundra', 'taiga', 'polaire'], tm:[-10, 6], hum:[.4, 1], terrain:'humide', r:0.7, lobes:6, f:['#668f4c', '#88b268', '#38582c'], baie:{ f:'mure', c:'#d0305a', c2:'#f26a8c', n:8, t:0.05 } },
   passiflore:  { nom:'Fruit de la passion', type:'liane', biomes:['subtropicale', 'mousson', 'tropicale', 'tropicale_cad', 'savane_claire'], tm:[18, 30], hum:[.5, 1], terrain:'lisiere', r:2, lobes:7, f:['#3f8a3a', '#62ae54', '#235a2a'], baie:{ f:'passion', c:'#6a3a8a', c2:'#a678c8', n:5, t:.15 } },
   goji:        { nom:'Goji', type:'arbuste', biomes:['prairie', 'steppe_aride', 'mediterraneenne', 'tempere', 'semi_aride'], tm:[6, 20], hum:[.15, .6], terrain:'sec', r:1.6, lobes:8, f:['#7a9a5a', '#9cbc7a', '#486a38'], baie:{ f:'ovale', c:'#e8501e', c2:'#ff8c5a', n:14, t:.065 } },
   goumi:       { nom:'Goumi du Japon', type:'arbuste', biomes:['tempere', 'subtropicale', 'mediterraneenne'], tm:[8, 20], hum:[.4, 1], terrain:'lisiere', r:1.9, lobes:9, f:['#8aa070', '#b0c498', '#546a46'], baie:{ f:'rond', c:'#d83a2a', c2:'#f6806a', n:16, t:.06 } },
@@ -33,10 +33,11 @@ const BAIES = {
   goyavier:    { nom:'Goyavier du Chili', type:'arbuste', biomes:['mediterraneenne', 'tempere', 'subtropicale'], tm:[8, 18], hum:[.5, 1], terrain:'lisiere', r:1.5, lobes:8, f:['#4a7a44', '#6c9c5e', '#294c2a'], baie:{ f:'rond', c:'#7a2a4a', c2:'#b8587c', n:12, t:.075 } },
   myrtillier:  { nom:'Myrtillier', type:'arbuste', biomes:['taiga', 'tempere', 'toundra', 'montagne'], tm:[-2, 14], hum:[.5, 1], terrain:'humide', r:1.2, lobes:7, f:['#5a8248', '#7ca662', '#33522a'], baie:{ f:'rond', c:'#3a4a8a', c2:'#8a9ad0', n:14, t:.07 } },
   poivrier:    { nom:'Poivrier du Sichuan, timut, sansho', type:'arbuste', biomes:['tempere', 'subtropicale', 'mousson', 'mediterraneenne'], tm:[8, 22], hum:[.4, 1], terrain:'lisiere', r:2, lobes:9, f:['#5a8a3e', '#7cae58', '#305428'], baie:{ f:'epine', c:'#a8301e', c2:'#e0705a', n:20, t:.05 } },
-  vigne:       { nom:'Vigne, raisin de table', type:'liane', biomes:['mediterraneenne', 'tempere', 'subtropicale', 'semi_aride'], tm:[9, 22], hum:[.2, .8], terrain:'sec', r:2.2, lobes:8, f:['#5c8c3c', '#80b056', '#335a26'], baie:{ f:'raisin', c:'#6a2a6a', c2:'#a05aa0', n:5, t:.2 } },
+  vigne:       { nom:'Vigne, raisin de table', type:'liane', biomes:['mediterraneenne', 'tempere', 'subtropicale', 'semi_aride'], tm:[9, 22], hum:[.2, .8], terrain:'sec', r:1.5, lobes:8, f:['#5c8c3c', '#80b056', '#335a26'], baie:{ f:'raisin', c:'#6a2a6a', c2:'#a05aa0', n:6, t:0.075 } },
 };
 // ---- validation : les espèces que le joueur a validées dans arbustes-baies.html (seules celles-là entrent dans le jeu) ----
 const BAIES_CLE = 'baies.valides.v1';
+try { if (!localStorage.getItem('baies.implantees.v1')) { localStorage.setItem(BAIES_CLE, JSON.stringify(Object.keys(BAIES))); localStorage.setItem('baies.implantees.v1', '1'); } } catch (e) {}   // implantation (07/10) : toutes les espèces entrent dans le jeu, une seule fois
 function baiesValides() { try { const l = JSON.parse(localStorage.getItem(BAIES_CLE) || '[]'); return Array.isArray(l) ? l.filter(k => BAIES[k]) : []; } catch (e) { return []; } }
 function baiesEnregistre(liste) { try { localStorage.setItem(BAIES_CLE, JSON.stringify(liste)); } catch (e) {} }
 
@@ -96,51 +97,55 @@ const BAIE_INK = '#2f2a24';
 function baieFruit(f, x, y, r) {
   const lw = Math.max(.6, r * .16);
   ctx.lineWidth = lw; ctx.strokeStyle = BAIE_INK; ctx.fillStyle = f.c; ctx.lineJoin = 'round';
-  const bille = (bx, by, q) => { ctx.beginPath(); ctx.arc(bx, by, q, 0, 7); ctx.fillStyle = f.c; ctx.fill(); ctx.stroke(); if (q > 1.6) { ctx.beginPath(); ctx.arc(bx - q * .3, by - q * .3, q * .32, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); } };
+  const bille = (bx, by, q) => { ctx.beginPath(); ctx.arc(bx, by, q, 0, 7); ctx.fillStyle = f.c; ctx.fill(); ctx.stroke(); if (q > 1.6) { ctx.beginPath(); ctx.arc(bx, by - q * .3, q * .32, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); } };
   switch (f.f) {
-    case 'ovale': ctx.beginPath(); ctx.ellipse(x, y, r * .75, r * 1.1, .6, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x - r * .2, y - r * .3, r * .25, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
+    case 'ovale': ctx.beginPath(); ctx.ellipse(x, y, r * .75, r * 1.1, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y - r * .3, r * .25, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
     case 'grappe': for (const [dx, dy] of [[0, -1.1], [-.8, -.2], [.8, -.2], [-.4, .7], [.4, .7], [0, .1]]) bille(x + dx * r * .9, y + dy * r * .9, r * .55); return;
     case 'raisin': for (const [dx, dy] of [[-.7, -1], [.7, -1], [0, -.5], [-1, 0], [0, 0], [1, 0], [-.5, .6], [.5, .6], [0, 1.2]]) bille(x + dx * r * .7, y + dy * r * .7, r * .5); return;
     case 'mure': for (const [dx, dy] of [[-.55, -.4], [.55, -.4], [0, .55], [-.55, .35], [.55, .35], [0, -.5]]) bille(x + dx * r, y + dy * r, r * .55); return;
-    case 'epine': for (const [dx, dy] of [[-.7, -.5], [.4, -.7], [.9, .1], [-.2, .2], [-.8, .6], [.3, .8]]) bille(x + dx * r, y + dy * r, r * .5); return;
+    case 'epine': for (const [dx, dy] of [[0, -.9], [-.8, -.3], [.8, -.3], [0, .1], [-.5, .75], [.5, .75]]) bille(x + dx * r, y + dy * r, r * .5); return;
     case 'fraise': ctx.beginPath(); ctx.moveTo(x - r * .9, y - r * .5); ctx.quadraticCurveTo(x, y - r * 1.2, x + r * .9, y - r * .5); ctx.quadraticCurveTo(x + r * .6, y + r * 1.1, x, y + r * 1.3); ctx.quadraticCurveTo(x - r * .6, y + r * 1.1, x - r * .9, y - r * .5); ctx.fill(); ctx.stroke();
       if (r > 2) { ctx.fillStyle = '#f2e27a'; for (const [dx, dy] of [[-.3, -.2], [.3, -.2], [0, .3], [-.25, .7], [.25, .7]]) ctx.fillRect(x + dx * r - .4, y + dy * r - .4, .9, .9); ctx.beginPath(); ctx.arc(x, y - r * .8, r * .35, 0, 7); ctx.fillStyle = '#4a8a3a'; ctx.fill(); } return;
-    case 'kiwi': ctx.beginPath(); ctx.ellipse(x, y, r * 1.05, r * .75, .3, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(x - r * .2, y - r * .15, r * .45, r * .3, .3, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
+    case 'kiwi': ctx.beginPath(); ctx.ellipse(x, y, r * 1.05, r * .75, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(x, y - r * .15, r * .45, r * .3, 0, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
     case 'passion': ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, r * .55, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); ctx.beginPath(); ctx.arc(x, y - r * .1, r * .18, 0, 7); ctx.fillStyle = '#e8d870'; ctx.fill(); return;
     default: bille(x, y, r);
   }
 }
 function baieFeuillage(a, cx, cy, R, rnd) {
-  const [base, clair, bord] = a.f, n = a.lobes * 2, ph = rnd() * 6.28, P = [];
-  if (a.type === 'rampant') {                                               // plante basse : quelques touffes de feuilles rondes
-    for (let i = 0; i < 7; i++) { const an = i / 7 * 6.28 + ph, d = i ? R * (.35 + rnd() * .35) : 0, X = cx + Math.cos(an) * d, Y = cy + Math.sin(an) * d, q = R * (.38 + rnd() * .12);
-      ctx.beginPath(); ctx.ellipse(X + q * .15, Y + q * .2, q, q * .8, 0, 0, 7); ctx.fillStyle = 'rgba(40,50,25,.25)'; ctx.fill();
-      ctx.beginPath(); ctx.ellipse(X, Y, q, q * .85, an, 0, 7); ctx.fillStyle = i % 2 ? base : clair; ctx.fill(); ctx.lineWidth = Math.max(.7, R * .05); ctx.strokeStyle = bord; ctx.stroke(); }
+  const [base, clair, bord] = a.f, n = a.lobes * 2, ph = -Math.PI / 2, P = [];   // symétrie : mêmes lobes tout autour, un lobe pointe vers le haut
+  if (a.type === 'rampant') {                                               // plante basse : rosace régulière de feuilles rondes (une au centre, huit autour)
+    for (let i = 0; i < 9; i++) { const an = (i - 1) / 8 * 6.28 + ph, d = i ? R * .5 : 0, X = cx + Math.cos(an) * d, Y = cy + Math.sin(an) * d, q = R * (i ? .34 : .3);
+      ctx.beginPath(); ctx.ellipse(X, Y + q * .25, q, q * .8, an, 0, 7); ctx.fillStyle = 'rgba(40,50,25,.25)'; ctx.fill();
+      ctx.beginPath(); ctx.ellipse(X, Y, q, q * .85, an, 0, 7); ctx.fillStyle = i ? base : clair; ctx.fill(); ctx.lineWidth = Math.max(.7, R * .05); ctx.strokeStyle = bord; ctx.stroke(); }
     return (x, y) => Math.hypot(x - cx, y - cy) < R * .8;
   }
-  for (let i = 0; i < n; i++) { const an = i / n * Math.PI * 2 + ph, q = (i % 2 ? .88 : 1.04) * (.96 + rnd() * .08); P.push([cx + Math.cos(an) * R * q, cy + Math.sin(an) * R * q * .96]); }
-  ctx.save(); ctx.translate(R * .16, R * .2); arbreLisse(P); ctx.fillStyle = 'rgba(55,50,30,.28)'; ctx.fill(); ctx.restore();
+  for (let i = 0; i < n; i++) { const an = i / n * Math.PI * 2 + ph, q = i % 2 ? .88 : 1.04; P.push([cx + Math.cos(an) * R * q, cy + Math.sin(an) * R * q * .96]); }
+  ctx.save(); ctx.translate(0, R * .2); arbreLisse(P); ctx.fillStyle = 'rgba(55,50,30,.28)'; ctx.fill(); ctx.restore();   // ombre centrée sous le pied
   arbreLisse(P); ctx.fillStyle = base; ctx.fill(); ctx.lineJoin = 'round'; ctx.strokeStyle = bord; ctx.lineWidth = Math.max(.9, R * .045); ctx.stroke();
   ctx.save(); arbreLisse(P); ctx.clip();
-  ctx.beginPath(); ctx.ellipse(cx - R * .2, cy - R * .22, R * .6, R * .52, -.5, 0, 7); ctx.fillStyle = clair; ctx.fill();
-  ctx.beginPath(); ctx.ellipse(cx + R * .4, cy + R * .48, R * .72, R * .42, -.6, 0, 7); ctx.fillStyle = 'rgba(30,50,25,.18)'; ctx.fill();
-  if (a.type === 'liane') { ctx.strokeStyle = bord + 'aa'; ctx.lineWidth = Math.max(.8, R * .035); for (let k = 0; k < 3; k++) { ctx.beginPath(); ctx.moveTo(cx - R, cy - R * (.5 - k * .5)); ctx.bezierCurveTo(cx - R * .3, cy - R * (.9 - k * .4), cx + R * .3, cy - R * (.1 - k * .4), cx + R, cy - R * (.4 - k * .5)); ctx.stroke(); } }
-  if (R > 10) { ctx.strokeStyle = bord + '66'; ctx.lineWidth = Math.max(.7, R * .02); ctx.lineCap = 'round'; const pas = R * .2; for (let y = -R, j = 0; y <= R; y += pas, j++) for (let x = -R + (j % 2) * pas / 2; x <= R; x += pas) { const X = cx + x + (rnd() - .5) * pas * .3, Y = cy + y + (rnd() - .5) * pas * .3; ctx.beginPath(); ctx.moveTo(X, Y); ctx.lineTo(X + Math.cos(-.6) * pas * .5, Y + Math.sin(-.6) * pas * .3); ctx.stroke(); } }
+  ctx.beginPath(); ctx.ellipse(cx, cy - R * .2, R * .62, R * .52, 0, 0, 7); ctx.fillStyle = clair; ctx.fill();                       // reflet : d'en haut, centré
+  ctx.beginPath(); ctx.ellipse(cx, cy + R * .5, R * .75, R * .4, 0, 0, 7); ctx.fillStyle = 'rgba(30,50,25,.18)'; ctx.fill();
+  if (a.type === 'liane') { ctx.strokeStyle = bord + 'aa'; ctx.lineWidth = Math.max(.8, R * .035); for (let k = -1; k <= 1; k++) { ctx.beginPath(); ctx.moveTo(cx - R, cy + R * k * .5); ctx.quadraticCurveTo(cx, cy + R * (k * .5 - .3), cx + R, cy + R * k * .5); ctx.stroke(); } }   // trois sarments en arc, symétriques
+  if (R > 10) { ctx.strokeStyle = bord + '66'; ctx.lineWidth = Math.max(.7, R * .02); ctx.lineCap = 'round'; const pas = R * .2; for (let y = -R, j = 0; y <= R; y += pas, j++) for (let x = -R + (j % 2) * pas / 2; x <= R; x += pas) { ctx.beginPath(); ctx.moveTo(cx + x, cy + y); ctx.lineTo(cx + x, cy + y + pas * .4); ctx.stroke(); } }   // nervures régulières
   ctx.restore();
   return (x, y) => Math.hypot(x - cx, (y - cy) / .96) < R * .76;
 }
 // peint une espèce centrée en (cx, cy), de rayon R pixels ; seed fixe la forme et la place des baies
-function peintBaie(a, cx, cy, R, seed) {
+function peintBaie(a, cx, cy, R, seed, fruits = true) {
   const rnd = seeded(seed * 977 + 41), dedans = baieFeuillage(a, cx, cy, R, rnd);
-  if (R < 4) return;                                                         // vue de loin : seulement le feuillage
-  const fr = a.baie, r = Math.max(1.2, fr.t * R * 2.6), pts = [];
-  for (let k = 0; k < fr.n * 8 && pts.length < fr.n; k++) {
-    const an = rnd() * 6.28, d = Math.sqrt(rnd()) * R * .8, p = [cx + Math.cos(an) * d, cy + Math.sin(an) * d * .96];
-    if (!dedans(p[0], p[1]) || pts.some(q => Math.hypot(q[0] - p[0], q[1] - p[1]) < r * 2.1)) continue;
-    pts.push(p);
-  }
+  if (R < 4 || !fruits) return;                                              // vue de loin, ou hors saison : seulement le feuillage
+  /* Fruits : plus petits (taille × 1,5 au lieu de × 2,6) et répartis en anneaux symétriques.
+     Le nombre est réduit si la place manque : au moins 4 rayons de fruit entre deux fruits voisins d'un anneau. */
+  const fr = a.baie, r = Math.max(1, fr.t * R * 1.5), pts = [], zone = R * (a.type === 'rampant' ? .68 : .7);   // plus large : les fruits s'écartent vers le bord du feuillage
+  let n = fr.n; const anneaux = n <= 8 ? [n] : n <= 14 ? [Math.round(n * .35), n - Math.round(n * .35)] : [Math.round(n * .2), Math.round(n * .3), n - Math.round(n * .2) - Math.round(n * .3)];
+  const rayons = anneaux.length === 1 ? [.7] : anneaux.length === 2 ? [.4, .95] : [.28, .62, .95];
+  anneaux.forEach((c, k) => {
+    const rho = zone * rayons[k], cap = Math.max(1, Math.floor(2 * Math.PI * rho / (r * 4.2)));                // pas plus de fruits que la place ne permet
+    c = Math.min(c, cap); if (c === 1 && anneaux.length > 1 && k === 0) { pts.push([cx, cy]); return; }       // (un seul fruit au centre)
+    for (let m = 0; m < c; m++) { const an = -Math.PI / 2 + (k % 2 ? Math.PI / c : 0) + m * 2 * Math.PI / c; pts.push([cx + Math.cos(an) * rho, cy + Math.sin(an) * rho * .96]); }
+  });
   pts.sort((p, q) => p[1] - q[1]);
   for (const [x, y] of pts) baieFruit(fr, x, y, r);
 }
 // dans le décor : un pied de la végétation fixe (flora de kind 'baie')
-function stampBaie(g, f, X, Y, s) { const a = BAIES[f.sp]; if (a) peintBaie(a, X, Y, Math.max(2.2, f.r * s), Math.round(f.v * 1e6)); }
+function stampBaie(g, f, X, Y, s) { const a = BAIES[f.sp]; if (a) peintBaie(a, X, Y, Math.max(2.2, f.r * s), Math.round(f.v * 1e6), typeof fruitsVisibles === 'function' ? fruitsVisibles(f) : true); }
