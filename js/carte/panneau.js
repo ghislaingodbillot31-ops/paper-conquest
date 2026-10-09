@@ -130,7 +130,7 @@ $('forme-id').addEventListener('change', e => { const id = Math.round(+e.target.
 // « Appliquer au jeu » : cette carte devient la carte de la région dans le jeu (même clé que region.html) ; la page parente (studio.html) recharge le jeu
 $('apply-game').addEventListener('click', () => {
   if (!FORME_ID || !S.forme) { flash('Choisissez d’abord une région (forme réelle) : sans numéro, la carte n’est celle d’aucune région', true); return; }
-  try { localStorage.setItem('paperConquestRegionMap.' + FORME_ID, JSON.stringify(S)); } catch (e) { flash('Enregistrement impossible', true); return; }
+  try { localStorage.setItem('dominiumRegionMap.' + FORME_ID, JSON.stringify(S)); } catch (e) { flash('Enregistrement impossible', true); return; }
   flash('Carte appliquée à la région ' + FORME_ID + ' dans le jeu');
   if (parent !== window) parent.postMessage({ studio:'applique', region:FORME_ID }, location.origin);
 });

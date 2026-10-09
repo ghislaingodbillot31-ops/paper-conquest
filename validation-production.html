@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Validation de la production</title>
+<style>
+  :root { --bg:#f5f7f2; --ink:#1e3a4c; --soft:#5b7080; --line:#c9d3ce; --panel:#fff; --rouge:#cf3b34; --orange:#c26f0a; --vert:#2f8a3c; --gris:#6b7c88; color-scheme:light }
+  @media (prefers-color-scheme: dark) { :root { --bg:#122029; --ink:#d3e2eb; --soft:#8ea4b2; --line:#2c4150; --panel:#0f1a21; --rouge:#ff7b72; --orange:#f0a24a; --vert:#5fcf73; --gris:#8ea4b2; color-scheme:dark } }
+  * { box-sizing:border-box }
+  body { margin:0; background:var(--bg); color:var(--ink); font:14px/1.45 system-ui, sans-serif; padding:18px 22px 40px }
+  h1 { margin:0 0 4px; font-size:22px } h2 { margin:22px 0 8px; font-size:16px }
+  p.sous { margin:0 0 14px; color:var(--soft) }
+  .cartes { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 }
+  .carte { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 16px; min-width:140px }
+  .carte b { display:block; font-size:24px } .carte span { color:var(--soft); font-size:12px }
+  .carte.rouge b { color:var(--rouge) } .carte.orange b { color:var(--orange) } .carte.gris b { color:var(--gris) } .carte.vert b { color:var(--vert) }
+  ul.liste { list-style:none; margin:0; padding:0; background:var(--panel); border:1px solid var(--line); border-radius:8px }
+  ul.liste li { padding:7px 12px; border-bottom:1px solid var(--line); display:flex; gap:10px; align-items:baseline }
+  ul.liste li:last-child { border-bottom:0 }
+  .code { font:600 11px ui-monospace, monospace; padding:1px 7px; border-radius:9px; border:1px solid currentColor; white-space:nowrap }
+  .rouge .code, li.rouge .code { color:var(--rouge) } li.orange .code { color:var(--orange) } li.gris .code { color:var(--gris) }
+  .ok { padding:10px 14px; border:1px solid var(--vert); color:var(--vert); border-radius:8px; background:var(--panel) }
+  table { border-collapse:collapse; background:var(--panel); border:1px solid var(--line) } th, td { padding:6px 12px; border-bottom:1px solid var(--line); text-align:left }
+  th { font-size:12px; color:var(--soft); text-transform:uppercase; letter-spacing:.06em }
+  button { font:inherit; padding:7px 14px; border:1px solid var(--line); border-radius:6px; background:var(--panel); color:inherit; cursor:pointer } button:focus-visible, textarea:focus-visible { outline:2px solid #2f7d9a; outline-offset:1px }
+  textarea { width:100%; height:240px; margin-top:8px; font:12px ui-monospace, monospace; background:var(--panel); color:inherit; border:1px solid var(--line); border-radius:6px; padding:8px }
+  #msg { margin-left:10px; color:var(--vert) }
+</style>
+<body>
+<h1>Validation de la production</h1>
+<p class="sous">Lit <code>data/production/</code> : ressources, ateliers et recettes des filières migrées. Une erreur n'est signalée que pour une filière <b>migrée</b> ; le reste est « en attente ».</p>
+<div id="rapport">Chargement…</div>
+<script src="js/batiments/validation-production.js"></script>
+<script>
+const j = u => fetch(u, { cache:'no-store' }).then(r => { if (!r.ok) throw new Error(u + ' : ' + r.status); return r.json(); });
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+let donnees = null;
+async function charger() {
+  const index = await j('data/production/index.json'), recettes = [];
+  for (const f of index.filieres) if (f.migree || f.anticipee) recettes.push(...(await j('data/production/' + f.fichier).catch(() => ({ recettes:[] }))).recettes);   // (migrée, ou recettes saisies à l'avance)
+  const jo = u => j(u).catch(() => null);
+  donnees = { index, ressources:await j('data/production/ressources.json'), ateliers:await j('data/production/ateliers.json'), recettes,
+    couts:await jo('data/production/couts_construction.json'), foyers:await jo('data/production/besoins_foyers.json'), services:await jo('data/production/besoins_services.json'), commerce:await jo('data/production/commerce.json') };
+  const r = ValidationProduction.validerProduction(donnees), n = (donnees.ressources || []).length;
+  const liste = (xs, classe) => xs.length ? '<ul class="liste">' + xs.map(x => '<li class="' + classe + '"><span class="code">' + esc(x.code) + '</span><span>' + esc(x.message) + '</span></li>').join('') + '</ul>' : '<p class="ok">Rien à signaler.</p>';
+  const cult = donnees.recettes.filter(x => (x.sousProduits || []).length).length;
+  document.getElementById('rapport').innerHTML =
+    '<div class="cartes"><div class="carte ' + (r.erreurs.length ? 'rouge' : 'vert') + '"><b>' + r.erreurs.length + '</b><span>erreurs</span></div><div class="carte ' + (r.avertissements.length ? 'orange' : 'vert') + '"><b>' + r.avertissements.length + '</b><span>avertissements</span></div><div class="carte gris"><b>' + r.attente.length + '</b><span>en attente</span></div><div class="carte ' + (r.stats.sansDebouche ? 'rouge' : 'vert') + '"><b>' + r.stats.sansDebouche + '</b><span>sans débouché</span></div>' +
+    '<div class="carte"><b>' + r.stats.recettes + '</b><span>recettes saisies</span></div><div class="carte"><b>' + cult + '</b><span>avec sous-produit</span></div><div class="carte"><b>' + r.stats.recettesMultiIngredients + '</b><span>à 2 ingrédients ou plus</span></div></div>' +
+    '<h2>Erreurs</h2>' + liste(r.erreurs, 'rouge') + '<h2>Avertissements</h2>' + liste(r.avertissements, 'orange') + '<h2>En attente (filières pas encore migrées)</h2>' + liste(r.attente, 'gris') +
+    '<h2>Avancement de la migration</h2><table><thead><tr><th>Ordre</th><th>Filière</th><th>État</th><th>Ressources</th><th>Ateliers</th></tr></thead><tbody>' +
+    index.filieres.map(f => '<tr><td>' + f.ordre + '</td><td>' + esc(f.nom) + '</td><td style="color:var(--' + (f.migree ? 'vert' : 'gris') + ')">' + (f.migree ? '● migrée' : '○ à faire') + '</td><td>' + donnees.ressources.filter(x => x.filiere === f.id).length + '</td><td>' + donnees.ateliers.filter(x => x.filiere === f.id).length + '</td></tr>').join('') + '</tbody></table>' +
+    '<h2>Export du graphe</h2><button type="button" id="mm">Exporter en Mermaid</button> <button type="button" id="cp" hidden>Copier</button> <button type="button" id="tl" hidden>Télécharger (.mmd)</button><span id="msg" role="status"></span><textarea id="sortie" hidden readonly aria-label="Graphe Mermaid"></textarea>';
+  const t = document.getElementById('sortie'), msg = t => { const m = document.getElementById('msg'); m.textContent = t; setTimeout(() => m.textContent = '', 2500); };
+  document.getElementById('mm').onclick = () => { t.value = ValidationProduction.exporterMermaid(donnees); t.hidden = false; document.getElementById('cp').hidden = document.getElementById('tl').hidden = false; };
+  document.getElementById('cp').onclick = () => navigator.clipboard.writeText(t.value).then(() => msg('Copié'), () => { t.select(); msg('Sélectionné : Ctrl + C'); });
+  document.getElementById('tl').onclick = () => { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([t.value], { type:'text/plain' })); a.download = 'production.mmd'; a.click(); };
+}
+charger().catch(e => { document.getElementById('rapport').innerHTML = '<p class="ok" style="color:var(--rouge);border-color:var(--rouge)">Erreur de chargement : ' + esc(e.message) + '</p>'; });
+</script>
+</body>
+</html>

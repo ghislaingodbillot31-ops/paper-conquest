@@ -1,0 +1,1183 @@
+{
+ "filiere": "metal",
+ "note": "Quantités à 1 par défaut : TODO équilibrage.",
+ "recettes": [
+  {
+   "id": "loupe_de_fer",
+   "atelier": "bas_fourneau",
+   "entrees": [
+    {
+     "ressource": "minerai de fer",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "loupe de fer",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "scories",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": "La loupe est ensuite forgée en fer."
+  },
+  {
+   "id": "fer_forge",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "loupe de fer",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": ""
+  },
+  {
+   "id": "acier_cementation",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "acier",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Cémentation : le fer absorbe le carbone du charbon."
+  },
+  {
+   "id": "clous",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "clous",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Pièce courante en fer : un seul ingrédient, c'est normal."
+  },
+  {
+   "id": "ferrures",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "ferrures",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Pièce courante en fer : un seul ingrédient, c'est normal."
+  },
+  {
+   "id": "cercles_de_fer",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "cercles de fer",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Pièce courante en fer : un seul ingrédient, c'est normal."
+  },
+  {
+   "id": "fers_a_cheval",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fers à cheval",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Pièce courante en fer : un seul ingrédient, c'est normal."
+  },
+  {
+   "id": "hamecons",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "hameçons",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Pièce courante en fer : un seul ingrédient, c'est normal."
+  },
+  {
+   "id": "tete_en_fer",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": ""
+  },
+  {
+   "id": "tete_en_acier",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "acier",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Meilleure efficacité et durabilité que le fer."
+  },
+  {
+   "id": "hache",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "hache",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "pioche",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pioche",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "houe",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "houe",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "pelle",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pelle",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "faucille",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "faucille",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "faux",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "faux",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "serpe",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "serpe",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "marteau",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "marteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Outil fini = tête forgée + manche en bois."
+  },
+  {
+   "id": "couteau",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manches de couteau",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "couteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Couteau = tête forgée + manche de couteau (os ou bois de cerf, à la menuiserie)."
+  },
+  {
+   "id": "dague",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "dague",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "épée",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "épée",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "masse",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "masse",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "lance",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "lance",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "pique",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pique",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "javelot",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "tete",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    },
+    {
+     "ressource": "cuir",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "javelot",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Arme = lame d'acier + manche + cuir."
+  },
+  {
+   "id": "fondre_cuivre",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "minerai de cuivre",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "cuivre",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fondre_étain",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "minerai d'étain",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "étain",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fondre_plomb",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "minerai de plomb",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "plomb",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fondre_argent",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "minerai d'argent",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "argent",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fondre_or",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "minerai d'or",
+     "qte": 1
+    },
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "or",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "bronze",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "cuivre",
+     "qte": 1
+    },
+    {
+     "ressource": "étain",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "bronze",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "cloche",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "bronze",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "cloche",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": "Pour l'église."
+  },
+  {
+   "id": "feuilles_de_plomb",
+   "atelier": "fonderie",
+   "entrees": [
+    {
+     "ressource": "plomb",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "feuilles de plomb",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "bijoux",
+   "atelier": "orfevre",
+   "entrees": [
+    {
+     "ressource": "argent",
+     "qte": 1
+    },
+    {
+     "ressource": "ambre",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "bijoux",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "chapelets",
+   "atelier": "orfevre",
+   "entrees": [
+    {
+     "ressource": "argent",
+     "qte": 1
+    },
+    {
+     "ressource": "ambre",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "chapelets",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "objets_liturgiques",
+   "atelier": "orfevre",
+   "entrees": [
+    {
+     "ressource": "or",
+     "qte": 1
+    },
+    {
+     "ressource": "argent",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "objets liturgiques",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "feuille_d_or",
+   "atelier": "orfevre",
+   "entrees": [
+    {
+     "ressource": "or",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "feuille d'or",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": "Enluminure."
+  },
+  {
+   "id": "monnaie",
+   "atelier": "atelier_monetaire",
+   "entrees": [
+    {
+     "ressource": "argent",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "monnaie",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "tenailles",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    },
+    {
+     "ressource": "clous",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "tenailles",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Deux branches de fer assemblées par un rivet (clou). Marteau et tenailles servent à les fabriquer : ils sont dans le stock de départ."
+  },
+  {
+   "id": "extraire_minerai_de_fer",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai de fer",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "extraire_minerai_de_cuivre",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai de cuivre",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "extraire_minerai_d_étain",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai d'étain",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "extraire_minerai_de_plomb",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai de plomb",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "extraire_minerai_d_argent",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai d'argent",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "extraire_minerai_d_or",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "minerai d'or",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "ambre",
+   "atelier": "fosse_miniere",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "ambre",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pioche"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "scie",
+   "atelier": "forge",
+   "entrees": [
+    {
+     "ressource": "fer",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "scie",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau",
+    "tenailles"
+   ],
+   "note": "Lame de fer + manche."
+  }
+ ]
+}

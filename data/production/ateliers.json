@@ -1,0 +1,651 @@
+[
+ {
+  "id": "camp_bucherons",
+  "nom": "Camp de bûcherons",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "bois",
+  "catalogueId": "camp_bucherons",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "loge_bucheron",
+  "nom": "Loge de bûcheron",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "bois",
+  "catalogueId": "loge_bucheron",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "hutte_forestier",
+  "nom": "Hutte de forestier",
+  "statut": "existant",
+  "categorie": "Récolte",
+  "filiere": "bois",
+  "catalogueId": "hutte_forestier",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "camp_chasse",
+  "nom": "Camp de chasse",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "elevage",
+  "catalogueId": "camp_chasse",
+  "banal": null,
+  "usureOutils": true,
+  "niveauxOutils": [
+   {
+    "niveau": 1,
+    "outils": [
+     "lance de chasse"
+    ],
+    "note": "2 silex + 1 bâton, sans archerie."
+   },
+   {
+    "niveau": 2,
+    "outils": [
+     "arc",
+     "flèche"
+    ],
+    "rendement": null,
+    "note": "Meilleur rendement et gibier plus gros. TODO équilibrage"
+   }
+  ]
+ },
+ {
+  "id": "hutte_cueillette",
+  "nom": "Hutte de cueillette",
+  "statut": "existant",
+  "categorie": "Récolte",
+  "filiere": "alimentation",
+  "catalogueId": "hutte_cueillette",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "rucher",
+  "nom": "Rucher",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "alimentation",
+  "catalogueId": "rucher",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "cabane_peche",
+  "nom": "Cabane de pêche",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "alimentation",
+  "catalogueId": "cabane_peche",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "tailleur_pierre",
+  "nom": "Camp de tailleur de pierre",
+  "statut": "modifié",
+  "categorie": "Récolte",
+  "filiere": "construction",
+  "catalogueId": "tailleur_pierre",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "fosse_miniere",
+  "nom": "Fosse minière",
+  "statut": "existant",
+  "categorie": "Récolte",
+  "filiere": "metal",
+  "catalogueId": "fosse_miniere",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "camp_mineur",
+  "nom": "Camp de mineur",
+  "statut": "existant",
+  "categorie": "Récolte",
+  "filiere": "metal",
+  "catalogueId": "camp_mineur",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "glaisiere",
+  "nom": "Glaisière",
+  "statut": "nouveau",
+  "categorie": "Récolte",
+  "filiere": "construction",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "marais_salant",
+  "nom": "Marais salant",
+  "statut": "nouveau",
+  "categorie": "Récolte",
+  "filiere": "alimentation",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true,
+  "contrainte": "côte uniquement"
+ },
+ {
+  "id": "ferme",
+  "nom": "Ferme",
+  "statut": "modifié",
+  "categorie": "Agriculture",
+  "filiere": "alimentation",
+  "catalogueId": "ferme",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "bergerie",
+  "nom": "Bergerie",
+  "statut": "modifié",
+  "categorie": "Agriculture",
+  "filiere": "cuir_textile",
+  "catalogueId": "bergerie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "fromagerie",
+  "nom": "Fromagerie (Laiterie)",
+  "statut": "renommé",
+  "categorie": "Agriculture",
+  "filiere": "elevage",
+  "catalogueId": "fromagerie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "pressoir",
+  "nom": "Pressoir",
+  "statut": "nouveau",
+  "categorie": "Agriculture",
+  "filiere": "alimentation",
+  "catalogueId": null,
+  "banal": {
+   "actif": true,
+   "taux": null,
+   "note": "TODO équilibrage"
+  },
+  "usureOutils": true
+ },
+ {
+  "id": "moulin",
+  "nom": "Moulin à vent",
+  "statut": "modifié",
+  "categorie": "Alimentation",
+  "filiere": "alimentation",
+  "catalogueId": "moulin",
+  "banal": {
+   "actif": true,
+   "taux": null,
+   "note": "TODO équilibrage"
+  },
+  "usureOutils": true
+ },
+ {
+  "id": "four",
+  "nom": "Four communal",
+  "statut": "modifié",
+  "categorie": "Alimentation",
+  "filiere": "alimentation",
+  "catalogueId": "four",
+  "banal": {
+   "actif": true,
+   "taux": null,
+   "note": "TODO équilibrage"
+  },
+  "usureOutils": true
+ },
+ {
+  "id": "brasserie",
+  "nom": "Brasserie",
+  "statut": "modifié",
+  "categorie": "Alimentation",
+  "filiere": "alimentation",
+  "catalogueId": "brasserie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "taverne",
+  "nom": "Taverne",
+  "statut": "modifié",
+  "categorie": "Services",
+  "filiere": "commerce",
+  "catalogueId": "taverne",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "boucherie",
+  "nom": "Boucherie",
+  "statut": "nouveau",
+  "categorie": "Alimentation",
+  "filiere": "elevage",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "saloir_fumoir",
+  "nom": "Saloir-fumoir",
+  "statut": "nouveau",
+  "categorie": "Alimentation",
+  "filiere": "alimentation",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "chandellerie_savonnerie",
+  "nom": "Chandellerie-savonnerie",
+  "statut": "nouveau",
+  "categorie": "Alimentation",
+  "filiere": "elevage",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "scierie",
+  "nom": "Scierie",
+  "statut": "modifié",
+  "categorie": "Bois",
+  "filiere": "bois",
+  "catalogueId": "scierie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "hutte_charbonnier",
+  "nom": "Hutte du charbonnier",
+  "statut": "existant",
+  "categorie": "Bois",
+  "filiere": "bois",
+  "catalogueId": "hutte_charbonnier",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "menuiserie",
+  "nom": "Atelier de menuiserie",
+  "statut": "modifié",
+  "categorie": "Bois",
+  "filiere": "bois",
+  "catalogueId": "menuiserie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "tonnellerie",
+  "nom": "Tonnellerie",
+  "statut": "nouveau",
+  "categorie": "Bois",
+  "filiere": "bois",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "fonderie",
+  "nom": "Fonderie",
+  "statut": "renommé",
+  "categorie": "Métal",
+  "filiere": "metal",
+  "catalogueId": "fonderie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "forge",
+  "nom": "Forge",
+  "statut": "modifié",
+  "categorie": "Métal",
+  "filiere": "metal",
+  "catalogueId": "forge",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "bas_fourneau",
+  "nom": "Bas fourneau",
+  "statut": "nouveau",
+  "categorie": "Métal",
+  "filiere": "metal",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "orfevre",
+  "nom": "Orfèvre",
+  "statut": "nouveau",
+  "categorie": "Métal",
+  "filiere": "metal",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "atelier_monetaire",
+  "nom": "Atelier monétaire",
+  "statut": "nouveau",
+  "categorie": "Métal",
+  "filiere": "metal",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true,
+  "unique": true,
+  "seigneurial": true
+ },
+ {
+  "id": "archerie",
+  "nom": "Archerie",
+  "statut": "modifié",
+  "categorie": "Armes",
+  "filiere": "armes",
+  "catalogueId": "archerie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "armurerie",
+  "nom": "Armurerie",
+  "statut": "modifié",
+  "categorie": "Armes",
+  "filiere": "armes",
+  "catalogueId": "armurerie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "tannerie",
+  "nom": "Tannerie",
+  "statut": "nouveau",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "cordonnerie",
+  "nom": "Atelier de cordonnier",
+  "statut": "modifié",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": "cordonnerie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "corderie",
+  "nom": "Corderie",
+  "statut": "nouveau",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "atelier_tissage",
+  "nom": "Atelier de tissage",
+  "statut": "nouveau",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "teinturerie_foulerie",
+  "nom": "Teinturerie-foulerie",
+  "statut": "nouveau",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "couture",
+  "nom": "Atelier de tailleur",
+  "statut": "modifié",
+  "categorie": "Cuir et textile",
+  "filiere": "cuir_textile",
+  "catalogueId": "couture",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "four_chaux",
+  "nom": "Four à chaux",
+  "statut": "nouveau",
+  "categorie": "Construction",
+  "filiere": "construction",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "tuilerie_poterie",
+  "nom": "Tuilerie-poterie",
+  "statut": "nouveau",
+  "categorie": "Construction",
+  "filiere": "construction",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "verrerie",
+  "nom": "Verrerie",
+  "statut": "nouveau",
+  "categorie": "Construction",
+  "filiere": "construction",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "grange",
+  "nom": "Grange",
+  "statut": "existant",
+  "categorie": "Stockage",
+  "filiere": "commerce",
+  "catalogueId": "grange",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "entrepot",
+  "nom": "Entrepôt",
+  "statut": "modifié",
+  "categorie": "Stockage",
+  "filiere": "commerce",
+  "catalogueId": "entrepot",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "relais",
+  "nom": "Poste de relais",
+  "statut": "modifié",
+  "categorie": "Stockage",
+  "filiere": "commerce",
+  "catalogueId": "relais",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "poteau",
+  "nom": "Poteau d'attache",
+  "statut": "existant",
+  "categorie": "Stockage",
+  "filiere": "commerce",
+  "catalogueId": "poteau",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "comptoir",
+  "nom": "Comptoir commercial",
+  "statut": "modifié",
+  "categorie": "Commerce",
+  "filiere": "commerce",
+  "catalogueId": "comptoir",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "comptoir_betail",
+  "nom": "Comptoir de bétail",
+  "statut": "existant",
+  "categorie": "Commerce",
+  "filiere": "commerce",
+  "catalogueId": "comptoir_betail",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "camp_colon",
+  "nom": "Camp de colon",
+  "statut": "existant",
+  "categorie": "Résidentiel",
+  "filiere": "commerce",
+  "catalogueId": "camp_colon",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "maison",
+  "nom": "Maison simple",
+  "statut": "modifié",
+  "categorie": "Résidentiel",
+  "filiere": "commerce",
+  "catalogueId": "maison",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "maison_cour",
+  "nom": "Maison avec arrière-cour",
+  "statut": "modifié",
+  "categorie": "Résidentiel",
+  "filiere": "commerce",
+  "catalogueId": "maison_cour",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "grande_maison",
+  "nom": "Maison avec cour et jardin",
+  "statut": "modifié",
+  "categorie": "Résidentiel",
+  "filiere": "commerce",
+  "catalogueId": "grande_maison",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "manoir",
+  "nom": "Manoir",
+  "statut": "modifié",
+  "categorie": "Résidentiel",
+  "filiere": "commerce",
+  "catalogueId": "manoir",
+  "banal": null,
+  "usureOutils": true,
+  "recoit": "banalités"
+ },
+ {
+  "id": "mairie",
+  "nom": "Mairie",
+  "statut": "modifié",
+  "categorie": "Services",
+  "filiere": "commerce",
+  "catalogueId": "mairie",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "marche",
+  "nom": "Marché",
+  "statut": "existant",
+  "categorie": "Services",
+  "filiere": "commerce",
+  "catalogueId": "marche",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "eglise",
+  "nom": "Église en bois",
+  "statut": "modifié",
+  "categorie": "Services",
+  "filiere": "commerce",
+  "catalogueId": "eglise",
+  "banal": null,
+  "usureOutils": true,
+  "recoit": "dîme"
+ },
+ {
+  "id": "puits",
+  "nom": "Puits",
+  "statut": "réorganisé",
+  "categorie": "Production",
+  "filiere": "alimentation",
+  "catalogueId": "puits",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "cimetiere",
+  "nom": "Cimetière",
+  "statut": "existant",
+  "categorie": "Décoratif",
+  "filiere": "commerce",
+  "catalogueId": "cimetiere",
+  "banal": null,
+  "usureOutils": true
+ },
+ {
+  "id": "garnison",
+  "nom": "Garnison",
+  "statut": "nouveau",
+  "categorie": "Services",
+  "filiere": "armes",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true,
+  "module": "manoir",
+  "note": "Ou module « milice » du Manoir ; dessin générique provisoire."
+ },
+ {
+  "id": "scriptorium",
+  "nom": "Scriptorium",
+  "statut": "nouveau",
+  "categorie": "Services",
+  "filiere": "commerce",
+  "catalogueId": null,
+  "banal": null,
+  "usureOutils": true,
+  "module": "eglise",
+  "note": "Module de l'Église : manuscrits enluminés."
+ }
+]

@@ -10,7 +10,7 @@
 //   rangees dans le stock de la region (sa capitale).
 const ECO = { startGold:1000, dayMs:60000, taxPerRegion:15, regionBasePrice:400, maxCatchUpDays:240,
   startDate:new Date(2027, 2, 15), perLevel:[0, 1, 2, 4] };
-const ECO_STORAGE_KEY = 'paperConquestEconomy';
+const ECO_STORAGE_KEY = 'dominiumEconomy';
 const newEconomy = () => ({ gold:ECO.startGold, day:0, lastTick:Date.now(), stocks:{} });
 let eco = newEconomy();
 try{ const saved = JSON.parse(localStorage.getItem(ECO_STORAGE_KEY)); if(saved && typeof saved.gold === 'number') eco = Object.assign(newEconomy(), saved); }catch(e){}

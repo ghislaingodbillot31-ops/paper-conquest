@@ -137,5 +137,4 @@ function drawFruitiers() {
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 30, vus = list.filter(r => r.x > x0 - m && r.x < x1 + m && r.y > y0 - m && r.y < y1 + m).sort((p, q) => p.y - q.y);
   for (const r of vus) { const a = FRUITIERS[r.key], [X, Y] = toS(r.x, r.y); FRUIT_INST = typeof fruitsVisibles === 'function' ? fruitsVisibles(r) : null; peintArbre(a, X, Y, Math.max(3, ARBRE_R * (a.r || 1) * s), r.id); }
   FRUIT_INST = null;
-  if (s > .3) for (const r of vus) if (r.g) { const [X, Y] = toS(r.g[0], r.g[1] + 5); ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(FRUITIERS[r.key].nom, X, Y + 2, Col.ink, Col.sheet); }
 }

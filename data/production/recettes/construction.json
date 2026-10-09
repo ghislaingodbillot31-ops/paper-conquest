@@ -1,0 +1,120 @@
+{
+ "filiere": "construction",
+ "anticipee": true,
+ "note": "Recettes saisies à l'avance (DEBOUCHES_RESSOURCES.md) ; la filière reste « à migrer ». Quantités à 1 : TODO équilibrage.",
+ "recettes": [
+  {
+   "id": "torchis",
+   "atelier": "tuilerie_poterie",
+   "entrees": [
+    {
+     "ressource": "argile",
+     "qte": 1
+    },
+    {
+     "ressource": "paille",
+     "qte": 1
+    },
+    {
+     "ressource": "eau",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "torchis",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Débouché immédiat de la paille et de l'argile en début de partie."
+  },
+  {
+   "id": "chaux",
+   "atelier": "four_chaux",
+   "entrees": [
+    {
+     "ressource": "calcaire",
+     "qte": 1
+    },
+    {
+     "ressource": "bois de chauffage",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "chaux",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "cendres",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "mortier",
+   "atelier": "four_chaux",
+   "entrees": [
+    {
+     "ressource": "chaux",
+     "qte": 1
+    },
+    {
+     "ressource": "sable",
+     "qte": 1
+    },
+    {
+     "ressource": "eau",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "mortier",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "vitraux",
+   "atelier": "verrerie",
+   "entrees": [
+    {
+     "ressource": "verre",
+     "qte": 1
+    },
+    {
+     "ressource": "feuilles de plomb",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "vitraux",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Sertissage au plomb (feuilles de plomb, pas du plomb brut)."
+  }
+ ]
+}

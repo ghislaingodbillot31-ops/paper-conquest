@@ -1,0 +1,649 @@
+{
+ "filiere": "bois",
+ "note": "Quantités à 1 par défaut : TODO équilibrage.",
+ "recettes": [
+  {
+   "id": "abattre",
+   "atelier": "camp_bucherons",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "écorce",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "hache"
+   ],
+   "extraction": true,
+   "note": "Arbres → grumes ; l'écorce part à la tannerie."
+  },
+  {
+   "id": "fendre",
+   "atelier": "loge_bucheron",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "bois de chauffage",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "hache"
+   ],
+   "note": ""
+  },
+  {
+   "id": "ramasser",
+   "atelier": "loge_bucheron",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "bâtons",
+     "qte": 1
+    },
+    {
+     "ressource": "brindilles",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "hache"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "fagots",
+   "atelier": "loge_bucheron",
+   "entrees": [
+    {
+     "ressource": "brindilles",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fagots",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "hache"
+   ],
+   "note": ""
+  },
+  {
+   "id": "graines",
+   "atelier": "hutte_forestier",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "graines",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "extraction": true,
+   "note": ""
+  },
+  {
+   "id": "pousses",
+   "atelier": "hutte_forestier",
+   "entrees": [
+    {
+     "ressource": "graines",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pousses",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "replantation",
+   "atelier": "hutte_forestier",
+   "entrees": [
+    {
+     "ressource": "pousses",
+     "qte": 1
+    }
+   ],
+   "sorties": [],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "effet": "replantation",
+   "note": "Les pousses sont plantées : la forêt repousse (pas de ressource en sortie)."
+  },
+  {
+   "id": "charbon",
+   "atelier": "hutte_charbonnier",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "charbon de bois",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle"
+   ],
+   "note": ""
+  },
+  {
+   "id": "planches_poutres",
+   "atelier": "scierie",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "poutres",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "bardeaux",
+   "atelier": "scierie",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "bardeaux",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "manche",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "marteau_de_pierre",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "silex",
+     "qte": 1
+    },
+    {
+     "ressource": "bâtons",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "marteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Recette de secours : un joueur qui perd son marteau n'est jamais bloqué. Sans outil requis."
+  },
+  {
+   "id": "rateau",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    },
+    {
+     "ressource": "bâtons",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "râteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "pelle_a_four",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "manche d'outil",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pelle à four",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "fuseau",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "bois",
+     "qte": 1
+    },
+    {
+     "ressource": "bâtons",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fuseau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie"
+   ],
+   "note": ""
+  },
+  {
+   "id": "metier_a_tisser",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "clous",
+     "qte": 1
+    },
+    {
+     "ressource": "bois",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "métier à tisser",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie",
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "paniers",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "brindilles",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "paniers",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Osier ou brindilles."
+  },
+  {
+   "id": "mobilier",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "clous",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "mobilier",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie",
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "charrette",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "clous",
+     "qte": 1
+    },
+    {
+     "ressource": "cercles de fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "charrette à main",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie",
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "chariot",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "clous",
+     "qte": 1
+    },
+    {
+     "ressource": "cercles de fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "chariot",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "scie",
+    "marteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "canne_a_peche",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "bâtons",
+     "qte": 1
+    },
+    {
+     "ressource": "corde",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "canne à pêche",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": "La corde (filasse) vient de la corderie, pas encore migrée."
+  },
+  {
+   "id": "manches_de_couteau",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "os",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "manches de couteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "manches_de_couteau_cerf",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "bois de cerf",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "manches de couteau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "des",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "os",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "dés",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "peignes",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "corne",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "peignes",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "lanternes",
+   "atelier": "menuiserie",
+   "entrees": [
+    {
+     "ressource": "corne",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "lanternes",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "couteau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "tonneau",
+   "atelier": "tonnellerie",
+   "entrees": [
+    {
+     "ressource": "planches",
+     "qte": 1
+    },
+    {
+     "ressource": "cercles de fer",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "tonneau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "marteau"
+   ],
+   "note": ""
+  }
+ ]
+}

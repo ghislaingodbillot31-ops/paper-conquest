@@ -1,15 +1,17 @@
 /* Serveur de logs (développement) : reçoit les logs du jeu envoyés par js/carte/logs.js et les écrit dans un fichier lisible par l'assistant.
-   Lancement : node tools/serveur-logs.js   (ou tools/lancer-logs.bat)   —   port 8001, fichier : <dossier temporaire>/paper-conquest-logs/jeu.log (hors du projet : pas de rechargement de la page).
+   Lancement : node tools/serveur-logs.js   (ou tools/lancer-logs.bat)   —   port 8001, fichier : <dossier temporaire>/dominium-logs/jeu.log (hors du projet : pas de rechargement de la page).
    GET /tail?n=200 : les n dernières lignes · DELETE /log : vide le fichier. Au-delà de 2 Mo, le fichier est tronqué à sa seconde moitié.
-   BASE DE DONNÉES DÉVELOPPEUR (fichier <dossier de l'utilisateur>/.paper-conquest-dev/base.json) : les réglages faits en mode développeur (stocks maximum, heure, actions) y sont inscrits.
+   BASE DE DONNÉES DÉVELOPPEUR (fichier <dossier de l'utilisateur>/.dominium-dev/base.json) : les réglages faits en mode développeur (stocks maximum, heure, actions) y sont inscrits.
    Collections : stocks { type de bâtiment: { article: maximum } }, variables { nom: valeur }, actions [ { t, nom, detail } ], historique [ { t, collection, cle, ancien, nouveau } ].
    COMMANDES : POST /base/commande { nom, params } met une commande en attente ; le jeu l'interroge (GET /base/commandes), l'exécute puis la marque faite (POST /base/fait { id }).
-   SAUVEGARDES DE PARTIE (dossier <dossier de l'utilisateur>/.paper-conquest-dev/sauvegardes, 40 au plus) : POST /base/sauvegarde { nom, cle, search, donnees } ; GET /base/sauvegardes (liste) ; GET /base/sauvegarde?nom=… (contenu).
+   SAUVEGARDES DE PARTIE (dossier <dossier de l'utilisateur>/.dominium-dev/sauvegardes, 40 au plus) : POST /base/sauvegarde { nom, cle, search, donnees } ; GET /base/sauvegardes (liste) ; GET /base/sauvegarde?nom=… (contenu).
    GET /base : tout · POST /base/set { collection, cle, valeur } (valeur null : supprime) · POST /base/action { nom, detail } · POST /base/sync { stocks } : le navigateur dépose ce qu'il a si la base est vide. */
 const http = require('http'), fs = require('fs'), os = require('os'), path = require('path');
-const DIR = path.join(os.tmpdir(), 'paper-conquest-logs'), FILE = path.join(DIR, 'jeu.log'), PORT = 8001, MAX = 2 * 1024 * 1024;
+const DIR = path.join(os.tmpdir(), 'dominium-logs'), FILE = path.join(DIR, 'jeu.log'), PORT = 8001, MAX = 2 * 1024 * 1024;
 fs.mkdirSync(DIR, { recursive:true });
-const BASE_DIR = path.join(os.homedir(), '.paper-conquest-dev'), BASE_FILE = path.join(BASE_DIR, 'base.json');
+const BASE_DIR = path.join(os.homedir(), '.dominium-dev'), BASE_FILE = path.join(BASE_DIR, 'base.json');
+const ANCIEN = path.join(os.homedir(), '.paper-conquest-dev');                                     // (ancien nom du jeu : le dossier est repris tel quel)
+if (fs.existsSync(ANCIEN) && !fs.existsSync(BASE_DIR)) fs.renameSync(ANCIEN, BASE_DIR);
 fs.mkdirSync(BASE_DIR, { recursive:true });
 let base = { stocks:{}, variables:{}, actions:[], historique:[], commandes:[] };
 try { base = { ...base, ...JSON.parse(fs.readFileSync(BASE_FILE, 'utf8')) }; } catch (e) {}
@@ -56,5 +58,5 @@ http.createServer((req, res) => {
   }
   if (req.method === 'GET' && req.url.startsWith('/tail')) { const n = +(new URL(req.url, 'http://x').searchParams.get('n')) || 100; let t = ''; try { t = fs.readFileSync(FILE, 'utf8').split('\n').slice(-n).join('\n'); } catch (e) {} res.writeHead(200, { 'Content-Type':'text/plain; charset=utf-8' }); return res.end(t); }
   if (req.method === 'DELETE') { fs.writeFileSync(FILE, ''); res.writeHead(204); return res.end(); }
-  res.writeHead(200, { 'Content-Type':'text/plain; charset=utf-8' }); res.end('Serveur de logs Paper Conquest : POST /log, GET /tail?n=100, DELETE /log, GET /base\nLogs : ' + FILE + '\nBase : ' + BASE_FILE + '\n');
+  res.writeHead(200, { 'Content-Type':'text/plain; charset=utf-8' }); res.end('Serveur de logs DOMINIUM : POST /log, GET /tail?n=100, DELETE /log, GET /base\nLogs : ' + FILE + '\nBase : ' + BASE_FILE + '\n');
 }).listen(PORT, () => console.log('Logs du jeu -> ' + FILE + '\nBase de données développeur -> ' + BASE_FILE + '\n(http://localhost:' + PORT + ')'));

@@ -11,7 +11,7 @@ function renderRegionMapTab(el, regionId){
   const cur = el.querySelector('iframe.region-map');
   if(cur && cur.dataset.src === src) return;              // deja affichee : on ne recharge pas
   el.classList.add('has-map');
-  el.innerHTML = '<iframe class="region-map" title="Carte de la région ' + regionId + '" src="' + src + '" data-src="' + src + '"></iframe>';
+  el.innerHTML = '<iframe class="region-map"' + (window.name === 'jeu-joueur' ? ' name="jeu-joueur"' : '') + ' title="Carte de la région ' + regionId + '" src="' + src + '" data-src="' + src + '"></iframe>';
 }
 
 // ---------- Plan de la region (onglet de la capitale) ----------

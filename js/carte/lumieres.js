@@ -15,7 +15,7 @@ const LUMIERES = {
 const SANS_TOIT = new Set(['marche', 'camp_colon', 'camp_bucherons', 'camp_chasse', 'hutte_charbonnier', 'puits', 'fosse_miniere', 'cimetiere']);   // lieux à ciel ouvert : pas de toit à garder dans l'ombre
 const LUM_COUL = { feu:'255,160,60', torche:'255,175,80', fenetre:'255,205,120' };
 const FRONT_LIBRE = 3;   // m : bande à l'avant de la parcelle (jardin, clôture, route) qui reste éclairée ; le reste de la parcelle (maison, toit) est re-noirci
-let lumCache = { v:-1, n:-1, list:[] }, lumCanvas = null;
+let lumCle = '', lumSrc = null, ne = 0, lumCache = { v:-1, n:-1, list:[] }, lumCanvas = null;
 function sourcesLumiere() {
   const ne = typeof etalsMarche === 'function' ? etalsMarche().length : 0;
   if (lumCache.v === sceneV && lumCache.n === S.houses.length && lumCache.e === ne) return lumCache.list;
@@ -38,6 +38,9 @@ function drawLumieres() {
   }
   if (lumCanvas.width !== cv.width || lumCanvas.height !== cv.height) { lumCanvas.width = cv.width; lumCanvas.height = cv.height; }
   const c = lumCanvas.getContext('2d'), lum = soleil(REGION_METEO.lat, METEO.doy, heureCarte()).lumiere, voile = voileCiel(lum);
+  const cle = [view.ox, view.oy, view.s, W, H, dpr, lum.toFixed(3), voile, S.houses.length, sceneV, ne = typeof etalsMarche === 'function' ? etalsMarche().length : 0].join();   // inchangé depuis la dernière image : le calque est déjà bon
+  if (cle === lumCle && lumSrc === sourcesLumiere()) return;
+  lumCle = cle; lumSrc = sourcesLumiere();
   c.setTransform(1, 0, 0, 1, 0, 0); c.clearRect(0, 0, lumCanvas.width, lumCanvas.height);
   if (lum >= .97) return;                                                                      // plein jour : rien
   c.setTransform(dpr, 0, 0, dpr, 0, 0);

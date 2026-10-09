@@ -188,14 +188,30 @@ function filetsChemins(bord) {
     }
   }
 }
+/* Bouts d'une route qui ne sont posés sur le flanc d'aucune autre route (un bout posé sur une autre route reste plat, il ne dépasse pas de celle-ci) */
+const libresCache = new Map();
+function boutsLibres(r) {
+  const key = roadsSig(), hit = libresCache.get(r.id);
+  if (hit && hit.key === key) return hit.E;
+  const P = smoothPts(r), E = [P[0], P[P.length - 1]].filter(e => !S.roads.some(o => {
+    if (o === r) return false;
+    const Q = smoothPts(o);
+    for (let i = 0; i < Q.length - 1; i++) if (ptSeg(e, Q[i], Q[i + 1]).d < 1.5 && segLen(e, Q[0]) > 2 && segLen(e, Q[Q.length - 1]) > 2) return true;
+    return false;
+  }));
+  libresCache.set(r.id, { key, E });
+  return E;
+}
 function drawRoads() {
   // au carrefour, le revêtement le plus noble passe dessus : terre < gravier < pavé
   const rank = r => roadType(r).pieton ? -1 : ROADS.indexOf(roadType(r));   // (le chemin passe sous toutes les routes : sa chaussée s'arrête au bord de la grande route)
   const s = view.s, bySurf = S.roads.slice().sort((a, b) => rank(a) - rank(b));
   const stroke = (r, color, grow) => {
     ctx.strokeStyle = color; ctx.lineWidth = Math.max(roadType(r).surf * s, 3.6) + 2 * grow; // (au moins 3,6 px de large, même de loin)
-    ctx.lineCap = 'round'; ctx.lineJoin = 'miter'; ctx.miterLimit = 1.6;   // (angle franc : le coin extérieur reste vif, pas arrondi)
+    ctx.lineCap = 'butt'; ctx.lineJoin = 'miter'; ctx.miterLimit = 1.6;   // (angle franc : le coin extérieur reste vif ; bout plat : un raccord ne dépasse plus de la route principale)
     for (const piece of roadPieces(r)) { polyPath(piece); ctx.stroke(); }
+    ctx.fillStyle = color;
+    for (const e of boutsLibres(r)) { const [X, Y] = toS(e[0], e[1]); ctx.beginPath(); ctx.arc(X, Y, ctx.lineWidth / 2, 0, Math.PI * 2); ctx.fill(); }   // bout libre (capitale, bord de carte) : arrondi
   };
   // bordure fine et sombre de toutes les routes d'abord, puis les chaussées : aux carrefours
   // les chaussées se fondent sans trait

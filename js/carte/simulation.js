@@ -942,7 +942,7 @@ function messagesJour() {
 /* PERSISTANCE DES HABITANTS : les habitants (workers) sont enregistrés dans le navigateur toutes les 2 s et à la fermeture de la page, et repris au premier pas de simulation. Une mise à jour du code (rechargement de la page) ne les
    remet donc pas à zéro : chacun reprend là où il était (position, charge, besoins, minuteurs). Les références vers d'autres objets (arbre visé, animal chassé, spot de pêche, tas au sol…) ne se sauvent pas : l'habitant qui en avait
    une repart de l'état « libre » (idle) et la choisit de nouveau ; l'attente d'une fabrication, la faim, la soif, les trajets des porteurs et la charge portée sont conservés. Valable 30 minutes. */
-const HABITANTS_CLE = 'paperConquestHabitants', REFS_HABITANTS = new Set(['target', 'proie', 'entree', 'cible', 'dst', 'chemin', 'bes', 'e', 'spot']), ETATS_A_REPRENDRE = ['cut', 'goPile', 'bGo', 'bPrend', 'bBack', 'capGo', 'capPrend', 'capBack', 'install', 'peche', 'range', 'tue'];
+const HABITANTS_CLE = 'dominiumHabitants', REFS_HABITANTS = new Set(['target', 'proie', 'entree', 'cible', 'dst', 'chemin', 'bes', 'e', 'spot']), ETATS_A_REPRENDRE = ['cut', 'goPile', 'bGo', 'bPrend', 'bBack', 'capGo', 'capPrend', 'capBack', 'install', 'peche', 'range', 'tue'];
 let habitantsRestaures = false;
 function sauverHabitants() {
   if (!habitantsRestaures || window.__nouvellePartie) return;
@@ -1131,7 +1131,7 @@ const CAP_RES = {
   hutte_charbonnier:{ bois:60, 'charbon de bois':80 }, camp_bucherons:{ bois:80 }, loge_bucheron:{ 'bois de chauffage':100, 'bâtons':30, brindilles:100 },
   camp_chasse:{ viande:80, peaux:12, os:30, tendons:10, graisse:20 }, fosse_miniere:{}, tailleur_pierre:{ pierre:60, silex:60 },
 };
-/* MAXIMUMS VALIDÉS en mode développeur (onglet « Définir les stocks », base de données ~/.paper-conquest-dev/base.json, validés le 07/10/2026) : ils remplacent les valeurs par défaut ci-dessus. */
+/* MAXIMUMS VALIDÉS en mode développeur (onglet « Définir les stocks », base de données ~/.dominium-dev/base.json, validés le 07/10/2026) : ils remplacent les valeurs par défaut ci-dessus. */
 const STOCKS_VALIDES = {
   loge_bucheron:{"bâtons":80,brindilles:300},
   camp_chasse:{silex:12,"bâtons":8,viande:300,peaux:60,os:50,tendons:40,graisse:50},

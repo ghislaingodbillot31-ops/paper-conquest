@@ -7,9 +7,8 @@
    elle GROSSIT DANS LES VIRAGES (jusqu'à +60 % au creux d'un méandre) et SE RESSERRE dans
    les passages droits (−20 %), avec en plus une lente respiration tirée de son tracé.
    Les écarts sont lissés pour que les berges restent douces. Demi-largeurs en mètres. */
+const RIVER_MIN_HW = 5;   // demi-largeur minimale d'un cours d'eau (m) : 10 m de large au moins (une barque passe)
 const riverHWCache = new WeakMap();
-// demi-largeur maximale d'une île : une part de la demi-largeur normale de la rivière à cet endroit
-const isleWide = (rv, is) => (rv.w0 + (rv.w1 - rv.w0) * is.i / Math.max(1, rv.pts.length - 1)) / 2 * is.wid;
 function riverHW(rv) {
   const P = rv.pts, n = P.length, hit = riverHWCache.get(rv), cf = (rv.confl || []).join();
   if (hit && hit.n === n && hit.p0 === P[0] && hit.w0 === rv.w0 && hit.w1 === rv.w1 && hit.cf === cf) return hit.hw;
@@ -26,8 +25,8 @@ function riverHW(rv) {
     const t = i / (n - 1), base = (rv.w0 + (rv.w1 - rv.w0) * t) / 2;
     // variation de taille accentuée : lente respiration ±40 % (bassins et étranglements),
     // virages jusqu'à +100 %
-    const breathe = .28 * Math.sin(2 * Math.PI * i * 4 / 420 + p1) + .14 * Math.sin(2 * Math.PI * i * 4 / 170 + p2);
-    hw[i] = base * Math.max(.45, .75 + 1 * bend[i] + breathe);
+    // (plus de respiration ni d'élargissement dans les virages : c'est ce qui ondulait les berges)
+    hw[i] = base * 1.15; // berges lisses (demande du 08/10) : largeur régulière, qui grossit seulement et doucement vers l'aval
     // en aval d'une confluence, la rivière principale a reçu l'eau de l'affluent : +25 %
     for (const c of rv.confl || []) if (i > c) { const x = Math.min(1, (i - c) / 30); hw[i] *= 1 + .25 * x * x * (3 - 2 * x); }
   }
@@ -45,21 +44,6 @@ function riverHW(rv) {
     const o = new Float32Array(n);
     for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - win); k <= Math.min(n - 1, i + win); k++) { s += hw[k]; c++; } o[i] = s / c; }
     hw = o;
-  }
-  // îles : la rivière s'ouvre en deux bras autour de l'île (jusqu'à 2 fois sa largeur au
-  // milieu de l'île), puis se reforme — élargissement en cloche, sans marche
-  // (les berges s'écartent en suivant la forme de l'île, et un peu au-delà de ses pointes :
-  // chacun des deux bras garde au moins la largeur de la rivière, sans étranglement)
-  const hw0 = hw.slice();
-  for (const is of rv.isles || []) {
-    const wide = isleWide(rv, is), L = is.half * .9, span = Math.ceil(L * 1.6);
-    for (let k = Math.max(0, is.i - span); k <= Math.min(n - 1, is.i + span); k++) {
-      const t = Math.abs(k - is.i) / L, u = Math.max(0, 1 - (t / 1.6) ** 2), g = u * u * (3 - 2 * u); // départ et fin en douceur (pente nulle)
-      // (autour de l'île, on part d'au moins la largeur normale, même si la rivière est
-      // étroite à cet endroit : chaque bras garde la largeur d'une rivière)
-      const normal = (rv.w0 + (rv.w1 - rv.w0) * k / (n - 1)) / 2, own = hw0[k] + (Math.max(hw0[k], normal) - hw0[k]) * g;
-      hw[k] = Math.max(hw[k], own * (1 + .25 * g) + wide * 1.25 * g);
-    }
   }
   // berges sans renflement brusque : la demi-largeur ne varie pas plus que 1,3 m (ou 8 % de la
   // largeur, pour un fleuve) tous les 4 m, dans les deux sens
@@ -81,60 +65,9 @@ function riverHW(rv) {
     for (let i = 0; i < n; i++) { let s = 0, c = 0; for (let k = Math.max(0, i - win2); k <= Math.min(n - 1, i + win2); k++) { s += hw[k]; c++; } o[i] = s / c; }
     hw = o;
   }
-  riverHWCache.set(rv, { n, p0:P[0], w0:rv.w0, w1:rv.w1, cf:cf + JSON.stringify(rv.isles || []), hw });
+  for (let i = 0; i < n; i++) hw[i] = Math.max(hw[i], RIVER_MIN_HW);   // largeur minimale : une barque (≈ 2 m) passe partout, même à la source et à l'embouchure
+  riverHWCache.set(rv, { n, p0:P[0], w0:rv.w0, w1:rv.w1, cf, hw });
   return hw;
-}
-/* Îles de rivière : une lentille de terre allongée dans l'axe du courant, au milieu de la
-   partie élargie ; ses bords sont légèrement irréguliers. Polygones gardés en mémoire. */
-const riverIsleCache = new WeakMap();
-function riverIsles(rv) {
-  if (!rv.isles || !rv.isles.length) return [];
-  const HW = riverHW(rv), hit = riverIsleCache.get(rv);
-  if (hit && hit.hw === HW) return hit.polys;
-  const P = rv.pts, n = P.length, polys = [];
-  for (const is of rv.isles) {
-    const rnd = seeded(is.i * 97 + 13), wide = isleWide(rv, is);
-    const ph = [rnd() * 6.28, rnd() * 6.28], N = 40; // bords ondulés doucement (pas de dents)
-    // contour de l'île ; « len » raccourcit l'île, « k » l'amincit : le cœur herbeux est la même
-    // lentille, plus courte et plus mince, construite le long de la rivière — il suit donc la
-    // courbe de l'île et ne déborde jamais dans l'eau (une réduction vers le centre, elle,
-    // sortait de l'île dans les îles courbes)
-    const lens = (len, k) => {
-      const L = [], R = [];
-      for (let s = 0; s <= N; s++) {
-        const t = -1 + 2 * s / N, fi = is.i + t * len * is.half * .9, i0 = Math.max(0, Math.min(n - 2, Math.floor(fi))), f = fi - i0;
-        const p = [P[i0][0] + (P[i0 + 1][0] - P[i0][0]) * f, P[i0][1] + (P[i0 + 1][1] - P[i0][1]) * f];
-        const a = P[Math.max(0, i0 - 2)], b = P[Math.min(n - 1, i0 + 3)], dl = segLen(a, b) || 1, nx = -(b[1] - a[1]) / dl, ny = (b[0] - a[0]) / dl;
-        const tt = t * len, w = wide * k * Math.sqrt(Math.max(0, 1 - Math.abs(t) ** 2.4)); // bouts arrondis (tangente perpendiculaire à l'axe), pas de pointe
-        const wl = w * (1 + .07 * Math.sin(tt * 5 + ph[0])), wr = w * (1 + .07 * Math.sin(tt * 4 + ph[1]));
-        L.push([p[0] + nx * wl, p[1] + ny * wl]); R.push([p[0] - nx * wr, p[1] - ny * wr]);
-      }
-      return [...L, ...R.reverse()];
-    };
-    const poly = lens(1, 1), inner = lens(.82, .7);
-    polys.push({ P:poly, inner, bb:bbox(poly), c:P[is.i] });
-  }
-  riverIsleCache.set(rv, { hw:HW, polys });
-  return polys;
-}
-// place les îles d'une rivière neuve : au large des bords de carte, loin des ponts, dans les
-// passages assez droits, bien espacées ; leur nombre et leur taille dépendent du cours d'eau
-function placeIsles(rv, rnd) {
-  const cls = RIVER_CLASS[rv.cls] || RIVER_CLASS.riviere, P = rv.pts, n = P.length, isles = [];
-  const count = countIn(rnd, cls.isles), roads = S.roads.map(r => r.pts); // (tracé logique : appelé avant le dessin)
-  for (let k = 0; k < count; k++) for (let t = 0; t < 40; t++) {
-    const len = between(rnd, cls.isleLen), half = Math.round(len / 8), i = 20 + half + Math.floor(rnd() * (n - 40 - 2 * half));
-    if (i - half < 20 || i + half > n - 20) continue;
-    const a = P[i - half], b = P[i], c = P[i + half];
-    let turn = Math.atan2(c[1] - b[1], c[0] - b[0]) - Math.atan2(b[1] - a[1], b[0] - a[0]);
-    if (Math.abs(Math.atan2(Math.sin(turn), Math.cos(turn))) > (rv.cls === 'fleuve' ? .35 : .5)) continue; // trop dans un virage (pointes en crochet)
-    const clear = len / 2 + rv.w1 * 1.5 + 30;
-    if (roads.some(q => q.slice(1).some((e, j) => ptSeg(b, q[j], e).d < clear))) continue; // loin des ponts
-    if (isles.some(o => Math.abs(o.i - i) < o.half + half + 25)) continue;             // bien espacées
-    isles.push({ i, half, grow:.9 + rnd() * .3, wid:.8 + rnd() * .4 }); // île large : 0,8 à 1,2 fois la demi-largeur
-    break;
-  }
-  return isles;
 }
 // disques [x, y, rayon] le long du cours, assez serrés pour que la berge soit lisse
 // (espacement ≤ 40 % du rayon) ; gardés en mémoire tant que la rivière ne change pas
@@ -145,17 +78,17 @@ function riverDiscs(rv) {
   const P = rv.pts, d = [];
   for (let i = 0; i < P.length - 1; i++) {
     const a = P[i], b = P[i + 1], L = segLen(a, b), r0 = HW[i], r1 = HW[i + 1];
-    const n = Math.max(1, Math.ceil(L / Math.max(.6, Math.min(r0, r1) * .4)));
+    const n = Math.max(1, Math.ceil(L / Math.max(.6, Math.min(r0, r1) * .2)));
     for (let k = 0; k < n; k++) { const t = k / n; d.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, r0 + (r1 - r0) * t]); }
   }
   const e = P[P.length - 1]; d.push([e[0], e[1], HW[P.length - 1]]);
   riverDiscCache.set(rv, { hw:HW, d });
   return d;
 }
-const WATER_FOAM = '#8ea5e0'; // liseré clair le long des berges
+const WATER_FOAM = '#2b8db6'; // liseré clair le long des berges
 // dégradé léger au bord (demande du 05/10) : l'eau s'éclaircit vers la berge, en bandes étroites.
 // mixWater(couleur, a) : la teinte de l'eau tirée de a (0 à 1) vers un bleu franc plus clair (pas vers le blanc).
-const WATER_BANDS = 3, WATER_SHALLOW = '#4f8cf0';
+const WATER_BANDS = 3, WATER_SHALLOW = '#38acd3';
 const mixWater = (c, a) => { const h = x => (x.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']).slice(0, 3).map(v => parseInt(v, 16)), p = h(c), q = h(WATER_SHALLOW); return 'rgb(' + p.map((v, i) => Math.round(v + (q[i] - v) * a)).join(',') + ')'; };
 // contour d'un lac pour le dessin : ses 40 points lissés (Chaikin fermé, 3 passes), sans coin
 const lakeShapeCache = new WeakMap();
@@ -385,7 +318,7 @@ function plantesDuLac(lk, idx) {
     const q = [round2(B[0] + rnd() * (B[2] - B[0])), round2(B[1] + rnd() * (B[3] - B[1]))], inside = inPoly(q, P), d = rive(q), u = rnd(), acc = rnd();
     if (inside && d >= 1.5 && d <= 16) {                                             // nénuphar
       const r = .6 + rnd() * .7, forte = champ(q, 1, 28);
-      if (acc < forte * .85 && libre(q, r + .5) && !proche(q)) pose({ k:'lily', p:q, v:rnd(), r, a:rnd() * 6.28 }, r + .5);
+      if (acc < forte * .425 && libre(q, r + .5) && !proche(q)) pose({ k:'lily', p:q, v:rnd(), r, a:rnd() * 6.28 }, r + .5);
     } else if (!inside && d <= 2.2) {                                                // roseaux
       const forte = champ(q, 2, 22);
       if (acc < forte * .9 && libre(q, 1.3) && !proche(q)) pose({ k:'reed', p:q, v:rnd(), n:3 + Math.floor(rnd() * 3 + forte * 4) }, 1.3);

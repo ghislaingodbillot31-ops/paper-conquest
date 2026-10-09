@@ -11,7 +11,7 @@ const DEV_FILTERS = [
   { id:'seas', label:'Noms des mers' },
   { id:'animals', label:'Zones animales' },
 ];
-const DEV_STORAGE_KEY = 'paperConquestDevFilters';
+const DEV_STORAGE_KEY = 'dominiumDevFilters';
 const devState = { land:true, towns:true, numbers:true, fishing:true, seas:true, animals:false };
 try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
 

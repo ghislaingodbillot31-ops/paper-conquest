@@ -61,6 +61,10 @@ function drawWater() {
     }
     return path;
   };
+  // grève de sable le long des berges (image de référence) : bande claire, liseré plus foncé à l'extérieur
+  const sable = Math.max(2, 2.4 * s);
+  ctx.fillStyle = '#d6b06a'; ctx.fill(discs(edge + sable + 1.4)); ctx.fillStyle = '#f2dd9e'; ctx.fill(discs(edge + sable));
+  for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.lineJoin = 'round'; ctx.strokeStyle = '#d6b06a'; ctx.lineWidth = 2 * (edge + sable + 1.4); ctx.stroke(); ctx.strokeStyle = '#f2dd9e'; ctx.lineWidth = 2 * (edge + sable); ctx.stroke(); }
   ctx.fillStyle = Col['water-edge']; ctx.fill(discs(edge));
   ctx.lineWidth = edge * 2;
   for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.stroke(); }
@@ -78,6 +82,10 @@ function drawWater() {
   for (let i = 1; i <= WATER_BANDS + 1; i++) { ctx.fillStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.fill(discs(-foam - bw * (i - 1))); } // du plus large (le plus clair) au plus étroit
   ctx.fillStyle = water; ctx.fill(discs(-foam - bw * (WATER_BANDS + 1)));
   for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.fill(); }
+  if (s >= .4) {                                                                      // relief de l'eau (même système que le sol) : fonds et reflets, découpés dans l'eau
+    ctx.save(); ctx.clip(discs(-foam - bw * (WATER_BANDS + 1))); drawEauRelief(s); ctx.restore();
+    for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); drawEauRelief(s); ctx.restore(); }
+  }
   for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); ctx.lineJoin = 'round';
     for (let i = WATER_BANDS + 1; i >= 1; i--) { ctx.strokeStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.lineWidth = 2 * (foam + bw * i); ctx.stroke(); }
     ctx.restore(); }
@@ -85,16 +93,6 @@ function drawWater() {
     ctx.save(); shape(lakeShape(lk), true); ctx.clip();
     ctx.strokeStyle = WATER_FOAM; ctx.lineWidth = foam * 2 + edge * 2; ctx.stroke(); ctx.restore();
     shape(lakeShape(lk), true); ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = edge * 2; ctx.stroke();
-  }
-  // îles : berge sombre, grève de sable, puis le sol du biome au cœur de l'île
-  const look = biomeLook();
-  for (const rv of S.rivers) for (const is of riverIsles(rv)) {
-    if (is.bb[2] < wx0 || is.bb[0] > wx1 || is.bb[3] < wy0 || is.bb[1] > wy1) continue;
-    if (FORME && !surTerre([(is.bb[0] + is.bb[2]) / 2, (is.bb[1] + is.bb[3]) / 2])) continue;   // (île à l'embouchure, en mer : pas d'île)
-    shape(is.P, true); ctx.lineWidth = edge * 2; ctx.stroke();
-    ctx.fillStyle = '#e4d7a6'; ctx.fill();
-    shape(is.inner, true); // cœur herbeux : toujours à l'intérieur de l'île, même courbe
-    ctx.fillStyle = look.ground; ctx.fill();
   }
   // (le fil du courant en pointillés est supprimé : la mer n'en a pas)
   if (false) {
@@ -157,10 +155,19 @@ let bridgeCache = { key:null, list:[] };
 const ptInPoly = (p, poly) => { let c = false; for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) if ((poly[i][1] > p[1]) !== (poly[j][1] > p[1]) && p[0] < (poly[j][0] - poly[i][0]) * (p[1] - poly[i][1]) / (poly[j][1] - poly[i][1]) + poly[i][0]) c = !c; return c; };
 function bridges() {
   if (bridgeCache.v === sceneV && bridgeCache.S === S) return bridgeCache.list; // décor inchangé : rien à vérifier
-  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined, r.isles]), (S.lakes || []).map(l => [l.c, l.pts && l.pts.length])]);
+  const key = JSON.stringify([S.roads.map(r => [r.id, r.kind, r.pts]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.confl, r.joined]), (S.lakes || []).map(l => [l.c, l.pts && l.pts.length])]);
   if (bridgeCache.key === key) { bridgeCache.v = sceneV; bridgeCache.S = S; return bridgeCache.list; }
   const list = [];
-  const rivs = S.rivers.map(river => { const rv = river.pts, HW = riverHW(river); return { rv, HW, bb:bbox(rv), hmax:Math.max(...HW) }; });
+  // chaque rivière : grille de 40 m des segments (élargis de leur demi-largeur + 12 m) : un point de route ne teste que les segments de sa case
+  const GC = 40, rivs = S.rivers.map(river => {
+    const rv = river.pts, HW = riverHW(river), grille = new Map();
+    for (let j = 0; j < rv.length - 1; j++) {
+      const m = Math.max(HW[j], HW[j + 1]) + 12;
+      for (let gx = Math.floor((Math.min(rv[j][0], rv[j + 1][0]) - m) / GC); gx <= Math.floor((Math.max(rv[j][0], rv[j + 1][0]) + m) / GC); gx++)
+        for (let gy = Math.floor((Math.min(rv[j][1], rv[j + 1][1]) - m) / GC); gy <= Math.floor((Math.max(rv[j][1], rv[j + 1][1]) + m) / GC); gy++) { const k = gx * 100003 + gy; (grille.get(k) || grille.set(k, []).get(k)).push(j); }
+    }
+    return { rv, HW, grille, bb:bbox(rv), hmax:Math.max(...HW) };
+  });
   const lacs = (S.lakes || []).map(lk => { const poly = lakeShape(lk); return { poly, bb:bbox(poly) }; });
   for (const r of S.roads) {
     const RP = smoothPts(r), P = resample(RP, PONT_PAS), n = P.length, rbb = bbox(RP), w = roadType(r).surf / 2 + 1.2;
@@ -171,7 +178,7 @@ function bridges() {
     if (!near.length && !lnear.length) continue;
     const wet = P.map(q => {
       for (const v of near) { if (q[0] < v.bb[0] - v.hmax - w || q[0] > v.bb[2] + v.hmax + w || q[1] < v.bb[1] - v.hmax - w || q[1] > v.bb[3] + v.hmax + w) continue;
-        for (let j = 0; j < v.rv.length - 1; j++) if (ptSeg(q, v.rv[j], v.rv[j + 1]).d < Math.max(v.HW[j], v.HW[j + 1]) + w * .5) return true; }
+        for (const j of v.grille.get(Math.floor(q[0] / GC) * 100003 + Math.floor(q[1] / GC)) || []) if (ptSeg(q, v.rv[j], v.rv[j + 1]).d < Math.max(v.HW[j], v.HW[j + 1]) + w * .5) return true; }
       for (const l of lnear) if (q[0] >= l.bb[0] - w && q[0] <= l.bb[2] + w && q[1] >= l.bb[1] - w && q[1] <= l.bb[3] + w && ptInPoly(q, l.poly)) return true;
       return false;
     });

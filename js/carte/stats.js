@@ -2,7 +2,7 @@
    Le panneau de droite occupe toute la hauteur de l'écran et ne se ferme jamais. Quand rien n'est sélectionné il affiche des STATISTIQUES PERSONNALISÉES : le joueur choisit celles qu'il veut voir
    (bouton « Personnaliser » : cases à cocher, enregistrées dans le navigateur, clé STATS_CLE). Chaque statistique : { id, groupe, nom, val() → texte }. Ajouter une statistique = une ligne dans STATS.
    Rafraîchi chaque seconde tant que rien n'est sélectionné. */
-const STATS_CLE = 'paperConquestStats', STATS_DEFAUT = ['hab', 'trav', 'or', 'date', 'nourriture', 'bois', 'pierre', 'satiete', 'actifs', 'pleins'];
+const STATS_CLE = 'dominiumStats', STATS_DEFAUT = ['hab', 'trav', 'or', 'date', 'nourriture', 'bois', 'pierre', 'satiete', 'actifs', 'pleins'];
 const stk = k => Math.floor((stockVillage()[k] || 0));
 const somme_ = (liste, st = stockVillage()) => Math.floor(liste.reduce((q, k) => q + (st[k] || 0), 0));
 const ouvriersVivants = () => [...workers.values()].filter(w => !w.passive);

@@ -1,4 +1,4 @@
-# Paper Conquest
+# DOMINIUM
 
 Jeu de gestion politique et territoriale, en pages HTML simples (pas de build, pas de framework). Identité visuelle "papier & crayon" posée sur un vrai globe interactif [MapLibre GL](https://maplibre.org/) : 500 régions compactes, individuellement sélectionnables, chacune avec sa propre carte générée (campagne, routes, bâtiments, fortifications).
 

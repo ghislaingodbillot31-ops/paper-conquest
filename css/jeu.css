@@ -58,7 +58,10 @@ button{ font-family:inherit; }
 .brand{ display:flex; align-items:center; gap:10px; }
 .brand-crest{ width:38px; height:38px; flex:none; }
 .brand-text .hand{ font-size:1.7rem; line-height:1; letter-spacing:0.02em; color:var(--ink); }
-.brand-sub{ font-size:0.72rem; color:var(--ink-soft); font-style:italic; margin-top:1px; }
+.brand-sub{ font-size:0.72rem; color:var(--ink-soft); font-style:italic; margin-top:1px; display:flex; align-items:center; gap:5px; text-decoration:none; }
+.brand-sub:hover{ color:var(--ink); }
+.brand-portrait{ width:18px; height:18px; display:inline-block; }
+.brand-portrait svg{ width:100%; height:100%; display:block; }
 
 .stat-pills{ display:flex; gap:18px; flex-wrap:wrap; margin-left:auto; }
 .stat-pill{ display:flex; align-items:center; gap:8px; }
@@ -392,3 +395,13 @@ table.rank .empty-row{ display:table-cell; }
   .stat-pills{ margin-left:0; order:3; width:100%; justify-content:space-between; }
   main.workspace{ padding:14px 12px 24px; }
 }
+
+/* choix de la région de départ : barre en bas de l'écran (globe comme carte de la région), la région n'est validée qu'au bouton Confirmer */
+.start-bar{ position:fixed; left:50%; bottom:86px; transform:translateX(-50%); z-index:60; display:flex; align-items:center; gap:14px; max-width:calc(100% - 24px);
+  background:var(--card); border:1.5px solid var(--line-strong); border-radius:12px; padding:8px 8px 8px 16px; box-shadow:0 6px 18px var(--shadow); font-weight:700; }
+.start-bar[hidden]{ display:none; }
+.start-ok{ appearance:none; border:1.5px solid var(--accent-ink); background:var(--accent); color:var(--accent-ink); font:800 1rem 'Nunito',sans-serif; padding:10px 22px; border-radius:9px; cursor:pointer; }
+.start-ok:hover:not(:disabled){ background:#cfa468; }
+.start-ok:disabled{ opacity:.45; cursor:not-allowed; }
+.start-ok:focus-visible{ outline:3px solid var(--chart-1); outline-offset:2px; }
+.capital-tabs[hidden], #cap-gestion[hidden]{ display:none; }

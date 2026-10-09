@@ -136,6 +136,6 @@ function drawBateaux() {
       ctx.setLineDash([5, 5]); ctx.strokeStyle = 'rgba(214,69,65,.85)'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.moveTo(X, Y); for (const w of r.wp) ctx.lineTo(...toS(w[0], w[1])); ctx.stroke(); ctx.setLineDash([]);
       const [DX, DY] = toS(...r.wp[r.wp.length - 1]); ctx.beginPath(); ctx.arc(DX, DY, 7, 0, 7); ctx.moveTo(DX - 4, DY - 4); ctx.lineTo(DX + 4, DY + 4); ctx.moveTo(DX + 4, DY - 4); ctx.lineTo(DX - 4, DY + 4); ctx.stroke();
     }
-    if (s > .12) { ctx.font = '600 14px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(a.nom, X, Y + Math.max(Ls * a.B * .7, 10) + 4, Col.ink, Col.sheet); }
+    if (s > ETIQ_ZOOM_MIN) { ctx.font = FONT_ETIQ; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(a.nom, X, Y + Math.max(Ls * a.B * .7, 10) + 4, Col.ink, Col.sheet); }
   }
 }

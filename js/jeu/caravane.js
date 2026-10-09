@@ -5,7 +5,7 @@
 // (plus court chemin en km sur les routes brunes), en temps reel et
 // sauvegarde. Arrivee en ville, elle y reste (icone masquee) jusqu'a un
 // nouvel ENVOYER depuis la fenetre de la ville.
-const CARAVAN_STORAGE_KEY = 'paperConquestCaravan';
+const CARAVAN_STORAGE_KEY = 'dominiumCaravan';
 const CARAVAN_SPEED_KM_S = 20;   // vitesse de test: 20 km par seconde reelle
 const caravan = { pos:null, voyage:null, moving:false };
 const caravanSend = { active:false, from:null };

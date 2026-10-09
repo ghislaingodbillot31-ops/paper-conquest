@@ -173,7 +173,7 @@ function drawVoies() {                                                         /
   ctx.restore();
 }
 function drawTerrestres() {
-  if (tool === 'marcher' || (typeof JR !== 'undefined' && JR.actif && JR.voies)) drawVoies();   // (mode développeur, option « Lignes de circulation » de l'onglet)
+  if (typeof JR !== 'undefined' && JR.actif && (tool === 'marcher' || JR.voies)) drawVoies();   // (mode développeur, option « Lignes de circulation » de l'onglet)
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 20, vus = [];
   for (const o of S.chariots || []) if (o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m) vus.push(['c', o]);
   for (const o of S.villageois || []) if (o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m) vus.push(['v', o]);
@@ -184,6 +184,6 @@ function drawTerrestres() {
     else { const a = CHARIOTS[o.kind]; peintChariot(o.kind, X, Y, Math.max(14, a.T * s), o.a, r && r.braq || 0); }
     if (k === marcheSel) { const R = t === 'c' ? Math.max(14, CHARIOTS[o.kind].T * s) * .75 : Math.max(7, VILLAGEOIS[o.kind].T * s * 1.2); ctx.save(); ctx.setLineDash([5, 4]); ctx.strokeStyle = '#d64541'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(X, Y, R, 0, 7); ctx.stroke(); ctx.setLineDash([]);
       if (r) { const [DX, DY] = toS(r.cible[0], r.cible[1]); ctx.strokeStyle = 'rgba(214,69,65,.85)'; ctx.beginPath(); ctx.moveTo(X, Y); for (const w of r.chemin) ctx.lineTo(...toS(w[0], w[1])); ctx.stroke(); ctx.beginPath(); ctx.arc(DX, DY, 7, 0, 7); ctx.moveTo(DX - 4, DY - 4); ctx.lineTo(DX + 4, DY + 4); ctx.moveTo(DX + 4, DY - 4); ctx.lineTo(DX - 4, DY + 4); ctx.stroke(); } ctx.restore(); }
-    if (s > .3) { ctx.font = '600 14px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(t === 'v' ? VILLAGEOIS[o.kind].nom : CHARIOTS[o.kind].nom, X, Y + (t === 'c' ? Math.max(14, CHARIOTS[o.kind].T * s) * .55 : Math.max(7, VILLAGEOIS[o.kind].T * s * 1.2) * .6) + 3, Col.ink, Col.sheet); }
+    if (s > ETIQ_ZOOM_MIN) { ctx.font = FONT_ETIQ; ctx.textAlign = 'center'; ctx.textBaseline = 'top'; haloText(t === 'v' ? VILLAGEOIS[o.kind].nom : CHARIOTS[o.kind].nom, X, Y + (t === 'c' ? Math.max(14, CHARIOTS[o.kind].T * s) * .55 : Math.max(7, VILLAGEOIS[o.kind].T * s * 1.2) * .6) + 3, Col.ink, Col.sheet); }
   }
 }

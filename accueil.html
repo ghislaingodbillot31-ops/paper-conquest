@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<title>DOMINIUM</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/jeu.css">
+<link rel="stylesheet" href="css/accueil.css">
+
+<main class="accueil">
+  <div class="accueil-carte">
+    <svg class="accueil-blason" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18" fill="none" stroke="#3c3527" stroke-width="2"/><path d="M20 2 C 26 10 26 30 20 38 M20 2 C 14 10 14 30 20 38 M2 20 H38 M5 12 H35 M5 28 H35" fill="none" stroke="#3c3527" stroke-width="1.4"/></svg>
+    <h1 class="hand accueil-titre">DOMINIUM</h1>
+    <p class="accueil-sous hand">Un monde entre vos mains</p>
+
+    <section class="etape" id="etape-titre">
+      <div class="actions">
+        <button class="btn principal" id="btn-continuer" type="button" hidden>Continuer<small id="continuer-sous"></small></button>
+        <button class="btn" id="btn-nouvelle" type="button">Nouvelle partie</button>
+      </div>
+    </section>
+
+    <section class="etape" id="etape-perso" hidden>
+      <h2 class="hand">Votre personnage</h2>
+      <p>Qui dirigera votre premier village ?</p>
+      <div class="champ"><label for="nom">Nom</label><input id="nom" maxlength="24" autocomplete="off" placeholder="Ex. Aliénor de Vaux"></div>
+      <div class="champ"><label id="lib-portrait">Portrait</label></div>
+      <div class="portraits" id="portraits" role="radiogroup" aria-labelledby="lib-portrait"></div>
+      <div class="rang"><button class="btn" id="perso-retour" type="button">Retour</button><button class="btn principal" id="perso-suivant" type="button" disabled>Choisir ma région</button></div>
+    </section>
+  </div>
+</main>
+
+<div class="modale" id="modale" hidden role="dialog" aria-modal="true" aria-labelledby="modale-titre">
+  <div>
+    <h2 class="hand" id="modale-titre" style="font-size:1.8rem">Effacer la partie ?</h2>
+    <p style="color:var(--ink-soft)">Votre partie en cours (régions, bâtiments, économie) sera supprimée. Cette action est définitive.</p>
+    <div class="rang"><button class="btn" id="modale-non" type="button">Annuler</button><button class="btn principal" id="modale-oui" type="button">Tout effacer</button></div>
+  </div>
+</div>
+
+<script src="js/jeu/joueur.js"></script>
+<script src="js/jeu/accueil.js"></script>
+</body>
+</html>

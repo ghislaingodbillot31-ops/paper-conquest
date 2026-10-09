@@ -1,12 +1,14 @@
+// renommage du jeu en DOMINIUM : les sauvegardes du navigateur (paperConquest…) sont reprises sous leur nouveau nom
+try { for (const k of Object.keys(localStorage)) if (k.startsWith('paperConquest')) { const n = 'dominium' + k.slice(13); if (localStorage.getItem(n) === null) localStorage.setItem(n, localStorage.getItem(k)); localStorage.removeItem(k); } } catch (e) {}
 // ---------- Regions: propriete, capitale, construction (sauvegarde locale) ----------
 // Etat du joueur, memorise dans ce navigateur (localStorage):
 //  - regions possedees (ids), achetees depuis le panneau de region;
 //  - batiments construits, par region: [{ type, pos, bearing, builtAt }].
 // Pas encore de serveur de jeu: "un autre joueur" n'existe pas encore, mais
 // chaque achat verifie deja que la region n'a pas de proprietaire (owner).
-const OWNED_STORAGE_KEY = 'paperConquestOwned';
-const BUILDINGS_STORAGE_KEY = 'paperConquestBuildings';
-const LEGACY_START_KEY = 'paperConquestStart'; // ancien achat unique, repris une fois
+const OWNED_STORAGE_KEY = 'dominiumOwned';
+const BUILDINGS_STORAGE_KEY = 'dominiumBuildings';
+const LEGACY_START_KEY = 'dominiumStart'; // ancien achat unique, repris une fois
 let selectedId = null;
 let ownedRegions = new Set();
 let buildings = {};
@@ -34,11 +36,28 @@ const regionBuildings = id => buildings[id] || [];
 // sur la selection des regions au clic.
 const interactionBusy = () => placement.active || boat.placing || boat.selected || send.active || caravanSend.active;
 
+// Tant que le joueur n'a pas confirmé sa région de départ, un clic sur une région ne fait que l'afficher (fiche à droite) ; elle n'est validée qu'au bouton Confirmer (barre du bas)
+const choixDepart = () => ownedRegions.size === 0;
 function updateRibbon(){
   const ribbon = document.getElementById('map-ribbon');
-  const ids = [...ownedRegions].sort((a, b) => a - b);
-  ribbon.textContent = selectedId !== null ? '📍 Région ' + selectedId : '📍 Cliquez sur une région pour l\'afficher';   // (plus d'achat : toute région s'affiche)
+  ribbon.textContent = choixDepart() ? (selectedId !== null ? '📍 Région ' + selectedId + ' · appuyez sur Confirmer pour commencer ici' : '📍 Choisissez votre région de départ : cliquez sur les régions pour les voir')
+    : selectedId !== null ? '📍 Région ' + selectedId : "📍 Cliquez sur une région pour l'afficher";
+  updateStartBar();
 }
+function updateStartBar(){
+  const bar = document.getElementById('start-bar'); if(!bar) return;
+  bar.hidden = !(choixDepart() && selectedId !== null);
+  if(bar.hidden) return;
+  const npc = NPC_REGION_IDS.has(selectedId);
+  document.getElementById('start-bar-text').textContent = npc ? 'Région ' + selectedId + ' : comptoir de commerce, non jouable' : 'Région ' + selectedId + ' sélectionnée';
+  document.getElementById('start-confirm').disabled = npc;
+}
+function confirmerDepart(){
+  if(!choixDepart() || selectedId === null || NPC_REGION_IDS.has(selectedId)) return;
+  ownedRegions.add(selectedId); savePlayerState(); refreshOwnershipLayers();
+  capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale');
+}
+document.getElementById('start-confirm').addEventListener('click', confirmerDepart);
 function refreshOwnershipLayers(){
   regionsFc.features.forEach(f => map.setFeatureState({ source:'regions', id:f.id }, { owned:ownedRegions.has(f.id) }));
   if(map.getLayer('capitals-owned')) map.setFilter('capitals-owned', ['in', ['get', 'regionId'], ['literal', [...ownedRegions]]]);

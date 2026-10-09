@@ -23,6 +23,8 @@ function draw() {
   if (atelier.on) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
   const pending = presentScene();                         // décor (tuiles)
   /* ORDRE : ce qui vit sous les arbres d'abord (animaux, bateaux, personnages — drawWorkers peint aussi la couche de cimes par-dessus eux), PUIS tout ce qui doit rester lisible et au-dessus des arbres : sélection, zones de travail, aperçus, noms, textes. */
+  const dev = typeof JR !== 'undefined' && JR.actif;                                        // (zones de pêche et lignes de circulation : mode développeur seulement)
+  if (dev && typeof drawRidesPeche === 'function') drawRidesPeche();    // rides légères sur les spots de pêche (poissons à la surface) : sous les bateaux et les personnages
   if (typeof drawFaune === 'function') drawFaune();
   if (typeof drawBateaux === 'function') drawBateaux();
   if (typeof drawTerrestres === 'function') drawTerrestres();
@@ -55,8 +57,10 @@ function draw() {
   drawWorkZones();
   if (typeof drawChampApercu === 'function') drawChampApercu();
   if (typeof drawCaptureCibles === 'function') drawCaptureCibles();
-  if (typeof drawEauPeche === 'function') drawEauPeche();
+  if (dev && typeof drawEauPeche === 'function') drawEauPeche();
   if (typeof drawFauneNoms === 'function') drawFauneNoms();
+  if (typeof drawRessources === 'function') drawRessources();   // repères de la map test : à chaque image (pas dans les tuiles : taille d'écran constante)
+  if (typeof drawEtiquettes === 'function') drawEtiquettes();   // noms des gisements et des arbres fruitiers (etiquettes.js)
   drawDraft();
   drawScale();
   updateStatus();

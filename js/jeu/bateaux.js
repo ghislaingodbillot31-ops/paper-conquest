@@ -111,7 +111,7 @@ function createNavigator(grid){
 // (createNavigator), affiche, puis suivi a vitesse constante. Le voyage est
 // sauvegarde (depart + duree): recharger la page reprend le trajet la ou il
 // en est. Arrive au port d'un comptoir, le bateau y est "a quai".
-const BOAT_STORAGE_KEY = 'paperConquestBoat';
+const BOAT_STORAGE_KEY = 'dominiumBoat';
 const BOAT_SPEED_KM_S = 60;   // vitesse de test: 60 km par seconde reelle
 const boat = { pos:null, selected:false, moving:false, placing:false, voyage:null };
 let seaNavigator = null, boatReady = false, boatPathTimer = null, sailRun = 0;

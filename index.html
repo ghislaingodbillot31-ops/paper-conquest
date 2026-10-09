@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <meta charset="utf-8">
-<title>Paper Conquest 2.0</title>
+<title>DOMINIUM</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
@@ -16,8 +16,8 @@
     <div class="brand">
       <svg class="brand-crest" viewBox="0 0 40 40"><circle cx="20" cy="20" r="18" fill="none" stroke="#3c3527" stroke-width="2"/><path d="M20 2 C 26 10 26 30 20 38 M20 2 C 14 10 14 30 20 38 M2 20 H38 M5 12 H35 M5 28 H35" fill="none" stroke="#3c3527" stroke-width="1.2"/></svg>
       <div class="brand-text">
-        <h1 class="hand">Paper Conquest</h1>
-        <div class="brand-sub hand">Un monde entre vos mains</div>
+        <h1 class="hand">DOMINIUM</h1>
+        <a class="brand-sub hand" id="brand-joueur" href="accueil.html" title="Retour à l'écran d'accueil">Un monde entre vos mains</a>
       </div>
     </div>
     <div class="stat-pills">
@@ -104,6 +104,11 @@
   </main>
 </div>
 
+<div class="start-bar" id="start-bar" hidden>
+                <span id="start-bar-text"></span>
+                <button class="start-ok" id="start-confirm" type="button">Confirmer</button>
+              </div>
+
 <div class="capital-modal" id="capital-modal" hidden>
   <div class="capital-panel" role="dialog" aria-modal="true" aria-labelledby="capital-title">
     <div class="capital-head"><h2 class="hand" id="capital-title">Capitale</h2><button class="capital-close" id="capital-close" type="button" aria-label="Fermer">✕</button></div>
@@ -112,6 +117,8 @@
   </div>
 </div>
 
+<script src="js/jeu/joueur.js"></script>
+<script>if (!lireJoueur()) location.replace('accueil.html');   // pas de personnage : écran d'accueil</script>
 <script src="js/saisons.js"></script>
 <script src="js/jeu/interface.js"></script>
 <script src="js/jeu/globe.js"></script>
@@ -130,3 +137,7 @@
 <script src="js/jeu/carte-region.js"></script>
 <script src="js/jeu/economie.js"></script>
 <script src="js/jeu/tableaux.js"></script>
+<script>{ const j = lireJoueur(), a = document.getElementById('brand-joueur'); if (j && a) { a.innerHTML = '<span class="brand-portrait">' + portraitSVG(j.portrait) + '</span>'; a.append(j.nom); } }   // personnage du joueur, sous le titre</script>
+<script>if (!estDev()) { const d = document.querySelector('.dev-panel'); if (d) d.style.display = 'none'; }   // le panneau développeur du globe n'apparaît qu'en mode développeur</script>
+</body>
+</html>

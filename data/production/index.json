@@ -1,0 +1,67 @@
+{
+ "version": 1,
+ "note": "Une filière est « migrée » quand son fichier de recettes est saisi ; le validateur ne signale d'erreur que pour les filières migrées.",
+ "filieres": [
+  {
+   "id": "metal",
+   "nom": "Métal",
+   "ordre": 1,
+   "migree": true,
+   "fichier": "recettes/metal.json"
+  },
+  {
+   "id": "bois",
+   "nom": "Bois",
+   "ordre": 2,
+   "migree": true,
+   "fichier": "recettes/bois.json"
+  },
+  {
+   "id": "alimentation",
+   "nom": "Alimentation",
+   "ordre": 3,
+   "migree": false,
+   "fichier": "recettes/alimentation.json",
+   "anticipee": true
+  },
+  {
+   "id": "elevage",
+   "nom": "Élevage",
+   "ordre": 4,
+   "migree": false,
+   "fichier": "recettes/elevage.json",
+   "anticipee": true
+  },
+  {
+   "id": "cuir_textile",
+   "nom": "Cuir et textile",
+   "ordre": 5,
+   "migree": false,
+   "fichier": "recettes/cuir_textile.json",
+   "anticipee": true
+  },
+  {
+   "id": "armes",
+   "nom": "Armes et équipement",
+   "ordre": 6,
+   "migree": false,
+   "fichier": "recettes/armes.json"
+  },
+  {
+   "id": "construction",
+   "nom": "Construction",
+   "ordre": 7,
+   "migree": false,
+   "fichier": "recettes/construction.json",
+   "anticipee": true
+  },
+  {
+   "id": "commerce",
+   "nom": "Commerce et consommation",
+   "ordre": 8,
+   "migree": false,
+   "fichier": "recettes/commerce.json",
+   "anticipee": true
+  }
+ ]
+}

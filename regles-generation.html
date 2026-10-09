@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Règles de génération</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a; --ok:#3f7a3a; --mod:#b8651e}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.4 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px auto;color:var(--soft);max-width:900px}
+  .barre{position:sticky;top:0;z-index:5;display:flex;gap:10px;justify-content:center;align-items:center;padding:8px;background:var(--bg);border-bottom:1px solid var(--edge)}
+  button{padding:7px 16px;border:1.4px solid var(--edge);border-radius:6px;background:#fff8e8;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+  button.principal{background:var(--ok);border-color:var(--ok);color:#fff}
+  button:disabled{opacity:.45;cursor:default}
+  #etat{font-weight:600;min-width:260px}
+  .groupe{margin:18px 24px 0}
+  .groupe h2{margin:0 0 8px;font:700 26px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.05em;border-bottom:2px solid var(--edge)}
+  .regle{display:grid;grid-template-columns:minmax(220px,1.2fr) 1fr 90px 90px;gap:10px;align-items:center;background:var(--card);border:1.4px solid var(--edge);border-radius:8px;padding:8px 12px;margin-bottom:8px}
+  .regle.mod{border-color:var(--mod);box-shadow:0 0 0 2px #b8651e33}
+  .regle b{font-weight:700}
+  .regle small{display:block;color:var(--soft);font-weight:400}
+  .regle input[type=range]{width:100%}
+  .regle input[type=number]{width:84px;padding:4px 6px;border:1.4px solid var(--edge);border-radius:5px;font:inherit;text-align:right}
+  .regle .def{font-size:12px;color:var(--soft);text-align:right}
+  .fixes{margin:26px 24px 40px}
+  .fixes h2{margin:0 0 8px;font:700 26px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.05em;border-bottom:2px solid var(--edge)}
+  .fixes h3{margin:14px 0 4px;font-size:15px}
+  .fixes ul{margin:0;padding-left:20px}
+  .fixes li{margin:2px 0}
+</style></head>
+<body>
+<header>
+  <h1>RÈGLES DE GÉNÉRATION</h1>
+  <p>Les distances (en mètres, bord contre bord) entre les types d'éléments posés sur la carte. Changez une valeur au curseur ou au clavier, puis cliquez <b>Valider</b> : les nouvelles distances sont appliquées tout de suite aux cartes ouvertes (Test jeu, Générateur, Ressources), sans recharger, et gardées pour les prochaines.</p>
+</header>
+<div class="barre"><button id="valider" class="principal" type="button" disabled>Valider</button><button id="annuler" type="button" disabled>Annuler les changements</button><button id="defauts" type="button">Tout remettre par défaut</button><span id="etat"></span></div>
+<div id="regles"></div>
+<section class="fixes">
+  <h2>RÈGLES FIXES (non modifiables ici)</h2>
+  <h3>Cailloux, rochers et pierres</h3><ul>
+    <li>Jamais l'un sur l'autre, jamais dans l'eau mais au bord, jamais sur une route (distances ci-dessus) ; le plus gros est gardé quand deux se touchent.</li>
+    <li>Jamais sous un bâtiment, sur un champ, sur un gisement, ni dans ou sous une forêt.</li>
+    <li>Cailloux de berge : par groupes de 1 à 5, posés à terre le long des rivières et des lacs.</li>
+    <li>Pierres à tailler : éparpillées sur la carte et plus nombreuses au bord des chemins ; silex : petits amas de nodules, hors forêt.</li></ul>
+  <h3>Arbres, buissons et plantes</h3><ul>
+    <li>Pas sur une route, une muraille, une tour, une porte, un gisement, un arbre fruitier, un champ ni sous un bâtiment ; jamais hors du terrain ni en mer.</li>
+    <li>Forêts : définies par un bruit (grandes masses) ; dans une forêt, rien d'autre que la forêt (ni arbre isolé, ni buisson, ni caillou).</li>
+    <li>Arbres isolés : surtout dans les clairières.</li>
+    <li>Arbres fruitiers et arbustes à baies : seulement les espèces validées, selon le biome, la température, l'humidité et le terrain.</li></ul>
+  <h3>Décors du sol (fleurs, touffes, buissons décoratifs, feuilles, champignons)</h3><ul>
+    <li>Sols herbeux : décors complets ; sols secs (savane, steppe, déserts) : herbes sèches, épis, brindilles, galets et pierres ; neige et glace : aucun.</li>
+    <li>Seuls les modèles « retenus » dans l'onglet Décors du sol sont posés (aucun retenu : tous). Toujours sous les arbres, les bâtiments, les habitants et les animaux.</li>
+    <li>Feuilles, champignons et souches : seulement au pied des arbres isolés ; prairies fleuries : taches de 6 à 16 m.</li></ul>
+  <h3>Eau et rivières</h3><ul>
+    <li>Largeur minimale d'un cours d'eau : 10 m (une barque passe) ; berges lisses ; le relief de l'eau n'a que deux couleurs et aucune ombre.</li>
+    <li>Rivières : aucune île ; les confluences sont raccordées en courbe, sans angle ; largeur minimale de 10 m ; contours lissés.</li>
+    <li>Ponts : toujours droits et perpendiculaires à la rivière, avec une route rectiligne dans leur axe avant et après (distances ci-dessus, groupe Routes) ; les routes de région longent un fleuve à la distance réglée.</li>
+    <li>Seule végétation dans l'eau : nénuphars (à 1,5 à 16 m du bord des lacs), roseaux au bord et plantes de berge.</li>
+    <li>Animaux : jamais dans l'eau ; habitants cachés à l'intérieur des bâtiments.</li></ul>
+</section>
+<script src="js/carte/regles.js"></script>
+<script>
+const lire = () => { try { const o = JSON.parse(localStorage.getItem(REGLES_CLE) || '{}'); return o && typeof o === 'object' ? o : {}; } catch (e) { return {}; } };
+const val = (o, id) => typeof o[id] === 'number' ? o[id] : REGLES_DEF.find(r => r.id === id).def;
+const fmt = v => String(Math.round(v * 100) / 100).replace('.', ',');
+let appl = lire(), draft = { ...appl };
+const zone = document.getElementById('regles'), etat = document.getElementById('etat'), bV = document.getElementById('valider'), bA = document.getElementById('annuler');
+const modifie = () => REGLES_DEF.some(r => val(draft, r.id) !== val(appl, r.id));
+function rafraichit() {
+  const m = modifie(); bV.disabled = bA.disabled = !m;
+  etat.textContent = m ? 'Changements non validés' : 'Toutes les règles sont appliquées'; etat.style.color = m ? 'var(--mod)' : 'var(--ok)';
+  for (const el of zone.querySelectorAll('.regle')) {
+    const id = el.dataset.id, v = val(draft, id), r = REGLES_DEF.find(q => q.id === id);
+    el.classList.toggle('mod', v !== val(appl, id)); el.querySelector('input[type=range]').value = v; el.querySelector('input[type=number]').value = v; el.querySelector('.def').textContent = 'défaut ' + fmt(r.def) + ' m';
+  }
+}
+for (const g of [...new Set(REGLES_DEF.map(r => r.groupe))]) {
+  const s = document.createElement('section'); s.className = 'groupe'; s.innerHTML = '<h2></h2>'; s.querySelector('h2').textContent = g.toUpperCase();
+  for (const r of REGLES_DEF.filter(q => q.groupe === g)) {
+    const el = document.createElement('div'); el.className = 'regle'; el.dataset.id = r.id;
+    el.innerHTML = '<div><b></b><small></small></div><input type="range"><input type="number"><span class="def"></span>';
+    el.querySelector('b').textContent = r.nom; el.querySelector('small').textContent = r.aide;
+    for (const i of el.querySelectorAll('input')) { i.min = r.min; i.max = r.max; i.step = r.pas; }
+    const set = v => { v = Math.max(r.min, Math.min(r.max, +v)); if (isFinite(v)) { draft[r.id] = Math.round(v * 100) / 100; rafraichit(); } };
+    el.querySelector('input[type=range]').addEventListener('input', e => set(e.target.value));
+    el.querySelector('input[type=number]').addEventListener('change', e => set(e.target.value));
+    s.appendChild(el);
+  }
+  zone.appendChild(s);
+}
+bV.onclick = () => {
+  try { localStorage.setItem(REGLES_CLE, JSON.stringify(draft)); } catch (e) { etat.textContent = 'Enregistrement impossible'; return; }
+  appl = { ...draft }; rafraichit(); etat.textContent = 'Validé : appliqué aux cartes ouvertes'; etat.style.color = 'var(--ok)';
+};
+bA.onclick = () => { draft = { ...appl }; rafraichit(); };
+document.getElementById('defauts').onclick = () => { draft = {}; rafraichit(); };
+rafraichit();
+</script>
+</body></html>

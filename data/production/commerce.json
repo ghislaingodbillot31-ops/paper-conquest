@@ -1,0 +1,36 @@
+{
+ "note": "Comptoir commercial : exporte les surplus contre monnaie, importe ce que la région ne produit pas.",
+ "exports": [
+  "planches",
+  "fer",
+  "acier",
+  "cuivre",
+  "étain",
+  "bronze",
+  "plomb",
+  "argent",
+  "or",
+  "sel",
+  "alun",
+  "ambre",
+  "laine",
+  "drap",
+  "toile",
+  "cuir",
+  "vin",
+  "hydromel",
+  "fromage de garde",
+  "salaison",
+  "poteries",
+  "verre",
+  "bijoux",
+  "huile d'olive",
+  "savon fin"
+ ],
+ "imports": [
+  "épices",
+  "soie",
+  "alun",
+  "encre"
+ ]
+}

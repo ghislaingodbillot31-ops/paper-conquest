@@ -325,7 +325,7 @@ function drawEauPeche() {
     const [X, Y] = toS(t.c[0], t.c[1]);
     ctx.beginPath(); ctx.moveTo(X, Y - r); ctx.lineTo(X + r, Y); ctx.lineTo(X, Y + r); ctx.lineTo(X - r, Y); ctx.closePath();                       // un losange : point d'attache
     ctx.fillStyle = pris ? '#3a3a3a' : rec.connu == null ? '#9aa4a8' : `hsl(${Math.round(rec.connu * 1.1)},60%,45%)`; ctx.fill(); ctx.strokeStyle = actif ? Col.accent : Col.sheet; ctx.lineWidth = actif ? 3 : 1.5; ctx.stroke();
-    if (s > .3) { ctx.font = '600 12px "IBM Plex Mono", monospace'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; haloText(pris ? 'pris' : connuTexte(rec), X, Y - r - 2, Col.ink, Col.sheet); }
+    if (s > ETIQ_ZOOM_MIN) { ctx.font = FONT_ETIQ; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; haloText(pris ? 'pris' : connuTexte(rec), X, Y - r - 2, Col.ink, Col.sheet); }
   };
   if (eauEdit) {
     hint("Pêcheur " + ((eauEdit.slot || 0) + 1) + " : cliquez sur un spot libre (Échap : annuler) · % = potentiel estimé, ? = inconnu, pris = déjà utilisé");
@@ -334,4 +334,29 @@ function drawEauPeche() {
     return;
   }
   for (let i = 0; i < Math.max(1, nbReel(h)); i++) { const e = eauDe(h, i); if (e) { terre(e.pos, e); pastille(e.pos, e.rec, true); } }
+}
+
+/* Rides des spots de pêche : sur chaque spot où il y a du poisson (potentiel ≥ 0,3), un ou deux fins cercles clairs s'élargissent doucement et s'effacent, comme si un poisson affleurait.
+   Très léger : un tracé de deux ellipses par spot visible, rien du tout si l'on est loin ou si le spot est hors écran ; plus le potentiel est fort, plus la ride est grande et visible. */
+function drawRidesPeche() {
+  const s = view.s; if (s < .6 || !S.rivers.length && !S.lakes.length) return;
+  const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), t = performance.now() / 1000;
+  ctx.save(); ctx.strokeStyle = '#eef9ff'; ctx.lineCap = 'round';
+  for (const c of corpsDEau()) {
+    const recs = spotsDe(c), O = c.kind === 'lac' ? c.lk : c.rv;
+    spotsPos(c).forEach((sp, i) => {
+      const rec = recs[i]; if (!rec || rec.pot < .3) return;
+      let [x, y] = sp.c;
+      if (c.kind === 'lac') { const dx = O.c[0] - x, dy = O.c[1] - y, d = Math.hypot(dx, dy) || 1; x += dx / d * 4.5; y += dy / d * 4.5; }   // (le spot d'un étang est sur la rive : la ride est un peu plus au large)
+      if (x < x0 - 6 || x > x1 + 6 || y < y0 - 6 || y > y1 + 6) return;
+      const [X, Y] = toS(x, y), g = rec.pot * 7.31 + i * 3.17, force = .4 + rec.pot * .6;
+      for (let k = 0; k < 2; k++) {
+        const ph = ((t * .32 + g + k * .5) % 1), a = Math.min(1, ph * 6) * (1 - ph) * .5 * force;   // naît, s'élargit, s'efface
+        if (a < .02) continue;
+        ctx.globalAlpha = a; ctx.lineWidth = Math.max(.8, s * .07 * (1 - ph * .5));
+        ctx.beginPath(); ctx.ellipse(X + k * s * .5, Y - k * s * .3, s * (.25 + ph * 1.1) * (.7 + force * .5), s * (.2 + ph * .85) * (.7 + force * .5), 0, 0, 6.2832); ctx.stroke();
+      }
+    });
+  }
+  ctx.restore();
 }

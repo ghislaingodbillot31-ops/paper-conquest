@@ -14,6 +14,9 @@ function strokeLine(pts, lw, color) {
   ctx.strokeStyle = color; ctx.lineWidth = lw; ctx.lineCap = 'square'; ctx.lineJoin = 'miter'; ctx.miterLimit = 3;
   polyPath(pts); ctx.stroke();
 }
+/* Étiquettes de la carte (noms des ressources, animaux, gisements, bateaux, poissons, habitants, chariots) : UNE seule police et UNE seule taille, en pixels d'écran :
+   elles ont donc la même taille quel que soit le zoom, avec un liseré clair (haloText) qui les garde lisibles sur tous les fonds. Affichées dès ETIQ_ZOOM_MIN. */
+const FONT_ETIQ = '600 14px "Barlow Condensed", sans-serif', ETIQ_ZOOM_MIN = .3;
 function haloText(t, x, y, color, halo) {
   ctx.lineWidth = 3; ctx.strokeStyle = halo; ctx.lineJoin = 'round'; ctx.strokeText(t, x, y);
   ctx.fillStyle = color; ctx.fillText(t, x, y);

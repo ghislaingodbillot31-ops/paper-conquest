@@ -11,7 +11,7 @@
      teintes des arbres [seul, lisière 1, lisière 2] et paliers de l'intérieur des forêts.
    « tempere » est la référence validée (forêt feuillue tempérée). */
 const REF_LOOK = {
-  ground:'#dcd08a', groundDark:'#d2c57c', species:{ f:1 },
+  ground:'#aacb2a', groundDark:'#9cc122', vary:.5, species:{ f:1 },
   pal:[['#93b25c', '#b6cf80', '#5d7638'], ['#7c9e50', '#a1bf72', '#4b6530'], ['#65874a', '#8aab6a', '#3d552e']],
   steps:['#557a4c', '#4b6d48', '#416146', '#385443', '#30483f'],
 };
@@ -26,77 +26,76 @@ const BIOMES = {
     look:{ ground:'#e9eef0', groundDark:'#d9e2e8', patch:'#f8fbfc', patchAt:.55, water:'#3d5fb8', species:{} } },
   toundra:       { name:'Toundra', rivers:[1, 1], lakes:[4, 8], lakeR:[14, 35],
     river:{ amp:[60, 100], cycles:[2.5, 3.5], w0:5, w1:12 }, flora:{ ...NO_FOREST, dense:.66, mid:.58, sparse:.01, bush:.25, rocks:.003 },
-    look:{ ground:'#c8c6a3', groundDark:'#b8b690', patch:'#eef1ec', patchAt:.66, species:{ c:1 }, small:.6,
+    look:{ ground:'#b9c47c', groundDark:'#a9b66c', patch:'#eef1ec', patchAt:.66, species:{ c:1 }, small:.6,
       pal:CONIFER_PAL, steps:CONIFER_STEPS, bushPal:['#8f8a5a', '#aba772', '#5f5c38'] } },
   taiga:         { name:'Taïga', rivers:[1, 1], lakes:[2, 4], lakeR:[30, 70],
     river:{ amp:[50, 90], cycles:[2, 3], w0:8, w1:18 }, flora:{ forest:.52, dense:.6, mid:.54, sparse:.03, bush:.05 },
-    look:{ ground:'#c9cba2', groundDark:'#bcbf93', species:{ c:1 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5, species:{ c:1 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
   tempere:       { name:'Forêt feuillue caducifoliée tempérée', rivers:[1, 1], lakes:[1, 2], lakeR:[45, 80],
     river:{ amp:[50, 90], cycles:[1.8, 2.6], w0:10, w1:24 }, flora:{ forest:.62, dense:.6, mid:.53, sparse:.02, bush:.06 }, look:{} },
   prairie:       { name:'Prairie', rivers:[1, 1], lakes:[0, 1], lakeR:[40, 70],
     river:{ amp:[40, 70], cycles:[1.5, 2.2], w0:12, w1:28 }, flora:{ forest:.72, dense:.7, mid:.64, sparse:.006, bush:.05 },
-    look:{ ground:'#dbd792', groundDark:'#cfcb85' } },
+    look:{ ground:'#b4d12e', groundDark:'#a8c828', vary:.5 } },
   subtropicale:  { name:'Forêt sempervirente subtropicale', rivers:[1, 1], lakes:[1, 2], lakeR:[35, 70],
     river:{ amp:[50, 90], cycles:[2, 2.8], w0:12, w1:26 }, flora:{ forest:.52, dense:.58, mid:.52, sparse:.03, bush:.06 },
-    look:{ ground:'#d4d08a', groundDark:'#c6c37b',
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5,
       pal:[['#7fa84f', '#a3c771', '#4f7232'], ['#5f8f43', '#83b062', '#3b5f2c'], ['#4f7d3e', '#72a05a', '#314f28']],
       steps:['#4a7a3f', '#3f6d39', '#356034', '#2c5430', '#24482b'] } },
   mediterraneenne:{ name:'Forêt sempervirente méditerranéenne', rivers:[1, 1], lakes:[0, 1], lakeR:[25, 45],
     river:{ amp:[40, 80], cycles:[2, 3], w0:5, w1:12 }, flora:{ forest:.64, dense:.62, mid:.55, sparse:.03, bush:.22 },
-    look:{ ground:'#dfcb8b', groundDark:'#d3bd7b', species:{ f:.7, c:.3 }, bushPal:['#9aa06a', '#b8bd88', '#6a6f46'],
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5, species:{ f:.7, c:.3 }, bushPal:['#9aa06a', '#b8bd88', '#6a6f46'],
       pal:[['#9aa25e', '#bcc280', '#666d3a'], ['#7f8a4e', '#a2ab6e', '#525a31'], ['#6d7a45', '#8f9c64', '#46502c']],
       steps:['#6b7644', '#606b3d', '#566137', '#4c5732', '#434d2d'] } },
   mousson:       { name:'Forêt de mousson', rivers:[1, 1], lakes:[1, 3], lakeR:[30, 60],
     river:{ amp:[70, 110], cycles:[2.2, 3.2], w0:12, w1:30 }, flora:{ forest:.55, dense:.6, mid:.53, sparse:.03, bush:.08 },
-    look:{ ground:'#d7c97f', groundDark:'#cabb6f',
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5,
       pal:[['#9fb04f', '#c2cf72', '#667532'], ['#84983f', '#a8ba60', '#556430'], ['#6c8438', '#8fa656', '#46582a']],
       steps:['#607a3a', '#566f35', '#4c6430', '#43592c', '#3a4e27'] } },
   desert_aride:  { name:'Désert aride', rivers:[0, 0], lakes:[0, 1], lakeR:[18, 30],
     river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.0015, bush:.02, rocks:.002 },
-    look:{ ground:'#ead5a0', groundDark:'#dec48c', patch:'#f4e4bb', patchAt:.6, water:'#2f50a8', species:{ p:1 }, bushPal:DRY_BUSH } },
+    look:{ ground:'#f1d88e', groundDark:'#e6c878', patch:'#f4e4bb', patchAt:.6, water:'#2f50a8', species:{ p:1 }, bushPal:DRY_BUSH } },
   xerophyte:     { name:'Désert et broussaille xérophytes', rivers:[0, 0], lakes:[0, 0], lakeR:[18, 30],
     river:{ amp:[40, 70], cycles:[2, 3], w0:6, w1:12 }, flora:{ ...NO_FOREST, sparse:.004, bush:.18, rocks:.003 },
-    look:{ ground:'#e0c894', groundDark:'#d3b880', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+    look:{ ground:'#e8cb84', groundDark:'#dcba70', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
   steppe_aride:  { name:'Steppe aride', rivers:[0, 1], lakes:[0, 1], lakeR:[18, 35],
     river:{ amp:[40, 70], cycles:[1.8, 2.6], w0:5, w1:11 }, flora:{ ...NO_FOREST, sparse:.002, bush:.08 },
-    look:{ ground:'#dccf92', groundDark:'#d0c283', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+    look:{ ground:'#d9d070', groundDark:'#cbc260', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
   semi_aride:    { name:'Désert semi-aride', rivers:[0, 1], lakes:[0, 0], lakeR:[18, 30],
     river:{ amp:[40, 70], cycles:[2, 3], w0:4, w1:9 }, flora:{ ...NO_FOREST, sparse:.003, bush:.1, rocks:.002 },
-    look:{ ground:'#e3cb96', groundDark:'#d7bc84', patch:'#ecd9ab', patchAt:.66, species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+    look:{ ground:'#ecd08c', groundDark:'#e0c078', patch:'#ecd9ab', patchAt:.66, species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
   savane:        { name:'Savane', rivers:[1, 1], lakes:[0, 2], lakeR:[15, 35],
     river:{ amp:[50, 90], cycles:[2, 2.8], w0:8, w1:18 }, flora:{ ...NO_FOREST, dense:.6, mid:.55, sparse:.02, bush:.05 },
-    look:{ ground:'#dfc673', groundDark:'#d2b862', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
+    look:{ ground:'#dbcc58', groundDark:'#cebd48', species:{ a:1 }, pal:ACACIA_PAL, bushPal:DRY_BUSH } },
   savane_claire: { name:'Savane et forêt claire', rivers:[1, 1], lakes:[1, 1], lakeR:[20, 40],
     river:{ amp:[50, 90], cycles:[2, 2.8], w0:8, w1:20 }, flora:{ forest:.64, dense:.6, mid:.54, sparse:.03, bush:.06 },
-    look:{ ground:'#d9c678', groundDark:'#cbb86a', species:{ a:.5, f:.5 }, pal:ACACIA_PAL,
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5, species:{ a:.5, f:.5 }, pal:ACACIA_PAL,
       steps:['#6f7a3c', '#657036', '#5b6531', '#525b2c', '#495128'] } },
   tropicale_cad: { name:'Forêt tropicale caducifoliée', rivers:[1, 1], lakes:[0, 2], lakeR:[25, 50],
     river:{ amp:[60, 100], cycles:[2, 3], w0:12, w1:26 }, flora:{ forest:.55, dense:.6, mid:.53, sparse:.03, bush:.07 },
-    look:{ ground:'#d4c47b', groundDark:'#c6b56b',
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5,
       pal:[['#a4ad4c', '#c6cd70', '#6b7330'], ['#8a9a42', '#adbd64', '#59652c'], ['#72853b', '#94a85a', '#495828']],
       steps:['#667c38', '#5b7033', '#51652e', '#475a2a', '#3e4f26'] } },
   tropicale:     { name:'Forêt sempervirente tropicale', rivers:[1, 1], lakes:[1, 3], lakeR:[25, 55],
     river:{ amp:[80, 130], cycles:[2.4, 3.4], w0:14, w1:34 }, flora:{ forest:.44, dense:.55, mid:.5, sparse:.05, bush:.08 },
-    look:{ ground:'#cfd08a', groundDark:'#c0c279', species:{ f:.8, p:.2 },
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5, species:{ f:.8, p:.2 },
       pal:[['#5f9a4a', '#82bd6a', '#3a6a2e'], ['#4a8440', '#6aa65c', '#2e5a28'], ['#3b7038', '#5a9254', '#244b23']],
       steps:['#356a36', '#2e5f31', '#27542c', '#214a28', '#1b3f23'] } },
   toundra_alpine:{ name:'Toundra alpine', rivers:[1, 1], lakes:[1, 2], lakeR:[15, 30],
     river:{ amp:[30, 60], cycles:[3, 5], w0:4, w1:9 }, flora:{ ...NO_FOREST, sparse:.004, bush:.12, rocks:.02 },
-    look:{ ground:'#cac7ae', groundDark:'#b9b69d', patch:'#f0f2f0', patchAt:.58, species:{ c:1 }, small:.6,
+    look:{ ground:'#b4bf8a', groundDark:'#a2ae78', patch:'#f0f2f0', patchAt:.58, species:{ c:1 }, small:.6,
       pal:CONIFER_PAL, bushPal:['#8e8d68', '#aaa983', '#606047'] } },
   montagne:      { name:'Forêt de montagne', rivers:[1, 1], lakes:[1, 2], lakeR:[18, 40],
     river:{ amp:[40, 80], cycles:[2.8, 4], w0:6, w1:12 }, flora:{ forest:.54, dense:.6, mid:.54, sparse:.03, bush:.06, rocks:.008 },
-    look:{ ground:'#cfcca1', groundDark:'#c0bd91', patch:'#eef0ee', patchAt:.72, species:{ c:.75, f:.25 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
+    look:{ ground:'#aacb2a', groundDark:'#9cc122', vary:.5, patch:'#eef0ee', patchAt:.72, species:{ c:.75, f:.25 }, pal:CONIFER_PAL, steps:CONIFER_STEPS } },
 };
 for (const b of Object.values(BIOMES)) b.tribs = [0, 0]; // une seule rivière, jamais d'affluent
 /* Trois tailles de cours d'eau (demande du 29/09) : largeur à la source → à la sortie de la
    carte (m), ampleur et nombre des méandres. Le fleuve est large, aux boucles amples et
    lentes ; la petite rivière est étroite et très sinueuse. */
 const RIVER_CLASS = {
-  // isles : nombre d'îles [min, max] ; isleLen : longueur d'une île (m)
-  petite:  { name:'Petite rivière', w0:3,  w1:8,   amp:[30, 60],   cycles:[3, 4.5],   isles:[0, 1], isleLen:[40, 70] },
-  riviere: { name:'Rivière',        w0:10, w1:24,  amp:[50, 90],   cycles:[1.8, 2.8], isles:[1, 2], isleLen:[80, 160] },
-  fleuve:  { name:'Fleuve',         w0:68, w1:112, amp:[140, 220], cycles:[1, 1.5],   isles:[2, 4], isleLen:[300, 520], harm:.06 }, // grandes boucles lentes, sans petites ondulations
+  petite:  { name:'Petite rivière', w0:3,  w1:8,   amp:[30, 60],   cycles:[3, 4.5] },
+  riviere: { name:'Rivière',        w0:10, w1:24,  amp:[50, 90],   cycles:[1.8, 2.8] },
+  fleuve:  { name:'Fleuve',         w0:68, w1:112, amp:[140, 220], cycles:[1, 1.5], harm:.06 }, // grandes boucles lentes, sans petites ondulations
 };
 // cours d'eau par défaut de chaque biome (mode « selon le biome »)
 const BIOME_RIVER = { polaire:null, toundra:'petite', taiga:'riviere', tempere:'riviere', prairie:'riviere',
@@ -339,9 +338,6 @@ function generateRegion(biome, seed, riverMode = 'auto') {
       const rv = makeRiverPath(ra, rb, { amp:between(rnd, RC.amp), cycles:between(rnd, RC.cycles), phase:rnd() * 6.28, w0:RC.w0, w1:RC.w1, harm:RC.harm });
       rv.cls = cls;
       if (!riverFitsRoads(rv) || S.rivers.some(o => riverGap(o, rv.pts.filter((_, i) => i % 5 === 0)) < 150)) continue;
-      rv.isles = placeIsles(rv, seeded(seed * 13 + 5 + k)); // îles (tirage à part : le reste de la région ne change pas)
-      // l'élargissement autour d'une île ne doit pas gêner un pont : on retire les îles fautives
-      while (rv.isles.length && !riverFitsRoads(rv)) rv.isles.pop();
       S.rivers.push(rv); break;
     }
   }

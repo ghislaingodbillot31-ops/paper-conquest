@@ -1,0 +1,31 @@
+{
+ "filiere": "elevage",
+ "anticipee": true,
+ "note": "Recettes saisies à l'avance (DEBOUCHES_RESSOURCES.md) ; la filière reste « à migrer ». Quantités à 1 : TODO équilibrage.",
+ "recettes": [
+  {
+   "id": "savon_fin",
+   "atelier": "chandellerie_savonnerie",
+   "entrees": [
+    {
+     "ressource": "huile d'olive",
+     "qte": 1
+    },
+    {
+     "ressource": "potasse",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "savon fin",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Savon de qualité pour le manoir."
+  }
+ ]
+}

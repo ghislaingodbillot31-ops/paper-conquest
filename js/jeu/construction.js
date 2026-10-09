@@ -261,7 +261,7 @@ function initSelection(){
 // n'est pas recalcule). Les filtres d'affichage sont conserves.
 function resetGame(){
   try{ [OWNED_STORAGE_KEY, BUILDINGS_STORAGE_KEY, LEGACY_START_KEY, BOAT_STORAGE_KEY, CARAVAN_STORAGE_KEY, ECO_STORAGE_KEY, TEMPS_KEY].forEach(k => localStorage.removeItem(k));
-    Object.keys(localStorage).filter(k => k.startsWith('paperConquestRegionMap.')).forEach(k => localStorage.removeItem(k)); }catch(e){}
+    Object.keys(localStorage).filter(k => k.startsWith('dominiumRegionMap.')).forEach(k => localStorage.removeItem(k)); }catch(e){}
   eco = newEconomy(); renderEconomy();
   if(placement.active) stopPlacement();
   closeCapital();

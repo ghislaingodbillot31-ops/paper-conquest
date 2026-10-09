@@ -7,6 +7,9 @@
      marcher : le groupe va vers un point de son secteur, en restant groupé (cohésion + séparation + même cap) ; les prédateurs peuvent viser un troupeau voisin
      repos   : tout le monde s'arrête
      fuite   : un prédateur approche → le groupe part en courant, loin de lui
+   Un CHEF mène chaque groupe (le plus grand adulte, h.chef) : il choisit le cap et les autres le suivent en formation derrière lui ; sans chef (capturé), le suivant en prend la place.
+   Les animaux sauvages se craignent entre eux (fauneCrainte : prédateurs, très gros animaux) et fuient les habitants ; fauneFuirZone(x, y, r) fait fuir tout groupe d'une zone.
+   Distances d'évitement réglables (regles.js) : gros cailloux 1 m, eau 4 m (sauf espèces d'eau) ; les routes se traversent librement.
    Évitent l'eau, les bâtiments et (sauf les espèces des bois) les grandes forêts. Les espèces d'eau (hippopotame, crocodile, castor, capybara…) restent à la rive. */
 const FAUNE_CATS = new Set(['elevage', 'faune', 'predateur']);
 const FAUNE_CAT = { elevage:{ t:'troupeau', g:[6, 12], r:70 }, faune:{ t:'troupeau', g:[4, 8], r:110 }, predateur:{ t:'solitaire', g:[1, 1], r:160 } };
@@ -47,7 +50,7 @@ let eauMem = new Map(), eauCle = null;
 function fauneEau(x, y, rad = .4) {
   const cle = sceneV + '|' + S.rivers.length + '|' + S.lakes.length + '|' + (Z.water ? Z.water.river.length + ',' + Z.water.lake.length : 0);
   if (cle !== eauCle || eauMem.size > 300000) { eauMem = new Map(); eauCle = cle; }
-  const k = ((Math.floor(x * 2) + 1000) * 16384 + Math.floor(y * 2) + 1000) * 64 + Math.round(rad * 10), v = eauMem.get(k);
+  const k = ((Math.floor(x * 2) + 1000) * 16384 + Math.floor(y * 2) + 1000) * 1024 + Math.round(rad * 10), v = eauMem.get(k);
   if (v !== undefined) return v;
   const r = fauneEauCalc(x, y, rad); eauMem.set(k, r); return r;
 }
@@ -61,23 +64,24 @@ function fauneEauCalc(x, y, rad) {
 }
 // un animal qui se retrouve dans l'eau (carte modifiée, apparition…) est remis sur la terre ferme la plus proche
 function fauneSecours(h, a) {
-  for (let r = 2; r <= 90; r += 2) for (let k = 0; k < 16; k++) { const an = k / 16 * 6.28 + r, x = a.x + Math.cos(an) * r, y = a.y + Math.sin(an) * r; if (fauneLibre(x, y, h.p.bois, Math.max(.2, h.T * .22))) { a.x = x; a.y = y; a.v = 0; a.d = null; return true; } }
+  for (let r = 2; r <= 90; r += 2) for (let k = 0; k < 16; k++) { const an = k / 16 * 6.28 + r, x = a.x + Math.cos(an) * r, y = a.y + Math.sin(an) * r; if (fauneLibre(x, y, h.p.bois, Math.max(.2, h.T * .22), h.opt)) { a.x = x; a.y = y; a.v = 0; a.d = null; return true; } }
   return false;
 }
 // rad : demi-largeur de l'animal (m). Eau, cailloux, gisements, bâtiments et (sauf bois) grandes forêts sont infranchissables ; les arbres, eux, se traversent (par-dessous : drawFaune)
-function fauneLibre(x, y, bois, rad = .4) {
+/* opt : { eau, roche } marges propres à l'espèce (espèce d'eau : { eau:0 }) ; par défaut les règles réglables regles.js (animal_eau, animal_roche). */
+function fauneLibre(x, y, bois, rad = .4, opt = null) {
   if (!inTerrain([x, y]) || !surTerre([x, y])) return false;
   const rc = fauneRocheCases(), cx = Math.floor(x / 16), cy = Math.floor(y / 16);
-  for (let j = cy - 1; j <= cy + 1; j++) for (let i = cx - 1; i <= cx + 1; i++) for (const r of rc.get(i + ',' + j) || []) if (Math.hypot(r.x - x, r.y - y) < r.r * .9 + rad) return false;
+  for (let j = cy - 1; j <= cy + 1; j++) for (let i = cx - 1; i <= cx + 1; i++) for (const r of rc.get(i + ',' + j) || []) if (Math.hypot(r.x - x, r.y - y) < r.r * .9 + rad + (r.r >= 1.2 ? (opt && opt.roche != null ? opt.roche : regle('animal_roche')) : .1)) return false;   // gros caillou : on passe à 1 m au moins
   for (const d of S.deposits || []) if (Math.abs(d.c[0] - x) < d.r * 1.4 && Math.abs(d.c[1] - y) < d.r * 1.4 && inPoly([x, y], d.pts)) return false;
-  if (fauneEau(x, y, rad)) return false;
+  if (fauneEau(x, y, rad + Math.max(0, (opt && opt.eau != null ? opt.eau : regle('animal_eau')) - .6))) return false;   // eau : 4 m de marge (espèces d'eau : à la rive)
   for (const h of S.houses) if (Math.abs(h.x - x) < 30 && Math.abs(h.y - y) < 30 && inPoly([x, y], corners(h))) return false;
   return bois || !fauneEnForet(x, y);
 }
 // vrai si l'on peut aller tout droit de (x0, y0) à (x1, y1) sans croiser d'eau ni d'obstacle (pas de 3 m) : deux points séparés par une rivière ne sont pas « directs »
-function fauneDirect(x0, y0, x1, y1, bois, rad = .4) {
+function fauneDirect(x0, y0, x1, y1, bois, rad = .4, opt = null) {
   const n = Math.ceil(Math.hypot(x1 - x0, y1 - y0) / 3);
-  for (let i = 1; i < n; i++) if (!fauneLibre(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, bois, rad)) return false;
+  for (let i = 1; i < n; i++) if (!fauneLibre(x0 + (x1 - x0) * i / n, y0 + (y1 - y0) * i / n, bois, rad, opt)) return false;
   return true;
 }
 // un point de rive proche de (x, y), à moins de R mètres : sommet d'un lac ou d'un fleuve, ramené de quelques mètres vers (x, y)
@@ -89,6 +93,7 @@ function fauneRive(x, y, R) {
   return [best[0] + (x - best[0]) * k, best[1] + (y - best[1]) * k];
 }
 
+const FAUNE_RIVE = { eau:0 };   // espèces d'eau : à la rive
 // ---- pose des foyers (régions du jeu, d'après la fiche de la région ; la map test pose les siens) ----
 // items : [{ cat, key, ab }] → foyers dans des endroits libres, à l'écart les uns des autres
 function placeFoyers(seed, items) {
@@ -102,7 +107,7 @@ function placeFoyers(seed, items) {
       if (p.eau) { const r = fauneRive(x, y, 400); if (r) { x = r[0]; y = r[1]; } }
       const foret = fz(x, y) > B.forest - (t < 250 ? .02 : -1);                                     // (espèce des bois : dans la forêt ; les autres : à découvert ; sur la fin, on ne regarde plus)
       if (t < 250 && !!p.bois !== foret && !p.eau) continue;
-      if (!dansRegion([x, y]) || !fauneLibre(x, y, true) || distToRoads([x, y]) < 30) continue;
+      if (!dansRegion([x, y]) || !fauneLibre(x, y, true, .4, p.eau ? FAUNE_RIVE : null) || distToRoads([x, y]) < 30) continue;
       if (out.some(o => Math.hypot(o.x - x, o.y - y) < (o.rr + p.r) * .9)) continue;
       out.push({ id:++id, cat:it.cat, key:it.key, x:round2(x), y:round2(y), ab:it.ab || 2, rr:p.r }); break;
     }
@@ -118,14 +123,22 @@ function fauneCree(f) {
   const sp = ANIMAUX[f.key]; if (!sp) return null;
   const p = fauneParam(f.cat, f.key), rnd = seeded(f.id * 977 + Math.round(f.x)), ab = f.ab || 2;
   const n = Math.max(1, Math.round(p.g[0] + (p.g[1] - p.g[0]) * (ab - 1) / 2)), T = sp.T, spread = 4 + 3 * Math.sqrt(n) * Math.sqrt(T);
-  const h = { f, key:f.key, cat:f.cat, p, n, T, spread, home:[f.x, f.y], mode:'paitre', t:3 + rnd() * 20, tp:null, an:[], bloque:0 };
+  const h = { f, key:f.key, cat:f.cat, p, n, T, spread, home:[f.x, f.y], mode:'paitre', t:3 + rnd() * 20, tp:null, an:[], bloque:0, opt:p.eau ? FAUNE_RIVE : null, chef:null };
   for (let i = 0; i < n; i++) for (let k = 0; k < 30; k++) {
     const a = rnd() * 6.28, d = Math.sqrt(rnd()) * spread, x = f.x + Math.cos(a) * d, y = f.y + Math.sin(a) * d;
-    if (!fauneLibre(x, y, p.bois) || !fauneDirect(f.x, f.y, x, y, p.bois) || h.an.some(o => Math.hypot(o.x - x, o.y - y) < T * 1.2)) continue;
+    if (!fauneLibre(x, y, p.bois, .4, h.opt) || !fauneDirect(f.x, f.y, x, y, p.bois, .4, h.opt) || h.an.some(o => Math.hypot(o.x - x, o.y - y) < T * 1.2)) continue;
     const jeune = f.cat !== 'predateur' && n >= 4 && rnd() < .18;
     h.an.push({ x, y, a:rnd() * 6.28, v:0, ph:rnd() * 6, s:(jeune ? .55 : .93 + rnd() * .14), jeune, t:rnd() * 6, d:null }); break;
   }
   return h.an.length ? h : null;
+}
+/* Le chef : le plus grand adulte du groupe. Si le chef est capturé ou disparaît, le suivant prend sa place. Chaque animal reçoit un rang de formation (a.k) : sa place derrière le chef. */
+function fauneChef(h) {
+  if (h.chef && !h.chef.captif && h.an.includes(h.chef)) return h.chef;
+  const L = h.an.filter(a => !a.captif), pr = L.filter(a => !a.jeune);
+  h.chef = (pr.length ? pr : L).reduce((m, a) => !m || a.s > m.s ? a : m, null);
+  let k = 0; for (const a of h.an) if (a !== h.chef) a.k = k++;
+  return h.chef;
 }
 function fauneCentre(h) { let x = 0, y = 0, n = 0; for (const a of h.an) { if (a.captif) continue; x += a.x; y += a.y; n++; } return n ? [x / n, y / n] : [h.home[0], h.home[1]]; }   // (les animaux capturés ne comptent plus)
 function fauneCible(h, c) {                                                                          // où aller : prédateur → souvent vers un troupeau ; espèce d'eau → la rive ; sinon un point du secteur
@@ -141,7 +154,7 @@ function fauneCible(h, c) {                                                     
     let p = [c[0] + Math.cos(a) * d, c[1] + Math.sin(a) * d];
     const dh = Math.hypot(p[0] - h.home[0], p[1] - h.home[1]); if (dh > R) p = [h.home[0] + (p[0] - h.home[0]) / dh * R * .9, h.home[1] + (p[1] - h.home[1]) / dh * R * .9];
     if (h.p.eau && Math.random() < .7) p = fauneRive(p[0], p[1], R + 60) || p;
-    if (fauneLibre(p[0], p[1], h.p.bois) && fauneDirect(c[0], c[1], p[0], p[1], h.p.bois)) return p;   // (pas de pâturage de l'autre côté d'une rivière : le troupeau resterait bloqué sur la rive)
+    if (fauneLibre(p[0], p[1], h.p.bois, .4, h.opt) && fauneDirect(c[0], c[1], p[0], p[1], h.p.bois, .4, h.opt)) return p;   // (pas de pâturage de l'autre côté d'une rivière : le troupeau resterait bloqué sur la rive)
   }
   return c;
 }
@@ -163,16 +176,23 @@ function fauneAnimal(h, a, c, dt) {
   if ((a.chk = (a.chk === undefined ? Math.random() : a.chk) - dt) <= 0) { a.chk = 1.5; if (fauneEau(a.x, a.y, Math.max(.2, h.T * .22))) fauneSecours(h, a); }   // (jamais dans l'eau)
   const T = h.T, run = h.mode === 'fuite' ? 3.2 : h.chasse && h.mode === 'marcher' ? 1.7 : 1, vw = fvit(T) * (a.jeune ? .8 : 1) * (h.cat === 'predateur' ? 1.1 : 1);
   let want = a.a, v = 0, turn = 2.4;
-  const dc = Math.hypot(c[0] - a.x, c[1] - a.y);
+  const chef = fauneChef(h), suiveur = chef && a !== chef, ref = chef ? [chef.x, chef.y] : c, dc = Math.hypot(ref[0] - a.x, ref[1] - a.y);   // (le groupe se rassemble autour de son chef)
   if (h.mode === 'marcher' || h.mode === 'fuite') {
-    let vx = h.tp[0] - a.x, vy = h.tp[1] - a.y; const dd = Math.hypot(vx, vy) || 1; vx /= dd; vy /= dd;
-    const k = Math.min(1, dc / h.spread) * (h.mode === 'fuite' ? .4 : 1.1);                           // cohésion
-    vx += (c[0] - a.x) / (dc || 1) * k; vy += (c[1] - a.y) / (dc || 1) * k;
-    for (const o of h.an) if (o !== a) { const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy); if (d < T * 1.3 && d > .01) { vx += dx / d * (T * 1.3 - d) / T * 1.6; vy += dy / d * (T * 1.3 - d) / T * 1.6; } }   // séparation
-    want = Math.atan2(vy, vx); v = vw * run * (a.jeune && h.mode !== 'fuite' ? 1.1 : 1); turn = h.mode === 'fuite' ? 5 : 2.6;
+    let vx, vy, cadence = 1;
+    if (!suiveur) {                                                                                   // le CHEF : droit vers la destination ; il ralentit si le groupe est loin derrière lui
+      vx = h.tp[0] - a.x; vy = h.tp[1] - a.y; const dd = Math.hypot(vx, vy) || 1; vx /= dd; vy /= dd;
+      let loin = 0; for (const o of h.an) if (o !== a && !o.captif) loin = Math.max(loin, Math.hypot(o.x - a.x, o.y - a.y));
+      if (h.mode !== 'fuite' && loin > h.spread * 1.6) cadence = Math.max(.35, 1 - (loin - h.spread * 1.6) / (h.spread * 1.6));
+    } else {                                                                                          // un SUIVEUR : sa place en formation, derrière et de côté du chef (V), plus vite s'il est en retard
+      const k = a.k || 0, rang = 1 + Math.floor(k / 2), cote = (k % 2 ? 1 : -1) * (1 + Math.floor(k / 4) * .6), co = Math.cos(chef.a), si = Math.sin(chef.a), back = T * (1.4 + rang * .9), lat = T * 1.1 * cote;
+      const sx = chef.x - co * back - si * lat, sy = chef.y - si * back + co * lat, dd = Math.hypot(sx - a.x, sy - a.y) || 1;
+      vx = (sx - a.x) / dd; vy = (sy - a.y) / dd; cadence = dd < T * .5 ? .85 : Math.min(1.7, .9 + dd / (h.spread + 4));
+    }
+    for (const o of h.an) if (o !== a && !o.captif) { const dx = a.x - o.x, dy = a.y - o.y, d = Math.hypot(dx, dy); if (d < T * 1.3 && d > .01) { vx += dx / d * (T * 1.3 - d) / T * 1.6; vy += dy / d * (T * 1.3 - d) / T * 1.6; } }   // séparation
+    want = Math.atan2(vy, vx); v = vw * run * cadence * (a.jeune && h.mode !== 'fuite' ? 1.1 : 1); turn = h.mode === 'fuite' ? 5 : 2.6;
   } else if (h.mode === 'paitre') {
     if ((a.t -= dt) <= 0) {                                                                           // brouter sur place, ou quelques pas
-      if (Math.random() < .35) { const an = dc > h.spread * 1.2 ? Math.atan2(c[1] - a.y, c[0] - a.x) + (Math.random() - .5) : Math.random() * 6.28, d = 2 + Math.random() * 4; a.d = [a.x + Math.cos(an) * d, a.y + Math.sin(an) * d]; a.t = 3 + Math.random() * 5; }
+      if (Math.random() < .35) { const an = dc > h.spread * 1.2 ? Math.atan2(ref[1] - a.y, ref[0] - a.x) + (Math.random() - .5) : Math.random() * 6.28, d = 2 + Math.random() * 4; a.d = [a.x + Math.cos(an) * d, a.y + Math.sin(an) * d]; a.t = 3 + Math.random() * 5; }
       else { a.d = null; a.t = 3 + Math.random() * 8; a.a += (Math.random() - .5) * 1.2; want = a.a; }
     }
     if (a.d) { const dd = Math.hypot(a.d[0] - a.x, a.d[1] - a.y); if (dd < .6) a.d = null; else { want = Math.atan2(a.d[1] - a.y, a.d[0] - a.x); v = vw * .22; turn = 1.6; } }
@@ -182,24 +202,46 @@ function fauneAnimal(h, a, c, dt) {
   if (a.v > .02) {
     const nx = a.x + Math.cos(a.a) * a.v * dt, ny = a.y + Math.sin(a.a) * a.v * dt;
     const rad = Math.max(.2, T * .22);
-    if (fauneLibre(nx, ny, h.p.bois, rad)) { a.x = nx; a.y = ny; a.ph += a.v * dt * 3.2 / Math.max(.3, T * .4); h.bloque = Math.max(0, h.bloque - dt); }
+    const dedans = !fauneLibre(a.x, a.y, h.p.bois, rad, h.opt);                                     // (déjà dans une marge d'évitement : on peut en sortir)
+    if (fauneLibre(nx, ny, h.p.bois, rad, h.opt) || dedans && fauneLibre(nx, ny, h.p.bois, rad, { eau:0, roche:0 })) { a.x = nx; a.y = ny; a.ph += a.v * dt * 3.2 / Math.max(.3, T * .4); h.bloque = Math.max(0, h.bloque - dt); }
     else {                                                                                            // obstacle : on contourne (cap tourné du côté libre), sinon on s'arrête
       let ok = false;
-      for (const dA of [.6, -.6, 1.2, -1.2, 1.9, -1.9]) { const q = a.a + dA; if (fauneLibre(a.x + Math.cos(q) * Math.max(1.5, T) * .8, a.y + Math.sin(q) * Math.max(1.5, T) * .8, h.p.bois, rad)) { a.a += dA * .5; a.v *= .6; ok = true; break; } }
+      for (const dA of [.6, -.6, 1.2, -1.2, 1.9, -1.9]) { const q = a.a + dA; if (fauneLibre(a.x + Math.cos(q) * Math.max(2.5, T * 1.2), a.y + Math.sin(q) * Math.max(2.5, T * 1.2), h.p.bois, rad, h.opt)) { a.a += dA * .5; a.v *= .6; ok = true; break; } }
       if (!ok) { a.a += (Math.random() < .5 ? 1 : -1) * 1.3; a.v = 0; a.d = null; }
       h.bloque += dt * .5;
     }
   }
 }
+/* Qui craint qui. Un prédateur est craint de tous (sauf d'un prédateur de taille comparable) ; un très gros animal (éléphant, rhinocéros, hippopotame : T ≥ 2,4) fait s'écarter les sauvages
+   deux fois plus petits que lui. Les troupeaux d'élevage ne craignent que les prédateurs. */
+function fauneCrainte(h, o) {
+  if (o === h) return false;
+  if (o.cat === 'predateur') return h.cat !== 'predateur' || o.T >= h.T * 1.4;
+  return h.cat === 'faune' && o.cat === 'faune' && o.T >= 2.4 && o.T >= h.T * 2.2;
+}
+// fuir : le groupe part à l'opposé de (x, y), à dist mètres, en courant (le chef choisit, les autres suivent)
+function fauneFuir(h, x, y, dist = 90) {
+  const c = h.c || h.home, dx = c[0] - x, dy = c[1] - y, k = dist / (Math.hypot(dx, dy) || 1), libre = q => fauneLibre(q[0], q[1], h.p.bois, .4, h.opt);
+  let tp = [c[0] + dx * k, c[1] + dy * k];
+  if (!libre(tp)) for (const dA of [.7, -.7, 1.4, -1.4, 2.1, -2.1]) { const co = Math.cos(dA), si = Math.sin(dA), q = [c[0] + (dx * co - dy * si) * k, c[1] + (dx * si + dy * co) * k]; if (libre(q)) { tp = q; break; } }
+  if (!libre(tp)) tp = [h.home[0], h.home[1]];
+  h.tp = tp; fauneMode(h, 'fuite', 5 + Math.random() * 4);
+}
+// une zone à évacuer (travaux, incendie, chasse…) : tous les groupes dont le centre est à moins de r + leur étendue s'en vont
+function fauneFuirZone(x, y, r) { for (const h of troupeaux) { const c = h.c || h.home; if (Math.hypot(c[0] - x, c[1] - y) < r + h.spread) fauneFuir(h, x, y, r + 60); } }
 function fauneGroupe(h, dt) {
-  const c = h.c = fauneCentre(h);
-  if (h.cat !== 'predateur' && h.mode !== 'fuite') {                                                  // un prédateur approche : fuite, à l'opposé
-    for (const o of troupeaux) if (o.cat === 'predateur') for (const q of o.an) {
-      const dx = c[0] - q.x, dy = c[1] - q.y, d = Math.hypot(dx, dy);
-      if (d < 55 + h.spread) { const k = 90 / (d || 1); h.tp = [c[0] + dx * k, c[1] + dy * k]; if (!fauneLibre(h.tp[0], h.tp[1], h.p.bois)) h.tp = [h.home[0], h.home[1]]; fauneMode(h, 'fuite', 5 + Math.random() * 4); break; }
+  const c = h.c = fauneCentre(h); fauneChef(h);
+  if (h.mode !== 'fuite') {
+    const D = regle('animal_peur_dist') + h.spread;
+    let danger = null;
+    for (const o of troupeaux) if (fauneCrainte(h, o)) { for (const q of o.an) if (!q.captif && Math.hypot(c[0] - q.x, c[1] - q.y) < D) { danger = q; break; } if (danger) break; }
+    if (!danger && h.cat !== 'elevage') {                                                              // les habitants font peur aux animaux sauvages
+      const R = regle('animal_peur_humain') * (h.cat === 'predateur' ? .5 : 1) + h.spread * .5;
+      if (R > h.spread * .5) for (const w of typeof workers === 'undefined' ? [] : workers.values()) if (typeof w.x === 'number' && !w.dedans && Math.hypot(c[0] - w.x, c[1] - w.y) < R) { danger = w; break; }
     }
+    if (danger) fauneFuir(h, danger.x, danger.y);
   }
-  if (h.mode === 'marcher' || h.mode === 'fuite') { if (Math.hypot(h.tp[0] - c[0], h.tp[1] - c[1]) < 5 + h.spread * .4 || h.bloque > 4) h.t = 0; }
+  if (h.mode === 'marcher' || h.mode === 'fuite') { const ch = h.chef || { x:c[0], y:c[1] }; if (Math.hypot(h.tp[0] - ch.x, h.tp[1] - ch.y) < 5 + h.spread * .4 || h.bloque > 4) h.t = 0; }
   if ((h.t -= dt) <= 0) fauneSuite(h, c);
   for (const a of h.an) fauneAnimal(h, a, c, dt);
 }
@@ -234,13 +276,13 @@ function fauneSousArbres(vus) {
     const ra = h.T * a.s * .7;
     for (const f of floraNear(a.x - 16, a.y - 16, a.x + 16, a.y + 16)) {
       if (f.kind !== 'tree' || seen.has(f)) continue;
-      if (Math.hypot(f.x - a.x, f.y - a.y) < (f.inner ? Math.max(f.r * 1.25, 5.8) : f.r) + ra) { seen.add(f); arbres.push(f); }
+      if (Math.hypot(f.x - a.x, f.y - a.y) < (f.inner ? Math.max(f.r * 1.25, 6.6) : f.r) + ra) { seen.add(f); arbres.push(f); }
     }
   }
   if (!arbres.length) return;
   arbres.sort((p, q) => p.y - q.y);
   const masse = arbres.filter(f => f.inner);
-  if (masse.length) { ctx.fillStyle = biomeLook().steps[0]; ctx.beginPath(); for (const f of masse) { const X = f.x * s + view.ox, Y = f.y * s + view.oy, R = Math.max(f.r * 1.25, 5.8) * s; ctx.moveTo(X + R, Y); ctx.arc(X, Y, R, 0, Math.PI * 2); } ctx.fill(); }
+  if (masse.length) { ctx.fillStyle = biomeLook().steps[0]; ctx.beginPath(); for (const f of masse) { const X = f.x * s + view.ox, Y = f.y * s + view.oy, R = Math.max(f.r * 1.25, 6.6) * s; ctx.moveTo(X + R, Y); ctx.arc(X, Y, R, 0, Math.PI * 2); } ctx.fill(); }
   for (const f of arbres) if (!f.inner) stampTree(ctx, f, f.x * s + view.ox, f.y * s + view.oy, s);
 }
 function drawFaune() {
@@ -259,10 +301,10 @@ function drawFaune() {
 function drawFauneNoms() {
   if (!troupeaux.length) return;
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
-  if (s > .12) for (const h of troupeaux) {
+  if (s > ETIQ_ZOOM_MIN) for (const h of troupeaux) {
     if (!h.c || h.c[0] < x0 - 60 || h.c[0] > x1 + 60 || h.c[1] < y0 - 60 || h.c[1] > y1 + 60) continue;
     const [X, Y] = toS(h.c[0], h.c[1] - h.spread - h.T * 1.2);
-    ctx.font = '600 14px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    ctx.font = FONT_ETIQ; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
     haloText(FAUNE_NOM(h.key) + (h.an.length > 1 ? ' ×' + h.an.length : '') + (h.mode === 'fuite' ? ' !' : ''), X, Y, Col.ink, Col.sheet);
   }
 }

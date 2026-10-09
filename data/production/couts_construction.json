@@ -1,0 +1,765 @@
+{
+ "note": "Coûts de construction par niveau (section 2 de DEBOUCHES_RESSOURCES.md) ; quantités à 1 et périodes d'entretien à définir : TODO équilibrage. Le torchis se fait à la Tuilerie-poterie (argile + paille + eau).",
+ "niveaux": {
+  "rustique": {
+   "nom": "Niveau 1 : rustique",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "bois",
+       "qte": 1
+      },
+      {
+       "ressource": "torchis",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "bois",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "toit",
+     "ressources": [
+      {
+       "ressource": "paille",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  },
+  "solide": {
+   "nom": "Niveau 2 : solide",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "planches",
+       "qte": 1
+      },
+      {
+       "ressource": "briques",
+       "qte": 1
+      }
+     ],
+     "auChoix": true
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "poutres",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "toit",
+     "ressources": [
+      {
+       "ressource": "bardeaux",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "autres",
+     "ressources": [
+      {
+       "ressource": "clous",
+       "qte": 1
+      },
+      {
+       "ressource": "ferrures",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  },
+  "noble": {
+   "nom": "Niveau 3 : noble",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "pierre taillée",
+       "qte": 1
+      },
+      {
+       "ressource": "mortier",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "poutres",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "toit",
+     "ressources": [
+      {
+       "ressource": "tuiles",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "autres",
+     "ressources": [
+      {
+       "ressource": "verre",
+       "qte": 1
+      },
+      {
+       "ressource": "ferrures",
+       "qte": 1
+      },
+      {
+       "ressource": "monnaie",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  },
+  "religieux": {
+   "nom": "Religieux",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "pierre taillée",
+       "qte": 1
+      },
+      {
+       "ressource": "mortier",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "poutres",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "toit",
+     "ressources": [
+      {
+       "ressource": "tuiles",
+       "qte": 1
+      },
+      {
+       "ressource": "feuilles de plomb",
+       "qte": 1
+      }
+     ],
+     "auChoix": true
+    },
+    {
+     "partie": "autres",
+     "ressources": [
+      {
+       "ressource": "vitraux",
+       "qte": 1
+      },
+      {
+       "ressource": "cloche",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  },
+  "defense": {
+   "nom": "Défense",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "pierre taillée",
+       "qte": 1
+      },
+      {
+       "ressource": "mortier",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "poutres",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "autres",
+     "ressources": [
+      {
+       "ressource": "ferrures",
+       "qte": 1
+      },
+      {
+       "ressource": "clous",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  },
+  "feu": {
+   "nom": "Feu",
+   "parties": [
+    {
+     "partie": "murs",
+     "ressources": [
+      {
+       "ressource": "briques",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "charpente",
+     "ressources": [
+      {
+       "ressource": "poutres",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    },
+    {
+     "partie": "toit",
+     "ressources": [
+      {
+       "ressource": "tuiles",
+       "qte": 1
+      }
+     ],
+     "auChoix": false
+    }
+   ]
+  }
+ },
+ "constructions": [
+  {
+   "id": "fortification",
+   "niveau": "defense"
+  },
+  {
+   "id": "tour",
+   "niveau": "defense"
+  },
+  {
+   "id": "porte",
+   "niveau": "defense"
+  }
+ ],
+ "ameliorations": [
+  {
+   "id": "eglise_clocher",
+   "atelier": "eglise",
+   "couts": [
+    {
+     "ressource": "cloche",
+     "qte": 1
+    }
+   ],
+   "note": "Clocher : amélioration de l'Église."
+  },
+  {
+   "id": "eglise_vitraux",
+   "atelier": "eglise",
+   "couts": [
+    {
+     "ressource": "vitraux",
+     "qte": 1
+    }
+   ]
+  },
+  {
+   "id": "eglise_liturgie",
+   "atelier": "eglise",
+   "couts": [
+    {
+     "ressource": "objets liturgiques",
+     "qte": 1
+    }
+   ]
+  }
+ ],
+ "batiments": [
+  {
+   "atelier": "camp_bucherons",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "loge_bucheron",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "hutte_forestier",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "camp_chasse",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "hutte_cueillette",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "rucher",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "cabane_peche",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "tailleur_pierre",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "fosse_miniere",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "poutres",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "étais de galerie"
+    }
+   ]
+  },
+  {
+   "atelier": "camp_mineur",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "poutres",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "étais de galerie"
+    }
+   ]
+  },
+  {
+   "atelier": "glaisiere",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "marais_salant",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "ferme",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "paille",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de chaume"
+    }
+   ]
+  },
+  {
+   "atelier": "bergerie",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "paille",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de chaume"
+    }
+   ]
+  },
+  {
+   "atelier": "fromagerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "pressoir",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "poutres",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "pressoir à vis"
+    },
+    {
+     "ressource": "toile",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "filtres"
+    }
+   ]
+  },
+  {
+   "atelier": "moulin",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "poutres",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "charpente"
+    },
+    {
+     "ressource": "toile",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "ailes du moulin"
+    }
+   ]
+  },
+  {
+   "atelier": "four",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "brasserie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "taverne",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "bardeaux",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de bardeaux"
+    }
+   ]
+  },
+  {
+   "atelier": "boucherie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "saloir_fumoir",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "chandellerie_savonnerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "scierie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "hutte_charbonnier",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "menuiserie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "tonnellerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "fonderie",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "forge",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "bas_fourneau",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "orfevre",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "atelier_monetaire",
+   "niveau": "noble",
+   "entretien": []
+  },
+  {
+   "atelier": "archerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "armurerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "tannerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "cordonnerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "corderie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "atelier_tissage",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "teinturerie_foulerie",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "couture",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "four_chaux",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "tuilerie_poterie",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "verrerie",
+   "niveau": "feu",
+   "entretien": []
+  },
+  {
+   "atelier": "grange",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "bardeaux",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de bardeaux"
+    }
+   ]
+  },
+  {
+   "atelier": "entrepot",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "bardeaux",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de bardeaux"
+    }
+   ]
+  },
+  {
+   "atelier": "relais",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "poteau",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "comptoir",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "comptoir_betail",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "camp_colon",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "paille",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de chaume"
+    }
+   ]
+  },
+  {
+   "atelier": "maison",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "paille",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de chaume"
+    }
+   ]
+  },
+  {
+   "atelier": "maison_cour",
+   "niveau": "solide",
+   "entretien": [
+    {
+     "ressource": "bardeaux",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "toit de bardeaux"
+    }
+   ]
+  },
+  {
+   "atelier": "grande_maison",
+   "niveau": "noble",
+   "entretien": []
+  },
+  {
+   "atelier": "manoir",
+   "niveau": "noble",
+   "entretien": []
+  },
+  {
+   "atelier": "mairie",
+   "niveau": "noble",
+   "entretien": []
+  },
+  {
+   "atelier": "marche",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "eglise",
+   "niveau": "religieux",
+   "entretien": []
+  },
+  {
+   "atelier": "puits",
+   "niveau": "rustique",
+   "entretien": [
+    {
+     "ressource": "corde",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "seau et treuil"
+    },
+    {
+     "ressource": "planches",
+     "qte": 1,
+     "periodeJours": null,
+     "note": "couvercle et margelle"
+    }
+   ]
+  },
+  {
+   "atelier": "cimetiere",
+   "niveau": "rustique",
+   "entretien": []
+  },
+  {
+   "atelier": "garnison",
+   "niveau": "solide",
+   "entretien": []
+  },
+  {
+   "atelier": "scriptorium",
+   "niveau": "solide",
+   "entretien": []
+  }
+ ],
+ "entretien_routes": [
+  {
+   "ressource": "pierre",
+   "qte": 1,
+   "periodeJours": null
+  },
+  {
+   "ressource": "scories",
+   "qte": 1,
+   "periodeJours": null,
+   "note": "Empierrement : les scories de la forge ne sont plus un déchet."
+  }
+ ]
+}

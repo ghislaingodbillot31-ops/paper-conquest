@@ -56,7 +56,11 @@ function renderCapitalView(){
     return;
   }
   title.textContent = 'Capitale — Région ' + capitalRegion;
-  renderTabs(tabsEl, body, CAPITAL_TABS, capitalTab, id => { capitalTab = id; renderCapitalView(); }, capitalRegion);
+  // hors mode développeur : la carte de la région seule (ni onglets Plan, Stocks, Construction, Caravane, Voyage, ni Gestion)
+  const dev = estDev(), tabs = dev ? CAPITAL_TABS : CAPITAL_TABS.filter(t => t.id === 'carte');
+  if(!dev) capitalTab = 'carte';
+  tabsEl.hidden = !dev; document.getElementById('cap-gestion').hidden = !dev;
+  renderTabs(tabsEl, body, tabs, capitalTab, id => { capitalTab = id; renderCapitalView(); }, capitalRegion);
 }
 document.getElementById('cap-globe').addEventListener('click', () => showView('carte'));
 document.getElementById('cap-gestion').addEventListener('click', () => { capitalTab = 'plan'; renderCapitalView(); });

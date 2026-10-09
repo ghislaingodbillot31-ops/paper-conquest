@@ -1,0 +1,370 @@
+{
+ "note": "Chaque maison consomme des GROUPES d'aliments : plus de groupes couverts, plus la maison est satisfaite et peut monter de niveau (la simulation n'est pas codée : données seulement). Quantités à 1 : TODO équilibrage.",
+ "groupesAliments": {
+  "pain_cereales": {
+   "nom": "Pain et céréales",
+   "ressources": [
+    "pain",
+    "bouillie",
+    "pâtisseries"
+   ]
+  },
+  "legumes": {
+   "nom": "Légumes",
+   "ressources": [
+    "panais",
+    "raves",
+    "carottes",
+    "choux",
+    "poireaux",
+    "oignons",
+    "ail",
+    "fèves",
+    "petits pois",
+    "navets",
+    "salades",
+    "gourdes",
+    "champignons",
+    "choucroute",
+    "légumes conservés"
+   ]
+  },
+  "fruits": {
+   "nom": "Fruits",
+   "ressources": [
+    "pommes",
+    "poires",
+    "cerises",
+    "prunes",
+    "pêches",
+    "abricots",
+    "coings",
+    "figues",
+    "olives",
+    "oranges",
+    "citrons",
+    "grenades",
+    "amandes",
+    "noix",
+    "noisettes",
+    "châtaignes",
+    "mûres",
+    "dattes",
+    "nèfles",
+    "sorbes",
+    "baies",
+    "fruits secs",
+    "confitures"
+   ]
+  },
+  "proteines": {
+   "nom": "Protéines",
+   "ressources": [
+    "viande",
+    "salaison",
+    "poisson",
+    "poisson salé",
+    "poisson fumé",
+    "poisson séché",
+    "œufs",
+    "fromage frais",
+    "fromage à pâte molle",
+    "fromage de garde",
+    "fèves",
+    "petits pois",
+    "potée",
+    "soupe"
+   ]
+  },
+  "matieres_grasses": {
+   "nom": "Matières grasses",
+   "ressources": [
+    "beurre",
+    "huile d'olive",
+    "huile de noix"
+   ]
+  },
+  "boisson": {
+   "nom": "Boisson",
+   "ressources": [
+    "bière",
+    "cidre",
+    "vin",
+    "hydromel",
+    "poiré",
+    "cormé"
+   ]
+  }
+ },
+ "satisfaction": {
+  "bonusVariete": true,
+  "note": "Bonus selon le nombre de groupes d'aliments couverts ; seuils à définir."
+ },
+ "niveaux": [
+  {
+   "niveau": 1,
+   "maisons": [
+    "maison",
+    "camp_colon"
+   ],
+   "besoins": [
+    {
+     "type": "groupe",
+     "groupe": "pain_cereales",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "legumes",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "proteines",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "boisson",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "bois de chauffage",
+     "qte": 1,
+     "saison": "hiver"
+    },
+    {
+     "type": "ressource",
+     "ressource": "chandelles",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "vêtements",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "chaussures",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "poteries",
+     "qte": 1
+    }
+   ]
+  },
+  {
+   "niveau": 2,
+   "maisons": [
+    "maison_cour"
+   ],
+   "besoins": [
+    {
+     "type": "groupe",
+     "groupe": "pain_cereales",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "legumes",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "fruits",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "proteines",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "matieres_grasses",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "boisson",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "bois de chauffage",
+     "qte": 1,
+     "saison": "hiver"
+    },
+    {
+     "type": "ressource",
+     "ressource": "chandelles",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "vêtements",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "chaussures",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "poteries",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "mobilier",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "peignes",
+     "qte": 1,
+     "besoin": "hygiène"
+    },
+    {
+     "type": "ressource",
+     "ressource": "lanternes",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "savon",
+     "qte": 1,
+     "besoin": "hygiène"
+    },
+    {
+     "type": "ressource",
+     "ressource": "chapelets",
+     "qte": 1,
+     "besoin": "dévotion"
+    }
+   ]
+  },
+  {
+   "niveau": 3,
+   "maisons": [
+    "grande_maison"
+   ],
+   "besoins": [
+    {
+     "type": "groupe",
+     "groupe": "pain_cereales",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "legumes",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "fruits",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "proteines",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "matieres_grasses",
+     "qte": 1
+    },
+    {
+     "type": "groupe",
+     "groupe": "boisson",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "bois de chauffage",
+     "qte": 1,
+     "saison": "hiver"
+    },
+    {
+     "type": "ressource",
+     "ressource": "chandelles",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "vêtements",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "chaussures",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "poteries",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "mobilier",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "peignes",
+     "qte": 1,
+     "besoin": "hygiène"
+    },
+    {
+     "type": "ressource",
+     "ressource": "lanternes",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "savon",
+     "qte": 1,
+     "besoin": "hygiène"
+    },
+    {
+     "type": "ressource",
+     "ressource": "chapelets",
+     "qte": 1,
+     "besoin": "dévotion"
+    },
+    {
+     "type": "ressource",
+     "ressource": "vin",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "fromage de garde",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "bijoux",
+     "qte": 1,
+     "besoin": "prestige"
+    },
+    {
+     "type": "ressource",
+     "ressource": "épices",
+     "qte": 1
+    },
+    {
+     "type": "ressource",
+     "ressource": "soie",
+     "qte": 1
+    }
+   ]
+  }
+ ]
+}

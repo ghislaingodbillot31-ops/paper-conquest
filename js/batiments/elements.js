@@ -11,7 +11,7 @@ const WOOD = {
   yard:'#c9b68b', speck:'#b5a076', dust:'#e4d5a8', dustHi:'#efe4c2',
   bark:'#6f5134', barkHi:'#8e6b46', barkLo:'#4c3721', grain:'#d9b680', ring:'#b18a58',
   plank:'#d8c08c', plankLine:'#b59b69', sticker:'#6b5236',
-  roofHi:'#a08a69', roof:'#86705a', roofLo:'#6f5c46', roofLine:'rgba(58,44,30,.45)',
+  roofHi:'#c9714a', roof:'#b8613e', roofLo:'#9a4e30', roofLine:'rgba(58,44,30,.45)',
   edge:'#3b2e22', fence:'#6b5236', rail:'#4b4a44', cart:'#9b7a52', shadow:'rgba(40,34,24,.33)',
   wattleHi:'#977650', beam:'#b8935f', spoil:'#ad946a', pitLo:'#33281c', pitHi:'#58452f', stone:'#8d877b', stoneLo:'#6c675d',
 };

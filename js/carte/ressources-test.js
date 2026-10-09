@@ -2,7 +2,7 @@
    La page map-test.html génère une carte avec tout ce que le jeu connaît (js/jeu/ressources.js) : les 9 minerais (gisements, S.deposits), les animaux
    d'élevage, la faune sauvage, les prédateurs, les poissons d'eau douce et de mer, les cultures et le bois (repères, S.ressources). Deux outils :
    « Placer » pose l'élément choisi là où l'on clique ; « Gomme » supprime celui qu'on clique. Ctrl+Z annule. La carte est enregistrée à part
-   (clé mapTest.v1). Un repère : { id, cat, key, x, y } ; peint par drawRessources (appelé par drawDecor). */
+   (clé mapTest.v1). Un repère : { id, cat, key, x, y } ; peint à chaque image par drawRessources (appelé par draw, pas dans les tuiles : disques, symboles et noms gardent leur taille d'écran à tous les zooms). */
 const CAT_TEST = [
   { id:'gisement', nom:'Minerais (gisements)', items:() => MINERALS,                              disque:'#7b7466', defaut:'⛏️' },
   { id:'elevage',  nom:'Animaux d’élevage',    items:() => animalsOf('elevage'),                   disque:'#c58b5a', defaut:'🐑' },
@@ -65,7 +65,7 @@ function drawRessources() {
     ctx.lineWidth = 1.5; ctx.strokeStyle = '#fffdf3'; ctx.stroke();
     ctx.font = Math.round(rayon * 1.15) + 'px "Segoe UI Emoji","Apple Color Emoji",sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillStyle = '#fff';
     ctx.fillText(glypheTest(r.cat, r.key), X, Y + 1);
-    if (s > .3) { ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textBaseline = 'top'; haloText(nomTest(r.cat, r.key), X, Y + rayon + 2, Col.ink, Col.sheet); }
+    if (s > ETIQ_ZOOM_MIN) { ctx.font = FONT_ETIQ; ctx.textBaseline = 'top'; haloText(nomTest(r.cat, r.key), X, Y + rayon + 2, Col.ink, Col.sheet); }
   }
 }
 // fantôme de l'élément choisi sous le curseur (outil « Placer ») ou cercle de la gomme

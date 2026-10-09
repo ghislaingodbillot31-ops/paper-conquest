@@ -1,0 +1,2989 @@
+[
+ {
+  "id": "bois",
+  "nom": "Bois (grumes)",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "loge_bucheron",
+   "scierie",
+   "hutte_charbonnier",
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "écorce",
+  "nom": "Écorce",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "tannerie"
+  ]
+ },
+ {
+  "id": "bois de chauffage",
+  "nom": "Bois de chauffage",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "four_chaux",
+   "tuilerie_poterie",
+   "verrerie",
+   "saloir_fumoir",
+   "maison",
+   "maison_cour",
+   "grande_maison"
+  ]
+ },
+ {
+  "id": "bâtons",
+  "nom": "Bâtons",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "brindilles",
+  "nom": "Brindilles",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "loge_bucheron",
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "fagots",
+  "nom": "Fagots",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "four"
+  ]
+ },
+ {
+  "id": "graines",
+  "nom": "Graines",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "hutte_forestier"
+  ]
+ },
+ {
+  "id": "pousses",
+  "nom": "Pousses",
+  "categorie": "Naturel",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "hutte_forestier"
+  ]
+ },
+ {
+  "id": "pierre",
+  "nom": "Pierre",
+  "categorie": "Naturel",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "tailleur_pierre"
+  ]
+ },
+ {
+  "id": "silex",
+  "nom": "Silex",
+  "categorie": "Naturel",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "tailleur_pierre"
+  ]
+ },
+ {
+  "id": "calcaire",
+  "nom": "Calcaire",
+  "categorie": "Naturel",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "four_chaux"
+  ]
+ },
+ {
+  "id": "argile",
+  "nom": "Argile",
+  "categorie": "Naturel",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "tuilerie_poterie",
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "sable",
+  "nom": "Sable",
+  "categorie": "Naturel",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "verrerie",
+   "four_chaux"
+  ]
+ },
+ {
+  "id": "eau",
+  "nom": "Eau",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "brasserie",
+   "four",
+   "tannerie",
+   "teinturerie_foulerie",
+   "four_chaux",
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "minerai de fer",
+  "nom": "Minerai de fer",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "bas_fourneau"
+  ]
+ },
+ {
+  "id": "minerai de cuivre",
+  "nom": "Minerai de cuivre",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "minerai d'étain",
+  "nom": "Minerai d'étain",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "minerai de plomb",
+  "nom": "Minerai de plomb",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "minerai d'argent",
+  "nom": "Minerai d'argent",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "minerai d'or",
+  "nom": "Minerai d'or",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "sel",
+  "nom": "Sel",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "saloir_fumoir",
+   "fromagerie"
+  ]
+ },
+ {
+  "id": "alun",
+  "nom": "Alun",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "ambre",
+  "nom": "Ambre",
+  "categorie": "Naturel",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "orfevre"
+  ]
+ },
+ {
+  "id": "blé",
+  "nom": "Blé",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "moulin"
+  ],
+  "groupe": "Céréales"
+ },
+ {
+  "id": "seigle",
+  "nom": "Seigle",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "moulin"
+  ],
+  "groupe": "Céréales"
+ },
+ {
+  "id": "orge",
+  "nom": "Orge",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "brasserie"
+  ],
+  "groupe": "Céréales"
+ },
+ {
+  "id": "avoine",
+  "nom": "Avoine",
+  "categorie": "Naturel",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "relais"
+  ],
+  "groupe": "Céréales"
+ },
+ {
+  "id": "paille",
+  "nom": "Paille",
+  "categorie": "Naturel",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "grange"
+  ]
+ },
+ {
+  "id": "foin",
+  "nom": "Foin",
+  "categorie": "Naturel",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "relais",
+   "grange"
+  ]
+ },
+ {
+  "id": "lin",
+  "nom": "Lin",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "corderie"
+  ]
+ },
+ {
+  "id": "chanvre",
+  "nom": "Chanvre",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "corderie"
+  ]
+ },
+ {
+  "id": "guède",
+  "nom": "Guède",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "garance",
+  "nom": "Garance",
+  "categorie": "Naturel",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "raisin",
+  "nom": "Raisin",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "pressoir"
+  ]
+ },
+ {
+  "id": "champignons",
+  "nom": "Champignons",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "viande",
+  "nom": "Viande",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 6
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "saloir_fumoir",
+   "maison"
+  ]
+ },
+ {
+  "id": "peaux",
+  "nom": "Peaux",
+  "categorie": "Chasse",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "tannerie"
+  ]
+ },
+ {
+  "id": "os",
+  "nom": "Os",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "tendons",
+  "nom": "Tendons",
+  "categorie": "Chasse",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "archerie"
+  ]
+ },
+ {
+  "id": "graisse",
+  "nom": "Graisse",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "suif",
+  "nom": "Suif",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "corne",
+  "nom": "Corne",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "bois de cerf",
+  "nom": "Bois de cerf",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "caillette",
+  "nom": "Caillette",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "boucherie"
+  ]
+ },
+ {
+  "id": "présure",
+  "nom": "Présure",
+  "categorie": "Chasse",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fromagerie"
+  ]
+ },
+ {
+  "id": "baies",
+  "nom": "Baies",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 8
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "teinturerie_foulerie",
+   "maison"
+  ]
+ },
+ {
+  "id": "miel",
+  "nom": "Miel",
+  "categorie": "Élevage",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "brasserie",
+   "maison"
+  ]
+ },
+ {
+  "id": "cire",
+  "nom": "Cire",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "poisson",
+  "nom": "Poisson frais",
+  "categorie": "Pêche",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 2
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "saloir_fumoir",
+   "maison"
+  ]
+ },
+ {
+  "id": "œufs",
+  "nom": "Œufs",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 15
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "maison"
+  ]
+ },
+ {
+  "id": "volaille",
+  "nom": "Volaille",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 6
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "boucherie",
+   "maison"
+  ]
+ },
+ {
+  "id": "plumes",
+  "nom": "Plumes",
+  "categorie": "Élevage",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "archerie"
+  ]
+ },
+ {
+  "id": "lait",
+  "nom": "Lait",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": {
+   "jours": 3
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fromagerie"
+  ]
+ },
+ {
+  "id": "laine",
+  "nom": "Laine",
+  "categorie": "Élevage",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "atelier_tissage",
+   "couture"
+  ]
+ },
+ {
+  "id": "animaux vivants",
+  "nom": "Animaux vivants",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "boucherie"
+  ]
+ },
+ {
+  "id": "fumier",
+  "nom": "Fumier",
+  "categorie": "Élevage",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "ferme"
+  ]
+ },
+ {
+  "id": "farine",
+  "nom": "Farine",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "four"
+  ]
+ },
+ {
+  "id": "son",
+  "nom": "Son",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "ferme",
+   "bergerie"
+  ]
+ },
+ {
+  "id": "pain",
+  "nom": "Pain",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 5
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "cendres",
+  "nom": "Cendres",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "potasse",
+  "nom": "Potasse",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "verrerie",
+   "chandellerie_savonnerie"
+  ]
+ },
+ {
+  "id": "malt",
+  "nom": "Malt",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "brasserie"
+  ]
+ },
+ {
+  "id": "drêche",
+  "nom": "Drêche",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "ferme"
+  ]
+ },
+ {
+  "id": "bière",
+  "nom": "Bière",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 20
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "hydromel",
+  "nom": "Hydromel",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "vin",
+  "nom": "Vin",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "cidre",
+  "nom": "Cidre",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "marc",
+  "nom": "Marc",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "ferme"
+  ]
+ },
+ {
+  "id": "beurre",
+  "nom": "Beurre",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "fromage frais",
+  "nom": "Fromage frais",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 7
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "fromage à pâte molle",
+  "nom": "Fromage à pâte molle",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": {
+   "jours": 30
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "fromage de garde",
+  "nom": "Fromage de garde",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "petit-lait",
+  "nom": "Petit-lait",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "ferme"
+  ]
+ },
+ {
+  "id": "salaison",
+  "nom": "Salaison",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "poisson salé",
+  "nom": "Poisson salé",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "poisson fumé",
+  "nom": "Poisson fumé",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "poisson séché",
+  "nom": "Poisson séché",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "chandelles",
+  "nom": "Chandelles",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "cierges",
+  "nom": "Cierges",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "savon",
+  "nom": "Savon",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "planches",
+  "nom": "Planches",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "menuiserie",
+   "tonnellerie",
+   "armurerie"
+  ]
+ },
+ {
+  "id": "poutres",
+  "nom": "Poutres",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "bardeaux",
+  "nom": "Bardeaux",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "charbon de bois",
+  "nom": "Charbon de bois",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "bas_fourneau",
+   "fonderie",
+   "forge"
+  ]
+ },
+ {
+  "id": "manche d'outil",
+  "nom": "Manches",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "forge"
+  ]
+ },
+ {
+  "id": "paniers",
+  "nom": "Paniers",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "mobilier",
+  "nom": "Mobilier",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "charrette à main",
+  "nom": "Charrette",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "chariot",
+  "nom": "Chariot",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "tonneau",
+  "nom": "Tonneau",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "pressoir",
+   "brasserie",
+   "saloir_fumoir",
+   "entrepot"
+  ]
+ },
+ {
+  "id": "loupe de fer",
+  "nom": "Loupe de fer",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "forge"
+  ]
+ },
+ {
+  "id": "scories",
+  "nom": "Scories",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "fer",
+  "nom": "Fer",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "forge",
+   "tonnellerie"
+  ]
+ },
+ {
+  "id": "acier",
+  "nom": "Acier",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "forge",
+   "archerie",
+   "armurerie"
+  ]
+ },
+ {
+  "id": "clous",
+  "nom": "Clous",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "ferrures",
+  "nom": "Ferrures",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "cordonnerie",
+   "archerie"
+  ]
+ },
+ {
+  "id": "cercles de fer",
+  "nom": "Cercles de fer",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "tonnellerie",
+   "menuiserie"
+  ]
+ },
+ {
+  "id": "fers à cheval",
+  "nom": "Fers à cheval",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "relais"
+  ]
+ },
+ {
+  "id": "hameçons",
+  "nom": "Hameçons",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "cabane_peche"
+  ]
+ },
+ {
+  "id": "tete",
+  "nom": "Têtes et lames",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "forge"
+  ]
+ },
+ {
+  "id": "cuivre",
+  "nom": "Cuivre",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "étain",
+  "nom": "Étain",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "bronze",
+  "nom": "Bronze",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie"
+  ]
+ },
+ {
+  "id": "plomb",
+  "nom": "Plomb",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "fonderie",
+   "verrerie"
+  ]
+ },
+ {
+  "id": "argent",
+  "nom": "Argent",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "orfevre",
+   "atelier_monetaire"
+  ]
+ },
+ {
+  "id": "or",
+  "nom": "Or",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "orfevre"
+  ]
+ },
+ {
+  "id": "cloche",
+  "nom": "Cloche",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "eglise"
+  ]
+ },
+ {
+  "id": "feuilles de plomb",
+  "nom": "Feuilles de plomb",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "bijoux",
+  "nom": "Bijoux",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "chapelets",
+  "nom": "Chapelets",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "objets liturgiques",
+  "nom": "Objets liturgiques",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "feuille d'or",
+  "nom": "Feuille d'or",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "monnaie",
+  "nom": "Monnaie",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "cuir",
+  "nom": "Cuir",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "cordonnerie",
+   "armurerie",
+   "forge"
+  ]
+ },
+ {
+  "id": "parchemin",
+  "nom": "Parchemin",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "filasse",
+  "nom": "Filasse",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "corderie",
+   "atelier_tissage"
+  ]
+ },
+ {
+  "id": "corde",
+  "nom": "Corde",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "archerie",
+   "cabane_peche"
+  ]
+ },
+ {
+  "id": "filet de pêche",
+  "nom": "Filet de pêche",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "cabane_peche"
+  ]
+ },
+ {
+  "id": "fil de laine",
+  "nom": "Fil de laine",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "atelier_tissage"
+  ]
+ },
+ {
+  "id": "drap brut",
+  "nom": "Drap brut",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "toile",
+  "nom": "Toile",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "couture",
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "drap",
+  "nom": "Drap",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "couture",
+   "teinturerie_foulerie"
+  ]
+ },
+ {
+  "id": "drap teint",
+  "nom": "Drap teint",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "couture"
+  ]
+ },
+ {
+  "id": "vêtements",
+  "nom": "Vêtements",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "gambison",
+  "nom": "Gambison",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "armurerie"
+  ]
+ },
+ {
+  "id": "chaussures",
+  "nom": "Chaussures",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "selles",
+  "nom": "Selles",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "harnais",
+  "nom": "Harnais",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "colliers de labour",
+  "nom": "Colliers de labour",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "chaux",
+  "nom": "Chaux",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "four_chaux"
+  ]
+ },
+ {
+  "id": "mortier",
+  "nom": "Mortier",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "pierre taillée",
+  "nom": "Pierre taillée",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "pointes de flèche",
+  "nom": "Pointes de flèche en silex",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": true,
+  "attendu": [
+   "archerie"
+  ]
+ },
+ {
+  "id": "tuiles",
+  "nom": "Tuiles",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "briques",
+  "nom": "Briques",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "poteries",
+  "nom": "Poteries",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "verre",
+  "nom": "Verre",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "attendu": [
+   "verrerie"
+  ]
+ },
+ {
+  "id": "vitraux",
+  "nom": "Vitraux",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "hache",
+  "nom": "Hache",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "pioche",
+  "nom": "Pioche",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "houe",
+  "nom": "Houe",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "pelle",
+  "nom": "Pelle",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "faucille",
+  "nom": "Faucille",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "faux",
+  "nom": "Faux",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "serpe",
+  "nom": "Serpe",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "marteau",
+  "nom": "Marteau",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "tenailles",
+  "nom": "Tenailles",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false,
+  "depart": true
+ },
+ {
+  "id": "couteau",
+  "nom": "Couteau",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "depart": true
+ },
+ {
+  "id": "canne à pêche",
+  "nom": "Canne à pêche",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "unSeulIngredientVoulu": true,
+  "depart": true
+ },
+ {
+  "id": "arc",
+  "nom": "Arc",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "flèche",
+  "nom": "Flèche",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "arbalète",
+  "nom": "Arbalète",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "carreaux",
+  "nom": "Carreaux d'arbalète",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": false
+ },
+ {
+  "id": "gourdin",
+  "nom": "Gourdin",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true,
+  "unSeulIngredientVoulu": true
+ },
+ {
+  "id": "dague",
+  "nom": "Dague",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "épée",
+  "nom": "Épée",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "masse",
+  "nom": "Masse",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "lance",
+  "nom": "Lance",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "pique",
+  "nom": "Pique",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "javelot",
+  "nom": "Javelot",
+  "categorie": "Transformé",
+  "filiere": "metal",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "arme",
+  "existant": true
+ },
+ {
+  "id": "bouclier en bois",
+  "nom": "Bouclier en bois",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "armure",
+  "existant": true
+ },
+ {
+  "id": "bouclier renforcé",
+  "nom": "Bouclier renforcé",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "armure",
+  "existant": false
+ },
+ {
+  "id": "armure de cuir",
+  "nom": "Armure de cuir",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "armure",
+  "existant": true
+ },
+ {
+  "id": "cotte de mailles",
+  "nom": "Cotte de mailles",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "armure",
+  "existant": false
+ },
+ {
+  "id": "armure de plates",
+  "nom": "Armure de plates",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "armure",
+  "existant": false
+ },
+ {
+  "id": "épices",
+  "nom": "Épices",
+  "categorie": "Importé",
+  "filiere": "commerce",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "soie",
+  "nom": "Soie",
+  "categorie": "Importé",
+  "filiere": "commerce",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "panais",
+  "nom": "Panais",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "ancienId": "pommes de terre"
+ },
+ {
+  "id": "carottes",
+  "nom": "Carottes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "choux",
+  "nom": "Choux",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "poireaux",
+  "nom": "Poireaux",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "oignons",
+  "nom": "Oignons",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "ail",
+  "nom": "Ail",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "fèves",
+  "nom": "Fèves",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "ancienId": "haricots"
+ },
+ {
+  "id": "petits pois",
+  "nom": "Petits pois",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "navets",
+  "nom": "Navets",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "salades",
+  "nom": "Salades",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "gourdes",
+  "nom": "Gourdes (calebasses)",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false,
+  "ancienId": "courges"
+ },
+ {
+  "id": "pommes",
+  "nom": "Pommes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "poires",
+  "nom": "Poires",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "cerises",
+  "nom": "Cerises",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "prunes",
+  "nom": "Prunes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "pêches",
+  "nom": "Pêches",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "abricots",
+  "nom": "Abricots",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "coings",
+  "nom": "Coings",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "figues",
+  "nom": "Figues",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "olives",
+  "nom": "Olives",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "oranges",
+  "nom": "Oranges",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "citrons",
+  "nom": "Citrons",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "grenades",
+  "nom": "Grenades",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "amandes",
+  "nom": "Amandes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "noix",
+  "nom": "Noix",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "noisettes",
+  "nom": "Noisettes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "châtaignes",
+  "nom": "Châtaignes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "mûres",
+  "nom": "Mûres",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "dattes",
+  "nom": "Dattes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "nèfles",
+  "nom": "Nèfles",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "sorbes",
+  "nom": "Sorbes",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": true
+ },
+ {
+  "id": "lance de chasse",
+  "nom": "Lance de chasse",
+  "categorie": "Transformé",
+  "filiere": "armes",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": true,
+  "niveauChasse": 1,
+  "attendu": [
+   "camp_chasse"
+  ]
+ },
+ {
+  "id": "scie",
+  "nom": "Scie",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false,
+  "depart": true
+ },
+ {
+  "id": "râteau",
+  "nom": "Râteau",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false
+ },
+ {
+  "id": "pelle à four",
+  "nom": "Pelle à four",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false
+ },
+ {
+  "id": "fuseau",
+  "nom": "Fuseau",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false
+ },
+ {
+  "id": "métier à tisser",
+  "nom": "Métier à tisser",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "outil",
+  "existant": false
+ },
+ {
+  "id": "manches de couteau",
+  "nom": "Manches de couteau",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "dés",
+  "nom": "Dés",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "peignes",
+  "nom": "Peignes",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "lanternes",
+  "nom": "Lanternes",
+  "categorie": "Transformé",
+  "filiere": "bois",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "raves",
+  "nom": "Raves",
+  "categorie": "Naturel",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": {
+   "jours": 10
+  },
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "torchis",
+  "nom": "Torchis",
+  "categorie": "Transformé",
+  "filiere": "construction",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "vinaigre",
+  "nom": "Vinaigre",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "poiré",
+  "nom": "Poiré",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "cormé",
+  "nom": "Cormé",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "huile d'olive",
+  "nom": "Huile d'olive",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "huile de noix",
+  "nom": "Huile de noix",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "savon fin",
+  "nom": "Savon fin",
+  "categorie": "Transformé",
+  "filiere": "elevage",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "fruits secs",
+  "nom": "Fruits secs",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "confitures",
+  "nom": "Confitures et pâtes de fruits",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "choucroute",
+  "nom": "Choucroute",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "légumes conservés",
+  "nom": "Légumes conservés",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "farine de châtaigne",
+  "nom": "Farine de châtaigne",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "pâtisseries",
+  "nom": "Pâtisseries",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "potée",
+  "nom": "Potée",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "soupe",
+  "nom": "Soupe",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "bouillie",
+  "nom": "Bouillie d'avoine",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "manuscrit enluminé",
+  "nom": "Manuscrit enluminé",
+  "categorie": "Transformé",
+  "filiere": "commerce",
+  "final": true,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "encre",
+  "nom": "Encre",
+  "categorie": "Importé",
+  "filiere": "commerce",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "épluchures",
+  "nom": "Épluchures et fruits abîmés",
+  "categorie": "Transformé",
+  "filiere": "alimentation",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "pelures d'oignon",
+  "nom": "Pelures d'oignon",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "colorant jaune",
+  "nom": "Colorant jaune",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ },
+ {
+  "id": "colorant violet",
+  "nom": "Colorant violet",
+  "categorie": "Transformé",
+  "filiere": "cuir_textile",
+  "final": false,
+  "perissable": null,
+  "stockable": true,
+  "type": "materiau",
+  "existant": false
+ }
+]

@@ -5,8 +5,8 @@
    Principe : on photographie les contenus de tous les bâtiments (inv, mat, stock, vivres) avant chaque ouvrier de simTick (jrActeur) et on compare : toute variation est attribuée à l'ouvrier qui vient d'agir,
    Historique par bâtiment (JR.hist : tout ce qui entre, sort, est pris pour lui ou déposé par lui, sans limite pratique) : en sélectionnant un bâtiment, le panneau n'affiche que le sien.
    quel que soit le code qui l'a causée (rien à instrumenter). Les changements hors des ouvriers (clic du joueur : construction payée, amélioration…) sont attribués à « Joueur / système ». */
-const DEV_CLE = 'paperConquestDev';
-/* BASE DE DONNÉES DÉVELOPPEUR : tout réglage fait ici (stocks maximum, heure, actions) est inscrit sur le serveur de logs (tools/serveur-logs.js, fichier ~/.paper-conquest-dev/base.json) en plus du navigateur ;
+const DEV_CLE = 'dominiumDev';
+/* BASE DE DONNÉES DÉVELOPPEUR : tout réglage fait ici (stocks maximum, heure, actions) est inscrit sur le serveur de logs (tools/serveur-logs.js, fichier ~/.dominium-dev/base.json) en plus du navigateur ;
    au chargement, le navigateur reprend ce que contient la base. Sans serveur, rien ne casse : le navigateur garde ses valeurs. */
 const BASE_URL = 'http://localhost:8001/base'; let baseHorsLigne = 0;
 function baseEnvoyer(chemin, corps) {
@@ -16,7 +16,8 @@ function baseEnvoyer(chemin, corps) {
 const baseVariable = (collection, cle, valeur) => { baseEnvoyer('/set', { collection, cle, valeur }); if (typeof jeuLog === 'function') jeuLog('base ' + collection + '.' + cle, valeur); };    // inscrit (ou supprime : valeur null) une variable
 const baseAction = (nom, detail) => { baseEnvoyer('/action', { nom, detail }); if (typeof jeuLog === 'function') jeuLog('action développeur ' + nom, detail); };
 const JR = { vue:true, voies:false, infos:false, actif:false, ev:[], hist:new Map(), snap:new Map(), cur:null, max:500, pause:false, filtre:'' };
-try { JR.actif = localStorage.getItem(DEV_CLE) === '1' || /[?&]dev\b/.test(location.search); } catch (e) {}
+const MODE_JOUEUR = window.name === 'jeu-joueur';                      // cadre « Jeu » du studio : version joueur, mode développeur interdit
+try { JR.actif = !MODE_JOUEUR && (localStorage.getItem(DEV_CLE) === '1' || /[?&]dev\b/.test(location.search)); } catch (e) {}
 const jrNom = h => { const m = S.houses.filter(o => o.kind === h.kind).sort((a, b) => a.id - b.id); return h.type + (m.length > 1 ? ' n°' + (m.indexOf(h) + 1) : ''); };
 function jrPhoto() {
   const m = new Map();
@@ -60,7 +61,7 @@ function jrActeur(h, slot) {
 }
 /* COMMANDES À DISTANCE : le serveur de logs garde une file de commandes (POST /base/commande) que le jeu interroge toutes les 4 s et exécute une fois. Commande « nouvelle_partie » { region } : la partie enregistrée (carte, bâtiments, arrivants,
    nom du village, habitants) est supprimée et le jeu s'ouvre sur la région demandée, régénérée à neuf (même adresse que le choix de région de la barre du haut). */
-/* SAUVEGARDES DE SÉCURITÉ : la partie (carte, bâtiments…) est copiée sur le serveur toutes les 5 minutes et AVANT toute « nouvelle partie » (dossier ~/.paper-conquest-dev/sauvegardes, 40 au plus). Commande « restaurer » { nom } : remet une de ces copies. */
+/* SAUVEGARDES DE SÉCURITÉ : la partie (carte, bâtiments…) est copiée sur le serveur toutes les 5 minutes et AVANT toute « nouvelle partie » (dossier ~/.dominium-dev/sauvegardes, 40 au plus). Commande « restaurer » { nom } : remet une de ces copies. */
 function sauvegarderPartie(raison) {
   try { const d = localStorage.getItem(KEY); if (!d) return Promise.resolve(null); const t = new Date().toISOString().replace(/[:.]/g, '-'); return baseEnvoyer('/sauvegarde', { nom:t + '_' + raison + '_' + (typeof GAME !== 'undefined' && GAME ? 'region' + GAME.region : 'carte'), cle:KEY, search:location.search, donnees:d }); } catch (e) { return Promise.resolve(null); }
 }
@@ -76,7 +77,7 @@ async function nouvellePartie(p) {
   await sauvegarderPartie('avant-nouvelle-partie');                                                   // (copie de sécurité avant d'effacer)
   const list = await (await fetch('data/regions/regions.json')).json(), r = list.find(x => x.id === +p.region); if (!r) throw new Error('région inconnue ' + p.region);
   window.__nouvellePartie = true; window.save = () => {};                                                // (plus aucun enregistrement : ni la carte ni les habitants de l'ancienne partie ne sont réécrits)
-  for (const k of Object.keys(localStorage)) if (k.startsWith(KEY) || k === HABITANTS_CLE || k.startsWith('paperConquestRegionMap.' + r.id)) localStorage.removeItem(k);
+  for (const k of Object.keys(localStorage)) if (k.startsWith(KEY) || k === HABITANTS_CLE || k.startsWith('dominiumRegionMap.' + r.id)) localStorage.removeItem(k);
   if (typeof flash === 'function') flash('Nouvelle partie : région ' + r.id + ' (' + r.pays + ', ' + r.climat.biome + ', ' + r.climat.temperature_c + ' °C)');
   const q = new URLSearchParams({ region:r.id, biome:r.climat.biome, river:r.eau.cours_eau_carte, seed:r.id * 7919 + 101, lon:r.centre[0], lat:r.centre[1], tm:r.climat.temperature_c, hum:r.climat.humidite });
   if (new URLSearchParams(location.search).has('test')) q.set('test', '1');
@@ -99,7 +100,7 @@ setInterval(async () => {
 // ---- définition des stocks (onglet développeur > « Définir les stocks ») ----
 /* Pour chaque type de bâtiment, le joueur règle le MAXIMUM de chaque ressource (matières nécessaires et produits) puis valide : les valeurs s'appliquent tout de suite (CAP_RES, simulation.js), sont gardées dans le navigateur
    (clé STOCKS_DEV_CLE) et affichées en JSON, à transmettre pour les inscrire définitivement dans le code. Seules les valeurs qui diffèrent du défaut sont gardées. */
-const STOCKS_DEV_CLE = 'paperConquestStocksDev', CAP_BASE = JSON.parse(JSON.stringify(CAP_RES));
+const STOCKS_DEV_CLE = 'dominiumStocksDev', CAP_BASE = JSON.parse(JSON.stringify(CAP_RES));
 let stocksDev = {}; try { stocksDev = JSON.parse(localStorage.getItem(STOCKS_DEV_CLE) || '{}') || {}; } catch (e) {}
 function appliquerStocksDev() { for (const k of new Set([...Object.keys(CAP_BASE), ...Object.keys(stocksDev), ...Object.keys(CAP_RES)])) CAP_RES[k] = { ...(CAP_BASE[k] || {}), ...(stocksDev[k] || {}) }; }
 appliquerStocksDev();
@@ -184,9 +185,16 @@ function devMontrer() {
       + '<button data-dev="stocks">Définir les stocks</button><small>Règle le maximum de chaque ressource par bâtiment, puis valide.</small>'
       + '<button data-dev="infos" id="dev-infos">Infos des habitants : afficher</button><small>Au-dessus de chaque habitant : satiété, soif, ce qu’il fait et où il va.</small>'
       + '<button data-dev="voies" id="dev-voies">Lignes de circulation : afficher</button><small>Les deux voies de chaque route (droite et gauche) avec le sens de la marche.</small>'
+      + '<h3 style="margin-top:6px">Temps</h3><label>Mois <select id="dev-mois">' + MOIS.map((m, i) => '<option value="' + i + '">' + m + '</option>').join('') + '</select></label><button data-dev="date-reelle">Date réelle</button>'
+      + '<label>Heure <b id="dev-heure-txt"></b><input id="dev-heure" type="range" min="0" max="24" step="0.25"></label><label><input id="dev-verrou" type="checkbox"> Verrouiller l’heure</label><small>Verrouillée, l’heure ne bouge plus (jour ou nuit figé) ; le mois change la saison, la météo et la neige.</small>'
       + '<button data-dev="journal">Journal des ressources : afficher / masquer</button><button data-dev="quitter">Quitter le mode développeur</button>';
     document.body.append(devTab, devPan);
-    devTab.addEventListener('click', () => { devPan.hidden = !devPan.hidden; devTab.setAttribute('aria-expanded', String(!devPan.hidden)); });
+    const tempsMaj = () => { devPan.querySelector('#dev-mois').value = dateDe(METEO.doy).mois; const h = heureCarte(); devPan.querySelector('#dev-heure').value = h; devPan.querySelector('#dev-heure-txt').textContent = libelleHeure(h); devPan.querySelector('#dev-verrou').checked = HEURE_VERROU != null; };
+    const tempsApplique = () => { sauveReglageTemps(); majNuit(); if (typeof markAllDirty === 'function') markAllDirty(); requestDraw(); tempsMaj(); };
+    devPan.querySelector('#dev-mois').addEventListener('change', e => { fixeJour(doyDe(15, +e.target.value), false); baseAction('mois changé', { mois:MOIS[+e.target.value] }); tempsApplique(); });
+    devPan.querySelector('#dev-heure').addEventListener('input', e => { const h = +e.target.value; if (HEURE_VERROU != null) HEURE_VERROU = h; else fixeHeure(h); tempsApplique(); });
+    devPan.querySelector('#dev-verrou').addEventListener('change', e => { HEURE_VERROU = e.target.checked ? +devPan.querySelector('#dev-heure').value : null; baseAction('heure verrouillée', { heure:HEURE_VERROU }); tempsApplique(); });
+    devTab.addEventListener('click', () => { tempsMaj(); devPan.hidden = !devPan.hidden; devTab.setAttribute('aria-expanded', String(!devPan.hidden)); });
     devPan.addEventListener('click', e => {
       const a = e.target.closest('[data-dev]'); if (!a) return;
       if (a.dataset.dev === 'habitants') { if (confirm('Réinitialiser tous les habitants ? Leurs ordres et ce qu’ils portent sont perdus.')) resetHabitants(); }
@@ -195,6 +203,7 @@ function devMontrer() {
       else if (a.dataset.dev === 'journal') { JR.vue = !JR.vue; baseAction('journal des ressources', { visible:JR.vue }); jrMontrer(); }
       else if (a.dataset.dev === 'infos') { JR.infos = !JR.infos; a.textContent = 'Infos des habitants : ' + (JR.infos ? 'masquer' : 'afficher'); baseAction('infos des habitants', { visibles:JR.infos }); requestDraw(); }
       else if (a.dataset.dev === 'voies') { JR.voies = !JR.voies; a.textContent = 'Lignes de circulation : ' + (JR.voies ? 'masquer' : 'afficher'); baseAction('lignes de circulation', { visibles:JR.voies }); requestDraw(); }
+      else if (a.dataset.dev === 'date-reelle') { fixeJour(aujourdhui(), true); sauveReglageTemps(); majNuit(); if (typeof markAllDirty === 'function') markAllDirty(); requestDraw(); tempsMaj(); }
       else if (a.dataset.dev === 'quitter') jrBascule(false);
     });
   }
@@ -239,7 +248,8 @@ function jrMontrer() {
   }
   jrBox.hidden = false; jrSig = ''; jrRendre();
 }
-function jrBascule(v = !JR.actif) { baseAction(v ? 'mode développeur activé' : 'mode développeur désactivé'); JR.actif = v; JR.snap = new Map(); JR.cur = null; try { localStorage.setItem(DEV_CLE, v ? '1' : '0'); } catch (e) {} jrMontrer(); if (typeof requestDraw === 'function') requestDraw(); if (typeof flash === 'function') flash(v ? 'Mode développeur activé (H ou Ctrl + Maj + D pour le quitter) · lignes de circulation affichées' : 'Mode développeur désactivé'); }
+function jrBascule(v = !JR.actif) {
+  if (MODE_JOUEUR) return; baseAction(v ? 'mode développeur activé' : 'mode développeur désactivé'); JR.actif = v; JR.snap = new Map(); JR.cur = null; try { localStorage.setItem(DEV_CLE, v ? '1' : '0'); } catch (e) {} jrMontrer(); if (typeof requestDraw === 'function') requestDraw(); if (typeof flash === 'function') flash(v ? 'Mode développeur activé (H ou Ctrl + Maj + D pour le quitter) · lignes de circulation affichées' : 'Mode développeur désactivé'); }
 document.addEventListener('keydown', e => {
   if (e.ctrlKey && e.shiftKey && (e.key === 'D' || e.key === 'd')) { e.preventDefault(); jrBascule(); return; }
   if ((e.key === 'h' || e.key === 'H') && !e.ctrlKey && !e.metaKey && !e.altKey && !(e.target.closest && e.target.closest('input,textarea,select'))) { e.preventDefault(); jrBascule(); }   // H : mode développeur

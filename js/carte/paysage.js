@@ -125,7 +125,7 @@ function forestNoise() {
 function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
   const base = S.roads.filter(r => !r.libre);   // routes de base : les seules dont dépend la végétation fixe ; celles du joueur ne la font qu'effacer (computeFlora)
-  const fk = S.landSeed + ':' + S.biome + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';') + '|' + (typeof baiesSignature === 'function' ? baiesSignature() : '');
+  const fk = S.landSeed + ':' + S.biome + ':' + (typeof decorsSignature === 'function' ? decorsSignature() : '') + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';') + '|' + (typeof baiesSignature === 'function' ? baiesSignature() : '');
   if (MONDE_PLAT) return floraCands = [];                                       // monde plat : aucune végétation
   if (floraCands && floraSeed === fk) return floraCands;
   const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
@@ -160,8 +160,8 @@ function floraCandidates() {
     if (woodAt[j * NX + i]) { tree(x + 1.5 + rnd() * 3, y + 1.5 + rnd() * 3, 3.2 + rnd() * 2.6, true); continue; }
     const px = x + rnd() * 5, py = y + rnd() * 5, n = nz(px, py), r = rnd();
     const fn = fz(px, py);
-    // prés dégagés : quelques bosquets serrés (cœur des taches sombres), de rares arbres isolés
-    const pTree = fn > B.forest - .015 ? .3 : n > B.dense + .06 ? .5 : n > B.mid + .04 ? .03 : B.sparse * .35;
+    // prés dégagés : de rares arbres isolés seulement. Plus de bosquets ni de couronne d'arbres autour des forêts : une grande forêt n'a que sa lisière (2 rangées, voir classifyWoods) et son massif.
+    const pTree = B.sparse * .35;
     const pBush = n > B.dense ? B.bush * .5 : B.bush * .15;
     if (r < pTree) tree(px, py, 3.2 + rnd() * 2.6, false);
     else if (r < pTree + pBush) out.push({ x:round2(px), y:round2(py), r:1.2 + rnd() * .9, kind:'bush', v:rnd() });
@@ -191,24 +191,15 @@ function floraCandidates() {
     }
   }
   out.length = nLisieres;
-  // îles : un bouquet d'arbres au cœur de chaque île (hors de la grève de sable)
-  for (const rv of S.rivers) for (const is of riverIsles(rv)) {
-    // (sur l'île même, à 7 m au moins de son bord : jamais dans l'eau ni sur la grève)
-    const P = is.P, bb = is.bb, deep = q => inPoly(q, P) && P.every((a, k) => ptSeg(q, a, P[(k + 1) % P.length]).d > 7);
-    for (let y = bb[1]; y < bb[3]; y += 6) for (let x = bb[0]; x < bb[2]; x += 6) {
-      const q = [x + rnd() * 4, y + rnd() * 4];
-      if (rnd() < .5 && deep(q)) { const before = out.length; tree(q[0], q[1], 0, false); if (out.length > before) out[before].isle = 1; }
-    }
-  }
   /* Rochers et cailloux de berge : par petits groupes (1 à 5 pierres, 0,4 à 2 m) le long des
-     lacs, des rivières et autour des îles, certains à moitié dans l'eau ; jamais sur un pont. */
+     lacs et des rivières, posés à terre ; jamais sur un pont. */
   const nearRoad = q => base.some(r => r.pts.slice(1).some((e, j) => ptSeg(q, r.pts[j], e).d < 14));
   const shoreRocks = (a, b, out_) => { // a : point de berge ; b : direction vers la terre (unitaire)
     if (nearRoad(a)) return;
     const k = 1 + Math.floor(rnd() * 5);
     for (let s = 0; s < k; s++) {
-      const off = -1.5 + rnd() * 4, side = (rnd() - .5) * 7, big = s === 0 && rnd() < .5;
-      out_.push({ x:round2(a[0] + b[0] * off - b[1] * side), y:round2(a[1] + b[1] * off + b[0] * side), r:big ? 2.4 + rnd() * 2 : .6 + rnd() * .7, kind:'rock', v:rnd(), wet:1 });
+      const big = s === 0 && rnd() < .5, rr = big ? 2.4 + rnd() * 2 : .6 + rnd() * .7, off = rr + .5 + rnd() * 2, side = (rnd() - .5) * 7;   // (à terre : le bord du caillou reste à 0,5 m au moins de l'eau)
+      out_.push({ x:round2(a[0] + b[0] * off - b[1] * side), y:round2(a[1] + b[1] * off + b[0] * side), r:rr, kind:'rock', v:rnd(), wet:1 });
     }
   };
   for (const lk of S.lakes) {
@@ -223,10 +214,6 @@ function floraCandidates() {
     for (const bank of [L, R]) for (let i = 0; i < bank.length - 1; i += step) if (rnd() < .24) {
       const a = bank[i], b = bank[i + 1], d = [b[0] - a[0], b[1] - a[1]], dl = Math.hypot(...d) || 1, side = bank === L ? 1 : -1;
       shoreRocks(a, [-d[1] / dl * side, d[0] / dl * side], out);
-    }
-    for (const is of riverIsles(rv)) for (let i = 0; i < is.P.length; i += 3) if (rnd() < .3) {
-      const a = is.P[i], u = [a[0] - is.c[0], a[1] - is.c[1]], L2 = Math.hypot(...u) || 1;
-      shoreRocks(a, [-u[0] / L2, -u[1] / L2], out); // vers le centre de l'île = vers la terre
     }
   }
   /* Pierres à tailler (le camp de tailleur de pierre les récolte) : éparpillées sur toute la carte et,
@@ -253,11 +240,16 @@ function floraCandidates() {
   { const rx = seeded(S.landSeed * 31 + 19);
     for (let n = 0; n < TW * TH / 60000; n++) { const cx = rx() * TW, cy = rx() * TH;
       for (let m = 3 + Math.floor(rx() * 4); m > 0; m--) out.push({ x:round2(cx + (rx() - .5) * 8), y:round2(cy + (rx() - .5) * 8), r:.45 + rx() * .35, kind:'silex', v:rx(), stone:1 }); } }
+  if (typeof decorsCandidats === 'function') out.push(...decorsCandidats(out.filter(f => f.kind === 'tree')));   // fleurs, touffes, buissons et feuilles au sol (decors.js)
   if (typeof baiesCandidats === 'function') out.push(...baiesCandidats(fz, B));   // arbres et arbustes à baies validés, selon le climat et le terrain (baies.js)
   // dans une forêt, rien d'autre que la forêt : pas d'arbre isolé ni de buisson (rives comprises)
-  const inForest = f => !f.wood && !f.wet && (woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004);
+  /* Rien d'autre sous une forêt : ni arbre isolé, ni buisson, ni caillou, ni silex, ni baie, ni décor. « Sous » = dans le bois OU dans les 7 m autour : le massif (aplat sombre) déborde du bois de 6,6 m
+     et recouvrirait ces éléments. Les arbres de la forêt elle-même (wood) sont exemptés. */
+  const BOIS_MARGE = 7, sousBois = (x, y) => woodCellAt(x, y) || fz(x, y) > B.forest - .004;
+  const pres = f => sousBois(f.x, f.y) || SEA_DIRS.some(([dx, dy]) => sousBois(f.x + dx * BOIS_MARGE, f.y + dy * BOIS_MARGE));
+  const inForest = f => !f.wood && !f.wet && pres(f);
   floraSeed = fk;
-  const dansBois = f => woodCellAt(f.x, f.y) || fz(f.x, f.y) > B.forest - .004;               // pierres et silex : jamais dans ni sous une forêt (rives comprises) — seuls les animaux y vivent
+  const dansBois = f => pres(f);                                                    // pierres et silex : jamais dans ni sous une forêt (rives comprises) — seuls les animaux y vivent
   return floraCands = out.filter(f => f.kind === 'rock' || f.kind === 'silex' ? !dansBois(f) : !inForest(f));
 }
 /* Modèles d'arbres dessinés une fois (houppier bosselé, contour sombre, côté ombre en bas
@@ -404,7 +396,7 @@ function classifyWoods() {
   for (const f of flora) {
     if (!f.wood) continue;
     f.depth = D[woodCell(f)];
-    f.inner = f.depth >= 2;
+    f.inner = f.depth >= 1;   // une seule rangée d'arbres au contour (les cases du bord) ; tout le reste est un gros bloc
     f.tone = f.depth === 0 ? 1 : 2;
   }
 }
@@ -415,9 +407,9 @@ function drawWoods(g, list, s, ox, oy) {
     const path = new Path2D();
     for (const f of list) {
       if (sel && !sel(f)) continue;
-      // la masse (k ≥ 1) couvre au moins 5,8 m autour de chaque arbre : entre deux cases
-      // voisines de 6 m, même en diagonale, il ne reste jamais de jour
-      const X = (f.x + f.r * dx) * s + ox, Y = (f.y + f.r * dy) * s + oy, R = (k >= 1 ? Math.max(f.r * k, 5.8) : f.r * k) * s + grow;
+      // la masse (k ≥ 1) couvre au moins 6,6 m autour de chaque arbre : même avec un arbre sur deux (damier de cases de 6 m,
+      // 8,5 m en diagonale), il ne reste jamais de jour
+      const X = (f.x + f.r * dx) * s + ox, Y = (f.y + f.r * dy) * s + oy, R = (k >= 1 ? Math.max(f.r * k, 6.6) : f.r * k) * s + grow;
       path.moveTo(X + R, Y); path.arc(X, Y, R, 0, Math.PI * 2);
     }
     return path;
@@ -454,6 +446,7 @@ function stampSilex(g, f, X, Y, s) {
 function stampTree(g, f, X, Y, s) {
   if (f.kind === 'baie') return stampBaie(g, f, X, Y, s);
   if (f.kind === 'silex') return stampSilex(g, f, X, Y, s);
+  if (f.kind === 'deco') return stampDeco(g, f, X, Y, s);
   const k = Math.max(f.r * s, f.kind === 'tree' ? 2.4 : 1.4) / SPR_R;
   g.drawImage(spriteOf(f), X - SPR_C * k, Y - SPR_C * k, SPR * k, SPR * k);
 }
@@ -462,13 +455,12 @@ function stampTree(g, f, X, Y, s) {
    - voileBois : sous le massif d'une grande forêt (arbres de l'intérieur, une seule masse) on voit le personnage en transparence ;
    - canopeeSur : COUCHE DE CIMES (tuiles.js, t.cc) : les houppiers des arbres isolés et de lisière sont peints une seule fois dans une couche de tuiles à part, posée par-dessus les personnages à chaque image : aucun arbre n'est repeint quand un personnage passe dessous. */
 const persos = [];
-const voileBois = (x, y) => floraNear(x - 7, y - 7, x + 7, y + 7).some(f => f.wood && f.inner && (f.x - x) ** 2 + (f.y - y) ** 2 <= Math.max(f.r * 1.25, 5.8) ** 2) ? .3 : 1;
+const voileBois = (x, y) => floraNear(x - 7, y - 7, x + 7, y + 7).some(f => f.wood && f.inner && (f.x - x) ** 2 + (f.y - y) ** 2 <= Math.max(f.r * 1.25, 6.6) ** 2) ? .3 : 1;
 function canopeeSur() { const P = persos.slice(); persos.length = 0; if (typeof presentCimes === 'function') presentCimes(P); }   // les cimes (couche de tuiles) repassent par-dessus les personnages, sans rien repeindre
-const WATER_TREE_FREE = 10; // m libres entre le bord du houppier et l'eau (rivières, lacs ; îles exceptées)
-const SEA_TREE_FREE = 6; // m libres entre le bord du houppier et la mer (cartes à forme réelle)
+const roche = f => f.kind === 'rock' || (f.kind === 'deco' && typeof DECOR_ROCHES !== 'undefined' && DECOR_ROCHES.has(f.id));
 const SEA_DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1], [.7, .7], [-.7, .7], [.7, -.7], [-.7, -.7]];
 // le houppier (rayon + marge) reste sur la terre : on teste 8 points autour de l'arbre
-const loinDeLaMer = f => { const R = f.r + SEA_TREE_FREE; return SEA_DIRS.every(([dx, dy]) => surTerre([f.x + dx * R, f.y + dy * R])); };
+const loinDeLaMer = f => { const R = f.r + regle('arbre_mer'); return SEA_DIRS.every(([dx, dy]) => surTerre([f.x + dx * R, f.y + dy * R])); };
 const WATER_MARGIN = 2; // m laissés libres au bord des rivières et des lacs
 let flora = [];
 const treeKey = f => f.x + ',' + f.y; // identité stable d'un arbre (sa position)
@@ -503,25 +495,42 @@ function obstacleTest(polys) {
 let staticFlora = [], staticKey = null;
 function computeFlora() {
   touchScene();
-  const key = JSON.stringify([S.landSeed, S.biome, S.roads.map(r => r.pts), S.walls.map(w => w.pts), S.towers.map(t => [t.x, t.y]),
+  const key = JSON.stringify([typeof reglesSignature === 'function' ? reglesSignature() : '', S.landSeed, S.biome, S.roads.map(r => r.pts), S.walls.map(w => w.pts), S.towers.map(t => [t.x, t.y]),
     S.gates.map(g => [g.x, g.y, g.a]), S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => l.c), (S.deposits || []).map(d => [d.kind, d.c, d.r]), (S.ressources || []).filter(r => r.cat === 'fruitier').map(r => [r.key, r.x, r.y])]);
   const full = key !== staticKey;
   if (full) {
     const polys = [], add = P => polys.push({ P, bb:bbox(P) });
     // routes : le tracé lissé tel qu'il est dessiné (les courbes débordent un peu du tracé logique)
-    for (const r of S.roads) { const q = smoothPts(r); for (let k = 0; k < q.length - 1; k++) add(segRect(q[k], q[k+1], r.w)); }
+    const routes = [];                                                              // la chaussée seule (pour les cailloux)
+    for (const r of S.roads) { const q = smoothPts(r); for (let k = 0; k < q.length - 1; k++) { const R = segRect(q[k], q[k+1], r.w); add(R); routes.push({ P:R, bb:bbox(R) }); } }
     for (const o of S.walls) for (let k = 0; k < o.pts.length - 1; k++) add(segRect(o.pts[k], o.pts[k+1], o.w));
     for (const d of S.deposits || []) add(d.pts);                                  // (ni arbres ni rochers sur un gisement)
     for (const r of S.ressources || []) if (r.cat === 'fruitier') { const h = ARBRE_R * 1.3; add([[r.x - h, r.y - h], [r.x + h, r.y - h], [r.x + h, r.y + h], [r.x - h, r.y + h]]); }   // (ni arbres ni rochers sous un arbre fruitier)
     S.towers.forEach(t => add(towerPoly(t)));
     S.gates.forEach(g => add(gatePoly(g)));
     polys.push(...Z.water.river, ...Z.water.lake);
-    const blocked = obstacleTest(polys), nearWater = obstacleTest([...Z.water.river, ...Z.water.lake]);
+    const surRoute = obstacleTest(routes), blocked = obstacleTest(polys), nearWater = obstacleTest([...Z.water.river, ...Z.water.lake]);
     staticFlora = floraCandidates().filter(f => {
       const h = f.r * .6;
-      // (les arbres des îles sont au milieu de l'eau de la rivière : on ne les teste pas contre elle)
-      return f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.kind === 'rock' || loinDeLaMer(f)) && (f.isle || f.wet || f.edge || !blocked(f)) && (f.kind !== 'tree' || f.isle || !nearWater({ x:f.x, y:f.y, r:(WATER_TREE_FREE + f.r) / .6 })); // (cailloux de berge : à moitié dans l'eau, voulu)
+      if (!(f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.kind === 'rock' || loinDeLaMer(f)))) return false;
+      if (!(f.wet || f.edge || !blocked(f))) return false;                                 // (cailloux de berge et de chemin : exemptés de ce test général)
+      // distances entre types : voir js/carte/regles.js (modifiables dans l'onglet Règles de génération)
+      const eau = m => nearWater({ x:f.x, y:f.y, r:(m + f.r) / .6 }), route = m => surRoute({ x:f.x, y:f.y, r:(m + f.r) / .6 });
+      if (f.kind === 'tree') { if (eau(regle('arbre_eau'))) return false; const m = regle('arbre_route'); if (m > 0 && route(m)) return false; }
+      else if (roche(f)) { if (eau(regle('roche_eau'))) return false; if (route(regle('roche_route'))) return false; }   // cailloux : jamais dans l'eau mais au bord, jamais sur une route
+      else if (f.kind === 'deco') { if (eau(regle('deco_eau')) || route(regle('deco_route'))) return false; }
+      else if (f.kind === 'bush') { if (eau(regle('buisson_eau'))) return false; if (route(regle('buisson_route'))) return false; }
+      return true;
     }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
+    /* cailloux : jamais l'un sur l'autre — au moins regle('roche_roche') m de vide entre les deux bords (les plus gros sont gardés d'abord) */
+    { const grille = new Map(), G = 12, gardes = new Set();
+      for (const f of staticFlora.filter(roche).sort((a, b) => b.r - a.r)) {
+        const gx = Math.floor(f.x / G), gy = Math.floor(f.y / G); let ok = true;
+        for (let i = gx - 1; i <= gx + 1 && ok; i++) for (let j = gy - 1; j <= gy + 1 && ok; j++) for (const o of grille.get(i + ',' + j) || []) if ((f.x - o.x) ** 2 + (f.y - o.y) ** 2 < (f.r + o.r + regle('roche_roche')) ** 2) { ok = false; break; }
+        if (!ok) continue;
+        gardes.add(f); const k = gx + ',' + gy; (grille.get(k) || grille.set(k, []).get(k)).push(f);
+      }
+      staticFlora = staticFlora.filter(f => !roche(f) || gardes.has(f)); }
     staticKey = key;
   }
   // forêts permanentes : un arbre ne disparaît que s'il a été abattu (S.cut, enregistré avec
@@ -535,6 +544,8 @@ function computeFlora() {
   flora = staticFlora.filter(keep);                       // déjà triée du nord au sud
   if (grown.length) flora = flora.concat(grown.filter(keep)).sort((a, b) => a.y - b.y);
   classifyWoods(); // intérieur des bois / lisière
+  // dans le massif, au-delà de la rangée de la lisière (profondeur 0) et de deux rangées de plus, un arbre sur deux seulement (en damier) : le massif est peint en aplat, le reste ne servait qu'à le dessiner
+  flora = flora.filter(f => !f.wood || f.depth <= 2 || ((Math.floor((f.x - 3) / 6) + Math.floor((f.y - 3) / 6)) & 1) === 0);
   floraVersion++; // les habitants au travail repartiront des nouveaux arbres
   floraIdx = null;
   // décor : on ne repeint qu'autour des arbres qui apparaissent ou disparaissent (le dégradé
@@ -567,7 +578,7 @@ function groundImage() {
   const pv = valueNoise(S.landSeed + 777), patchAt = look.patchAt || 2;
   // variations de couleur du sol, comme sur une carte : nappes de teinte (herbe grasse ↔ herbe sèche, ~350 m puis ~90 m)
   // et de clarté (~140 m puis ~30 m), bruits indépendants du relief ; look.vary règle la force (1 par défaut)
-  const nt = valueNoise(S.landSeed + 1301), nl = valueNoise(S.landSeed + 2707), vary = look.vary == null ? 1 : look.vary;
+  const nt = valueNoise(S.landSeed + 1301), nl = valueNoise(S.landSeed + 2707), vary = look.vary == null ? .5 : look.vary;
   const c3 = v => Math.max(-1, Math.min(1, (v - .5) * 2.4));
   for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
     let t = (nz(x * HG + HG / 2, y * HG + HG / 2) - .38) / .3;

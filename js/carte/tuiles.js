@@ -11,10 +11,10 @@
      attendant, les tuiles de vue d'ensemble (0,5 px/m, toujours gardées) bouchent les trous.
    - Ce qui bouge (habitants, aperçu, tracés, sélection, graduations) est dessiné à chaque
      image par-dessus, sur le canevas transparent de la carte (voir draw). */
-const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16, 32, 64], TILE_MAX = 220, TILE_MS = 8;
+const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16, 32, 64], TILE_MAX = 80, TILE_MS = 8;
 const tiles = new Map();                  // 'L:i:j' → { L, i, j, x0, y0, m, c (décor), cc (cimes : houppiers des arbres isolés et de lisière, transparent), dirty:[rects], used, seen, spr }
 const tileKey = (L, i, j) => L + ':' + i + ':' + j;
-let tileClock = 0, tileFrame = 0;
+let tileClock = 0, tileFrame = 0, lastShown = [];   // lastShown : tuiles du dernier niveau de zoom entièrement peint (affichées dessous le temps que le nouveau niveau se peigne)
 
 /* ---- peinture d'un rectangle du terrain dans une image ----
    Le code de dessin de la carte dessine dans ctx, avec la vue (view, W, H) : on les remplace le
@@ -55,10 +55,10 @@ function drawDecor() {
   drawWalls();
   const list = floraNear(x0 - 40, y0 - 40, x1 + 40, y1 + 40);   // (houppiers et ombres qui débordent)
   drawWoods(ctx, list.filter(f => f.wood), view.s, view.ox, view.oy);
-  for (const f of list) if (!f.wood) { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
+  for (const f of list) if (f.kind === 'deco') { const [X, Y] = toS(f.x, f.y); stampDeco(ctx, f, X, Y, view.s); }   // décors du sol : sous les arbres
+  for (const f of list) if (!f.wood && f.kind !== 'deco') { const [X, Y] = toS(f.x, f.y); stampTree(ctx, f, X, Y, view.s); }
   drawZones();                                                  // (quadrillage noir par-dessus les arbres : il reste lisible en forêt)
   drawFruitiers();
-  if (typeof drawRessources === 'function') drawRessources();   // (repères de la map test : par-dessus les arbres)
   drawBorder();
   const near = (o, m) => o.x > x0 - m && o.x < x1 + m && o.y > y0 - m && o.y < y1 + m;
   for (const g of S.gates) if (near(g, 20)) drawGate(g, 'normal');
@@ -111,7 +111,7 @@ function newTile(L, i, j) {
   const m = TILE_PX / L, c = document.createElement('canvas'); c.width = c.height = TILE_PX;
   const cc = document.createElement('canvas'); cc.width = cc.height = TILE_PX;
   const t = { L, i, j, x0:i * m, y0:j * m, m, c, cc, dirty:[], used:++tileClock, spr:null };
-  paintTile(t, tileRect(t));
+  paintTile(t, tileRect(t));                                      // (d'un bloc : le coût d'une peinture est surtout fixe, découper en morceaux le multipliait)
   tiles.set(tileKey(L, i, j), t);
   if (tiles.size > TILE_MAX) {                                   // on libère les moins récentes (jamais la vue d'ensemble)
     const old = [...tiles.values()].filter(o => o.L !== .5).sort((a, b) => a.used - b.used).slice(0, tiles.size - TILE_MAX);
@@ -120,15 +120,17 @@ function newTile(L, i, j) {
   return t;
 }
 function dropTile(t) {
-  tiles.delete(tileKey(t.L, t.i, t.j)); t.cc = null;
+  tiles.delete(tileKey(t.L, t.i, t.j));
+  if (t.cc) t.cc.width = t.cc.height = 0;                       // (mémoire rendue tout de suite, sans attendre le ramasse-miettes)
+  t.cc = null;
   if (t.spr) { t.spr.destroy({ texture:true, baseTexture:true }); t.spr = null; }
+  t.c.width = t.c.height = 0;
 }
 // repeint les rectangles en attente d'une tuile (fusionnés s'ils sont nombreux)
-function cleanTile(t) {
+function cleanTile(t, over) {
   if (!t.dirty.length) return;
-  let list = t.dirty; t.dirty = [];
-  if (list.length > 6) list = [list.reduce((a, r) => [Math.min(a[0], r[0]), Math.min(a[1], r[1]), Math.max(a[2], r[2]), Math.max(a[3], r[3])])];
-  for (const r of list) paintTile(t, r);
+  if (t.dirty.length > 24) t.dirty = [t.dirty.reduce((a, r) => [Math.min(a[0], r[0]), Math.min(a[1], r[1]), Math.max(a[2], r[2]), Math.max(a[3], r[3])])];
+  do paintTile(t, t.dirty.shift()); while (t.dirty.length && !(over && over()));   // (au moins un morceau par image, puis tant qu'il reste du temps)
 }
 
 /* ---- ce qui a changé ---- */
@@ -147,7 +149,7 @@ const invalidateTiles = (x, y, r) => markDirty([x - r, y - r, x + r, y + r]);
 // repeint qu'autour de ceux qui ont changé (les cases à bâtir d'une route vont jusqu'à 40 m)
 let lastObjs = null, lastLand = null;
 function sceneDiff() {
-  const land = JSON.stringify([FORME_ID, S.landSeed, S.biome, S.reliefSeed, S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1, r.isles]), S.lakes.map(l => [l.c, l.pts.length]), (S.deposits || []).map(d => [d.kind, d.c, d.r])]);
+  const land = JSON.stringify([FORME_ID, S.landSeed, S.biome, S.reliefSeed, S.rivers.map(r => [r.pts.length, r.pts[0], r.w0, r.w1]), S.lakes.map(l => [l.c, l.pts.length]), (S.deposits || []).map(d => [d.kind, d.c, d.r])]);
   const now = new Map(), box = new Map();
   const add = (k, o, pts, m) => { now.set(k, JSON.stringify(o)); const b = bbox(pts); box.set(k, [b[0] - m, b[1] - m, b[2] + m, b[3] + m]); };
   const etals = JSON.stringify(typeof etalsMarche === 'function' ? etalsMarche().map(e => [e.c, e.r]) : []);                 // (le marché est dessiné d'après ses étals permanents)
@@ -196,7 +198,7 @@ function presentScene() {
   const baseTiles = [];
   for (let j = 0; j * TILE_PX / .5 < TH; j++) for (let i = 0; i * TILE_PX / .5 < TW; i++) baseTiles.push(tiles.get(tileKey(.5, i, j)) || newTile(.5, i, j));
   let pending = false;
-  for (const t of baseTiles) { if (t.dirty.length && !over()) cleanTile(t); if (t.dirty.length) pending = true; }
+  for (const t of baseTiles) { if (t.dirty.length && !over()) cleanTile(t, over); if (t.dirty.length) pending = true; }
   // tuiles visibles au niveau du zoom
   const m = TILE_PX / L, [wx0, wy0] = toW(0, 0), [wx1, wy1] = toW(W, H), shown = [];
   if (L !== .5) {
@@ -212,10 +214,13 @@ function presentScene() {
       let t = tiles.get(tileKey(L, i, j));
       if (!t && (!painted || !over())) { t = newTile(L, i, j); painted = true; }
       if (!t) { pending = true; continue; }
-      if (t.dirty.length) { if (!over()) cleanTile(t); if (t.dirty.length) pending = true; }
+      if (t.dirty.length) { if (!over()) cleanTile(t, over); if (t.dirty.length) pending = true; }
       t.used = ++tileClock; t.seen = tileFrame; shown.push(t);
     }
   }
+  // zoom : tant que le nouveau niveau n'est pas fini, les tuiles de l'ancien restent affichées dessous (plus de vue d'ensemble floue)
+  const dessous = pending && lastShown.length && lastShown[0].L !== L ? lastShown.filter(t => tiles.get(tileKey(t.L, t.i, t.j)) === t) : [];
+  if (!pending) lastShown = shown;
   cimesVues = L === .5 ? baseTiles : shown;                          // (tuiles de cimes à afficher par-dessus les personnages)
   if (GPU) {
     const { renderer, stage, world, base, cur } = GPU;
@@ -223,7 +228,9 @@ function presentScene() {
     const bg = PIXI.utils.string2hex(Col.sheet || '#f5f7f2'); if (renderer.background.color !== bg) renderer.background.color = bg;
     for (const t of baseTiles) tileSprite(t, base);
     for (const c of cur.children) c.visible = false;
-    for (const t of shown) tileSprite(t, cur).visible = true;
+    cur.sortableChildren = true;
+    for (const t of dessous) { const sp = tileSprite(t, cur); sp.visible = true; sp.zIndex = 0; }
+    for (const t of shown) { const sp = tileSprite(t, cur); sp.visible = true; sp.zIndex = 1; }
     world.scale.set(s); world.position.set(view.ox, view.oy);
     renderer.render(stage);
     ctx.clearRect(0, 0, W, H);                                  // le canevas du dessus ne garde que ce qui bouge
@@ -231,7 +238,7 @@ function presentScene() {
     ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
     ctx.imageSmoothingEnabled = true;
     const put = t => ctx.drawImage(t.c, t.x0 * s + view.ox, t.y0 * s + view.oy, t.m * s + .6, t.m * s + .6);
-    baseTiles.forEach(put); shown.forEach(put);
+    baseTiles.forEach(put); dessous.forEach(put); shown.forEach(put);
   }
   return pending;
 }

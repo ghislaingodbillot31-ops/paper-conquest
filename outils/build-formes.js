@@ -119,6 +119,9 @@ for (const f of fc.features.map((f, i) => ({ ...f, id:i + 1 }))) {
 const txt = '{\n"version": 2, "terrain": [' + TW + ', ' + TH + '],\n"regions": {\n' +
   Object.entries(out).map(([id, r]) => JSON.stringify(id) + ': ' + JSON.stringify(r)).join(',\n') + '\n}\n}\n';
 fs.writeFileSync(path.join(ROOT, 'data/regions/formes.json'), txt);
+// un fichier par région (le jeu ne charge que celle qu'on joue : ~17 Ko au lieu de 4 Mo pour les 500)
+fs.mkdirSync(path.join(ROOT, 'data/regions/formes'), { recursive:true });
+for (const [id, r] of Object.entries(out)) fs.writeFileSync(path.join(ROOT, 'data/regions/formes', id + '.json'), JSON.stringify({ terrain:[TW, TH], ...r }));
 const sea = Object.values(out).filter(r => { const a = r.terres.reduce((s, q) => s + ringArea(q), 0); return a < TW * TH * 1.04 * .995; }).length;
 log(Object.keys(out).length, 'regions ·', sea, 'avec de la mer dans le cadre ·', Object.values(out).filter(r => !r.routes.length).length, 'sans route ·',
   'data/regions/formes.json ecrit (' + Math.round(txt.length / 1024) + ' Ko)');

@@ -1,0 +1,337 @@
+{
+ "note": "Consommation des services et équipements (section 4). Quantités à 1 : TODO équilibrage. Rien n'est simulé : données seulement.",
+ "services": [
+  {
+   "atelier": "eglise",
+   "besoins": [
+    {
+     "ressource": "cierges",
+     "qte": 1
+    },
+    {
+     "qte": 1,
+     "ressource": "vin",
+     "usage": "messe"
+    },
+    {
+     "ressource": "parchemin",
+     "qte": 1
+    },
+    {
+     "ressource": "chapelets",
+     "qte": 1
+    },
+    {
+     "ressource": "objets liturgiques",
+     "qte": 1
+    },
+    {
+     "ressource": "feuille d'or",
+     "qte": 1
+    },
+    {
+     "ressource": "manuscrit enluminé",
+     "qte": 1
+    }
+   ],
+   "recoit": "dîme"
+  },
+  {
+   "atelier": "manoir",
+   "besoins": [
+    {
+     "ressource": "vin",
+     "qte": 1
+    },
+    {
+     "ressource": "épices",
+     "qte": 1
+    },
+    {
+     "ressource": "soie",
+     "qte": 1
+    },
+    {
+     "ressource": "bijoux",
+     "qte": 1
+    },
+    {
+     "ressource": "cierges",
+     "qte": 1
+    },
+    {
+     "ressource": "parchemin",
+     "qte": 1
+    },
+    {
+     "ressource": "mobilier",
+     "qte": 1
+    },
+    {
+     "ressource": "feuille d'or",
+     "qte": 1
+    },
+    {
+     "ressource": "manuscrit enluminé",
+     "qte": 1
+    }
+   ],
+   "recoit": "banalités"
+  },
+  {
+   "atelier": "mairie",
+   "besoins": [
+    {
+     "ressource": "parchemin",
+     "qte": 1
+    },
+    {
+     "qte": 1,
+     "ressource": "monnaie",
+     "usage": "salaires et impôts"
+    }
+   ],
+   "note": "Actes et chartes qui débloquent lois et impôts."
+  },
+  {
+   "atelier": "taverne",
+   "besoins": [
+    {
+     "ressource": "bière",
+     "qte": 1
+    },
+    {
+     "ressource": "vin",
+     "qte": 1
+    },
+    {
+     "ressource": "cidre",
+     "qte": 1
+    },
+    {
+     "ressource": "hydromel",
+     "qte": 1
+    },
+    {
+     "ressource": "poiré",
+     "qte": 1
+    },
+    {
+     "ressource": "pain",
+     "qte": 1
+    },
+    {
+     "ressource": "fromage frais",
+     "qte": 1
+    },
+    {
+     "ressource": "salaison",
+     "qte": 1
+    },
+    {
+     "ressource": "dés",
+     "qte": 1
+    },
+    {
+     "ressource": "potée",
+     "qte": 1
+    },
+    {
+     "ressource": "soupe",
+     "qte": 1
+    },
+    {
+     "ressource": "lanternes",
+     "qte": 1
+    }
+   ]
+  },
+  {
+   "atelier": "relais",
+   "besoins": [
+    {
+     "ressource": "avoine",
+     "qte": 1
+    },
+    {
+     "ressource": "foin",
+     "qte": 1
+    },
+    {
+     "ressource": "fers à cheval",
+     "qte": 1
+    },
+    {
+     "ressource": "selles",
+     "qte": 1
+    },
+    {
+     "ressource": "harnais",
+     "qte": 1
+    }
+   ],
+   "note": "Un cheval sans harnais ne tire rien."
+  },
+  {
+   "atelier": "garnison",
+   "besoins": [
+    {
+     "ressource": "salaison",
+     "qte": 1
+    },
+    {
+     "ressource": "pain",
+     "qte": 1
+    },
+    {
+     "ressource": "bière",
+     "qte": 1
+    },
+    {
+     "ressource": "poisson salé",
+     "qte": 1
+    },
+    {
+     "ressource": "poisson fumé",
+     "qte": 1
+    }
+   ],
+   "equipement": [
+    {
+     "niveau": 1,
+     "armes": [
+      "gourdin"
+     ]
+    },
+    {
+     "niveau": 2,
+     "armes": [
+      "lance",
+      "bouclier en bois"
+     ]
+    },
+    {
+     "niveau": 3,
+     "armes": [
+      "épée",
+      "bouclier renforcé",
+      "cotte de mailles",
+      "armure de cuir",
+      "pique",
+      "javelot",
+      "dague",
+      "masse"
+     ]
+    },
+    {
+     "niveau": 4,
+     "armes": [
+      "armure de plates",
+      "arc",
+      "flèche",
+      "arbalète",
+      "carreaux"
+     ]
+    }
+   ],
+   "note": "Ravitaillement en salaisons, pain et bière ; ses armes s'usent. Équipement par niveau (TODO équilibrage)."
+  },
+  {
+   "atelier": "comptoir",
+   "besoins": [
+    {
+     "qte": 1,
+     "ressource": "monnaie",
+     "usage": "achats et ventes"
+    }
+   ]
+  }
+ ],
+ "equipements": [
+  {
+   "atelier": "ferme",
+   "ressources": [
+    "colliers de labour",
+    "charrette à main",
+    "chariot",
+    "paniers"
+   ],
+   "note": "Collier de labour : charrue et animal de trait ; charrette et chariot : capacité de transport (le chariot demande un cheval avec harnais) ; paniers : vendanges."
+  },
+  {
+   "atelier": "entrepot",
+   "ressources": [
+    "charrette à main",
+    "chariot",
+    "tonneau",
+    "poteries"
+   ]
+  },
+  {
+   "atelier": "marche",
+   "ressources": [
+    "paniers",
+    "charrette à main",
+    "chariot"
+   ]
+  },
+  {
+   "atelier": "comptoir",
+   "ressources": [
+    "charrette à main",
+    "chariot"
+   ]
+  },
+  {
+   "atelier": "hutte_cueillette",
+   "ressources": [
+    "paniers"
+   ]
+  },
+  {
+   "atelier": "fromagerie",
+   "ressources": [
+    "poteries"
+   ],
+   "note": "Faisselles."
+  },
+  {
+   "atelier": "atelier_tissage",
+   "ressources": [
+    "peignes"
+   ],
+   "note": "Peignes : outil de cardage."
+  },
+  {
+   "atelier": "ferme",
+   "ressources": [
+    "houe",
+    "faucille",
+    "faux",
+    "serpe",
+    "râteau"
+   ],
+   "note": "Outils de la ferme : houe (potager), faucille (céréales), faux (pré de fauche), serpe (verger, vigne), râteau (foin)."
+  },
+  {
+   "atelier": "cabane_peche",
+   "ressources": [
+    "canne à pêche"
+   ]
+  },
+  {
+   "atelier": "marais_salant",
+   "ressources": [
+    "râteau"
+   ],
+   "note": "Le sel se ratisse."
+  },
+  {
+   "atelier": "atelier_tissage",
+   "ressources": [
+    "fuseau",
+    "métier à tisser"
+   ]
+  }
+ ]
+}

@@ -155,6 +155,14 @@ async function addRegions(){
     if(interactionBusy() || !e.features.length) return;
     selectRegion(e.features[0].id);
   });
+  // clic droit : sélectionne la région ET ouvre sa carte (« ← Carte » ramène au globe) ; le clic gauche, lui, ne fait que la sélectionner pendant le choix du départ
+  map.on('contextmenu', 'regions', (e) => {
+    e.preventDefault();
+    if(interactionBusy() || !e.features.length) return;
+    selectRegion(e.features[0].id);
+    capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale');
+  });
+  map.getCanvas().addEventListener('contextmenu', ev => ev.preventDefault());   // (pas de menu du navigateur sur la carte)
   map.on('mouseenter', 'regions', () => { if(!interactionBusy()) map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 

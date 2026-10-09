@@ -1,0 +1,581 @@
+{
+ "filiere": "alimentation",
+ "anticipee": true,
+ "note": "Recettes saisies à l'avance (DEBOUCHES_RESSOURCES.md) ; la filière reste « à migrer ». Quantités à 1 : TODO équilibrage.",
+ "recettes": [
+  {
+   "id": "eau_du_puits",
+   "atelier": "puits",
+   "entrees": [],
+   "sorties": [
+    {
+     "ressource": "eau",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "extraction": true,
+   "note": "Le puits fournit l'eau."
+  },
+  {
+   "id": "choucroute",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "choux",
+     "qte": 1
+    },
+    {
+     "ressource": "sel",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "choucroute",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": "Légume de garde pour l'hiver."
+  },
+  {
+   "id": "conserve_navets",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "navets",
+     "qte": 1
+    },
+    {
+     "ressource": "sel",
+     "qte": 1
+    },
+    {
+     "ressource": "vinaigre",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "légumes conservés",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "épluchures",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "conserve_raves",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "raves",
+     "qte": 1
+    },
+    {
+     "ressource": "sel",
+     "qte": 1
+    },
+    {
+     "ressource": "vinaigre",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "légumes conservés",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "épluchures",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "conserve_oignons",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "oignons",
+     "qte": 1
+    },
+    {
+     "ressource": "sel",
+     "qte": 1
+    },
+    {
+     "ressource": "vinaigre",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "légumes conservés",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "pelures d'oignon",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "sechage_prunes",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "prunes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fruits secs",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Séchoir : un fruit qui se conserve et se transporte."
+  },
+  {
+   "id": "sechage_figues",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "figues",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fruits secs",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Séchoir : un fruit qui se conserve et se transporte."
+  },
+  {
+   "id": "sechage_raisin",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "raisin",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fruits secs",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Séchoir : un fruit qui se conserve et se transporte."
+  },
+  {
+   "id": "sechage_dattes",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "dattes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fruits secs",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Séchoir : un fruit qui se conserve et se transporte."
+  },
+  {
+   "id": "sechage_abricots",
+   "atelier": "saloir_fumoir",
+   "entrees": [
+    {
+     "ressource": "abricots",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "fruits secs",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Séchoir : un fruit qui se conserve et se transporte."
+  },
+  {
+   "id": "vinaigre",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "vin",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "vinaigre",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "vin",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "raisin",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "vin",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "cidre",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "pommes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "cidre",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "poire",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "poires",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "poiré",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "corme",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "sorbes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "cormé",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [
+    "tonneau"
+   ],
+   "note": ""
+  },
+  {
+   "id": "huile_olive",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "olives",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "huile d'olive",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [],
+   "note": ""
+  },
+  {
+   "id": "huile_noix",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "noix",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "huile de noix",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [],
+   "note": ""
+  },
+  {
+   "id": "huile_noisettes",
+   "atelier": "pressoir",
+   "entrees": [
+    {
+     "ressource": "noisettes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "huile de noix",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [
+    {
+     "ressource": "marc",
+     "qte": 1
+    }
+   ],
+   "duree": 10,
+   "outils": [],
+   "note": ""
+  },
+  {
+   "id": "farine_chataigne",
+   "atelier": "moulin",
+   "entrees": [
+    {
+     "ressource": "châtaignes",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "farine de châtaigne",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "note": "Le pain des régions pauvres en blé."
+  },
+  {
+   "id": "patisseries",
+   "atelier": "four",
+   "entrees": [
+    {
+     "ressource": "farine",
+     "qte": 1
+    },
+    {
+     "ressource": "œufs",
+     "qte": 1
+    },
+    {
+     "ressource": "beurre",
+     "qte": 1
+    },
+    {
+     "ressource": "miel",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pâtisseries",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle à four"
+   ],
+   "note": "Aliment de maison noble."
+  },
+  {
+   "id": "bouillie",
+   "atelier": "four",
+   "entrees": [
+    {
+     "ressource": "avoine",
+     "qte": 1
+    },
+    {
+     "ressource": "eau",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "bouillie",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle à four"
+   ],
+   "note": ""
+  },
+  {
+   "id": "epluchures_porcs",
+   "atelier": "ferme",
+   "entrees": [
+    {
+     "ressource": "épluchures",
+     "qte": 1
+    }
+   ],
+   "sorties": [],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [],
+   "effet": "nourriture_porcs",
+   "note": "Porcherie : les épluchures et les fruits abîmés nourrissent les porcs, rien n'est perdu."
+  },
+  {
+   "id": "pain_de_chataigne",
+   "atelier": "four",
+   "entrees": [
+    {
+     "ressource": "farine de châtaigne",
+     "qte": 1
+    },
+    {
+     "ressource": "eau",
+     "qte": 1
+    }
+   ],
+   "sorties": [
+    {
+     "ressource": "pain",
+     "qte": 1
+    }
+   ],
+   "sousProduits": [],
+   "duree": 10,
+   "outils": [
+    "pelle à four"
+   ],
+   "note": "Pain des régions pauvres en blé."
+  }
+ ]
+}

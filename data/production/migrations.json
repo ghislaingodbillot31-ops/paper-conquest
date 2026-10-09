@@ -1,0 +1,81 @@
+{
+ "note": "Ce que l'adaptateur du jeu devra convertir. Rien de ceci n'est encore appliqué au code du jeu.",
+ "renommages": [
+  {
+   "de": "grain",
+   "vers": "blé",
+   "convertirStocks": true,
+   "note": "Les stocks existants de grain deviennent du blé (décision du 09/10/2026)."
+  },
+  {
+   "de": "pommes de terre",
+   "vers": "panais",
+   "convertirStocks": true,
+   "note": "Légume d'Amérique (après 1492) remplacé par un légume médiéval ; l'ancien identifiant reste dans le code du jeu (cultures.js) jusqu'à l'adaptateur."
+  },
+  {
+   "de": "haricots",
+   "vers": "fèves",
+   "convertirStocks": true,
+   "note": "Légume d'Amérique (après 1492) remplacé par un légume médiéval ; l'ancien identifiant reste dans le code du jeu (cultures.js) jusqu'à l'adaptateur."
+  },
+  {
+   "de": "courges",
+   "vers": "gourdes",
+   "convertirStocks": true,
+   "note": "Légume d'Amérique (après 1492) remplacé par un légume médiéval ; l'ancien identifiant reste dans le code du jeu (cultures.js) jusqu'à l'adaptateur."
+  }
+ ],
+ "groupesAffichage": {
+  "Céréales": [
+   "blé",
+   "seigle",
+   "orge",
+   "avoine"
+  ]
+ },
+ "remplacements": [
+  {
+   "de": "fibres",
+   "par": [
+    "filasse"
+   ],
+   "note": "Corde : filasse → corde à la Corderie (plan). Voir usages_a_migrer."
+  },
+  {
+   "de": "tissus",
+   "par": [
+    "drap brut",
+    "toile",
+    "drap"
+   ],
+   "note": "Aucun usage dans le code du jeu (seulement dans l'arbre des ressources)."
+  }
+ ],
+ "usages_a_migrer": {
+  "fibres": [
+   "js/batiments/outils.js:60 CORDE (3 fibres → 3 corde, menuiserie)",
+   "js/carte/simulation.js:190 ACTIVITES hutte de cueillette « fibres »",
+   "js/carte/simulation.js:218-239 cueillette de fibres (FIBRES_PAR_PLANTE)",
+   "js/carte/simulation.js:651 RESERVE_ATELIER menuiserie fibres:9",
+   "js/carte/simulation.js:1142 STOCKS_VALIDES menuiserie fibres:50",
+   "js/batiments/catalogue.js:122 et :132 (catégorie et unité)"
+  ],
+  "tissus": [],
+  "grain": [
+   "js/batiments/cultures.js:26-29 (produit:'grain')",
+   "js/batiments/production.js:13 moulin, :15 brasserie",
+   "js/batiments/catalogue.js:111,115,136,163,214,219",
+   "js/carte/simulation.js:1100,1147,1150,1255"
+  ],
+  "pommes de terre": [
+   "js/batiments/cultures.js:15 (pomme_de_terre, produit « pommes de terre »)"
+  ],
+  "haricots": [
+   "js/batiments/cultures.js:22 (haricot, produit « haricots »)"
+  ],
+  "courges": [
+   "js/batiments/cultures.js:25 (courge, produit « courges »)"
+  ]
+ }
+}

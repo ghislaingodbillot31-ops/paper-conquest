@@ -15,7 +15,7 @@ const libelleDate = doy => { const d = dateDe(doy); return d.jour + (d.jour === 
    Au tout premier lancement, elle part de la vraie date et de la vraie heure (UTC) ; son point de départ est gardé dans le navigateur (partagé par le jeu
    et les cartes), donc elle continue entre les sessions. Pour la remettre à zéro : supprimer la clé TEMPS_KEY (le reset du jeu le fait).
    tempsJeu() → { doy : jour de l'année 1 à 365, h : heure UTC du jeu 0 à 24 }. */
-const JOUR_MS = 30 * 60 * 1000, JOUR_MS_V2 = 12 * 24 * 3600 * 1000 / 365, JOUR_MS_V1 = 4 * 3600 * 1000, TEMPS_KEY = 'paperConquestTemps';
+const JOUR_MS = 30 * 60 * 1000, JOUR_MS_V2 = 12 * 24 * 3600 * 1000 / 365, JOUR_MS_V1 = 4 * 3600 * 1000, TEMPS_KEY = 'dominiumTemps';
 function doyReel() { const n = new Date(); return doyDe(Math.min(n.getUTCDate(), MOIS_JOURS[n.getUTCMonth()]), n.getUTCMonth()); }
 const TEMPS = (() => {
   try { let t = JSON.parse(localStorage.getItem(TEMPS_KEY)); if (t && t.debut && t.j0 >= 0) {
@@ -91,16 +91,17 @@ function voileCiel(L) {
   return 'rgba(' + rgb.join(',') + ',' + (.86 * (1 - L) ** 1.1).toFixed(3) + ')';
 }
 let HEURE_FIXE = null;                                                              // null : l'heure réelle ; sinon un DÉCALAGE (en heures) ajouté à l'heure réelle : l'heure choisie continue de s'écouler
-function heureCarte() { const h = heureSolaire(REGION_METEO.lon); return HEURE_FIXE == null ? h : ((h + HEURE_FIXE) % 24 + 24) % 24; }
+let HEURE_VERROU = null;                                                            // null : l'heure s'écoule ; sinon une heure (0 à 24) GELÉE : le jeu reste à cette heure (mode développeur)
+function heureCarte() { if (HEURE_VERROU != null) return HEURE_VERROU; const h = heureSolaire(REGION_METEO.lon); return HEURE_FIXE == null ? h : ((h + HEURE_FIXE) % 24 + 24) % 24; }
 function majNuit() {
   const el = typeof document !== 'undefined' && document.getElementById('nuit'); if (!el) return null;
   const s = soleil(REGION_METEO.lat, METEO.doy, heureCarte()); el.style.background = voileCiel(s.lumiere); return s;
 }
 /* Réglages de l'heure et du jour (curseurs du Test jeu) : enregistrés dans le navigateur, pour qu'une mise à jour du code (rechargement de la page) ne les change pas. */
-const REGLAGE_TEMPS_CLE = 'paperConquestReglageTemps3';   // (nouvelle clé : l'ancien réglage figeait l'heure ; maintenant c'est un décalage)
-function sauveReglageTemps() { try { localStorage.setItem(REGLAGE_TEMPS_CLE, JSON.stringify({ heure:HEURE_FIXE, doy:JOUR_AUTO ? null : METEO.doy })); } catch (e) {} if (typeof baseVariable === 'function') baseVariable('variables', 'temps', { decalageHeures:HEURE_FIXE, jour:JOUR_AUTO ? null : METEO.doy }); }   // (base de données développeur : dev.js)
-function fixeHeure(h) { HEURE_FIXE = h == null ? null : h - heureSolaire(REGION_METEO.lon); sauveReglageTemps(); return majNuit(); }
-try { const r = JSON.parse(localStorage.getItem(REGLAGE_TEMPS_CLE) || 'null'); if (r) { if (r.heure != null) HEURE_FIXE = r.heure; if (r.doy != null) fixeJour(r.doy, false); } } catch (e) {}   // (au chargement : on retrouve l'heure et le jour réglés)
+const REGLAGE_TEMPS_CLE = 'dominiumReglageTemps3';   // (nouvelle clé : l'ancien réglage figeait l'heure ; maintenant c'est un décalage)
+function sauveReglageTemps() { try { localStorage.setItem(REGLAGE_TEMPS_CLE, JSON.stringify({ heure:HEURE_FIXE, doy:JOUR_AUTO ? null : METEO.doy, verrou:HEURE_VERROU })); } catch (e) {} if (typeof baseVariable === 'function') baseVariable('variables', 'temps', { decalageHeures:HEURE_FIXE, jour:JOUR_AUTO ? null : METEO.doy }); }   // (base de données développeur : dev.js)
+function fixeHeure(h) { if (HEURE_VERROU != null && h != null) HEURE_VERROU = h; HEURE_FIXE = h == null ? null : h - heureSolaire(REGION_METEO.lon); sauveReglageTemps(); return majNuit(); }
+try { const r = JSON.parse(localStorage.getItem(REGLAGE_TEMPS_CLE) || 'null'); if (r) { if (r.heure != null) HEURE_FIXE = r.heure; if (r.verrou != null) HEURE_VERROU = r.verrou; if (r.doy != null) fixeJour(r.doy, false); } } catch (e) {}   // (au chargement : on retrouve l'heure et le jour réglés)
 if (typeof document !== 'undefined' && typeof PAGE !== 'undefined' && PAGE !== 'batiments') {
   const wrap = document.getElementById('wrap');
   if (wrap) { const v = document.createElement('div'); v.id = 'nuit'; v.setAttribute('aria-hidden', 'true');

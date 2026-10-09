@@ -39,109 +39,126 @@
   .edge.sel{stroke-width:3}
   .colh{font:700 13px "Barlow Condensed",sans-serif; letter-spacing:.12em; fill:var(--soft); text-transform:uppercase}
   .hint{position:absolute; left:12px; bottom:10px; background:var(--panel); border:1px solid var(--line); border-radius:6px; padding:6px 10px; font-size:12px; color:var(--soft)}
+  #app{grid-template-rows:auto 1fr}
+  #barre{grid-column:1/-1; display:flex; gap:14px; align-items:center; flex-wrap:wrap; padding:6px 12px; border-bottom:1px solid var(--line); background:var(--panel)}
+  #barre .coul[hidden]{display:none}
+  #barre .vues button, #barre .coul button{font:inherit; padding:5px 13px; border:1px solid var(--line); background:var(--bg); color:inherit; cursor:pointer}
+  #barre .vues button:first-child, #barre .coul button:first-child{border-radius:6px 0 0 6px} #barre .vues button:last-child, #barre .coul button:last-child{border-radius:0 6px 6px 0}
+  #barre button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  #barre button:focus-visible, #liste input:focus-visible, .pastille:focus-visible{outline:2px solid #2f7d9a; outline-offset:1px}
+  #barre small{color:var(--soft)}
+  #liste{grid-column:1/-1; overflow:auto; padding:12px 16px; display:none}
+  #app.vue-liste #carte, #app.vue-liste aside{display:none} #app.vue-liste #liste{display:block}
+  .pastilles{display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px}
+  .pastille{display:flex; align-items:center; gap:6px; padding:4px 12px; border:1.5px solid var(--line); border-radius:14px; background:var(--panel); color:inherit; font:inherit; cursor:pointer}
+  .pastille[aria-pressed="false"]{opacity:.45}
+  .pastille i{width:12px; height:12px; border-radius:50%; display:inline-block}
+  #liste table{border-collapse:collapse; width:100%; font-size:13px}
+  #liste th{position:sticky; top:-12px; background:var(--panel); text-align:left; font:600 12px "Barlow Condensed",sans-serif; letter-spacing:.1em; text-transform:uppercase; color:var(--soft); padding:6px 8px; border-bottom:2px solid var(--line)}
+  #liste td{padding:6px 8px; border-bottom:1px solid var(--line); vertical-align:top}
+  #liste tr.l{cursor:pointer} #liste tr.l:hover td{background:#8883}
+  .pt{width:14px; height:14px; border-radius:50%; display:inline-block; vertical-align:middle; margin-right:6px}
+  .mat{display:inline-block; border:1px solid var(--line); border-radius:10px; padding:0 8px; margin:1px 3px 1px 0; font-size:12px}
+  .mat.q{border-color:#cf3b34; color:#cf3b34; font-weight:700}
+  .mat.o{border-color:#e08a1e; color:#c26f0a}
+  .alt{color:var(--soft); font-size:12px; margin-top:3px}
+  .manque{color:#c26f0a; font-size:12px} .manque.r{color:#cf3b34}
+  #filieres{grid-column:1/-1; overflow:auto; padding:14px 18px; display:none}
+  #app.vue-filieres #carte, #app.vue-filieres aside, #app.vue-filieres #liste{display:none} #app.vue-filieres #filieres{display:block}
+  #app.vue-liste #filieres{display:none}
+  .onglets{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:6px}
+  .onglets button{font:600 14px "Barlow",sans-serif; padding:7px 16px; border:1.5px solid var(--line); border-radius:20px; background:var(--panel); color:inherit; cursor:pointer}
+  .onglets button[aria-pressed="true"]{background:var(--ink); color:var(--bg); border-color:var(--ink)}
+  .onglets button:focus-visible, .carte-res:focus-visible{outline:2px solid #2f7d9a; outline-offset:2px}
+  #filieres .phrase{color:var(--soft); margin:2px 0 14px; max-width:78ch}
+  .flux{display:flex; align-items:flex-start; gap:0; min-width:min-content}
+  .col{flex:0 0 250px}
+  .col h4{margin:0 0 8px; font:700 13px "Barlow Condensed",sans-serif; letter-spacing:.12em; text-transform:uppercase; color:var(--soft)}
+  .fl{flex:0 0 38px; align-self:stretch; display:flex; align-items:center; justify-content:center; color:var(--line); font-size:26px}
+  .carte-res{display:block; width:100%; text-align:left; font:inherit; color:inherit; background:var(--panel); border:1.5px solid var(--line); border-left-width:6px; border-radius:8px; padding:8px 10px; margin:0 0 9px; cursor:pointer}
+  .carte-res:hover{border-color:var(--soft)}
+  .carte-res b{font-size:14px}
+  .carte-res .par{font-size:12.5px; margin-top:2px}
+  .carte-res .il{font-size:12.5px; margin-top:4px; color:var(--soft)}
+  .carte-res .bloc{font-size:12px; margin-top:4px; color:#c26f0a} .carte-res .bloc.r{color:#cf3b34}
+  .carte-res.sel{outline:3px solid var(--ink); outline-offset:1px}
+  .carte-res .bat{font-size:13px; margin-top:3px; font-weight:600}
+  .plan{display:inline-block; font-size:11px; font-weight:600; border:1px dashed #7a5aa8; color:#7a5aa8; border-radius:9px; padding:0 7px; margin-left:6px}
+  .recette{margin:8px 0 0; padding:8px 0 0; border-top:1px dashed var(--line); font-size:12.5px; color:var(--ink); cursor:default}
+  .recette ul{list-style:none; margin:0; padding-left:14px; border-left:1px solid var(--line)} .recette li{margin:2px 0}
+  .recette .qte{font-weight:700} .recette .bat{color:var(--soft)}
+  .legende{display:flex; gap:16px; flex-wrap:wrap; margin:0 0 10px; font-size:13px} .legende i{width:12px; height:12px; border-radius:50%; display:inline-block; margin-right:5px; vertical-align:-1px}
 </style>
 <body>
 <div id="app">
+  <div id="barre">
+    <div class="vues" role="group" aria-label="Vue"><button type="button" data-vue="arbre" aria-pressed="true">Arbre</button><button type="button" data-vue="filieres" aria-pressed="false">Filières</button><button type="button" data-vue="liste" aria-pressed="false">Liste globale</button></div>
+    <div class="coul" role="group" aria-label="Couleurs de l'arbre" id="coul" hidden><button type="button" data-coul="cat" aria-pressed="true">Couleurs : catégories</button><button type="button" data-coul="etat" aria-pressed="false">Couleurs : état</button></div>
+    <small id="bilan"></small>
+  </div>
   <div id="carte">
     <header><h1>Arbre des ressources</h1><input type="search" id="q" placeholder="Chercher une ressource…"><div class="leg" id="leg"></div></header>
     <svg id="svg"><defs><marker id="fl" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#8a9aa6"/></marker>
       <marker id="flu" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#2f7d9a"/></marker>
       <marker id="fld" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8z" fill="#d2602a"/></marker></defs><g id="monde"></g></svg>
-    <div class="hint">Clique une ressource : en <b style="color:#2f7d9a">bleu</b> d'où elle vient, en <b style="color:#d2602a">orange</b> à quoi elle sert. Molette : zoom · glisser : déplacer.</div>
+    <div class="hint">Clique une ressource : en <b style="color:#2f7d9a">bleu</b> d'où elle vient, en <b style="color:#d2602a">orange</b> à quoi elle sert. Molette : zoom · glisser : déplacer. Pastille : <b style="color:#3f9b4a">verte</b> circuit complet, <b style="color:#e08a1e">orange</b> information manquante, <b style="color:#cf3b34">rouge</b> aucun lien · <b style="color:#7d8b96">grise</b> filière pas encore migrée.</div>
   </div>
   <aside id="fiche"><h2>Arbre des ressources</h2><p>Chaque case est une ressource du jeu. Les flèches vont de ce qu'on <b>utilise</b> vers ce qu'on <b>obtient</b>, de gauche (la nature) à droite (les produits finis). Clique une case pour voir ce qui la produit et à quoi elle sert.</p>
-    <p><small>Toutes les données viennent du jeu (catalogue des bâtiments, recettes, cultures) : l'arbre se met à jour tout seul quand le jeu change.</small></p></aside>
+    <p><small>Toutes les données viennent de <code>data/production/</code> (ressources, ateliers, recettes des filières migrées) : l'arbre se met à jour tout seul quand ces fichiers changent. Un bâtiment « nouveau » du plan est orange tant qu'il n'existe pas dans le catalogue du jeu. Le jeu change.</small></p></aside>
+  <section id="filieres" aria-label="Filières de production"></section>
+  <section id="liste" aria-label="Liste globale des ressources"></section>
 </div>
 <script src="js/batiments/catalogue.js"></script>
-<script src="js/batiments/outils.js"></script>
-<script src="js/batiments/cultures.js"></script>
 <script>
-/* ---------- données (tirées du jeu) ----------
-   Tables reprises à la main parce qu'elles vivent dans simulation.js (non chargé ici) : à tenir à jour si elles changent. */
-const AMELIOS = [
-  { nom:'Charrette à main (bûcherons, tailleur, grange, entrepôt)', cout:{ bois:20 } },
-  { nom:'Chariot de transport (bûcherons, tailleur, grange, entrepôt)', cout:{ bois:40, planches:20 } },
-  { nom:'Haut fourneau (fonderie : acier)', cout:{ bois:60, pierre:60, fer:20 } },
-];
-const VALEUR_OR = { 'légumes':2, 'œufs':2, 'pommes':2, 'pain':3, 'bois':2, 'planches':4, 'laine':3, 'peaux':3, 'bière':4, 'chaussures':6, 'vêtements':8 };   // comptoir commercial
-const OUTILS_REQUIS = [   // bâtiment → outil exigé (outils.js : OUTIL_DE) + hutte de forestier selon l'activité
-  ['Camp de bûcherons', 'hache'], ['Loge de bûcheron', 'hache'], ['Camp de tailleur de pierre', 'pioche'], ['Fosse minière', 'pioche'], ['Ferme (céréales)', 'faux'],
-  ['Bergerie', 'couteau'], ['Cabane de pêche', 'canne'], ['Hutte de forestier (récolter)', 'serpe'], ['Hutte de forestier (planter)', 'pelle'],
-  ['Ferme : jardin potager', 'houe'], ['Ferme : verger', 'serpe'],
-];
-const BAT = { menuiserie:'Atelier de menuiserie', forge:'Forge', archerie:'Archerie', armurerie:'Armurerie' };
+/* ---------- données : data/production/*.json (la source de vérité ; contrôles : validation-production.html) ----------
+   Une ressource, un atelier, une recette (entrées, sorties, sous-produits, outils). Une filière « migrée » a ses recettes saisies ; les autres n'ont que leurs ressources (état gris « à migrer »). */
+const charge = u => { const x = new XMLHttpRequest(); x.open('GET', u, false); x.send(); if (x.status !== 200 && x.status !== 0) throw new Error(u + ' : ' + x.status); return JSON.parse(x.responseText); };
+const IDX = charge('data/production/index.json'), DRES = charge('data/production/ressources.json'), DAT = charge('data/production/ateliers.json');
+const MIGREES = new Set(IDX.filieres.filter(f => f.migree).map(f => f.id));
+const chargeOpt = u => { try { return charge(u); } catch (e) { return null; } };
+const DREC = IDX.filieres.filter(f => f.migree || f.anticipee).flatMap(f => (chargeOpt('data/production/' + f.fichier) || { recettes:[] }).recettes);   // (migrée, ou recettes saisies à l'avance : la filière reste « à migrer »)
+const ATELIER = new Map(DAT.map(a => [a.id, a]));
 const nomBat = id => (PRESETS.find(p => p.id === id) || {}).name || id;
 
-/* ---------- construction du graphe ---------- */
 const CATS = {
-  nature:{ nom:'Nature', c:'#5a9a4c' }, brut:{ nom:'Matières premières', c:'#a8794a' }, vivre:{ nom:'Vivres', c:'#d9a521' }, minerai:{ nom:'Minerais', c:'#8a6a58' },
-  metal:{ nom:'Métaux', c:'#5f7a96' }, transf:{ nom:'Matériaux transformés', c:'#d2602a' }, outil:{ nom:'Outils', c:'#2f7d9a' }, arme:{ nom:'Armes et munitions', c:'#b4443a' }, defense:{ nom:'Boucliers et armures', c:'#7a5aa8' },
+  naturel:{ nom:'Naturel', c:'#5a9a4c' }, metal:{ nom:'Métal', c:'#5f7a96' }, bois:{ nom:'Bois', c:'#a8794a' }, alimentation:{ nom:'Alimentation', c:'#d9a521' }, elevage:{ nom:'Élevage', c:'#c98a3a' },
+  cuir_textile:{ nom:'Cuir et textile', c:'#b0643a' }, construction:{ nom:'Construction', c:'#8a8f98' }, commerce:{ nom:'Commerce', c:'#7a5aa8' }, outil:{ nom:'Outils', c:'#2f7d9a' }, arme:{ nom:'Armes et armures', c:'#b4443a' },
 };
-const N = new Map(), R = [];                         // nœuds ; relations { ins, outs, via, note, tool }
-const node = (id, nom, cat, note) => { if (!N.has(id)) N.set(id, { id, nom, cat, note:[], depart:0 }); const n = N.get(id); if (note) n.note.push(note); return n; };
-const rel = (ins, outs, via, note, tool) => { R.push({ ins, outs, via, note:note || '', tool:tool || null }); };
-const VIVRES = new Set(FOOD_LIST);
-const cat = nom => VIVRES.has(nom) ? 'vivre' : ['fer', 'cuivre', 'étain', 'plomb', 'argent', 'or', 'bronze', 'acier'].includes(nom) ? 'metal' : nom.startsWith('minerai') || ['sel', 'alun', 'ambre'].includes(nom) ? 'minerai' : ['planches', 'corde', 'farine', 'bière', 'chaussures', 'vêtements'].includes(nom) ? 'transf' : 'brut';
-const r = (nom, c) => { node(nom, nom[0].toUpperCase() + nom.slice(1), c || cat(nom)); return nom; };
-
-// sources de la nature
-const FORET = node('Forêt', 'Forêt', 'nature'), CARRIERE = node('Rochers', 'Rochers et carrière', 'nature'), EAU = node('Eau', 'Lacs et rivières', 'nature'), TERRES = node('Terres', 'Terres cultivables', 'nature'),
-  PRAIRIE = node('Prairies', 'Prairies (pâturage)', 'nature'), ELEVAGE = node('Elevage', 'Animaux d’élevage', 'nature'), GISEMENTS = node('Gisements', 'Gisements de minerai', 'nature'), ARBRES = node('Arbres', 'Arbres fruitiers', 'nature');
-rel(['Forêt'], [r('bois')], 'Camp de bûcherons', '2 bois par arbre abattu, laissés au sol (tas de 20 puis transport) ; zone de travail à définir', 'hache');
-rel(['Forêt'], [r('bois de chauffage')], 'Loge de bûcheron', 'le tronc est fendu sur place : 4 bûches par arbre ; stock 100', 'hache');
-rel(['Forêt'], [r('graines')], 'Hutte de forestier (récolter)', '5 graines par arbre, 30 au plus par trajet', 'serpe');
-rel(['graines'], [r('pousses')], 'Hutte de forestier', '3 graines donnent 1 pousse, prête après la germination (45 s) ; 10 pousses au plus par trajet');
-rel(['Rochers'], [r('pierre')], 'Camp de tailleur de pierre', 'pierres de la zone de travail (3 au moins)', 'pioche');
-rel(['Eau'], [r('poisson')], 'Cabane de pêche', 'étangs et rivières du village', 'canne');
-rel(['Terres'], [r('grain')], 'Ferme', 'céréales de saison : blé, orge, avoine, seigle (voir CULTURES ET SAISONS)', 'faux');
-rel(['Prairies'], [r('laine')], 'Bergerie', 'moutons qui paissent autour', 'couteau');
-for (const [k, nom] of Object.entries(ORE)) rel(['Gisements'], [r(nom)], 'Fosse minière', 'gisement « ' + k + ' » à moins de 250 m', 'pioche');
-// fermes : extensions
-node('fruits', 'Fruits d’arbres', 'vivre'); node('légumes', 'Légumes de saison', 'vivre');
-for (const [k, e] of Object.entries(FERME_EXT)) {
-  const via = 'Ferme : ' + e.nom.toLowerCase();
-  if (e.cult === 'legume') rel(['Terres'], [r('légumes')], via, 'légumes de saison (' + Object.values(CULTURES).filter(c => c.type === 'legume').map(c => c.nom.toLowerCase()).join(', ') + ')', e.outil);
-  else if (e.cult === 'fruit') rel(['Arbres'], [r('fruits')], via, 'fruits de saison (' + Object.values(CULTURES).filter(c => c.type === 'fruit').length + ' arbres : pommes, poires, cerises…)', e.outil);
-  else rel(['Elevage'], [r(e.produit)], via, '1 toutes les ' + e.every + ' s');
+const N = new Map(), R = [];                         // nœuds ; relations { ins, outs, sous, via, bat, tools, note, q, extraction }
+for (const r of DRES) N.set(r.id, { id:r.id, nom:r.nom, note:[], depart:r.depart ? 1 : 0, res:r,
+  cat:r.categorie === 'Naturel' ? 'naturel' : r.type === 'outil' ? 'outil' : r.type === 'arme' || r.type === 'armure' || r.filiere === 'armes' ? 'arme' : r.filiere });
+for (const x of DREC) {
+  const at = ATELIER.get(x.atelier) || { nom:x.atelier, statut:'nouveau' };
+  R.push({ ins:x.entrees.map(e => e.ressource), outs:[...x.sorties, ...(x.sousProduits || [])].map(e => e.ressource), sous:(x.sousProduits || []).map(e => e.ressource), via:at.nom,
+    bat:at.statut !== 'nouveau' && at.catalogueId ? at.catalogueId : null, tools:x.outils || [], note:x.note || '', q:Object.fromEntries(x.entrees.map(e => [e.ressource, e.qte])), ou:false, plan:false, extraction:!!x.extraction, recette:x.id });
 }
-rel([], [r('miel', 'brut')], 'Rucher', 'à venir : le rucher n’a pas encore de production');
-// transformations simples (jobs « fetch » du catalogue)
-for (const p of PRESETS) if (p.job && p.job.type === 'fetch') rel([r(p.job.mat)], [r(p.job.product)], p.name, 'matière prise chez un producteur à moins de ' + p.job.reach + ' m');
-// fonderie (outils.js : FUSIONS)
-for (const f of FUSIONS) rel(Object.keys(f.cout).map(x => r(x)), Object.keys(f.sort).map(x => r(x)), 'Fonderie' + (f.niv ? ' (haut fourneau)' : ''), Object.entries(f.cout).map(([k, q]) => q + ' ' + k).join(' + ') + ' → ' + Object.entries(f.sort).map(([k, q]) => q + ' ' + k).join(', '));
-// fabrication : objets (outils.js : OBJETS), un nœud par objet
-const FAM = { outil:'outil', arme:'arme', munition:'arme', bouclier:'defense', armure:'defense' };
-const TETES = ['pierre', 'cuivre', 'bronze', 'fer', 'acier'];
-node('tete', 'Têtes et lames', 'transf', 'matériau principal des outils et des armes : pierre (version primitive), cuivre, bronze, fer, acier');
-rel(TETES.map(x => r(x)), ['tete'], 'Forge / Atelier de menuiserie', 'plus le matériau est avancé, meilleurs sont l’efficacité, la durabilité et les dégâts (×1 pierre, ×1,3 cuivre, ×1,6 bronze, ×2 fer, ×2,6 acier)');
-for (const [k, o] of Object.entries(OBJETS)) {
-  const recs = RECETTES.filter(x => x.objet === k), ins = new Set(), ateliers = new Set();
-  recs.forEach(x => { Object.keys(x.cout).forEach(i => ins.add(TETES.includes(i) ? 'tete' : i)); x.ateliers.forEach(a => ateliers.add(a)); });
-  const mats = o.mats.map(m => MATERIAUX[m].label).join(', ');
-  node('o:' + k, o.nom, FAM[o.type] || 'outil', 'matériaux : ' + mats);
-  rel([...ins].map(i => i === 'tete' ? i : r(i)), ['o:' + k], [...ateliers].map(a => BAT[a] || a).join(' / '), 'matériaux : ' + mats + (o.qte ? ' · ' + o.qte + ' par fabrication' : '') + ' · dégâts de base ' + o.deg);
-}
-rel([r('bois')], [r('corde')], 'Atelier de menuiserie', '2 bois donnent 3 cordes (liant des versions primitives, arcs, cannes)');
-
-// constructions, améliorations, outils : ce à quoi servent les ressources (hors arbre : pas de flèche)
-const USAGES = new Map();       // ressource → [textes]
+// usages (texte) : biens de consommation, ateliers qui utiliseront la ressource, outils
+const USAGES = new Map();
 const usage = (res, t) => { if (!USAGES.has(res)) USAGES.set(res, []); USAGES.get(res).push(t); };
-for (const p of PRESETS) { const c = COUTS[p.id]; if (c) for (const [k, q] of Object.entries(c)) usage(k, 'Construction : ' + p.name + ' (' + q + ')'); }
-for (const a of AMELIOS) for (const [k, q] of Object.entries(a.cout)) usage(k, 'Amélioration : ' + a.nom + ' (' + q + ')');
-for (const [k, e] of Object.entries(FERME_EXT)) for (const [res, q] of Object.entries(e.cout)) usage(res, 'Extension de ferme : ' + e.nom + ' (' + q + ')');
-for (const [bat, t] of OUTILS_REQUIS) usage('o:' + (Object.keys(OBJETS).find(k => OBJETS[k].nom.toLowerCase().startsWith(t)) || t), 'Outil requis : ' + bat);
-usage('bois', 'Combustible de la fonderie (2 par fusion, 1 pour le bronze, 3 pour l’acier)');
-usage('pousses', 'Replantation de la forêt (pelle) : les pousses sont plantées dans la zone et deviennent des arbres');
-usage('pierre', 'Outils et armes primitifs (tête en pierre)');
-for (const [k, v] of Object.entries(VALEUR_OR)) usage(k, 'Vente au comptoir commercial : ' + v + ' Or l’unité');
-for (const [k, q] of Object.entries(STOCK_DEPART)) { const id = N.has(k) ? k : null; if (id) N.get(id).depart = q; }
-for (const nom of ['pierre', 'planches', 'bois', 'corde', 'légumes', 'pain']) if (!N.has(nom)) r(nom);
-usage('légumes', 'Nourriture (la consommation par les villageois est à venir)'); usage('fruits', 'Nourriture (la consommation par les villageois est à venir)');
-usage('bière', 'Besoin de la taverne (à venir)'); usage('vêtements', 'Marché (à venir)'); usage('chaussures', 'Marché (à venir)');
-usage('œufs', 'Nourriture (la consommation par les villageois est à venir)'); usage('viande', 'Nourriture (la consommation par les villageois est à venir)'); usage('poisson', 'Nourriture (la consommation par les villageois est à venir)'); usage('pain', 'Nourriture (la consommation par les villageois est à venir)');
-// nœuds manquants créés par les relations (sécurité)
-for (const x of R) for (const id of [...x.ins, ...x.outs]) if (!N.has(id)) r(id);
-
+for (const r of DRES) {
+  if (r.final) usage(r.id, r.dechet ? 'Déchet : n\'est pas utilisé' : 'Bien de consommation : n\'entre dans aucune recette (maisons, taverne, église…)');
+  for (const a of r.attendu || []) { const at = ATELIER.get(a); if (at && !R.some(x => x.ins.includes(r.id) && x.via === at.nom)) usage(r.id, 'Sera utilisée par : ' + at.nom + (MIGREES.has(at.filiere) ? '' : ' (filière pas encore migrée)')); }
+}
+for (const x of R) for (const t of x.tools) usage(t, 'Outil de : ' + x.via);
+// débouchés (couts_construction, besoins_foyers, besoins_services, commerce)
+const D_COUTS = chargeOpt('data/production/couts_construction.json'), D_FOYERS = chargeOpt('data/production/besoins_foyers.json'), D_SERVICES = chargeOpt('data/production/besoins_services.json'), D_COMMERCE = chargeOpt('data/production/commerce.json');
+const nomAt = id => (ATELIER.get(id) || { nom:id }).nom;
+if (D_COUTS) {
+  for (const [k, niv] of Object.entries(D_COUTS.niveaux || {})) for (const p of niv.parties) for (const x of p.ressources) usage(x.ressource, 'Construction (' + niv.nom + ', ' + p.partie + (p.auChoix ? ', au choix' : '') + ')');
+  for (const b of D_COUTS.batiments || []) for (const e of b.entretien || []) usage(e.ressource, 'Entretien : ' + nomAt(b.atelier) + (e.note ? ' (' + e.note + ')' : ''));
+  for (const e of D_COUTS.entretien_routes || []) usage(e.ressource, 'Entretien des routes' + (e.note ? ' : ' + e.note : ''));
+  for (const a of D_COUTS.ameliorations || []) for (const x of a.couts) usage(x.ressource, 'Amélioration : ' + nomAt(a.atelier) + ' (' + a.id + ')');
+}
+if (D_FOYERS) for (const niv of D_FOYERS.niveaux) for (const bz of niv.besoins) {
+  const lib = 'Besoin des foyers de niveau ' + niv.niveau + (bz.saison ? ' (' + bz.saison + ')' : '') + (bz.besoin ? ' : ' + bz.besoin : '');
+  if (bz.type === 'groupe') for (const id of D_FOYERS.groupesAliments[bz.groupe].ressources) usage(id, lib + ' : groupe « ' + D_FOYERS.groupesAliments[bz.groupe].nom + ' »'); else usage(bz.ressource, lib);
+}
+if (D_SERVICES) {
+  for (const sv of D_SERVICES.services) { for (const bz of sv.besoins) usage(bz.ressource, 'Service : ' + nomAt(sv.atelier) + (bz.usage ? ' (' + bz.usage + ')' : '')); for (const e of sv.equipement || []) for (const a of e.armes) usage(a, 'Équipement de la ' + nomAt(sv.atelier) + ' (niveau ' + e.niveau + ')'); }
+  for (const e of D_SERVICES.equipements || []) for (const id of e.ressources) usage(id, 'Équipement : ' + nomAt(e.atelier));
+}
+if (D_COMMERCE) { for (const id of D_COMMERCE.exports || []) usage(id, 'Export du comptoir commercial'); for (const id of D_COMMERCE.imports || []) usage(id, 'Importé par le comptoir commercial'); }
+for (const a of DAT) for (const n of a.niveauxOutils || []) for (const o of n.outils) usage(o, 'Outil de chasse niveau ' + n.niveau + ' : ' + a.nom);
 /* ---------- niveaux (colonnes) : du plus brut au plus fini ---------- */
 const prodDe = new Map(); for (const x of R) for (const o of x.outs) { if (!prodDe.has(o)) prodDe.set(o, []); prodDe.get(o).push(x); }
 const tier = new Map();
@@ -152,18 +169,18 @@ const niv = (id, pile = new Set()) => {
 };
 for (const id of N.keys()) niv(id);
 const maxT0 = Math.max(...tier.values());
-for (const n of N.values()) if (['outil', 'arme', 'defense'].includes(n.cat)) tier.set(n.id, maxT0);   // produits finis : toujours la dernière colonne
+for (const n of N.values()) if (['outil', 'arme'].includes(n.cat)) tier.set(n.id, maxT0);   // produits finis : toujours la dernière colonne
 const maxT = Math.max(...tier.values());
 
 /* ---------- arêtes ---------- */
 const AR = new Map();
-for (const x of R) for (const a of x.ins) for (const b of x.outs) { const k = a + '→' + b; if (!AR.has(k)) AR.set(k, { a, b, vias:new Set(), notes:[] }); AR.get(k).vias.add(x.via); }
+for (const x of R) for (const a of x.ins) for (const b of x.outs) { if (N.get(a).listeSeule || N.get(b).listeSeule) continue; const k = a + '→' + b; if (!AR.has(k)) AR.set(k, { a, b, vias:new Set(), notes:[] }); AR.get(k).vias.add(x.via); }
 
 /* ---------- mise en page ---------- */
-const COLW = 250, ROWH = 40, BW = 190, BH = 30, X0 = 30, Y0 = 130;
+const COLW = 290, ROWH = 56, BW = 220, BH = 46, X0 = 30, Y0 = 130;
 const ordreCat = Object.keys(CATS);
 const cols = Array.from({ length:maxT + 1 }, () => []);
-for (const n of N.values()) cols[tier.get(n.id)].push(n);
+for (const n of N.values()) if (!n.listeSeule) cols[tier.get(n.id)].push(n);
 // barycentre : proche de ses parents, par catégorie
 const pos = new Map();
 cols.forEach((c, t) => {
@@ -185,9 +202,10 @@ for (const e of AR.values()) {
   edgeEl.set(e.a + '→' + e.b, p);
 }
 for (const n of N.values()) {
+  if (n.listeSeule) continue;
   const P = pos.get(n.id), g = el('g', { class:'node', transform:`translate(${P.x} ${P.y})` }, gN);
   el('rect', { width:BW, height:BH, fill:CATS[n.cat].c + '30', stroke:CATS[n.cat].c }, g);
-  const t = el('text', { x:9, y:19, fill:'currentColor' }, g); t.textContent = n.nom.length > 26 ? n.nom.slice(0, 25) + '…' : n.nom;
+  const t = el('text', { x:9, y:19, fill:'currentColor' }, g); t.textContent = n.nom.length > 28 ? n.nom.slice(0, 27) + '…' : n.nom;
   g.addEventListener('click', ev => { ev.stopPropagation(); choisir(n.id); });
   nodeEl.set(n.id, g);
 }
@@ -195,7 +213,7 @@ const W = X0 * 2 + (maxT + 1) * COLW, H = Y0 + rows * ROWH + 40;
 /* ---------- zoom / déplacement ---------- */
 const view = { k:1, x:0, y:0 }, carte = document.getElementById('carte');
 const maj = () => monde.setAttribute('transform', `translate(${view.x} ${view.y}) scale(${view.k})`);
-{ const w = carte.clientWidth || 1000, h = carte.clientHeight || 700; view.k = Math.min(1, w / W, h / H); view.x = 4; view.y = 0; maj(); }
+{ const w = carte.clientWidth || 1000, h = carte.clientHeight || 700; view.k = Math.min(1, w / W); view.x = 4; view.y = 55; maj(); }
 carte.addEventListener('wheel', e => { e.preventDefault(); const b = carte.getBoundingClientRect(), px = e.clientX - b.left, py = e.clientY - b.top, f = Math.exp(-e.deltaY * .0015), nk = Math.min(3, Math.max(.2, view.k * f)), k = nk / view.k; view.x = px - (px - view.x) * k; view.y = py - (py - view.y) * k; view.k = nk; maj(); }, { passive:false });
 let drag = null; carte.addEventListener('pointerdown', e => { drag = { sx:e.clientX, sy:e.clientY, x:view.x, y:view.y, moved:false }; carte.classList.add('drag'); });
 addEventListener('pointermove', e => { if (!drag) return; const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy; if (Math.abs(dx) + Math.abs(dy) > 3) drag.moved = true; view.x = drag.x + dx; view.y = drag.y + dy; maj(); });
@@ -214,10 +232,10 @@ function choisir(id) {
   for (const [k, e] of edgeEl) { const [a, b] = k.split('→'); const up = (amont.has(a) || a === id) && (amont.has(b) || b === id), down = (aval.has(a) || a === id) && (aval.has(b) || b === id);
     e.setAttribute('class', 'edge' + (up ? ' up' : down ? ' down' : ' dim')); e.setAttribute('marker-end', up ? 'url(#flu)' : down ? 'url(#fld)' : 'url(#fl)'); }
   const n = N.get(id), C = CATS[n.cat];
-  const prod = (prodDe.get(id) || []).map(x => `<div class="rel"><b>${esc(x.via)}</b>${x.ins.length ? ' : ' + x.ins.map(lien).join(' + ') + ' → ' + esc(n.nom) : ' → ' + esc(n.nom)}${x.tool ? '<br><small>outil requis : ' + esc(x.tool) + '</small>' : ''}${x.note ? '<br><small>' + esc(x.note) + '</small>' : ''}</div>`).join('');
+  const prod = (prodDe.get(id) || []).map(x => `<div class="rel"><b>${esc(x.via)}</b>${x.plan ? ' <span class="plan">prévu · à coder</span>' : ''}${x.ins.length ? ' : ' + x.ins.map(lien).join(' + ') + ' → ' + esc(n.nom) : ' → ' + esc(n.nom)}${x.tools.length ? '<br><small>outils requis : ' + x.tools.map(t => esc((N.get(t) || { nom:t }).nom)).join(', ') + '</small>' : ''}${x.sous.includes(id) ? '<br><small>sous-produit de cette fabrication</small>' : ''}${x.note ? '<br><small>' + esc(x.note) + '</small>' : ''}</div>`).join('');
   const usesR = R.filter(x => x.ins.includes(id)).map(x => `<div class="rel"><b>${esc(x.via)}</b> : ${x.ins.map(i => i === id ? '<b>' + esc(n.nom) + '</b>' : lien(i)).join(' + ')} → ${x.outs.map(lien).join(', ')}${x.note ? '<br><small>' + esc(x.note) + '</small>' : ''}</div>`).join('');
   const us = (USAGES.get(id) || []).map(t => `<li>${esc(t)}</li>`).join('');
-  fiche.innerHTML = `<h2>${esc(n.nom)}</h2><span class="badge" style="background:${C.c}">${C.nom}</span>${n.depart ? ` <small>· ${n.depart} au départ (camp de colon)</small>` : ''}
+  fiche.innerHTML = `<h2>${esc(n.nom)}</h2><span class="badge" style="background:${C.c}">${C.nom}</span> <span class="badge" style="background:${ETATS[etat(id).s].c}">${ETATS[etat(id).s].nom}</span>${n.depart ? ` <small>· ${n.depart} au départ (camp de colon)</small>` : ''}
     ${n.note.length ? '<p><small>' + n.note.map(esc).join(' · ') + '</small></p>' : ''}
     <h3>Comment l'obtenir</h3>${prod || '<p><small>Source de la nature : rien à produire.</small></p>'}
     <h3>À quoi ça sert</h3>${usesR}${us ? '<ul>' + us + '</ul>' : ''}${!usesR && !us ? '<p><small>Aucun usage dans le jeu pour le moment.</small></p>' : ''}
@@ -225,11 +243,192 @@ function choisir(id) {
   fiche.querySelectorAll('a.res').forEach(a => a.onclick = () => choisir(a.dataset.id));
 }
 /* ---------- recherche et filtres ---------- */
-document.getElementById('q').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); if (!q) { choisir(null); return; } const hit = [...N.values()].find(n => n.nom.toLowerCase().includes(q)); if (hit) { choisir(hit.id); const P = pos.get(hit.id), b = carte.getBoundingClientRect(); view.x = b.width / 2 - (P.x + BW / 2) * view.k; view.y = b.height / 2 - (P.y + BH / 2) * view.k; maj(); } });
+document.getElementById('q').addEventListener('input', e => { const q = e.target.value.trim().toLowerCase(); if (!q) { choisir(null); return; } const hit = [...N.values()].find(n => n.nom.toLowerCase().includes(q)); if (hit) { choisir(hit.id); const P = pos.get(hit.id), b = carte.getBoundingClientRect(); if (P) { view.x = b.width / 2 - (P.x + BW / 2) * view.k; view.y = b.height / 2 - (P.y + BH / 2) * view.k; maj(); } } });
 const leg = document.getElementById('leg'), cache = new Set();
 for (const [k, c] of Object.entries(CATS)) { const l = document.createElement('label'); l.innerHTML = `<input type="checkbox" checked hidden><i style="background:${c.c}"></i>${c.nom}`; l.onclick = ev => { ev.preventDefault(); cache.has(k) ? cache.delete(k) : cache.add(k); l.style.opacity = cache.has(k) ? .4 : 1;
-  for (const n of N.values()) nodeEl.get(n.id).style.display = cache.has(n.cat) ? 'none' : '';
+  for (const n of N.values()) if (nodeEl.has(n.id)) nodeEl.get(n.id).style.display = cache.has(n.cat) ? 'none' : '';
   for (const [key, e] of edgeEl) { const [a, b] = key.split('→'); e.style.display = cache.has(N.get(a).cat) || cache.has(N.get(b).cat) ? 'none' : ''; } }; leg.appendChild(l); }
+
+/* ---------- état de chaque ressource ----------
+   VERT   : le produit a tout son circuit de création — une recette dont le bâtiment EXISTE dans le jeu, dont les matériaux et les outils sont verts.
+   ORANGE : il manque une information — un matériau (?), un bâtiment à créer (?), un outil (?).
+   ROUGE  : aucun lien trouvé — dans une filière migrée, rien ne produit cette ressource.
+   GRIS   : filière pas encore migrée : ses recettes ne sont pas encore saisies (on ne juge pas ; ses ressources sont supposées disponibles). */
+const ETATS = { vert:{ nom:'Circuit complet', c:'#3f9b4a' }, orange:{ nom:'Information manquante', c:'#e08a1e' }, rouge:{ nom:'Aucun lien trouvé', c:'#cf3b34' }, gris:{ nom:'Filière à migrer', c:'#7d8b96' } };
+const idBat = v => (PRESETS.find(p => v.toLowerCase().startsWith(p.name.toLowerCase())) || {}).id || null;
+const batsDe = x => x.bat ? [x.bat] : x.via.split(' / ').map(idBat);
+const auChoix = x => x.ou;
+const estSource = id => ['Naturel', 'Importé'].includes(N.get(id).res.categorie) && !(prodDe.get(id) || []).length;       // (la nature et le commerce : rien à produire)
+const aMigrer = id => !MIGREES.has(N.get(id).res.filiere) && !(prodDe.get(id) || []).length && !estSource(id);
+const relOk = (x, G) => batsDe(x).every(Boolean) && (x.ins.length > 0 || x.extraction) && x.ins.every(i => G.has(i)) && x.tools.every(t => N.has(t) && G.has(t));
+/* Point fixe (indépendant de l'ordre) : G = le plus grand ensemble de ressources qui ont une source, ou une recette complète avec matériaux et outils dans G. Un cercle (la hache coupe le bois qui fait la hache)
+   reste vert tant que le reste est complet ; un seul maillon cassé (un bâtiment à créer) fait tomber toute la chaîne qui en dépend. */
+const G = new Set(N.keys());
+for (let change = true; change;) { change = false; for (const id of [...G]) if (!estSource(id) && !aMigrer(id) && !(prodDe.get(id) || []).some(x => relOk(x, G))) { G.delete(id); change = true; } }
+const stDe = i => aMigrer(i) ? 'gris' : G.has(i) ? 'vert' : (prodDe.get(i) || []).length ? 'orange' : 'rouge';
+const memo = new Map();
+function etat(id) {
+  if (memo.has(id)) return memo.get(id);
+  const n = N.get(id);
+  if (!n) return { s:'rouge', rels:[], manque:['ressource inconnue'] };
+  if (estSource(id)) { const e = { s:'vert', rels:[], nature:true }; memo.set(id, e); return e; }
+  if (aMigrer(id)) { const e = { s:'gris', rels:[], manque:['filière « ' + n.res.filiere + ' » pas encore migrée'] }; memo.set(id, e); return e; }
+  const rels = (prodDe.get(id) || []).map(x => {
+    const manque = [], bats = batsDe(x);
+    bats.forEach((b, i) => { if (!b) manque.push('bâtiment à créer : ' + x.via.split(' / ')[i]); });
+    const ins = x.ins.map(i => ({ id:i, nom:(N.get(i) || { nom:i }).nom, s:stDe(i) }));
+    for (const i of ins) if (i.s !== 'vert' && i.s !== 'gris') manque.push('matériau ? ' + i.nom + (i.s === 'rouge' ? ' (aucune source)' : ' (incomplet)'));
+    const tools = x.tools.map(t => ({ id:t, nom:(N.get(t) || { nom:t }).nom, s:N.has(t) ? stDe(t) : 'rouge' }));
+    for (const t of tools) if (t.s !== 'vert' && t.s !== 'gris') manque.push('outil ? ' + t.nom);
+    return { via:x.via, bats, ins, tools, note:x.note, q:x.q || {}, manque, ok:relOk(x, G), choix:auChoix(x), plan:x.plan, sous:x.sous, nouveau:!x.bat && !batsDe(x).every(Boolean), extraction:x.extraction };
+  });
+  const e = { s:stDe(id), rels, manque:rels.length ? [] : ['aucun lien trouvé'] };
+  memo.set(id, e); return e;
+}
+/* Causes racines : ce qui bloque vraiment une ressource (un bâtiment à créer, un outil sans source…), remontées de maillon en maillon jusqu'à un point fixe. */
+const CAUSES = new Map();
+{
+  const nom = id => (N.get(id) || { nom:id }).nom, bloquees = [...N.keys()].filter(id => !G.has(id) && !aMigrer(id));
+  for (const id of bloquees) {
+    const c = new Map(), e = etat(id), x = e.rels.find(r => r.ok) || e.rels[0];
+    if (!x) c.set(nom(id), 'rouge');
+    else x.bats.forEach((bt, i) => { if (!bt) c.set('bâtiment à créer : ' + x.via.split(' / ')[i], 'orange'); });
+    CAUSES.set(id, c);
+  }
+  for (let change = true; change;) {
+    change = false;
+    for (const id of bloquees) {
+      const e = etat(id), x = e.rels.find(r => r.ok) || e.rels[0]; if (!x) continue;
+      for (const j of [...x.ins, ...x.tools]) if (j.s !== 'vert' && j.s !== 'gris') for (const [k, v] of CAUSES.get(j.id) || []) if (!CAUSES.get(id).has(k)) { CAUSES.get(id).set(k, v); change = true; }
+    }
+  }
+}
+const causes = id => CAUSES.get(id) || new Map();
+const TOUT = [...N.values()].map(n => ({ n, e:etat(n.id) }));
+const compte = { vert:0, orange:0, rouge:0, gris:0 }; TOUT.forEach(t => compte[t.e.s]++);
+document.getElementById('bilan').innerHTML = TOUT.length + ' ressources · <b style="color:' + ETATS.vert.c + '">' + compte.vert + ' vertes</b> · <b style="color:' + ETATS.orange.c + '">' + compte.orange + ' orange</b> · <b style="color:' + ETATS.rouge.c + '">' + compte.rouge + ' rouges</b> · <b style="color:' + ETATS.gris.c + '">' + compte.gris + ' à migrer</b>';
+
+/* ---------- liste globale ---------- */
+const listeEl = document.getElementById('liste'), filtres = new Set(['vert', 'orange', 'rouge', 'gris']);
+let recherche = '';
+const matHtml = i => '<span class="mat ' + (i.s === 'rouge' ? 'q' : i.s === 'orange' ? 'o' : '') + '">' + (i.s === 'vert' ? '' : '? ') + esc(i.nom) + '</span>';
+function ligne(t) {
+  const { n, e } = t, C = CATS[n.cat], meilleure = e.rels.find(x => x.ok) || e.rels[0], autres = e.rels.filter(x => x !== meilleure);
+  const bat = x => x.via.split(' / ').map((v, i) => x.bats[i] ? esc(v) : '<span class="mat q">? ' + esc(v) + '</span>').join(' / ');
+  const mats = x => (x.ins.length ? x.ins.map(matHtml).join('') : x.extraction ? '<span class="mat">récolte (rien à fournir)</span>' : '<span class="mat q">?</span>') + x.tools.map(t => '<span class="mat ' + (t.s === 'vert' ? '' : t.s === 'rouge' ? 'q' : 'o') + '">outil : ' + (t.s === 'vert' ? '' : '? ') + esc(t.nom) + '</span>').join('');
+  const bloc = e.s === 'vert' ? [] : [...causes(n.id)].map(([k, v]) => '<span class="mat ' + (v === 'rouge' ? 'q' : 'o') + '">' + esc(k) + '</span>'), manque = e.s === 'vert' ? '' : (e.s === 'rouge' ? '<div class="manque r">aucun lien trouvé</div>' : '<div class="manque">bloqué par : ' + (bloc.join(' ') || '?') + '</div>');
+  return '<tr class="l" data-id="' + esc(n.id) + '"><td><span class="pt" style="background:' + ETATS[e.s].c + '" title="' + ETATS[e.s].nom + '"></span><b>' + esc(n.nom) + '</b><br><small style="color:var(--soft)">' + C.nom + (n.depart ? ' · ' + n.depart + ' au départ' : '') + '</small></td>' +
+    '<td>' + (e.nature ? '<small>Source de la nature</small>' : meilleure ? bat(meilleure) : '<span class="mat q">?</span>') + '</td>' +
+    '<td>' + (e.nature ? '' : meilleure ? mats(meilleure) : '<span class="mat q">?</span>') + (autres.length ? '<div class="alt">+ ' + autres.length + ' autre' + (autres.length > 1 ? 's' : '') + ' recette' + (autres.length > 1 ? 's' : '') + ' : ' + autres.map(x => esc(x.via)).filter((v, i, a) => a.indexOf(v) === i).join(', ') + '</div>' : '') + '</td>' +
+    '<td><small>' + (meilleure ? esc(meilleure.note) : '') + '</small>' + manque + '</td></tr>';
+}
+function dessinerListe() {
+  const q = recherche.toLowerCase(), ordre = { rouge:0, orange:1, vert:2, gris:3 };
+  const vus = TOUT.filter(t => filtres.has(t.e.s) && (!q || t.n.nom.toLowerCase().includes(q))).sort((a, b) => ordre[a.e.s] - ordre[b.e.s] || ordreCat.indexOf(a.n.cat) - ordreCat.indexOf(b.n.cat) || a.n.nom.localeCompare(b.n.nom, 'fr'));
+  listeEl.querySelector('tbody').innerHTML = vus.map(ligne).join('') || '<tr><td colspan="4"><small>Aucune ressource.</small></td></tr>';
+  listeEl.querySelector('#nb').textContent = vus.length + ' sur ' + TOUT.length;
+}
+const BLOCAGES = new Map(); for (const t of TOUT) for (const [k, v] of causes(t.n.id)) { const b = BLOCAGES.get(k) || { v, n:0 }; b.n++; BLOCAGES.set(k, b); }
+const resume = [...BLOCAGES].sort((a, b) => b[1].n - a[1].n).map(([k, b]) => '<span class="mat ' + (b.v === 'rouge' ? 'q' : 'o') + '">' + esc(k) + ' · bloque ' + b.n + '</span>').join(' ');
+listeEl.innerHTML = (resume ? '<p style="margin:0 0 10px"><b>Causes de blocage</b> (ce qu\'il faut définir en premier) : ' + resume + '</p>' : '') + '<div class="pastilles"><input type="search" id="rq" placeholder="Chercher une ressource…" aria-label="Chercher une ressource">' +
+  Object.entries(ETATS).map(([k, v]) => '<button type="button" class="pastille" data-f="' + k + '" aria-pressed="true"><i style="background:' + v.c + '"></i>' + v.nom + ' (' + compte[k] + ')</button>').join('') + '<small id="nb"></small></div>' +
+  '<table><thead><tr><th>Ressource</th><th>Produite par (bâtiment)</th><th>Matériaux nécessaires</th><th>Détail</th></tr></thead><tbody></tbody></table>';
+listeEl.querySelector('#rq').addEventListener('input', e => { recherche = e.target.value.trim(); dessinerListe(); });
+listeEl.addEventListener('click', e => {
+  const p = e.target.closest('.pastille'); if (p) { const k = p.dataset.f; filtres.has(k) ? filtres.delete(k) : filtres.add(k); p.setAttribute('aria-pressed', String(filtres.has(k))); dessinerListe(); return; }
+  const l = e.target.closest('tr.l'); if (l) { vue('filieres'); dessinerParcours(l.dataset.id); }                                          // (un clic sur une ligne : la ressource dans l'arbre)
+});
+dessinerListe();
+
+
+/* ---------- filières : une chaîne de production à la fois, sans lignes qui se croisent ----------
+   Chaque ressource est une carte : qui la fabrique, ce qu'il faut, ce qui la bloque. Un clic déroule sa recette complète jusqu'à la nature. */
+const TEXTES = {
+  metal:'Du minerai au fer, à l’acier, au bronze et aux bijoux : bas fourneau, forge, fonderie, orfèvre, atelier monétaire ; les outils et les armes de métal.',
+  bois:'Des arbres aux planches, au charbon de bois et aux tonneaux : bûcherons, forestier, scierie, charbonnier, menuiserie, tonnellerie.',
+  alimentation:'Céréales, farine et pain, bières, vins, poisson et conserves, légumes et fruits.',
+  elevage:'Lait et fromages, viande, œufs, chasse, chandelles et savon.',
+  cuir_textile:'Peaux et cuir, laine, lin et chanvre, drap, corde et vêtements.',
+  armes:'Arcs, flèches, arbalètes, boucliers et armures.',
+  construction:'Pierre, chaux, argile, tuiles, verre : tout ce qui sert à bâtir.',
+  commerce:'Stockage, échanges, importations (épices, soie) et consommation des habitants.',
+};
+const FILIERES = IDX.filieres.map(f => {
+  const propres = DRES.filter(r => r.filiere === f.id).map(r => r.id), ids = new Set(propres);
+  for (const id of propres) for (const x of prodDe.get(id) || []) for (const i of [...x.ins, ...x.tools]) ids.add(i);
+  return { id:f.id, nom:f.nom + (f.migree ? '' : ' (à migrer)'), texte:TEXTES[f.id] || '', migree:f.migree, ids:[...ids] };
+});
+const PHASES = ['Source', 'Récolte', 'Transformation', 'Fabrication', 'Produit fini', 'Étape 6'];
+const unit = (v, x) => (x.q && x.q[v] ? x.q[v] + ' × ' : '');
+function profondeur(ids) {
+  const set = new Set(ids), d = new Map();
+  const f = (id, pile = new Set()) => {
+    if (d.has(id)) return d.get(id); if (pile.has(id)) return 0; pile.add(id);
+    let m = 0; for (const x of prodDe.get(id) || []) for (const i of [...x.ins, ...x.tools]) if (set.has(i) && i !== id) m = Math.max(m, f(i, pile) + 1);
+    pile.delete(id); d.set(id, m); return m;
+  };
+  ids.forEach(i => f(i)); return d;
+}
+function carteRes(id, sel) {
+  const n = N.get(id), e = etat(id), x = e.rels.find(r => r.ok) || e.rels[0], c = ETATS[e.s].c;
+  const par = e.nature ? '<div class="bat">Source de la nature' + (n.res.categorie === 'Importé' ? ' / import' : '') + '</div>' : e.s === 'gris' ? '<div class="bat">Filière à migrer</div>' : x ? '<div class="bat">▸ ' + x.via.split(' / ').map((v, i) => x.bats[i] ? esc(v) : '<span class="mat q">? ' + esc(v) + ' (à créer)</span>').join(' / ') + (x.sous.includes(id) ? ' <small>(sous-produit)</small>' : '') + '</div>' : '<div class="bat"><span class="mat q">? bâtiment</span></div>';
+  const il = e.nature || e.s === 'gris' ? '' : x ? (x.choix ? 'Il faut, au choix : ' : 'Il faut : ') + (x.ins.length ? x.ins.map(i => '<span class="mat ' + (i.s === 'rouge' ? 'q' : i.s === 'orange' ? 'o' : '') + '">' + esc(unit(i.id, x) + (i.s === 'vert' || i.s === 'gris' ? '' : '? ') + i.nom) + '</span>').join('') : '<span class="mat">récolte</span>') + x.tools.map(t => '<span class="mat ' + (t.s === 'vert' || t.s === 'gris' ? '' : 'o') + '">outil : ' + (t.s === 'vert' || t.s === 'gris' ? '' : '? ') + esc(t.nom) + '</span>').join('') : 'Il faut : <span class="mat q">?</span>';
+  const outilDe = [...new Set(R.filter(r => r.tools.includes(id)).map(r => r.via))];
+  const bloc = e.s === 'vert' || e.s === 'gris' ? '' : e.s === 'rouge' ? '<div class="bloc r">aucun lien trouvé</div>' : '<div class="bloc">bloqué par : ' + esc([...causes(id).keys()].join(', ') || '?') + '</div>';
+  return '<button type="button" class="carte-res' + (sel ? ' sel' : '') + '" data-id="' + esc(id) + '" style="border-left-color:' + c + '"><b>' + esc(n.nom) + '</b> <span style="color:' + c + '" title="' + ETATS[e.s].nom + '">●</span>' + par + (il ? '<div class="il">' + il + '</div>' : '') + (outilDe.length ? '<div class="il">Outil de : ' + esc(outilDe.join(', ')) + '</div>' : '') + bloc + '</button>';
+}
+/* PARCOURS d'une ressource, quelle que soit sa filière : à gauche d'où elle vient (ses matériaux, puis les matériaux de ceux-ci…), au centre elle, à droite ce qu'on fabrique avec elle.
+   Seuls les MATÉRIAUX comptent : l'outil d'un bâtiment (hache, lance de chasse…) n'est pas un ingrédient du produit, il n'entre pas dans le parcours. */
+const amont1 = id => [...new Set((prodDe.get(id) || []).flatMap(x => x.ins))];
+const aval1 = id => [...new Set(R.filter(x => x.ins.includes(id)).flatMap(x => x.outs))];
+function niveaux(id, voisins) { const lv = new Map([[id, 0]]); let front = [id]; for (let k = 1; front.length && k <= 8; k++) { const nx = []; for (const a of front) for (const b of voisins(a)) if (!lv.has(b)) { lv.set(b, k); nx.push(b); } front = nx; } return lv; }
+function dessinerParcours(id) {
+  const up = niveaux(id, amont1), down = niveaux(id, aval1), cols = new Map();
+  for (const [i, k] of up) if (i !== id) (cols.get(-k) || cols.set(-k, []).get(-k)).push(i);
+  for (const [i, k] of down) if (i !== id) (cols.get(k) || cols.set(k, []).get(k)).push(i);
+  cols.set(0, [id]);
+  const ks = [...cols.keys()].sort((a, b) => a - b), nom = N.get(id).nom, noms = l => l.map(i => esc(N.get(i).nom)).join(', ');
+  const direct = amont1(id), apres = aval1(id), usages = (USAGES.get(id) || []);
+  const titre = k => k < 0 ? (k === -1 ? 'D’où ça vient' : 'Plus en amont') : k === 0 ? 'Ressource choisie' : (k === 1 ? 'Où ça va' : 'Plus loin');
+  filEl.innerHTML = '<div class="onglets"><button type="button" data-retour="1">← Retour à la filière</button></div>' +
+    '<p class="phrase"><b>' + esc(nom) + '</b> — vient de : ' + (e0(id).nature ? 'la nature' : direct.length ? noms(direct) : 'aucune source trouvée') + ' · finit dans : ' + (apres.length ? noms(apres) : 'aucune fabrication' + (usages.length ? ' (usages : ' + esc(usages.slice(0, 3).join(' ; ')) + ')' : ' pour le moment')) + '.</p>' +
+    '<div class="flux">' + ks.map((k, j) => (j ? '<div class="fl" aria-hidden="true">›</div>' : '') + '<div class="col"><h4>' + titre(k) + '</h4>' + cols.get(k).sort((a, b) => N.get(a).nom.localeCompare(N.get(b).nom, 'fr')).map(i => carteRes(i, i === id)).join('') + '</div>').join('') + '</div>';
+}
+const e0 = id => etat(id);
+let filiereCourante = 'metal';
+const filEl = document.getElementById('filieres');
+function dessinerFilieres() {
+  const f = FILIERES.find(x => x.id === filiereCourante), ids = [...new Set(f.ids)].filter(i => N.has(i)), d = profondeur(ids), maxD = Math.max(...ids.map(i => d.get(i)));
+  const cols = Array.from({ length:maxD + 1 }, () => []); ids.forEach(i => cols[d.get(i)].push(i));
+  const compte2 = ids.reduce((a, i) => (a[etat(i).s]++, a), { vert:0, orange:0, rouge:0, gris:0 }), compte = compte2;
+  filEl.innerHTML = '<div class="onglets" role="group" aria-label="Filière">' + FILIERES.map(x => '<button type="button" data-fil="' + x.id + '" aria-pressed="' + (x.id === f.id) + '">' + x.nom + '</button>').join('') + '</div>' +
+    '<p class="phrase"><b>' + f.nom + '</b> — ' + f.texte + ' <b>Clique une carte</b> pour voir d’où elle vient et où elle finit.</p>' +
+    '<div class="legende"><span><i style="background:' + ETATS.vert.c + '"></i>Circuit complet (' + compte.vert + ')</span><span><i style="background:' + ETATS.orange.c + '"></i>Information manquante (' + compte.orange + ')</span><span><i style="background:' + ETATS.rouge.c + '"></i>Aucun lien trouvé (' + compte.rouge + ')</span><span><i style="background:' + ETATS.gris.c + '"></i>À migrer (' + (compte2.gris || 0) + ')</span></div>' +
+    '<div class="flux">' + cols.map((c, k) => (k ? '<div class="fl" aria-hidden="true">›</div>' : '') + '<div class="col"><h4>' + (k + 1) + ' · ' + (PHASES[k] || 'Étape ' + (k + 1)) + '</h4>' + c.sort((a, b) => N.get(a).nom.localeCompare(N.get(b).nom, 'fr')).map(i => carteRes(i)).join('') + '</div>').join('') + '</div>';
+}
+filEl.addEventListener('click', e => {
+  const b = e.target.closest('[data-fil]'); if (b) { filiereCourante = b.dataset.fil; dessinerFilieres(); return; }
+  if (e.target.closest('[data-retour]')) { dessinerFilieres(); return; }
+  const c = e.target.closest('.carte-res'); if (c) dessinerParcours(c.dataset.id);                       // (un clic, où que soit la carte : son parcours)
+});
+dessinerFilieres();
+
+/* ---------- vues et couleurs de l'arbre ---------- */
+function vue(v) { document.getElementById('app').classList.toggle('vue-liste', v === 'liste'); document.getElementById('app').classList.toggle('vue-filieres', v === 'filieres'); document.getElementById('coul').hidden = v !== 'arbre'; for (const b of document.querySelectorAll('[data-vue]')) b.setAttribute('aria-pressed', String(b.dataset.vue === v)); try { history.replaceState(null, '', '#' + v); } catch (e) {} }
+function coul(m) {
+  for (const b of document.querySelectorAll('[data-coul]')) b.setAttribute('aria-pressed', String(b.dataset.coul === m));
+  for (const [id, g] of nodeEl) { const n = N.get(id), c = m === 'etat' ? ETATS[etat(id).s].c : CATS[n.cat].c, r = g.querySelector('rect'); r.setAttribute('fill', c + '30'); r.setAttribute('stroke', c); r.setAttribute('stroke-width', m === 'etat' ? 2.4 : 1.4); }
+}
+/* Détail de chaque nœud de l'arbre : le bâtiment producteur sous le nom, une pastille d'état (vert / orange / rouge), un contour en pointillés quand la recette est seulement prévue. */
+for (const [id, g] of nodeEl) {
+  const e = etat(id), x = e.rels.find(r => r.ok) || e.rels[0];
+  const sub = el('text', { x:9, y:37, fill:'currentColor', 'font-size':'10.5', opacity:'.7' }, g);
+  sub.textContent = e.nature ? 'Nature' : e.s === 'gris' ? 'filière à migrer' : x ? '▸ ' + (x.via.length > 34 ? x.via.slice(0, 33) + '…' : x.via) : '▸ ?';
+  el('circle', { cx:BW - 12, cy:12, r:5.5, fill:ETATS[e.s].c, stroke:'#0006', 'stroke-width':'.8' }, g);
+  if (x && x.plan) g.querySelector('rect').setAttribute('stroke-dasharray', '5 3');
+}
+document.getElementById('barre').addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; if (b.dataset.vue) vue(b.dataset.vue); if (b.dataset.coul) coul(b.dataset.coul); });
+vue(location.hash === '#liste' ? 'liste' : location.hash === '#filieres' ? 'filieres' : 'arbre');
 </script>
 </body>
 </html>
