@@ -125,7 +125,9 @@
   "filiere": "construction",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "marais_salant",
@@ -136,7 +138,9 @@
   "catalogueId": null,
   "banal": null,
   "usureOutils": true,
-  "contrainte": "côte uniquement"
+  "contrainte": "côte uniquement",
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "ferme",
@@ -180,7 +184,9 @@
    "taux": null,
    "note": "TODO équilibrage"
   },
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "moulin",
@@ -238,7 +244,9 @@
   "filiere": "elevage",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "saloir_fumoir",
@@ -248,7 +256,9 @@
   "filiere": "alimentation",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "chandellerie_savonnerie",
@@ -258,7 +268,9 @@
   "filiere": "elevage",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "scierie",
@@ -298,7 +310,9 @@
   "filiere": "bois",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "fonderie",
@@ -328,7 +342,9 @@
   "filiere": "metal",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "orfevre",
@@ -338,7 +354,9 @@
   "filiere": "metal",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "atelier_monetaire",
@@ -350,7 +368,9 @@
   "banal": null,
   "usureOutils": true,
   "unique": true,
-  "seigneurial": true
+  "seigneurial": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "archerie",
@@ -380,7 +400,9 @@
   "filiere": "cuir_textile",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "cordonnerie",
@@ -400,7 +422,9 @@
   "filiere": "cuir_textile",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "atelier_tissage",
@@ -410,7 +434,9 @@
   "filiere": "cuir_textile",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "teinturerie_foulerie",
@@ -420,7 +446,9 @@
   "filiere": "cuir_textile",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "couture",
@@ -440,7 +468,9 @@
   "filiere": "construction",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "tuilerie_poterie",
@@ -450,7 +480,9 @@
   "filiere": "construction",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "verrerie",
@@ -460,7 +492,9 @@
   "filiere": "construction",
   "catalogueId": null,
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "grange",
@@ -634,7 +668,9 @@
   "banal": null,
   "usureOutils": true,
   "module": "manoir",
-  "note": "Ou module « milice » du Manoir ; dessin générique provisoire."
+  "note": "Ou module « milice » du Manoir ; dessin générique provisoire.",
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  },
  {
   "id": "scriptorium",
@@ -646,6 +682,8 @@
   "banal": null,
   "usureOutils": true,
   "module": "eglise",
-  "note": "Module de l'Église : manuscrits enluminés."
+  "note": "Module de l'Église : manuscrits enluminés.",
+  "dessin": "js/batiments/dessins-production.js",
+  "catalogue": true
  }
 ]

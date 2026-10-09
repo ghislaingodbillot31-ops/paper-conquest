@@ -159,7 +159,7 @@ $('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
 $('zfit').addEventListener('click', () => atelier.on ? fitAtelier() : fit());
 $('zhome').addEventListener('click', () => atelier.on ? fitAtelier() : fitContent());
 // atelier : liste complète des bâtiments (un clic l'affiche seul sur son carré), bouton carte / atelier
-const GALLERY_GROUPS = [['', 'Village'], ['res', 'Ressources'], ['logi', 'Logistique'], ['com', 'Commerce'], ['agri', 'Agriculture']];
+const GALLERY_GROUPS = [['', 'Village'], ['res', 'Ressources'], ['logi', 'Logistique'], ['com', 'Commerce'], ['agri', 'Agriculture'], ['ind', 'Industrie'], ['def', 'Défense']];
 const drawable = PRESETS.filter(p => BUILD_DRAW[p.id]);
 $('gallery').innerHTML = GALLERY_GROUPS.map(([cat, name]) => {
   const list = drawable.filter(p => (p.cat || '') === cat);

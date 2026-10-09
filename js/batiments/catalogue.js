@@ -222,6 +222,49 @@ PRESETS.push(
   { id:'four',     cat:'agri', name:'Four communal', f:2, d:2, turn:true, job:{ type:'craft' },
     use:'Transforme la farine en pain (file de production)' },
 );
+/* Nouveaux bâtiments du plan de production (PLAN_BATIMENTS_PRODUCTION.md). Ils ont leur dessin (dessins-production.js) et sont visibles dans l'éditeur ; ils ne sont pas encore proposés au joueur
+   (BUILD_MENUS) ni reliés à la simulation : leurs recettes sont dans data/production/. Les noms sont ceux de data/production/ateliers.json. */
+PRESETS.push(
+  { id:'glaisiere', cat:'res', name:'Glaisière', f:2, d:2, turn:true,
+    use:"Extrait l'argile et le sable" },
+  { id:'marais_salant', cat:'res', name:'Marais salant', f:3, d:2, turn:true,
+    use:"Fait évaporer l’eau de mer pour récolter le sel (côte uniquement)" },
+  { id:'pressoir', cat:'agri', name:'Pressoir', f:2, d:3, turn:true,
+    use:"Presse le raisin (vin), les pommes (cidre), les olives et les noix (huile) ; atelier banal" },
+  { id:'boucherie', cat:'ind', name:'Boucherie', f:2, d:2, turn:true,
+    use:"Découpe les animaux : viande, peau, os, tendons, suif, corne, caillette" },
+  { id:'saloir_fumoir', cat:'ind', name:'Saloir-fumoir', f:2, d:2, turn:true,
+    use:"Sale, fume et sèche la viande, le poisson et les légumes pour les conserver" },
+  { id:'chandellerie_savonnerie', cat:'ind', name:'Chandellerie-savonnerie', f:2, d:2, turn:true,
+    use:"Fabrique chandelles, cierges et savon avec le suif, la cire et la potasse" },
+  { id:'tonnellerie', cat:'ind', name:'Tonnellerie', f:2, d:2, turn:true,
+    use:"Assemble les tonneaux avec des douelles et des cercles de fer" },
+  { id:'bas_fourneau', cat:'ind', name:'Bas fourneau', f:2, d:2, turn:true,
+    use:"Réduit le minerai de fer au charbon de bois en loupe de fer" },
+  { id:'orfevre', cat:'ind', name:'Orfèvre', f:2, d:2, turn:true,
+    use:"Travaille l’argent, l’or et l’ambre : bijoux, chapelets, objets liturgiques" },
+  { id:'atelier_monetaire', cat:'ind', name:'Atelier monétaire', f:2, d:2, turn:true,
+    use:"Frappe la monnaie avec l’argent (atelier du seigneur, unique)" },
+  { id:'tannerie', cat:'ind', name:'Tannerie', f:3, d:3, turn:true,
+    use:"Transforme les peaux en cuir avec de l’écorce, de l’eau et de la chaux ; parchemin" },
+  { id:'corderie', cat:'ind', name:'Corderie', f:2, d:4, turn:true,
+    use:"Prépare la filasse de lin et de chanvre, puis la corde et les filets" },
+  { id:'atelier_tissage', cat:'ind', name:'Atelier de tissage', f:2, d:2, turn:true,
+    use:"File la laine et tisse drap brut et toile" },
+  { id:'teinturerie_foulerie', cat:'ind', name:'Teinturerie-foulerie', f:3, d:2, turn:true,
+    use:"Foule le drap et le teint avec la guède, la garance et l’alun" },
+  { id:'four_chaux', cat:'ind', name:'Four à chaux', f:2, d:2, turn:true,
+    use:"Cuit le calcaire en chaux, et fait le mortier" },
+  { id:'tuilerie_poterie', cat:'ind', name:'Tuilerie-poterie', f:3, d:2, turn:true,
+    use:"Cuit l’argile en tuiles, briques et poteries ; fait le torchis" },
+  { id:'verrerie', cat:'ind', name:'Verrerie', f:2, d:2, turn:true,
+    use:"Fond le sable et la potasse en verre ; vitraux avec des feuilles de plomb" },
+  { id:'garnison', cat:'def', name:'Garnison', f:3, d:3, turn:true,
+    use:"Équipe et ravitaille les soldats du village (module du manoir)" },
+  { id:'scriptorium', cat:'', name:'Scriptorium', f:2, d:2, turn:true,
+    use:"Copie et enlumine des manuscrits (module de l’église)" },
+);
+
 /* Coût de construction (ressources du village) et stock donné par le camp de colon.
    Le stock du village est S.stock { ressource: quantité } ; le camp le remplit une fois, à sa pose. */
 const COUTS = {
