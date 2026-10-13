@@ -1,0 +1,345 @@
+:root{
+  --desk:#d6ddd9; --sheet:#f5f7f2; --ground:#edf1e2; --panel:#e9eee9;
+  --ink:#1e3a4c; --ink-soft:#5b7080; --line:rgba(30,58,76,.16);
+  --zone:#3c8a5c; --zone-fill:rgba(0,0,0,.04); --zone-line:rgba(0,0,0,.75); --verge:transparent;
+  --house:#b8613e; --house-edge:#5a2c1c; --roof-line:rgba(90,44,28,.5);
+  --earth:#dcc9a0; --earth-edge:#9a8660; --path:#9a7248; --path-edge:#5e4129; --gravel:#d8cba6; --gravel-edge:#8e8455; --paving:#d6c4a0; --paving-edge:#8e8455;
+  --wall:#9a9488; --wall-edge:#3f3a32;
+  --water:#38acd3; --water-edge:#1a79a6; --bridge:#8a7a62;
+  --grass:#aacb2a; --grass-dark:#9cc122; --tree:#3f6232; --tree-dark:#2f4d28; --bush:#5a7a3a;
+  --contour:#5b4a2c;
+  --f-meadow:#8fa656; --f-wheat:#dcbc62; --f-plough:#a4784c; --f-fallow:#b5b46a; --f-alfalfa:#6f9042; --f-forest:#3f5f33; --parcel-edge:#77745a; --veil:rgba(58,52,38,.26); --stall-a:#b8553a; --stall-b:#d4a64a; --tavern:#b88a5c; --church:#a98c64; --ore-iron:#9a6a55; --ore-clay:#c49a6a; --f-field:#d4b45a; --f-pasture:#8aa552; --sheep:#f4f0e6;
+  --accent:#d2602a; --bad:#c23b30; --shadow:rgba(40,48,36,.20);
+  --btn:#fbfcfa; --btn-on:#1e3a4c; --btn-on-ink:#f5f7f2;
+  color-scheme:light;
+}
+/* thème sombre : seulement l'interface — la carte garde ses couleurs de carte peinte */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+    --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+    --zone:#5cc48a; --zone-fill:rgba(0,0,0,.06); --zone-line:rgba(0,0,0,.8);
+    --accent:#f08a4c; --bad:#ef5a4c;
+    --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#0c1318; --sheet:#122029; --ground:#142630; --panel:#0f1a21;
+  --ink:#d3e2eb; --ink-soft:#8ea4b2; --line:rgba(211,226,235,.14);
+  --zone:#5cc48a; --zone-fill:rgba(0,0,0,.06); --zone-line:rgba(0,0,0,.8);
+  --accent:#f08a4c; --bad:#ef5a4c;
+  --btn:#172630; --btn-on:#d3e2eb; --btn-on-ink:#0c1318;
+  color-scheme:dark;
+}
+html,body{height:100%}
+[hidden]{display:none !important} /* un élément caché le reste, même avec un display propre (.overlay, .tiroir…) */
+body{
+  margin:0; box-sizing:border-box; padding-inline:16px; padding-block:12px;
+  background:var(--desk); color:var(--ink);
+  font:14px/1.45 "MedievalSharp",serif;
+}
+*,*::before,*::after{box-sizing:inherit}
+.app{display:grid; grid-template-columns:292px minmax(0,1fr); gap:12px; height:100%}
+.panel{
+  background:var(--panel); border:1px solid var(--line); border-radius:4px;
+  overflow:auto; padding:14px 14px 18px; display:flex; flex-direction:column; gap:16px;
+}
+.panel h1{font:700 22px/1.1 "MedievalSharp",serif; letter-spacing:.02em; margin:0; text-wrap:balance}
+.panel .sub{margin:2px 0 0; color:var(--ink-soft); font-size:13px}
+.panel h2{
+  font:600 12px/1 "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em;
+  color:var(--ink-soft); margin:0 0 8px;
+}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace; font-variant-numeric:tabular-nums}
+button,select,input{font:inherit; color:inherit}
+button{background:var(--btn); border:1px solid var(--line); border-radius:3px; padding:6px 10px; cursor:pointer}
+button:hover{border-color:var(--ink-soft)}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--accent); outline-offset:1px}
+button[aria-pressed="true"]{background:var(--btn-on); color:var(--btn-on-ink); border-color:var(--btn-on)}
+button.danger{color:var(--bad)}
+.seg{display:grid; grid-template-columns:repeat(3,1fr); gap:4px}
+.seg button{display:flex; flex-direction:column; align-items:center; gap:1px; padding:7px 4px}
+.seg kbd{font:400 10px "IBM Plex Mono",monospace; opacity:.6}
+.presets{display:grid; grid-template-columns:1fr 1fr; gap:6px}
+.preset{display:grid; grid-template-columns:auto 1fr; gap:2px 8px; align-items:center; text-align:left; padding:7px 8px}
+.preset .mini{grid-row:span 2; display:grid; gap:1px; background:var(--house-edge); border:1px solid var(--house-edge)}
+.preset .mini i{background:var(--house); width:9px; height:9px}
+.preset b{font-weight:600; font-size:13px; line-height:1.1}
+.presets .group{grid-column:1 / -1; margin:6px 0 0; font:600 11px "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+.preset span{font:400 11px "IBM Plex Mono",monospace; opacity:.75}
+.gallery{display:grid; grid-template-columns:1fr 1fr; gap:4px; margin-top:10px}
+.gallery .group{grid-column:1 / -1; margin:6px 0 0; font:600 11px "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+.gcard{padding:5px 7px; text-align:left; font-size:12.5px; line-height:1.15; min-width:0}
+.row{display:flex; gap:6px; align-items:center; flex-wrap:wrap}
+.row label{display:flex; flex-direction:column; font-size:12px; color:var(--ink-soft); gap:2px}
+.row input[type=number]{width:74px; padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.row select{padding:5px 6px; border:1px solid var(--line); border-radius:3px; background:var(--btn)}
+.kv{display:grid; grid-template-columns:auto 1fr; gap:3px 12px; margin:0 0 8px; font-size:13px}
+.kv dt{color:var(--ink-soft)}
+.kv dd{margin:0; font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums}
+.muted{color:var(--ink-soft); font-size:13px; margin:0}
+.check{display:flex; gap:8px; align-items:center; font-size:13px}
+.stack{display:flex; flex-direction:column; gap:6px}
+details summary{cursor:pointer; font:600 12px "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em; color:var(--ink-soft)}
+details ul{margin:8px 0 0; padding-left:18px; font-size:13px}
+details kbd{font:400 11px "IBM Plex Mono",monospace; border:1px solid var(--line); border-radius:3px; padding:0 4px}
+
+.sheet{position:relative; background:var(--sheet); border:1px solid var(--line); border-radius:4px; overflow:hidden; min-height:0; display:flex; flex-direction:column}
+.canvas-wrap{position:relative; flex:1; min-height:0}
+canvas{position:absolute; inset:0; touch-action:none; display:block}
+.zoom{position:absolute; top:10px; left:10px; display:flex; flex-direction:column; gap:4px}
+.zoom button{width:32px; height:32px; padding:0; font:500 16px "IBM Plex Mono",monospace}
+.status{
+  display:flex; flex-wrap:wrap; gap:4px 18px; padding:7px 12px; border-top:1px solid var(--line);
+  font:400 12px "IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; color:var(--ink-soft);
+}
+.status b{color:var(--ink); font-weight:500}
+.toast{
+  position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+  background:var(--ink); color:var(--sheet); padding:6px 12px; border-radius:3px; font-size:13px;
+  pointer-events:none; transition:opacity .25s; max-width:calc(100% - 32px); text-align:center;
+}
+.toast.bad{background:var(--bad); color:#fff}
+.overlay{position:absolute; inset:0; background:rgba(0,0,0,.35); display:grid; place-items:center; padding:16px}
+.dialog{background:var(--panel); border:1px solid var(--line); border-radius:4px; padding:14px; width:min(560px,100%); display:flex; flex-direction:column; gap:10px}
+.g-trav b{margin:0 6px; font-variant-numeric:tabular-nums}
+.g-ctrl-ligne{flex-basis:100%; display:flex; flex-wrap:wrap; align-items:center; gap:8px}
+.g-ctrl-ligne button{padding:3px 10px}
+.g-ctrl-ligne button.on{background:var(--btn-on); color:var(--btn-on-ink)}
+.g-ctrl-ligne small{flex-basis:100%; color:var(--ink-soft)}
+.g-fab{flex-basis:100%; display:flex; flex-direction:column; gap:4px; padding-top:6px; border-top:1px dashed var(--line)}
+.g-fab select{width:100%; margin-top:2px}
+.g-ext{display:flex; flex-wrap:wrap; align-items:center; gap:6px}
+.g-ext small{flex-basis:100%; color:var(--ink-soft)}
+.g-ext select{width:auto; flex:1 1 140px}
+.g-amelio{flex-basis:100%; display:flex; flex-direction:column; align-items:flex-start; gap:4px; padding-top:6px; border-top:1px dashed var(--line)}
+.dialog textarea{width:100%; height:220px; font:12px "IBM Plex Mono",monospace; background:var(--btn); color:var(--ink); border:1px solid var(--line); border-radius:3px; padding:8px; resize:vertical}
+
+@media (max-width:760px){
+  .app{grid-template-columns:1fr; grid-template-rows:minmax(340px,1fr) auto; height:auto; min-height:100%}
+  .sheet{order:1; height:62vh}
+  .panel{order:2}
+}
+@media (prefers-reduced-motion: reduce){ .toast{transition:none} }
+
+/* ---------- capitale (region.html) : carte plein écran, bandeau, onglets et panneaux posés dessus ---------- */
+:root{
+  --hud:rgba(247,242,228,.94); --hud-edge:#8a7654; --hud-ink:#3b2e1d; --hud-soft:#7a6a52; --hud-on:#5c4526; --hud-on-ink:#fbf5e6;
+  --hud-shadow:0 6px 20px rgba(40,30,15,.28);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){ --hud:rgba(33,27,19,.93); --hud-edge:#8a7654; --hud-ink:#efe4cc; --hud-soft:#b7a585; --hud-on:#e0c48e; --hud-on-ink:#241c10; --hud-shadow:0 6px 20px rgba(0,0,0,.5); }
+}
+:root[data-theme="dark"]{ --hud:rgba(33,27,19,.93); --hud-edge:#8a7654; --hud-ink:#efe4cc; --hud-soft:#b7a585; --hud-on:#e0c48e; --hud-on-ink:#241c10; --hud-shadow:0 6px 20px rgba(0,0,0,.5); }
+
+body.capitale{padding:0; overflow:hidden; background:var(--sheet)}
+.capitale [hidden]{display:none !important}
+.capitale .canvas-wrap{position:fixed; inset:0}
+.capitale .muted{color:var(--hud-soft)}
+.capitale button{background:var(--hud); color:var(--hud-ink); border-color:var(--hud-edge)}
+.capitale button[aria-pressed="true"]{background:var(--hud-on); color:var(--hud-on-ink); border-color:var(--hud-on)}
+.capitale button.danger{color:var(--bad)}
+.capitale .zoom{top:auto; left:auto; right:calc(var(--panneau) + 14px); bottom:96px}
+.capitale .zoom button{box-shadow:var(--hud-shadow)}
+.capitale .toast{position:fixed; z-index:60; bottom:auto; top:calc(74px + env(safe-area-inset-top, 0px)); left:calc((100% - var(--panneau)) / 2); padding:12px 28px; font:600 24px "MedievalSharp",serif; letter-spacing:.04em; border-radius:6px; box-shadow:var(--hud-shadow); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge)}   /* messages de gérance : sous le bandeau, en grand */
+.capitale .toast.bad{background:var(--bad); color:#fff}
+
+/* bandeau du haut */
+.bandeau{
+  position:fixed; top:calc(10px + env(safe-area-inset-top, 0px)); left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%);
+  display:flex; align-items:stretch; background:var(--hud); color:var(--hud-ink);
+  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); max-width:calc(100% - var(--panneau) - 32px);
+}
+.bandeau-pop{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft)}
+.bandeau-pop svg{width:20px; height:20px; fill:var(--hud-ink)}
+.bandeau-pop .sep{margin-left:4px}
+.bandeau-date{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); white-space:nowrap}
+.bandeau-date b{font:600 18px "MedievalSharp",serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
+.bandeau-region{display:flex; align-items:center; padding:4px 10px; border-right:1px solid var(--hud-edge)}
+.bandeau-region select{max-width:210px; font:13px "MedievalSharp",serif; padding:3px 6px; border:1px solid var(--hud-edge); border-radius:4px; background:transparent; color:var(--hud-ink)}
+.bandeau-region select option{color:#111; background:#fff}
+.bandeau-pop, .bandeau-stock{white-space:nowrap}
+.bandeau-stock{display:flex; align-items:center; gap:6px; padding:6px 14px; border-right:1px solid var(--hud-edge); font-size:13px; color:var(--hud-soft); cursor:help}
+.bandeau-stock{position:relative}
+.stock-detail{display:none; position:absolute; top:calc(100% + 6px); left:0; min-width:170px; padding:8px 12px; background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); cursor:default; z-index:5}
+.bandeau-stock:hover .stock-detail{display:block}
+.stock-detail div{display:flex; justify-content:space-between; gap:18px; padding:2px 0; font-size:13px; color:var(--hud-soft)}
+.stock-detail div b{font-size:15px}
+.stock-detail .vide{font-style:italic}
+.stock-detail .art{margin-top:6px; color:var(--hud-ink)}
+.stock-detail .art:first-child{margin-top:0}
+.stock-detail .lieu{font-size:12px; padding:0 0 0 12px}
+.bandeau-stock b{font:600 18px "MedievalSharp",serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
+.bandeau-pop b{font:600 18px "MedievalSharp",serif; color:var(--hud-ink); font-variant-numeric:tabular-nums}
+.bandeau-nom{display:flex; align-items:center; gap:6px; padding:4px 10px 4px 18px; min-width:0}
+.bandeau-nom h1{margin:0; font:700 22px/1.1 "MedievalSharp",serif; letter-spacing:.04em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+.nom-btn{border:0; background:none !important; padding:2px 6px; font-size:16px; color:var(--hud-soft) !important}
+.nom-btn:hover{color:var(--hud-ink) !important}
+.nom-form{
+  position:absolute; top:calc(100% + 8px); left:50%; transform:translateX(-50%); width:min(320px, calc(100vw - 32px));
+  background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow);
+  padding:12px; display:flex; flex-direction:column; gap:8px; color:var(--hud-ink); font-size:13px;
+}
+.nom-form input{padding:6px 8px; border:1px solid var(--hud-edge); border-radius:3px; background:var(--btn); font-size:15px}
+.nom-form .muted:empty{display:none}
+
+/* fiche de sélection (à droite) */
+:root{--panneau:500px}   /* largeur du panneau de droite (permanent, toute la hauteur) */
+.fiche{
+  position:fixed; top:0; right:0; bottom:0; width:var(--panneau); overflow:auto; z-index:20;
+  background:var(--hud); color:var(--hud-ink); border:0; border-left:1.5px solid var(--hud-edge); border-radius:0; box-shadow:var(--hud-shadow); padding:16px 18px 16px;
+}
+.fiche-tete{display:flex; align-items:center; justify-content:space-between; margin-bottom:6px}
+.fiche h2, .tiroir h2, .aide h3{font:600 12px/1 "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0}
+.fiche-tete button{padding:2px 7px}
+.fiche .kv dt{color:var(--hud-soft)}
+
+/* panneau d'onglet, posé au-dessus de la barre du bas */
+.tiroir{
+  position:fixed; left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%); bottom:calc(66px + env(safe-area-inset-bottom, 0px)); width:max-content; max-width:min(1020px, calc(100% - var(--panneau) - 32px));
+  max-height:calc(100% - 170px); overflow:auto; background:var(--hud); color:var(--hud-ink);
+  border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:12px 14px;
+  display:flex; flex-direction:column; gap:10px;
+}
+/* taille fixe : changer de catégorie ne redimensionne pas le panneau (les cartes défilent dans leur zone) */
+#tiroir-construction{width:min(1020px, calc(100% - var(--panneau) - 32px)); height:min(360px, calc(100% - 170px)); overflow:hidden}
+#tiroir-construction .cartes{flex:1 1 auto; min-height:0; align-items:flex-start; overflow-y:hidden}
+.tiroir-opts{display:flex; flex-direction:column; gap:6px; border-top:1px solid var(--hud-edge); padding-top:8px; margin:0}
+.tiroir .row label{color:var(--hud-soft)}
+.tiroir .row label.check{flex-direction:row; margin-left:8px}
+.chemins{display:flex; gap:10px; flex-wrap:wrap}
+.chemins button{display:flex; flex-direction:column; align-items:flex-start; gap:4px; width:150px; padding:8px; text-align:left; font-weight:600}
+.chemins button::before{content:""; width:100%; height:34px; border-radius:3px; border:1px solid var(--earth-edge)}
+#kind-terre::before{background:repeating-linear-gradient(100deg, var(--earth) 0 7px, #bfb189 7px 9px)}
+#kind-chemin::before{background:linear-gradient(var(--path-edge) 0 0) center/100% 8px no-repeat, var(--sheet,#eee); border-color:var(--path-edge)}
+#kind-gravier::before{background:radial-gradient(circle at 30% 40%, #b5ad93 1.5px, transparent 2px) 0 0/7px 7px, var(--gravel)}
+#kind-pave::before{background:linear-gradient(90deg, var(--paving-edge) 1px, transparent 1px) 0 0/12px 100%, linear-gradient(var(--paving-edge) 1px, transparent 1px) 0 0/100% 9px, var(--paving)}
+.chemins kbd{font:400 11px "IBM Plex Mono",monospace; font-weight:400; opacity:.75}
+.categories{display:flex; gap:4px; flex-wrap:wrap; border-bottom:1px solid var(--hud-edge); padding-bottom:8px}
+.categories button{font:600 14px "MedievalSharp",serif; letter-spacing:.04em; padding:5px 12px}
+.categories button[aria-selected="true"]{background:var(--hud-on); color:var(--hud-on-ink); border-color:var(--hud-on)}
+.cartes{display:flex; gap:8px; overflow-x:auto; padding-bottom:4px}
+.carte{flex:0 0 112px; display:flex; flex-direction:column; align-items:center; gap:3px; padding:6px 6px 8px; text-align:center; border-radius:5px}
+.carte .vignette{position:static; width:84px; height:84px; border-radius:3px; border:1px solid var(--hud-edge); display:block; background:var(--grass)}
+.carte b{font-size:12.5px; line-height:1.15}
+.carte span{font:400 10.5px "IBM Plex Mono",monospace; opacity:.75}
+.outil-wall{background:linear-gradient(transparent 38%, var(--wall-edge) 38% 42%, var(--wall) 42% 58%, var(--wall-edge) 58% 62%, transparent 62%), var(--grass) !important}
+.outil-tower{background:radial-gradient(circle, var(--wall) 0 18px, var(--wall-edge) 18px 20px, transparent 21px), var(--grass) !important}
+.outil-gate{background:linear-gradient(90deg, transparent 30%, var(--earth) 30% 70%, transparent 70%), linear-gradient(transparent 38%, var(--wall) 38% 62%, transparent 62%), var(--grass) !important}
+.aide{display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:14px}
+.aide ul{margin:6px 0 0; padding-left:18px; font-size:13px; display:flex; flex-direction:column; gap:3px}
+.aide kbd{font:400 11px "IBM Plex Mono",monospace; border:1px solid var(--hud-edge); border-radius:3px; padding:0 4px}
+
+/* barre d'onglets du bas */
+.onglets{
+  position:fixed; left:calc((100% - var(--panneau)) / 2); transform:translateX(-50%); bottom:calc(10px + env(safe-area-inset-bottom, 0px));
+  display:flex; gap:4px; padding:4px; background:var(--hud); border:1.5px solid var(--hud-edge); border-radius:8px; box-shadow:var(--hud-shadow);
+}
+.onglets button{display:flex; align-items:center; gap:7px; padding:7px 16px; border-radius:5px; border-color:transparent; font:600 16px "MedievalSharp",serif; letter-spacing:.05em}
+.onglets svg{width:20px; height:20px}
+@media (max-width:560px){
+  .onglets button{padding:7px 10px; font-size:15px}
+  .bandeau-pop span{display:none}
+  .capitale .zoom{bottom:auto; top:74px; right:10px}
+}
+/* petit écran : le panneau permanent passe en bas, sur 42 % de la hauteur */
+@media (max-width:900px){
+  :root{--panneau:0px}
+  .fiche{top:auto; left:0; right:0; bottom:0; width:auto; height:42%; border-left:0; border-top:1.5px solid var(--hud-edge)}
+  .fiche.bat-fiche{width:auto}
+  .onglets{bottom:calc(42% + 8px)}
+  .tiroir{bottom:calc(42% + 62px)}
+  .capitale .zoom{right:14px; bottom:calc(42% + 62px)}
+}
+
+/* fenêtre d'événement (arrivants) : sur le côté gauche de la carte */
+.evenement{position:fixed; top:146px; left:14px; width:min(260px, calc(100vw - 28px)); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:10px 12px 12px}
+.evenement h2{font:600 12px/1 "MedievalSharp",serif; text-transform:uppercase; letter-spacing:.12em; color:var(--hud-soft); margin:0 0 6px}
+.evenement p{margin:0 0 10px; font-size:14px}
+.evenement .row{display:flex; gap:8px}
+
+/* stock du village (coin haut gauche) et coût sur les cartes de construction */
+.stock{position:fixed; top:calc(66px + env(safe-area-inset-top, 0px)); left:14px; display:flex; gap:12px; flex-wrap:wrap; max-width:calc(50vw - 160px); background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:7px 12px; font-size:13px}
+.stock b{font-variant-numeric:tabular-nums}
+.carte .cout{display:block; color:var(--hud-soft); font-size:11px}
+
+/* réglage de l'heure (Test jeu) : coin bas gauche */
+.reglage-heure{position:fixed; left:14px; bottom:calc(14px + env(safe-area-inset-bottom, 0px)); display:flex; flex-direction:column; gap:6px; width:230px; background:var(--hud); color:var(--hud-ink); border:1.5px solid var(--hud-edge); border-radius:6px; box-shadow:var(--hud-shadow); padding:8px 12px 10px; font-size:13px}
+.reglage-heure label{display:flex; flex-direction:column; gap:4px}
+.reglage-heure b{font-weight:500; color:var(--hud-soft); font-size:12px}
+
+/* fiche d'un étang : barre de population et tableau des espèces */
+.lac-barre{height:8px; background:var(--hud-edge); border-radius:4px; overflow:hidden; margin:2px 0 8px; opacity:.9}
+.lac-barre i{display:block; height:100%; width:0; background:var(--accent, #d9b25f); transition:width .4s}
+.lac-tab{width:100%; border-collapse:collapse; font-size:12px}
+.lac-tab td{padding:2px 4px; vertical-align:middle}
+.lac-tab button{padding:1px 6px; font-size:11px}
+
+/* fiche d'un bâtiment : largeur fixe, mêmes hauteurs de lignes et de boutons pour tous les bâtiments */
+.fiche.bat-fiche{width:var(--panneau)}
+.bat{display:flex; flex-direction:column; gap:8px}
+.bat-tete{min-height:34px}
+.bat-nom{margin:0; font:700 28px/1 "MedievalSharp",serif; letter-spacing:.06em; text-transform:uppercase}
+.bat-cat{font:600 12px "MedievalSharp",serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft)}
+.bat-desc{margin:0; padding-bottom:8px; border-bottom:1px dashed var(--hud-edge); font-size:14px; font-style:italic; color:var(--hud-soft)}
+.bat h4{margin:6px 0 0; padding-bottom:3px; border-bottom:1px solid var(--hud-edge); font:600 12px/1 "MedievalSharp",serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft)}
+.bat-ligne{display:flex; align-items:center; justify-content:space-between; gap:12px; min-height:34px; font-size:14px}
+.bat-ligne b{font:600 18px "MedievalSharp",serif}
+.bat-ctl{display:flex; align-items:center; gap:10px}
+.bat-ctl b{min-width:64px; text-align:center}
+.bat button{min-height:32px; padding:0 14px; border:1.5px solid var(--hud-edge); border-radius:5px 4px 6px 4px / 4px 6px 4px 5px; font:600 15px "MedievalSharp",serif; letter-spacing:.05em}
+.bat-ctl button{width:36px; padding:0; font-size:20px}
+.bat button:disabled{opacity:.4; cursor:default}
+.bat-etat{width:100%; font-size:16px !important; letter-spacing:.14em !important}
+.bat-etat.on{border-color:var(--good, #4a8a3f) !important}
+.bat-etat.off{border-color:var(--bad) !important}
+.bat-stock{list-style:none; margin:0; padding:0; display:grid; grid-template-columns:1fr 1fr; gap:0 22px}
+.bat-stock li{display:flex; justify-content:space-between; align-items:center; min-height:28px; border-bottom:1px dotted var(--hud-edge); font-size:14px}
+.bat-stock b{font:600 17px "MedievalSharp",serif}
+.bat-vide, .bat-aide{margin:0; font-size:14px; color:var(--hud-soft)}
+.bat-btns{display:flex; flex-wrap:wrap; gap:8px; align-items:center}
+.bat-pied{margin-top:6px; padding-top:10px; border-top:1px dashed var(--hud-edge)}
+.bat-pied .danger{margin-left:auto}
+.bat-cour{display:flex; align-items:center; gap:6px; font-size:13px; color:var(--hud-soft)}
+.bat-rayon{display:flex; flex-direction:column; gap:4px; font-size:14px}
+.bat-reglages{display:flex; flex-direction:column; gap:8px}
+.bat .kv{margin:0; font-size:13px}
+.bat .kv dd{font-size:12.5px}
+
+/* onglets INFOS / STOCK de la fiche d'un bâtiment, barre de remplissage */
+.bat-onglets{display:flex; gap:6px}
+.bat-onglets button{flex:1; letter-spacing:.14em}
+.bat-barre{height:8px; border-radius:4px; background:var(--hud-edge); overflow:hidden; opacity:.9}
+.bat-barre i{display:block; height:100%; background:var(--accent, #d9b25f)}
+
+.outil-champ{background:repeating-linear-gradient(0deg, #b9996d 0 7px, #a2805a 7px 9px) !important}
+
+.bat-onglets{flex-wrap:wrap}
+
+.bat-curseur{display:flex; align-items:center; gap:10px}
+.bat-curseur input{width:150px}
+.bat-curseur b{min-width:48px; text-align:right; font:600 17px "MedievalSharp",serif}
+
+/* production : liste des produits (défilante, lignes de hauteur fixe) et file d'attente */
+.prod-liste{max-height:250px; overflow-y:auto; border:1px solid var(--hud-edge); border-radius:4px; padding:2px 8px}
+.prod-titre{font:600 12px/1 "MedievalSharp",serif; letter-spacing:.14em; text-transform:uppercase; color:var(--hud-soft); padding:8px 0 3px}
+.prod-ligne{display:flex; align-items:center; justify-content:space-between; gap:10px; min-height:40px; border-bottom:1px dotted var(--hud-edge)}
+.prod-nom{display:flex; flex-direction:column; font-size:14px}
+.prod-nom small{color:var(--hud-soft); font-size:12px}
+.prod-file{margin:0; padding-left:22px; font-size:14px}
+.prod-file li{display:flex; align-items:center; justify-content:space-between; gap:8px; min-height:30px; border-bottom:1px dotted var(--hud-edge)}
+.prod-file button{min-height:24px; padding:0 8px}
+.prod-avert{color:var(--bad); font-weight:700; cursor:help}
+
+.fonte-stock{font-size:14px; white-space:nowrap}
+.fonte-stock b{font:600 17px "MedievalSharp",serif}
+
+.bat button.fonte-btn{width:auto; min-width:64px; font-size:15px !important; letter-spacing:.1em !important}
+
+.stats .bat-ligne{min-height:22px; font-size:13px}
+.stats .bat-ligne b{font-size:16px}
+.stats{gap:3px}
+.stats h4{margin-top:4px}
+.jour-now{color:var(--hud-ink); background:rgba(255,255,255,.08); border-left:3px solid #e0b050; padding-left:6px; margin-left:-9px}
+.stat-case{display:flex; align-items:center; gap:8px; min-height:30px; font-size:14px}

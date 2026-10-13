@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Véhicules</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#14212b; --bar:#1d2d3a; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
+  * { box-sizing:border-box }
+  html, body { height:100%; margin:0; background:var(--bg); color:var(--ink); font:500 14px/1.3 system-ui, sans-serif }
+  body { display:flex }
+  #liste { flex:1; min-width:0; overflow:auto }
+  header { padding:18px 24px 4px; position:relative }
+  h1 { margin:0; font:700 30px "Barlow Condensed", sans-serif; letter-spacing:.04em }
+  header p { margin:4px 0 0; color:var(--soft) }
+  .options { position:absolute; top:20px; right:24px; color:var(--soft) }
+  .options select, .ligne select { background:#0003; color:var(--ink); border:1px solid #fff3; border-radius:5px; padding:4px 6px; margin-left:6px }
+  .grille { display:grid; grid-template-columns:repeat(auto-fill, minmax(260px, 1fr)); gap:14px; padding:18px 24px 24px }
+  figure { margin:0; background:#7fc3d6; border:2px solid #3f8aa6; border-radius:10px; overflow:hidden; color:#12303c; text-align:center; cursor:pointer; position:relative }
+  figure:hover { border-color:var(--on) }
+  figure.on { border-color:#d64541; box-shadow:0 0 0 2px #d6454188 }
+  figure.modif::after { content:"modifié"; position:absolute; top:6px; right:8px; font-size:11px; color:#7a2a10; font-weight:700 }
+  canvas { display:block; width:100%; height:auto }
+  figcaption { padding:0 8px 10px; background:#f6efdc }
+  figcaption b { display:block; padding-top:6px; font:700 22px "Barlow Condensed", sans-serif }
+  figcaption span { color:#6b5f4a; font-size:12.5px }
+  #editeur { width:380px; flex:none; background:var(--bar); border-left:1px solid #0006; overflow:auto; padding:14px 16px 30px }
+  #editeur h3 { margin:0 0 8px; font:700 26px "Barlow Condensed", sans-serif; letter-spacing:.04em }
+  #apercu { width:100%; height:auto; background:#7fc3d6; border-radius:10px; display:block }
+  #aide { color:var(--soft); margin:6px 0 0 }
+  details { margin-top:10px; border-top:1px solid #ffffff18; padding-top:6px }
+  summary { cursor:pointer; color:var(--on); font-weight:700; padding:4px 0 }
+  .ligne { display:grid; grid-template-columns:130px 1fr 44px; align-items:center; gap:8px; margin:5px 0 }
+  .ligne label { color:var(--soft) }
+  .ligne input[type=range] { width:100%; accent-color:var(--on) }
+  .ligne output { text-align:right; color:var(--ink); font-variant-numeric:tabular-nums; font-size:12px }
+  .ligne input[type=color] { width:44px; height:26px; padding:0; border:1px solid #fff3; background:none; border-radius:4px }
+  .ligne.c { grid-template-columns:130px 44px 1fr }
+  .ligne.k { grid-template-columns:130px 1fr }
+  .btns { display:flex; flex-wrap:wrap; gap:8px; margin-top:14px }
+  button { background:#0004; color:var(--ink); border:1px solid #fff3; border-radius:6px; padding:7px 12px; font:inherit; cursor:pointer }
+  button:hover { border-color:var(--on); color:var(--on) }
+  #msg { color:var(--on); margin-top:8px; min-height:18px }
+  @media (max-width:900px) { body { flex-direction:column } #editeur { width:auto; border-left:0; border-top:1px solid #0006 } }
+</style>
+<div id="liste">
+  <header><h1>Véhicules</h1><p>Petite barque de pêche · Bateau · Navire · Charrette à bras · Chariots (passagers, animaux, marchandises, minerai, bois) — vus de dessus. Clique un bateau pour le modifier : les réglages sont enregistrés dans ce navigateur.</p>
+    <label class="options">Taille <select id="echelle"><option value="ajustee">Ajustée (détail)</option><option value="reelle">Réelle (même échelle)</option></select></label></header>
+  <main class="grille" id="main"></main>
+</div>
+<aside id="editeur"><p id="aide">Choisis un bateau dans la liste.</p></aside>
+<script src="js/carte/vehicules.js"></script>
+<script src="js/carte/animaux.js"></script>
+<script src="js/carte/villageois.js"></script>
+<script src="js/carte/chariots.js"></script>
+<script>
+/* Création de véhicules : les trois bateaux côte à côte (js/carte/vehicules.js, peintBateau) + un éditeur : un clic ouvre les réglages (taille, largeur, couleurs,
+   équipement) ; ce qu'on change est enregistré (clé vehicules.v1) et lu par vehicules.js. Proue vers le haut. */
+const W0 = 300, H0 = 520, dpr = Math.max(2, window.devicePixelRatio || 1), PW = 330, PH = 400;
+// les bateaux et les chariots sont dans le même éditeur : un seul registre, deux dessinateurs
+const TOUS = { ...VEHICULES, ...CHARIOTS }, TOUS_DEFAUT = { ...VEHICULES_DEFAUT, ...CHARIOTS_DEFAUT }, estChariot = k => !!CHARIOTS[k];
+const peintVehicule = (k, x, y, L, ang, braq = 0) => (estChariot(k) ? peintChariot : peintBateau)(k, x, y, L, ang, braq);
+let ctx;                                                      // (le contexte global que les dessinateurs utilisent)
+let ECHELLE_REELLE = false;
+const PXM = (H0 - 60) / Math.max(...Object.keys(TOUS).map(k => TOUS[k].T * (estChariot(k) ? chariotEtendue(k)[0] + chariotEtendue(k)[1] : 1.6)));       // pixels par mètre : le plus grand bateau (voiles et beaupré compris) remplit la carte
+const cartes = {};
+let choisi = null;
+const modifie = k => JSON.stringify(TOUS[k]) !== JSON.stringify(TOUS_DEFAUT[k]);
+function peint(k, cv, w, h, reel) {
+  ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, w, h);
+  const a = TOUS[k], ch = estChariot(k), [ar, av] = ch ? chariotEtendue(k) : [.8, .8], L = reel && ECHELLE_REELLE ? a.T * PXM : Math.min((h - 40) / (ar + av), (w - 30) / (a.B * (ch ? 1.6 : 2.4)));
+  peintVehicule(k, w / 2, h / 2 + (av - ar) / 2 * L + (ch ? 0 : L * .02), L, -Math.PI / 2);   // avant vers le haut
+}
+function sauve() { const o = {}; for (const k in TOUS) if (modifie(k)) o[k] = TOUS[k]; try { localStorage.setItem('vehicules.v1', JSON.stringify(o)); } catch (e) {} }
+function rafraichit(k) { peint(k, cartes[k].cv, W0, H0, true); cartes[k].fig.classList.toggle('modif', modifie(k)); if (choisi === k) peint(k, document.getElementById('apercu'), PW, PH, false); sauve(); }
+// ---- la liste ----
+for (const k of Object.keys(TOUS)) {
+  const a = TOUS[k], fig = document.createElement('figure'), cv = document.createElement('canvas');
+  cv.width = W0 * dpr; cv.height = H0 * dpr; fig.append(cv);
+  fig.insertAdjacentHTML('beforeend', `<figcaption><b>${a.nom}</b><span>longueur ${a.T} m</span></figcaption>`);
+  document.getElementById('main').append(fig); cartes[k] = { fig, cv }; fig.addEventListener('click', () => choisis(k)); peint(k, cv, W0, H0, true); fig.classList.toggle('modif', modifie(k));
+}
+document.getElementById('echelle').addEventListener('change', e => { ECHELLE_REELLE = e.target.value === 'reelle'; for (const k in cartes) peint(k, cartes[k].cv, W0, H0, true); });
+// ---- aperçu animé : le cheval tire le pivot de l'essieu avant sur un parcours en S, la caisse suit sa trajectoire ----
+const anim = { on:false, k:null, t:0, st:null, last:0 };
+function animePas(ts) {
+  if (!anim.on) return;
+  const dt = Math.min(.05, (ts - (anim.last || ts)) / 1000); anim.last = ts; anim.t += dt;
+  const a = TOUS[anim.k], cv = document.getElementById('apercu'), ppm = 46, vit = 2.2;
+  const ah = -Math.PI / 2 + Math.sin(anim.t * .55) * .95 + Math.sin(anim.t * 1.3) * .25;                   // direction du cheval : serpente autour de « vers le haut »
+  if (!anim.st) anim.st = { px:0, py:0, ab:-Math.PI / 2 };
+  const e = chariotPas(anim.st, a.T, ah, vit * dt);
+  ctx = cv.getContext('2d'); ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, PW, PH);
+  const ox = PW / 2 - anim.st.px * ppm, oy = PH * .55 - anim.st.py * ppm;                                      // la caméra suit le pivot
+  ctx.fillStyle = 'rgba(255,255,255,.35)'; for (let i = -6; i <= 6; i++) for (let j = -8; j <= 8; j++) { const gx = Math.round(anim.st.px / 3) * 3 + i * 3, gy = Math.round(anim.st.py / 3) * 3 + j * 3; ctx.fillRect(gx * ppm + ox - 1, gy * ppm + oy - 1, 2, 2); }
+  peintChariot(anim.k, e.x * ppm + ox, e.y * ppm + oy, a.T * ppm, e.ang, e.braq);
+  requestAnimationFrame(animePas);
+}
+// ---- l'éditeur ----
+const COMMUN = ['Coque', [['r', 'T', 'Longueur (m)', null, null, .1], ['r', 'B', 'Largeur (÷ longueur)', .15, .5, .01], ['c', 'coque', 'Liston (bord)'], ['c', 'pont', 'Pont / fond'], ['c', 'planche', 'Joints des planches'], ['c', 'bord', 'Contour']]];
+const SCHEMAS = {
+  barque: [COMMUN, ['Équipement', [['r', 'bancs', 'Bancs', 2, 4, 1], ['c', 'banc', 'Couleur des bancs'], ['k', 'rames', 'Rames']]]],
+  bateau: [COMMUN, ['Gréement', [['r', 'mats', 'Mâts', 1, 2, 1], ['k', 'voiles', 'Voiles'], ['c', 'voile', 'Couleur des voiles'], ['k', 'greement', 'Haubans']]], ['Pont', [['k', 'ecoutille', 'Écoutille à grille'], ['k', 'cabestan', 'Cabestan'], ['k', 'ancre', 'Ancre'], ['k', 'annexe', 'Canot à la remorque']]]],
+  navire: [COMMUN, ['Gréement', [['r', 'mats', 'Mâts', 2, 4, 1], ['k', 'voiles', 'Voiles'], ['c', 'voile', 'Couleur des voiles'], ['k', 'greement', 'Haubans']]], ['Pont et armement', [['k', 'chateaux', 'Châteaux avant et arrière'], ['r', 'ecoutilles', 'Écoutilles', 0, 3, 1], ['r', 'canons', 'Canons par bord', 0, 8, 1], ['k', 'chaloupe', 'Chaloupe sur le pont']]]],
+};
+const CHARGES = ['aucune', 'passagers', 'animaux', 'marchandises', 'minerai', 'bois'], CHEVAUX = ['bai', 'noir', 'blanc'];
+const COMMUN_CH = ['Caisse', [['r', 'T', 'Longueur de la caisse (m)', null, null, .1], ['r', 'B', 'Largeur (÷ longueur)', .3, .8, .01], ['c', 'coque', 'Liston (bord)'], ['c', 'pont', 'Plancher'], ['c', 'planche', 'Joints des planches'], ['c', 'bord', 'Contour'], ['c', 'roue', 'Roues']]];
+const CHARGE = ['Chargement', [['s', 'charge', 'Charge', CHARGES], ['c', 'minerai', 'Couleur du minerai']]];
+SCHEMAS.charrette = [COMMUN_CH, ['Charrette', [['r', 'roues', 'Roues', 2, 2, 2], ['s', 'charge', 'Charge', CHARGES], ['c', 'minerai', 'Couleur du minerai']]]];
+for (const k of ['chariot_passagers', 'chariot_animaux', 'chariot_marchandises', 'chariot_minerai', 'chariot_bois']) SCHEMAS[k] = [COMMUN_CH, ['Attelage', [['s', 'cheval', 'Cheval (robe)', CHEVAUX], ['r', 'roues', 'Roues', 4, 4, 2]]], CHARGE];
+const RANGE_T = { barque:[2, 8], bateau:[8, 24], navire:[20, 60], charrette:[1.2, 2.4], chariot_passagers:[2.5, 5], chariot_animaux:[2.5, 5], chariot_marchandises:[2.5, 5], chariot_minerai:[2.5, 5], chariot_bois:[3, 6] };
+function champ(k, [t, key, nom, x, y, pas]) {
+  const a = TOUS[k], div = document.createElement('div');
+  const maj = v => { if (v === false) a[key] = 0; else a[key] = v; rafraichit(k); };
+  if (t === 'r') {
+    if (key === 'T') { x = RANGE_T[k][0]; y = RANGE_T[k][1]; }
+    div.className = 'ligne'; const v = a[key];
+    div.innerHTML = `<label>${nom}</label><input type="range" min="${x}" max="${y}" step="${pas}" value="${v}"><output>${v}</output>`;
+    const inp = div.querySelector('input'), out = div.querySelector('output');
+    inp.addEventListener('input', () => { out.textContent = inp.value; maj(+inp.value); });
+  } else if (t === 'c') {
+    div.className = 'ligne c'; div.innerHTML = `<label>${nom}</label><input type="color" value="${a[key] || '#9c4a2e'}">`;
+    div.querySelector('input').addEventListener('input', e => maj(e.target.value));
+  } else if (t === 's') {
+    div.className = 'ligne'; div.innerHTML = `<label>${nom}</label><select>${x.map(v => `<option${v === a[key] ? ' selected' : ''}>${v}</option>`).join('')}</select>`;
+    div.querySelector('select').addEventListener('change', e => maj(e.target.value));
+  } else {
+    div.className = 'ligne k'; div.innerHTML = `<label>${nom}</label><input type="checkbox"${a[key] ? ' checked' : ''}>`;
+    div.querySelector('input').addEventListener('change', e => maj(e.target.checked ? 1 : false));
+  }
+  return div;
+}
+const enJs = o => JSON.stringify(o).replace(/"(\w+)":/g, '$1:').replace(/"/g, "'");
+function choisis(k) {
+  choisi = k; anim.on = false; for (const id in cartes) cartes[id].fig.classList.toggle('on', id === k);
+  const ed = document.getElementById('editeur');
+  ed.innerHTML = `<h3>${TOUS[k].nom}</h3><canvas id="apercu" width="${PW * dpr}" height="${PH * dpr}"></canvas><div class="btns"><button id="b-reinit">Rétablir l'original</button><button id="b-copie">Copier le code</button></div><div id="msg"></div>`;
+  SCHEMAS[k].forEach(([titre, champs], i) => { const d = document.createElement('details'); d.open = i < 2; d.innerHTML = `<summary>${titre}</summary>`; for (const c of champs) d.append(champ(k, c)); ed.append(d); });
+  peint(k, document.getElementById('apercu'), PW, PH, false);
+  if (estChariot(k) && TOUS[k].roues === 4) {                                                // chariot articulé : un parcours en S pour voir l'essieu avant pivoter
+    const bt = document.createElement('button'); bt.id = 'b-anim'; bt.textContent = 'Animer le parcours'; ed.querySelector('.btns').append(bt);
+    bt.addEventListener('click', () => { anim.on = !anim.on; bt.textContent = anim.on ? 'Arrêter' : 'Animer le parcours'; if (anim.on) { anim.k = k; anim.t = 0; anim.st = null; requestAnimationFrame(animePas); } else peint(k, document.getElementById('apercu'), PW, PH, false); });
+  }
+  const dire = t => { document.getElementById('msg').textContent = t; };
+  document.getElementById('b-reinit').addEventListener('click', () => { TOUS[k] = JSON.parse(JSON.stringify(TOUS_DEFAUT[k])); (estChariot(k) ? CHARIOTS : VEHICULES)[k] = TOUS[k]; rafraichit(k); choisis(k); dire('Dessin d\'origine rétabli'); });
+  document.getElementById('b-copie').addEventListener('click', () => { navigator.clipboard.writeText(k + ': ' + enJs(TOUS[k]) + ',').then(() => dire('Code copié (à coller dans VEHICULES, js/carte/vehicules.js, ou CHARIOTS, js/carte/chariots.js)'), () => dire('Copie impossible')); });
+}
+</script>

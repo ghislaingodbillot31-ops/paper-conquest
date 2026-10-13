@@ -296,7 +296,7 @@
    "note": "Faisselles."
   },
   {
-   "atelier": "atelier_tissage",
+   "atelier": "corderie",
    "ressources": [
     "peignes"
    ],
@@ -327,7 +327,7 @@
    "note": "Le sel se ratisse."
   },
   {
-   "atelier": "atelier_tissage",
+   "atelier": "corderie",
    "ressources": [
     "fuseau",
     "métier à tisser"

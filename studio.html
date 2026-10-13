@@ -26,9 +26,10 @@
 </style>
 <nav class="principal" role="tablist" aria-label="Sections">
   <b>DOMINIUM</b>
-  <button role="tab" data-section="jeu" aria-selected="true" title="Le jeu tel que le voit un joueur : aucune option développeur">Jeu</button>
-  <button role="tab" data-section="dev" aria-selected="false" title="Options développeur, tests, générateurs, journal">Dev</button>
+  <button role="tab" data-section="dev" aria-selected="true" title="Options développeur : globe, routes">Dev</button>
+  <button role="tab" data-section="donnees" aria-selected="false" title="Toutes les données chiffrées : ressources, arbre de production, règles de génération">Données</button>
   <button role="tab" data-section="design" aria-selected="false" title="Tous les designs : bâtiments, habitants, décors, couleurs…">Design</button>
+  <button role="tab" data-section="logs" aria-selected="false" title="Journal du jeu (serveur de logs)">LOGS</button>
   <span id="msg" role="status"></span>
 </nav>
 <nav class="sous" id="sous" role="tablist" aria-label="Sous-onglets"></nav>
@@ -36,57 +37,60 @@
 <script>
 /* STUDIO permanent (adresse studio.html, ne change jamais). Trois onglets, chacun avec ses sous-onglets ; un sous-onglet = une page existante dans un cadre, chargée à la première visite puis gardée.
    - JEU    : le jeu complet version joueur. Les cadres portent le nom « jeu-joueur » : le mode développeur y est interdit (joueur.js estDev, dev.js JR.actif), même si le réglage est activé ailleurs.
-   - DEV    : les options de développement (mode développeur actif d'office dans les pages marquées « ?dev »), générateurs, tests, règles, journal du jeu.
-   - DESIGN : tous les designs (bâtiments, habitants, animaux, véhicules, végétation, décors, couleurs, écran d'accueil).
+   - DEV    : les options de développement (mode développeur actif d'office dans les pages marquées « ?dev »), générateurs, tests, règles.
+   - LOGS   : le journal du jeu (serveur de logs sur :8001), seul pour le moment.
+   - DESIGN : les designs du jeu (bâtiments, habitants, animaux, véhicules, végétation, décors, carte globale).
    Adresses : #jeu/<sous-onglet>, #dev/<…>, #design/<…> ; les anciennes (#testjeu, #edition/<outil>) sont reprises. Pour ajouter un outil : une ligne dans ONGLETS.
    Les pages partagent le stockage du navigateur : « Appliquer au jeu » (éditeur de carte) enregistre la carte de la région là où le jeu la lit ; les cadres de région sont alors rechargés à leur prochaine visite. */
 const R123 = 'region=123&biome=tempere&river=riviere&seed=974138&lon=-0.31&lat=48.16&tm=8&hum=1';
 const ONGLETS = {
-  jeu: { joueur:true, onglets:[
-    { id:'parcours', label:'Parcours complet', src:'accueil.html', region:true },
-    { id:'globe', label:'Globe', src:'index.html', region:true },
-    { id:'region', label:'Région 123', src:'region.html?' + R123, region:true },
-  ] },
   dev: { onglets:[
-    { id:'region', label:'Région test (123)', src:'region.html?test=1&dev&' + R123, region:true },
-    { id:'globe', label:'Globe (dev)', src:'index.html?dev', region:true },
-    { id:'carte', label:'Générateur', src:'editeur-carte.html' },
-    { id:'routes', label:'Routes', src:'editeur-routes.html' },
-    { id:'maptest', label:'Ressources', src:'map-test.html' },
+    { id:'globe', label:'Globe (dev)', src:'index.html?dev', region:true, decharger:true },
+    { id:'routes', label:'Routes', src:'editeur-routes.html', decharger:true },
+  ] },
+  logs: { onglets:[
+    { id:'journal', label:'Journal du jeu', src:'http://localhost:8001/tail?n=400', recharger:true, titre:'Journal du jeu (serveur de logs : node outils/serveur-logs.js)' },
+  ] },
+  donnees: { onglets:[
+    { id:'maptest', label:'Ressources', src:'map-test.html', decharger:true },
     { id:'arbre', label:'Arbre des ressources', src:'arbre-ressources.html' },
     { id:'regles', label:'Règles de génération', src:'regles-generation.html' },
     { id:'production', label:'Validation production', src:'validation-production.html', recharger:true },
-    { id:'journal', label:'Journal du jeu', src:'http://localhost:8001/tail?n=400', recharger:true, titre:'Journal du jeu (serveur de logs : node tools/serveur-logs.js)' },
   ] },
   design: { onglets:[
     { id:'batiments', label:'Bâtiments', src:'editeur-batiments.html' },
+    { id:'liste-bat', label:'Liste des bâtiments', src:'batiments-liste.html' },
     { id:'villageois', label:'Habitants', src:'editeur-villageois.html' },
     { id:'animaux', label:'Animaux', src:'editeur-animaux.html' },
     { id:'vehicules', label:'Véhicules', src:'editeur-vehicules.html' },
     { id:'arbres', label:'Végétation', src:'arbres-fruitiers.html' },
     { id:'baies', label:'Arbustes à baies', src:'arbustes-baies.html', baies:true },
     { id:'decors', label:'Décors du sol', src:'decors-sol.html' },
+    { id:'mapglobale', label:'Map Global', src:'map-globale.html' },
     { id:'biomes', label:'Couleurs des biomes', src:'biomes-couleurs.html' },
-    { id:'accueil', label:'Écran d\'accueil', src:'accueil.html' },
+    { id:'matieres', label:'Matières premières', src:'matieres-premieres.html' },
   ] },
 };
 // anciennes adresses : #edition/<outil> → nouvel emplacement
-const ANCIEN = { carte:'dev/carte', routes:'dev/routes', maptest:'dev/maptest', arbre:'dev/arbre', regles:'dev/regles', batiments:'design/batiments', villageois:'design/villageois', animaux:'design/animaux', vehicules:'design/vehicules', arbres:'design/arbres', baies:'design/baies', decors:'design/decors', biomes:'design/biomes' };
+const ANCIEN = { carte:'dev/globe', routes:'dev/routes', maptest:'donnees/maptest', arbre:'donnees/arbre', regles:'donnees/regles', batiments:'design/batiments', villageois:'design/villageois', animaux:'design/animaux', vehicules:'design/vehicules', arbres:'design/arbres', baies:'design/baies', decors:'design/decors', biomes:'design/biomes' };
 const cadres = document.getElementById('cadres'), sous = document.getElementById('sous'), frames = {}, perimes = new Set();
-let section = 'jeu', dernier = { jeu:'parcours', dev:'region', design:'batiments' };
+let section = 'dev', dernier = { dev:'globe', donnees:'maptest', design:'batiments', logs:'journal' };
 function cadre(sec, o) {
   const k = sec + '/' + o.id;
-  if (!frames[k]) { const f = document.createElement('iframe'); f.title = o.titre || o.label; if (ONGLETS[sec].joueur) f.name = 'jeu-joueur'; f.dataset.src = o.src; cadres.appendChild(f); frames[k] = f; }
+  if (!frames[k]) { const f = document.createElement('iframe'); f.title = o.titre || o.label; if (ONGLETS[sec].joueur) f.name = 'jeu-joueur'; f.dataset.src = o.src; if (o.decharger) f.dataset.decharger = '1'; cadres.appendChild(f); frames[k] = f; }
   return frames[k];
 }
 function afficher() {
   const o = ONGLETS[section].onglets.find(x => x.id === dernier[section]), k = section + '/' + o.id;
-  for (const [n, f] of Object.entries(frames)) f.classList.toggle('on', n === k);
+  for (const [n, f] of Object.entries(frames)) {
+    f.classList.toggle('on', n === k);
+    if (n !== k && f.dataset.decharger && f.dataset.charge) { f.src = 'about:blank'; delete f.dataset.charge; }   // pages lourdes (globe, routes, ressources) : déchargées de la mémoire dès qu'on les quitte ; le jeu enregistre sa progression en partant
+  }
   const f = cadre(section, o); f.classList.add('on');
-  if (!f.src || o.recharger || perimes.has(k)) { f.src = f.dataset.src; perimes.delete(k); }
+  if (!f.dataset.charge || o.recharger || perimes.has(k)) { f.src = f.dataset.src; f.dataset.charge = '1'; perimes.delete(k); }
 }
 function show(sec, id) {
-  section = ONGLETS[sec] ? sec : 'jeu';
+  section = ONGLETS[sec] ? sec : 'dev';
   if (id && ONGLETS[section].onglets.some(x => x.id === id)) dernier[section] = id;
   for (const b of document.querySelectorAll('nav.principal [data-section]')) b.setAttribute('aria-selected', String(b.dataset.section === section));
   sous.innerHTML = '';
@@ -101,14 +105,15 @@ function dire(t) { const m = document.getElementById('msg'); m.textContent = t; 
 document.querySelector('nav.principal').addEventListener('click', e => { const b = e.target.closest('[data-section]'); if (b) show(b.dataset.section); });
 sous.addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) show(section, b.dataset.id); });
 // les pages du jeu (région, globe, accueil) sont rechargées à leur prochaine visite quand une carte ou des arbustes ont été appliqués
-function perimerJeu() { for (const sec of ['jeu', 'dev']) for (const o of ONGLETS[sec].onglets) if (o.region) perimes.add(sec + '/' + o.id); }
+function perimerJeu() { for (const sec of ['dev']) for (const o of ONGLETS[sec].onglets) if (o.region) perimes.add(sec + '/' + o.id); }
 addEventListener('message', e => {
   if (e.origin !== location.origin || !e.data) return;
-  if (e.data.studio === 'baies') { perimerJeu(); dire('Arbustes à baies mis à jour : visibles dans Jeu et Dev'); }
-  else if (e.data.studio === 'applique') { perimerJeu(); dire(e.data.region === 123 ? 'Région 123 appliquée : visible dans Jeu et Dev' : 'Région ' + e.data.region + ' enregistrée (les tests utilisent la région 123)'); }
+  if (e.data.studio === 'baies') { perimerJeu(); dire('Arbustes à baies mis à jour : visibles dans Dev'); }
+  else if (e.data.studio === 'applique') { perimerJeu(); dire(e.data.region === 123 ? 'Région 123 appliquée : visible dans Dev' : 'Région ' + e.data.region + ' enregistrée (les tests utilisent la région 123)'); }
 });
 let [sec, id] = location.hash.slice(1).split('/');
-if (sec === 'testjeu') [sec, id] = ['jeu', 'parcours'];
+if (sec === 'testjeu') [sec, id] = ['dev', 'globe'];
+else if (sec === 'dev' && id === 'journal') [sec, id] = ['logs', 'journal'];   // le journal du jeu a son propre onglet
 else if (sec === 'edition' && ANCIEN[id]) [sec, id] = ANCIEN[id].split('/');
 show(sec, id);
 </script>

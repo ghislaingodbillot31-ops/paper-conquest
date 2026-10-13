@@ -32,7 +32,8 @@ CONTINENTS.forEach(c => { CONTINENT_BY_ID[c.id] = c; });
 //    un grand fleuve navigable qui rejoint l'ocean (les deux a la fois de preference:
 //    estuaires), au moins 1 800 km entre deux comptoirs, hors calotte,
 //    grand Nord et deserts extremes. Tous accessibles en bateau.
-const NPC_COLOR = '#8f5fa8';
+const NPC_COLOR = '#b9b07c';
+const eclaircir = (hex, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(hex.slice(i, i + 2), 16) * (1 - t) + 255 * t).toString(16).padStart(2, '0')).join('');   // melange avec du blanc (region selectionnee du globe)
 const NPC_REGION_IDS = new Set([449, 421, 477, 489,
   21, 22, 23, 42, 52, 68, 77, 100, 111, 113, 134, 147, 182, 188, 222, 227, 236, 240, 248, 256, 261, 302, 311, 314, 319, 320, 329, 337,
   370, 372, 398, 403, 411, 435, 469, 486, 497, 499]);
@@ -78,8 +79,30 @@ NAV_ITEMS.forEach((item, i) => {
 function switchView(activeBtn){
   document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b === activeBtn));
   const view = activeBtn.dataset.view;
+  if(view !== 'capitale' && typeof dechargerRegion === 'function') dechargerRegion();   // retour au globe : la région est déchargée (progression enregistrée)
   document.querySelectorAll('.view').forEach(v => v.hidden = v.dataset.view !== view);
   if(view === 'capitale' && typeof renderCapitalView === 'function') renderCapitalView();
 }
 const showView = view => switchView(document.querySelector('.nav-item[data-view="' + view + '"]'));
 const currentView = () => { const b = document.querySelector('.nav-item.active'); return b ? b.dataset.view : null; };
+
+/* ---------- texte de carte en police medievale ----------
+   Les polices de la carte (glyphes) n'ont pas de style medieval : chaque texte est dessine sur un canevas avec la police web
+   (index.html) et ajoute a la carte comme une image ; la couche l'affiche par 'icon-image' (id renvoye). Sans la police : serif. */
+const MAP_FONT = 'MedievalSharp';
+function textImage(map, text, { size = 12, ls = 0.5, color = '#e2d3a0', halo = 'rgba(30,36,26,0.85)', maxChars = 14, upper = false } = {}){
+  const id = 'txt:' + size + ':' + color + ':' + text;
+  if(map.hasImage(id)) return id;
+  const pr = 2, words = (upper ? text.toUpperCase() : text).split(' '), lines = [''];
+  for(const w of words){ const l = lines[lines.length - 1]; if(l && (l + ' ' + w).length > maxChars) lines.push(w); else lines[lines.length - 1] = l ? l + ' ' + w : w; }
+  const c = document.createElement('canvas'), g = c.getContext('2d'), font = size * pr + 'px ' + MAP_FONT + ', serif';
+  g.font = font; g.letterSpacing = ls * pr + 'px';
+  const lh = size * 1.2 * pr, pad = 4 * pr;
+  c.width = Math.ceil(Math.max(...lines.map(l => g.measureText(l).width)) + pad * 2); c.height = Math.ceil(lh * lines.length + pad * 2);
+  g.font = font; g.letterSpacing = ls * pr + 'px'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round';
+  lines.forEach((l, i) => { const x = c.width / 2, y = pad + lh * (i + .5);
+    g.lineWidth = 3 * pr; g.strokeStyle = halo; g.strokeText(l, x, y); g.fillStyle = color; g.fillText(l, x, y); });
+  map.addImage(id, g.getImageData(0, 0, c.width, c.height), { pixelRatio:pr });
+  return id;
+}
+const loadMapFont = () => document.fonts.load('20px ' + MAP_FONT).catch(() => {});

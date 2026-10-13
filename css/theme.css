@@ -1,0 +1,19 @@
+/* Thème de couleurs : 16 couleurs fixes, ternes (voir js/theme.js). Usage : var(--c-herbe), var(--c-herbe-sombre)… */
+:root{
+  --c-encre: #2b2618;   /* traits, textes, contours gravés */
+  --c-herbe: #a59e72;   /* sol des régions, terre du globe (couleur de base) */
+  --c-herbe-sombre: #3f493b;   /* ombres du sol, mer du globe (couleur de base) */
+  --c-parchemin: #e6dfc6;   /* fonds clairs, papier, panneaux */
+  --c-sable: #cbbe92;   /* berges, plages, routes claires */
+  --c-argile: #a06b48;   /* toits, terre cuite, contours des régions possédées */
+  --c-brun: #6a5238;   /* bois, mines, chemins de terre */
+  --c-mousse: #7c8160;   /* prairies, herbe d’entre-deux */
+  --c-feuillage: #566244;   /* arbres, buissons, cultures */
+  --c-foret: #2e3a2e;   /* grands bois, ombres végétales */
+  --c-eau: #62808a;   /* rivières, lacs, bassins */
+  --c-brume: #98a292;   /* zones de pêche, lointains, voiles */
+  --c-pierre: #86806f;   /* rochers, murailles, ponts */
+  --c-ocre: #b38b3e;   /* monnaie, mise en valeur, régions possédées */
+  --c-violet: #6e5a72;   /* comptoirs, commerce */
+  --c-brique: #8a4a3b;   /* alertes, refus, danger */
+}

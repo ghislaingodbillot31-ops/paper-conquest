@@ -186,13 +186,15 @@ function stockDetail() {
   }
   return d;
 }
-let stockTexte = '';
+let stockTexte = '', stockTotal = null, stockAt = -1e9;
+const STOCK_MS = 400;                                                                  // le stock affiché se met à jour 2,5 fois par seconde (avant : à chaque image, ≈ 90 ms/s avec 300 bâtiments)
 function afficherStock() {
+  const now = performance.now(); if (now - stockAt < STOCK_MS) return; stockAt = now;
   const st = stockVillage(), show = !!(GAME && fonde());
   stockBox.hidden = !show; if (!show) return;
   const total = Object.values(st).reduce((s, n) => s + n, 0), el = document.getElementById('stock-total');
   if (el) {
-    el.textContent = Math.floor(total);
+    if (Math.floor(total) !== stockTotal) { stockTotal = Math.floor(total); el.textContent = stockTotal; }
     const D = stockDetail(), L = Object.entries(D).map(([k, l]) => [k, l, l.reduce((s, x) => s + x[1], 0)]).sort((a, b) => a[0].localeCompare(b[0], 'fr')), d = document.getElementById('stock-detail');   // survol : chaque article et où il se trouve
     const html = L.length ? L.map(([k, l, n]) => `<div class="art"><span>${k[0].toUpperCase() + k.slice(1)}</span><b>${n}</b></div>`).join('') : '<div class="vide">Le stock est vide</div>';
     if (d && d.dataset.h !== html) { d.dataset.h = html; d.innerHTML = html; }

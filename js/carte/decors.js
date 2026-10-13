@@ -60,6 +60,13 @@ ajoute('Fleurs', 'Lavande', (g) => { couronne(g, 6, () => { g.beginPath(); g.mov
 ajoute('Fleurs', 'Fleur orange', (g) => { couronne(g, 6, () => { g.translate(.1, 0); petale(g, .78, .2, '#f28c28', '#a04e0c', .045, .6); }); couronne(g, 6, () => { g.translate(.12, 0); petale(g, .42, .08, '#fbc76a', null); }); disque(g, 0, 0, .13, '#8a3a0c'); });
 ajoute('Fleurs', 'Fleurs des prés (trio)', (g) => { [[-.45, -.3, '#fffdf4', '#c8c4ac'], [.4, -.1, '#f4d02e', '#a8820e'], [0, .5, '#f0a0c4', '#a8436d']].forEach(([x, y, c, e]) => { g.save(); g.translate(x, y); g.scale(.5, .5); couronne(g, 6, () => disque(g, .4, 0, .34, c, e, .07)); disque(g, 0, 0, .22, '#f0b820', '#8a6008', .06); g.restore(); }); });
 
+// 13/10 : toutes les fleurs sont simplifiées — cinq pétales ronds d'une couleur autour d'un cœur rond de l'autre ; seules les couleurs distinguent les espèces
+{
+  const COUL = { 'Marguerite':['#fffdf4', '#f2c22a'], 'Pâquerette':['#fffefa', '#f1c232'], "Bouton d'or":['#f4d02e', '#e09f10'], 'Coquelicot':['#dc3d2c', '#2a1a14'], 'Bleuet':['#5176dc', '#2a2f6a'], 'Pissenlit':['#f6c91c', '#e09f10'],
+    'Pissenlit en graine':['#e6e5da', '#b8b6a4'], 'Trèfle fleuri':['#f0a0c4', '#d0709a'], 'Violette':['#7a4ac4', '#f2c22a'], 'Myosotis':['#6aa0e8', '#f4d02e'], 'Lavande':['#8a6ad0', '#6a4aa8'], 'Fleur orange':['#f28c28', '#f7d070'], 'Fleurs des prés (trio)':['#f4d02e', '#fffdf4'] };
+  for (const d of D) if (d.cat === 'Fleurs') { const [p, c] = COUL[d.nom] || ['#f4d02e', '#e09f10']; d.f = g => { couronne(g, 5, () => disque(g, .4, 0, .32, p, '#2f2a24', .045)); disque(g, 0, 0, .24, c, '#2f2a24', .045); }; }
+}
+
 // ===== TOUFFES D'HERBE =====
 // touffe vue du dessus : brins qui rayonnent depuis le centre (n brins, de la longueur l0 à l1, courbure b)
 function rayons(g, r, n, l0, l1, b, w, c, hi, a0 = 0) { for (let i = 0; i < n; i++) { const a = a0 + i / n * TAU, l = l0 + (l1 - l0) * (i % 2); brin(g, Math.cos(a) * .06, Math.sin(a) * .06, Math.cos(a + b) * l, Math.sin(a + b) * l, 0, w, c, hi); } }
@@ -137,7 +144,7 @@ function decorsCandidats(trees) {
   const ok = decorsValides(), pris = d => !ok || ok.has(d.id), par = n => DECORS_SOL.filter(d => d.nom === n && pris(d)), cat = c => DECORS_SOL.filter(d => d.cat === c && pris(d));
   const rnd = seeded(S.landSeed * 41 + 7), out = [], pick = l => l[Math.floor(rnd() * l.length)];
   const pose = (d, x, y, k = 1) => { if (!d) return; const t = DECOR_TAILLE[d.cat]; let r = (t[0] + rnd() * (t[1] - t[0])) * k; if (d.nom === 'Souche') r = .9 + rnd() * .3; if (d.nom === 'Petit buisson clair') r *= .75;
-    out.push({ x:round2(x), y:round2(y), r:round2(r), kind:'deco', id:d.id, v:rnd(), a:/^(Fleurs|Touffes|Feuilles)$/.test(d.cat) ? rnd() * 6.283 : 0 }); };
+    out.push({ x:round2(x), y:round2(y), r:round2(r), kind:'deco', sa:d.cat === 'Feuilles' || /Amanite|Cèpe|Groupe de champignons|Souche/.test(d.nom) ? 1 : 0, id:d.id, v:rnd(), a:/^(Fleurs|Touffes|Feuilles)$/.test(d.cat) ? rnd() * 6.283 : 0 }); };
   const fleurs = cat('Fleurs'), touffes = cat('Touffes').filter(d => !/Mousse|Joncs/.test(d.nom)), buissons = cat('Buissons'), feuilles = cat('Feuilles'), champis = DECORS_SOL.filter(d => /Amanite|Cèpe|Groupe de champignons/.test(d.nom) && pris(d));
   const ZX = TW, ZY = TH, aire = ZX * ZY;
   if (sec) {                                                                          // sols secs : herbes sèches, épis, brindilles, galets et pierres

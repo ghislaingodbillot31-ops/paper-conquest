@@ -5,7 +5,7 @@
    les vrais fleuves, les vrais lacs et les vraies routes vers les capitales voisines.
    Sans forme (éditeur sans région choisie, page d'essai), le terrain reste un rectangle. */
 let FORME = null, FORME_ID = null, masque = null;
-const FORMES_V = 16;                                 // monter pour que les cartes de région déjà enregistrées soient régénérées par le générateur à jour
+const FORMES_V = 22;                                 // monter pour que les cartes de région déjà enregistrées soient régénérées par le générateur à jour
 // à chaque nouvelle version, les cartes de région enregistrées (et le plan de l'éditeur) sont supprimées : elles repartent du générateur à jour
 try { if (localStorage.getItem('regionsGenV') !== String(FORMES_V)) {
   Object.keys(localStorage).filter(k => k.startsWith('dominiumRegionMap.') || k === 'editeurCarte.v1').forEach(k => localStorage.removeItem(k));
@@ -33,7 +33,7 @@ if (GAME) chargeForme(GAME.region);
 const MQ = 4;
 const aireAnneau = r => r.reduce((A, p, i) => { const q = r[(i + 1) % r.length]; return A + p[0] * q[1] - q[0] * p[1]; }, 0) / 2;   // (signée : positive si le contour tourne dans le sens direct)
 const anneauxPath = (rings, k) => { const p = new Path2D(); for (const r of rings) { p.moveTo(r[0][0] / k, r[0][1] / k); for (const q of r) p.lineTo(q[0] / k, q[1] / k); p.closePath(); } return p; };   // contours en mètres → chemin en pixels (k m par pixel)
-function procheDe(p, L) { let b = { d:Infinity, q:null }; for (let i = 0; i < L.length - 1; i++) { const t = ptSeg(p, L[i], L[i + 1]); if (t.d < b.d) b = t; } return b; }   // point le plus proche de p sur la ligne L : { d, q }
+   // point le plus proche de p sur la ligne L : { d, q }
 function masqueForme() {
   if (masque || !FORME) return masque;
   const w = TW / MQ, h = TH / MQ, c = document.createElement('canvas'); c.width = w; c.height = h;
@@ -57,53 +57,94 @@ function segSurTerre(a, b) {
 }
 
 /* ---- génération d'après la forme : routes, fleuves et lacs réels ---- */
-// route qui suit une vraie route (liste de points) : tronçons de 3 cases, orientés par pas de
-// 10° (règles du zonage), 30° de virage au plus d'un tronçon au suivant ; elle s'arrête au bord
-// de la carte, ou à la capitale voisine si elle est dans le cadre
-function routeLeLongDe(line, virage = 30) {
-  const angDiff = (a, b) => ((a - b) % 360 + 540) % 360 - 180;
-  let p = line[0].slice(), k = 1, last = null;
-  const pts = [p];
-  for (let n = 0; n < 900; n++) {
-    while (k < line.length - 1 && segLen(p, line[k]) < 48) k++;
-    const aim = line[k];
-    if (k === line.length - 1 && inTerrain(aim) && segLen(p, aim) < 3 * CELL) break;   // arrivée (capitale voisine)
-    let deg = Math.round(Math.atan2(aim[1] - p[1], aim[0] - p[0]) * 18 / Math.PI) * 10;
-    if (last !== null) { const d = angDiff(deg, last); if (Math.abs(d) > virage) deg = last + Math.sign(d) * virage; }
-    deg = ((deg % 360) + 360) % 360;
-    const q = goDeg(p, deg, 3 * CELL);
-    if (!inTerrain(q)) {                                        // sortie de la carte : arrêt pile sur le bord
-      const d = [Math.cos(deg * Math.PI / 180), Math.sin(deg * Math.PI / 180)];
-      const tx = d[0] > 1e-9 ? (TW - p[0]) / d[0] : d[0] < -1e-9 ? -p[0] / d[0] : Infinity;
-      const ty = d[1] > 1e-9 ? (TH - p[1]) / d[1] : d[1] < -1e-9 ? -p[1] / d[1] : Infinity;
-      const e = goDeg(p, deg, Math.min(tx, ty));
-      pts.push([Math.max(0, Math.min(TW, e[0])), Math.max(0, Math.min(TH, e[1]))]);
-      break;
-    }
-    if (deg === last && pts.length > 1) pts[pts.length - 1] = q; else pts.push(q);
-    p = q; last = deg;
-  }
-  return pts;
-}
 /* Route de ceinture d'une île : le contour de la terre qui porte la capitale, décalé vers l'intérieur de COTE_DIST m, lissé ; seul le plus long tronçon qui reste à terre, hors fleuve et à bonne distance
    de la côte est gardé (les baies étroites l'interrompent). Retourne les points, ou null. */
 const COTE_DIST = 70;
-function routeCotiere(c0) {
-  const aire = aireAnneau;
-  const ring = ((FORME && FORME.terres) || []).filter(r => r.length > 8 && inPoly(c0, r)).sort((a, b) => Math.abs(aire(b)) - Math.abs(aire(a)))[0];
-  if (!ring) return null;
-  const R = resample([...ring, ring[0]], 24).slice(0, -1), n = R.length, sg = Math.sign(aire(ring)) || 1;
-  let P = R.map((p, i) => { const a = R[(i + n - 1) % n], b = R[(i + 1) % n], tx = b[0] - a[0], ty = b[1] - a[1], l = Math.hypot(tx, ty) || 1; return [p[0] - ty / l * sg * COTE_DIST, p[1] + tx / l * sg * COTE_DIST]; });
-  for (let k = 0; k < 4; k++) P = P.map((p, i) => { let x = 0, y = 0; for (let d = -2; d <= 2; d++) { const q = P[(i + d + n) % n]; x += q[0]; y += q[1]; } return [x / 5, y / 5]; });   // (les coins des baies sont arrondis)
-  const bon = P.map(p => inTerrain(p) && surTerre(p) && R.every(q => segLen(p, q) > COTE_DIST * .7));
-  let start = bon.indexOf(false); start = start < 0 ? 0 : start + 1;
-  let best = [], cur = [];
-  for (let k = 0; k <= n; k++) {
-    const i = (start + k) % n;
-    if (k < n && bon[i]) cur.push(P[i].map(round2)); else { if (cur.length > best.length) best = cur; cur = []; }
+/* Le tracé réel d'un fleuve ne sert qu'à PLACER le cours d'eau dans notre monde : on le redessine fluide (demande du 12/10). Moyenne glissante sur l'abscisse curviligne (fenêtre ~ 4 largeurs, 3 passes) :
+   plus de coudes ni de dents, des courbes amples. Les deux bouts reviennent progressivement au tracé réel (le fleuve entre et sort de la carte au même endroit). Un point tous les 4 m. */
+function lisseCours(P, w) {
+  const n = P.length; if (n < 20) return P;
+  const h = Math.max(12, Math.round(w * 2 / 4)), L = n * 4, fade = Math.min(150, L / 4) / 4;
+  let Q = P.map(q => q.slice());
+  for (let pass = 0; pass < 3; pass++) Q = Q.map((_, i) => { let sx = 0, sy = 0, c = 0; for (let k = Math.max(0, i - h); k <= Math.min(n - 1, i + h); k++) { sx += Q[k][0]; sy += Q[k][1]; c++; } return [sx / c, sy / c]; });
+  return P.map((q, i) => { const t = Math.min(1, i / fade, (n - 1 - i) / fade), m = t * t * (3 - 2 * t); return [round2(q[0] + (Q[i][0] - q[0]) * m), round2(q[1] + (Q[i][1] - q[1]) * m)]; });
+}
+/* CARREFOURS EN T ET EN X (demande du 12/10) : à chaque croisement (X) et chaque jonction (T, le bout d'une route posé sur le flanc d'une autre), toutes les routes concernées restent parfaitement DROITES sur carrefour_droit m
+   (10 m) de part et d'autre du centre, puis se raccordent à leur tracé par une courbe de Bézier de carrefour_raccord m, tangente aux deux bouts. En T, la route qui s'arrête arrive PERPENDICULAIREMENT à l'autre.
+   Les carrefours à moins de 140 m d'un pont sont laissés tels quels (le pont a ses propres raccords). Modifie r.pts des routes passées. */
+function carrefoursDroits(roads, pontsC) {
+  const D = regle('carrefour_droit'), Lr = regle('carrefour_raccord'); if (D <= 0) return;
+  const P = new Map(roads.map(r => [r.id, resample(r.pts, 2)])), ponts = pontsC || (typeof bridges === 'function' ? bridges().map(b => b.c) : []);   // (centres de ponts : fournis par le générateur quand bridges() n'existe pas encore)
+  const unit = (a, b) => { const l = segLen(a, b) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
+  const J = [], proche = c => J.some(j => segLen(j.c, c) < 30), loinPont = c => !ponts.some(q => segLen(q, c) < 140);
+  for (let a = 0; a < roads.length; a++) for (let b = 0; b < roads.length; b++) {              // 1. les T d'abord (un bout posé sur un flanc compte aussi comme croisement : il ne doit pas être pris pour un X)
+    if (a === b) continue; const A = P.get(roads[a].id), B = P.get(roads[b].id);
+    for (const fin of [0, A.length - 1]) {
+      const e = A[fin]; let best = null; for (let j = 0; j < B.length - 1; j++) { const t = ptSeg(e, B[j], B[j + 1]); if (t.d < 2.5 && (!best || t.d < best.d)) best = { d:t.d, j, q:t.q }; }
+      if (best && segLen(best.q, B[0]) > 25 && segLen(best.q, B[B.length - 1]) > 25 && !proche(best.q) && loinPont(best.q)) J.push({ c:best.q, type:'T', m:[{ id:roads[a].id, fin, end:true }, { id:roads[b].id, i:best.j }] });
+    }
   }
-  if (bon.every(Boolean)) best.push(best[0]);                                                                    // (île entière : la boucle est fermée)
-  return best.length * 24 > 6 * CELL ? best : null;
+  for (let a = 0; a < roads.length; a++) for (let b = a + 1; b < roads.length; b++) {          // 2. puis les X (deux routes qui se traversent)
+    const A = P.get(roads[a].id), B = P.get(roads[b].id);
+    for (let i = 0; i < A.length - 1; i++) for (let j = 0; j < B.length - 1; j++) { const x = segCross(A[i], A[i + 1], B[j], B[j + 1]); if (x && !proche(x) && loinPont(x)) J.push({ c:x, type:'X', m:[{ id:roads[a].id, i }, { id:roads[b].id, i:j }] }); }
+  }
+  const nD = Math.round(D / 2), nL = Math.round(Lr / 2);
+  const droit = (Q, i, C, d, s) => {                                                         // route Q, centre C à l'indice i, direction d (du centre vers l'extérieur), côté s : D m droits puis raccord
+    const n = Q.length, f = k => i + s * k; if (f(nD + nL + 2) < 0 || f(nD + nL + 2) >= n) return;
+    for (let k = 1; k <= nD; k++) Q[f(k)] = [round2(C[0] + d[0] * k * 2), round2(C[1] + d[1] * k * 2)];
+    const p0 = Q[f(nD)], ib = f(nD + nL), p1 = Q[ib], t1 = unit(Q[ib - s * 2], Q[ib + s * 2]), dd = segLen(p0, p1) * .4, c1 = [p0[0] + d[0] * dd, p0[1] + d[1] * dd], c2 = [p1[0] - t1[0] * dd * s * s, p1[1] - t1[1] * dd * s * s];
+    for (let k = 1; k < nL; k++) { const u = k / nL, w = 1 - u; Q[f(nD + k)] = [round2(w * w * w * p0[0] + 3 * w * w * u * c1[0] + 3 * w * u * u * c2[0] + u * u * u * p1[0]), round2(w * w * w * p0[1] + 3 * w * w * u * c1[1] + 3 * w * u * u * c2[1] + u * u * u * p1[1])]; }
+  };
+  const proj = (Q, c) => { let bi = 0, bd = Infinity; Q.forEach((q, i) => { const d = segLen(q, c); if (d < bd) { bd = d; bi = i; } }); return bi; };
+  for (const j of J) {
+    const through = j.type === 'X' ? j.m : [j.m[1]], C = j.c;
+    for (const m of through) {                                                              // routes qui passent : droites des deux côtés
+      const Q = P.get(m.id), i = proj(Q, C), t = unit(Q[Math.max(0, i - 4)], Q[Math.min(Q.length - 1, i + 4)]);
+      Q[i] = C.slice(); droit(Q, i, C, t, 1); droit(Q, i, C, [-t[0], -t[1]], -1);
+    }
+    if (j.type === 'T') {                                                                     // route qui s'arrête : perpendiculaire à l'autre, du côté de son tracé
+      const m = j.m[0], Q = P.get(m.id), B = P.get(j.m[1].id), jb = proj(B, C), tb = unit(B[Math.max(0, jb - 4)], B[Math.min(B.length - 1, jb + 4)]);
+      let nrm = [-tb[1], tb[0]]; const i = m.fin, inner = Q[i === 0 ? 8 : Q.length - 9], s = i === 0 ? 1 : -1; if ((inner[0] - C[0]) * nrm[0] + (inner[1] - C[1]) * nrm[1] < 0) nrm = [-nrm[0], -nrm[1]];
+      Q[i] = C.slice(); droit(Q, i, C, nrm, s);
+    }
+  }
+  for (const r of roads) r.pts = resample(P.get(r.id), 4).map(q => [round2(q[0]), round2(q[1])]);
+}
+/* Routes sans angle, uniquement des courbes (demande du 12/10) : un point tous les 4 m ; là où le tracé tourne de plus de route_angle (14°) sur 24 m, la zone (±24 m) est adoucie par moyenne glissante, et on recommence jusqu'à ce qu'il n'y reste plus de coin.
+   Les deux bouts restent fixes (carrefours, bords de la carte). */
+function arrondirAngles(P) {
+  const ANG_MAX = regle('route_angle') * Math.PI / 180;   // (règle route_angle)
+  const ferme = P.length > 3 && segLen(P[0], P[P.length - 1]) < 1;                    // boucle fermée : on la fait démarrer au milieu de son premier côté (le coin d'origine devient intérieur et s'arrondit comme les autres)
+  if (ferme) { const m = [(P[0][0] + P[1][0]) / 2, (P[0][1] + P[1][1]) / 2]; P = [m, ...P.slice(1, -1), P[0], m]; }
+  let Q = resample(P, 4); if (Q.length < 12) return P;
+  const cap = (a, b) => Math.atan2(b[1] - a[1], b[0] - a[0]);
+  for (let it = 0; it < 60; it++) {
+    const n = Q.length, mal = new Uint8Array(n); let un = false;
+    for (let i = 3; i < n - 3; i++) { let t = cap(Q[i], Q[i + 3]) - cap(Q[i - 3], Q[i]); t = Math.abs(Math.atan2(Math.sin(t), Math.cos(t))); if (t > ANG_MAX) { un = true; for (let k = Math.max(1, i - 6); k <= Math.min(n - 2, i + 6); k++) mal[k] = 1; } }
+    if (!un) break;
+    Q = Q.map((q, i) => { if (!mal[i]) return q; let sx = 0, sy = 0, c = 0; for (let k = Math.max(0, i - 4); k <= Math.min(n - 1, i + 4); k++) { sx += Q[k][0]; sy += Q[k][1]; c++; } return [round2(sx / c), round2(sy / c)]; });
+  }
+  return Q;
+}
+/* Routes d'une région : les routes commerciales qui partent de sa capitale vers les capitales voisines (F.routes, issues de data/monde/routes.json par outils/build-formes.js : du centre vers l'extérieur, déjà lisses,
+   avec leurs ponts perpendiculaires). Chaque route est reprise telle quelle ; seul le bout qui sort du terrain est coupé exactement au bord (point d'intersection) — rien n'est ajouté, rien n'est déplacé.
+   La plus longue est pavée, les autres en gravier ; routes figées (fige) : le lissage et les carrefours automatiques ne les retouchent pas. */
+function routesCommerciales(F) {
+  const coupe = P => {
+    const out = [];
+    for (let i = 0; i < P.length; i++) {
+      const q = P[i];
+      if (inTerrain(q)) { out.push([round2(q[0]), round2(q[1])]); continue; }
+      if (i && inTerrain(P[i - 1])) {                                                  // la route sort : point exact sur le bord, puis fin
+        const a = P[i - 1], t = [(q[0] < 0 ? 0 - a[0] : q[0] > TW ? TW - a[0] : Infinity) / (q[0] - a[0] || 1e-9), (q[1] < 0 ? 0 - a[1] : q[1] > TH ? TH - a[1] : Infinity) / (q[1] - a[1] || 1e-9)].filter(isFinite), s = Math.min(...t, 1);
+        out.push([round2(a[0] + (q[0] - a[0]) * s), round2(a[1] + (q[1] - a[1]) * s)]);
+      }
+      break;
+    }
+    return out;
+  };
+  return (F.routes || []).map(r => coupe(r.pts)).filter(P => P.length > 1).sort((a, b) => roadLen({ pts:b }) - roadLen({ pts:a }))
+    .map((pts, i) => ({ id:i + 1, kind:i ? 'gravier' : 'pave', w:CELL, pts, fige:true }));
 }
 const CLASSE_FLEUVE = { 1:'fleuve', 2:'riviere' };               // (les autres : petite rivière)
 function genereDepuisForme(biome, seed) {
@@ -117,17 +158,21 @@ function genereDepuisForme(biome, seed) {
   F.fleuves.forEach((f, k) => {
     const cls = CLASSE_FLEUVE[f.cls] || 'petite', RC = RIVER_CLASS[cls];
     F.fl = F.fl || [];
-    let all = F.fl[k] ? F.fl[k].pts : resample(chaikinOpen(resample(f.pts, 24), 4), 4), bouche = F.fl[k] ? F.fl[k].bouche : null;
+    let all = F.fl[k] ? F.fl[k].pts : lisseCours(resample(chaikinOpen(resample(f.pts, 24), 4), 4), (RC.w0 + RC.w1) / 2), bouche = F.fl[k] ? F.fl[k].bouche : null;
     if (all.length < 4) return;
     // le fleuve s'arrête à la côte (le tracé réel se prolonge en mer et longe le rivage : tronçons parasites)
     if (!F.fl[k]) {
       const mer = all.findIndex(p => inTerrain(p) && !surTerre(p));
       if (mer >= 0 && mer < 8 && all.slice(0, mer + 1).every(inTerrain)) { F.fl[k] = { pts:[], drop:true }; return; }
-      if (mer >= 8) { all = all.slice(0, mer + 3); bouche = mer - 1; }           // dernier point sur la terre
+      if (mer >= 8) {                                                                // dernier point sur la terre ; puis le fleuve PÉNÈTRE dans la mer sur 3 largeurs, dans l'axe de son cours : il débouche vraiment dans la mer (il s'arrêtait avant le rivage)
+        all = all.slice(0, mer + 1); bouche = mer - 1;
+        const e = all[all.length - 1], f0 = all[Math.max(0, all.length - 6)], l0 = segLen(f0, e) || 1, v = [(e[0] - f0[0]) / l0, (e[1] - f0[1]) / l0], n = Math.ceil(3 * RC.w1 / 4);
+        for (let i = 1; i <= n; i++) all.push([round2(e[0] + v[0] * i * 4), round2(e[1] + v[1] * i * 4)]);
+      }           // dernier point sur la terre
       F.fl[k] = { pts:all, bouche };
     }
     if (F.fl[k].drop) return;
-    const rv = { pts:all, w0:RC.w0, w1:RC.w1, cls, nom:f.n };
+    const wc = (RC.w0 + RC.w1) / 2, rv = { pts:all, w0:wc, w1:wc, cls, nom:f.n };   // même largeur de la source à l'embouchure
     if (bouche != null) rv.bouche = bouche;
     S.rivers.push(rv); rv.k = k;
   });
@@ -158,45 +203,9 @@ function genereDepuisForme(biome, seed) {
   // pavée), les autres partent du même point (un bout de route : raccord permis), en gravier
   const capR = riveDe(cap), c0 = capR && capR.d < capR.hw + riveMarge() ? rivePoussee(capR, capR.side) : cap;
   S.bourg = [c0.map(Math.round)];
-  const lines = F.routes.map(r => redresserPonts(routeLeLongDe(ecarteDesFleuves([c0, ...r.pts.slice(1)], capR ? capR.side : 1))))
-    .filter(p => p.length > 1 && roadLen({ pts:p }) > 3 * CELL).sort((a, b) => roadLen({ pts:b }) - roadLen({ pts:a }));
-  /* Les routes vers les capitales voisines partent toutes de la capitale et se chevauchaient sur quelques mètres avant de
-     se séparer (faisceau raté). Chaque route secondaire se détache maintenant de la principale à l'endroit où elle s'en
-     écarte vraiment (3 cases) : un embranchement net, posé sur la principale. */
-  const dLigne = (p, L) => procheDe(p, L).d, proche = (p, L) => procheDe(p, L).q;
-  for (let n = 1; n < lines.length; n++) {
-    const P = lines[n]; let k = 1;
-    while (k < P.length && dLigne(P[k], lines[0]) < 3 * CELL) k++;
-    if (k >= P.length || k < 2) continue;                        // reste collée à la principale, ou part tout de suite ailleurs : inchangée
-    // une fourche ne repart pas en épingle le long de la principale : elle quitte la principale à 30° au moins (sinon on saute ses premiers points)
-    const sin30 = Math.sin(Math.PI / 6);
-    for (; k < P.length - 1; k++) {
-      let t = { d:Infinity }; for (let i = 0; i < lines[0].length - 1; i++) { const u = ptSeg(P[k - 1], lines[0][i], lines[0][i + 1]); if (u.d < t.d) t = { ...u, a:lines[0][i], b:lines[0][i + 1] }; }   // (le tronçon de la principale le plus proche)
-      const q = t.q, tl = segLen(t.a, t.b) || 1, bl = segLen(q, P[k]) || 1;
-      if (Math.abs(((t.b[0] - t.a[0]) * (P[k][1] - q[1]) - (t.b[1] - t.a[1]) * (P[k][0] - q[0])) / (tl * bl)) >= sin30) break;
-    }
-    lines[n] = [proche(P[k - 1], lines[0]), ...P.slice(k)];
-  }
-  lines.forEach((pts, i) => S.roads.push({ id:i + 1, kind:i ? 'gravier' : 'pave', w:CELL, pts }));
-  if (!S.roads.length) {                                        // région sans route (île…) : une route de ceinture le long de la côte, et une branche depuis la capitale
-    const ceinture = routeCotiere(c0);
-    if (ceinture) {
-      const anneau = redresserPonts(ceinture);
-      S.roads.push({ id:1, kind:'pave', w:CELL, pts:anneau });
-      const A = proche(c0, anneau);
-      if (A && segLen(c0, A) > 2 * CELL) { const branche = redresserPonts(resample([c0, A], 12)); S.roads.push({ id:2, kind:'gravier', w:CELL, pts:[...branche.slice(0, -1), A] }); }
-    }
-  }
-  if (!S.roads.length) {                                        // (sans côte exploitable : un chemin de la capitale vers l'intérieur)
-    const dir = [TW / 2 - c0[0], TH / 2 - c0[1]], L = Math.hypot(...dir) || 1;
-    const pts = redresserPonts(routeLeLongDe(ecarteDesFleuves([c0, [c0[0] + dir[0] / L * 400, c0[1] + dir[1] / L * 400]], capR ? capR.side : 1)));
-    if (pts.length > 1) S.roads.push({ id:1, kind:'terre', w:CELL, pts });
-  }
-  /* Règle des lacs (LAC_DIST, eau.js) : un lac réel trop près d'une route, d'un fleuve, de la mer ou d'un autre lac est retiré
-     (les plus grands d'abord) : aucun lac ne touche rien. */
-  const lacs = S.lakes.sort((a, b) => { const A = bbox(a.pts), B = bbox(b.pts); return (B[2] - B[0]) * (B[3] - B[1]) - (A[2] - A[0]) * (A[3] - A[1]); });
-  S.lakes = [];
-  for (const lk of lacs) { S.lakes.push(lk); if (!lacLibre(lk)) S.lakes.pop(); }
+  S.roads = routesCommerciales(F);                                                // ROUTES DE LA RÉGION = les routes commerciales de la carte globale, À L'IDENTIQUE (aucune route en plus, aucun tracé retouché)
+  /* LACS = ceux de la carte du monde (water.json, via build-formes.js), à l'identique : même nombre, même place, même forme (rien de déplacé, rien de retiré, aucun lac artificiel). Seuls les lacs hors de la terre du cadre sont écartés. */
+  S.lakes = S.lakes.filter(g => g.pts.every(surTerre));
   computeZones();
   S.deposits = placeDeposits(seed);
   S.ressources = placeFruitiers(seed, fruitiersDuBiome(S.biome, seed));      // (les arbres fruitiers d'origine de ce biome)
@@ -208,12 +217,14 @@ function genereDepuisForme(biome, seed) {
 /* PONTS DROITS. Les routes de région suivent une grille de directions (routeLeLongDe : pas de 10°, virages de 30° au plus) : un pont pouvait donc traverser en biais, avec des courbes qui
    gonflent aux deux bouts. Pour chaque traversée d'une rivière, la route est refaite : un pont DROIT et PERPENDICULAIRE au cours d'eau (axe = la normale de la rivière au point de passage),
    précédé et suivi de pont_droit mètres de route dans le même axe, raccordés au reste du tracé par une courbe douce (Bézier cubique tangente à la route d'origine et à l'axe du pont). Règles : regles.js (pont_droit, pont_marge). */
-function redresserPonts(line) {
+function redresserPonts(line) { return redresserPontsBrut(arrondirAngles(line)); }   // (les coins sont adoucis AVANT : les sections droites des ponts ne sont jamais retouchées)
+function redresserPontsBrut(line) {
   if (!S.rivers.length || line.length < 3) return line;
+  const COS_VIRAGE = Math.cos(regle('pont_virage') * Math.PI / 180), CHERCHE = Math.ceil(regle('pont_cherche') / 12);   // (règles pont_virage, pont_cherche ; points de 12 m)
   const L = typeof regle === 'function' ? regle('pont_droit') : 40, M = typeof regle === 'function' ? regle('pont_marge') : 12;
   const unit = (a, b) => { const l = segLen(a, b) || 1; return [(b[0] - a[0]) / l, (b[1] - a[1]) / l]; };
   const bez = (p0, d0, p1, d1) => {                                   // courbe de p0 (cap d0) à p1 (cap d1), tangente aux deux bouts (Bézier cubique) : jamais de coin au raccord
-    const D = segLen(p0, p1), k = D * .4, c1 = [p0[0] + d0[0] * k, p0[1] + d0[1] * k], c2 = [p1[0] - d1[0] * k, p1[1] - d1[1] * k], n = Math.max(4, Math.ceil(D / 10)), out = [];
+    const D = segLen(p0, p1), k = D * .4, c1 = [p0[0] + d0[0] * k, p0[1] + d0[1] * k], c2 = [p1[0] - d1[0] * k, p1[1] - d1[1] * k], n = Math.max(8, Math.ceil(D / 3)), out = [];   // (un point tous les 3 m : courbe lisse, sans facettes)
     for (let i = 0; i <= n; i++) { const u = i / n, w = 1 - u, a = w * w * w, b = 3 * w * w * u, e = 3 * w * u * u, f = u * u * u; out.push([round2(a * p0[0] + b * c1[0] + e * c2[0] + f * p1[0]), round2(a * p0[1] + b * c1[1] + e * c2[1] + f * p1[1])]); }
     return out;
   };
@@ -224,17 +235,38 @@ function redresserPonts(line) {
     while (a < P.length && !trouve) {
       if (!eau[a]) { a++; continue; }
       let b = a; while (b + 1 < P.length && eau[b + 1]) b++;
-      const r = eau[Math.floor((a + b) / 2)];
-      if (faits.some(q => segLen(q, r.q) < r.hw + 20)) { a = b + 1; continue; }
+      const r0 = eau[Math.floor((a + b) / 2)];
+      if (faits.some(q => segLen(q, r0.q) < r0.hw + 20)) { a = b + 1; continue; }
+      /* Choix du passage : le pont ne se pose pas forcément là où le tracé réel croise la rivière (confluence, rive en biais, méandre serré). On essaie plusieurs passages le long de la route (± pont_cherche m) et on garde le meilleur :
+         celui qui demande le moins de virage à l'entrée et à la sortie, avec un pont droit qui ne traverse QUE cette rivière (jamais un confluent, jamais deux fois l'eau). */
+      const essai = r => {
+        const reach = r.hw + M + L, lpre = reach + regle('pont_approche'), n = r.n; let sA = Math.sign((P[a][0] - r.q[0]) * n[0] + (P[a][1] - r.q[1]) * n[1]) || 1;
+        let ia = a - 1; while (ia > 0 && segLen(P[ia], r.q) < lpre) ia--;
+        let ib = b + 1; while (ib < P.length - 1 && segLen(P[ib], r.q) < lpre) ib++;
+        if (ia < 1 || ib > P.length - 2) return null;                                                // (route qui commence ou finit dans l'eau, ou trop près d'un bout : pas de pont possible)
+        { const g = unit(P[ia], P[ib]), sg = Math.sign(-(g[0] * n[0] + g[1] * n[1])); if (sg) sA = sg; }   // le pont va du côté d'où la route vient vers celui où elle repart (jamais à contresens)
+        const A = [round2(r.q[0] + n[0] * sA * reach), round2(r.q[1] + n[1] * sA * reach)], B = [round2(r.q[0] - n[0] * sA * reach), round2(r.q[1] - n[1] * sA * reach)];
+        if (ia < 1 || ib > P.length - 2 || segLen(P[ia], r.q) < reach + 6 || segLen(P[ib], r.q) < reach + 6 || !inTerrain(A) || !inTerrain(B)) return null;   // (traversée au bord de la carte : laissée telle quelle)
+        const ax = unit(A, B), d0 = unit(P[ia - 1], P[ia]), d2 = unit(P[ib], P[ib + 1]), net = unit(P[ia], P[ib]);
+        const c0 = ax[0] * d0[0] + ax[1] * d0[1], c2 = ax[0] * d2[0] + ax[1] * d2[1];
+        if (ax[0] * net[0] + ax[1] * net[1] < -.2 || c0 < COS_VIRAGE || c2 < COS_VIRAGE) return null;   // (demi-tour ou coude trop fort : pas ce passage)
+        let eaux = 0, dans = false;                                                                      // le pont ne traverse qu'UNE nappe d'eau
+        for (let s = 0, n2 = Math.ceil(segLen(A, B) / 4); s <= n2; s++) { const q = [A[0] + (B[0] - A[0]) * s / n2, A[1] + (B[1] - A[1]) * s / n2], w = riveDe(q), mouille = !!w && w.d < w.hw; if (mouille && !dans) eaux++; dans = mouille; }
+        if (eaux !== 1) return null;
+        const sa = riveDe(A), sb = riveDe(B), si = riveDe(P[ia]), so = riveDe(P[ib]);                  // chaque bout du pont sur la bonne rive : même rive que la route qui arrive (resp. repart), rives opposées
+        if (!sa || !sb || !si || !so || sa.side !== si.side || sb.side !== so.side || sa.side === sb.side) return null;
+        return { r, ia, ib, A, B, ax, d0, d2, cout:Math.acos(Math.max(-1, Math.min(1, c0))) + Math.acos(Math.max(-1, Math.min(1, c2))) };
+      };
+      let best = null;
+      for (let k = Math.max(0, a - CHERCHE), kf = Math.min(P.length - 1, b + CHERCHE); k <= kf; k += 2) {
+        const r = k >= a && k <= b ? eau[k] : riveDe(P[k]); if (!r || r.d > r.hw + 160) continue;
+        const c = essai(r); if (!c) continue;
+        c.cout += Math.abs(k - Math.floor((a + b) / 2)) * 12 * .0012;                                      // (légère préférence pour le passage d'origine)
+        if (!best || c.cout < best.cout) best = c;
+      }
+      if (!best) { a = b + 1; continue; }
+      const { r, ia, ib, A, B, ax, d0, d2 } = best;
       faits.push(r.q);
-      const reach = r.hw + M + L, lpre = reach + 30, n = r.n, sA = Math.sign((P[a][0] - r.q[0]) * n[0] + (P[a][1] - r.q[1]) * n[1]) || 1;
-      let ia = a - 1; while (ia > 0 && segLen(P[ia], r.q) < lpre) ia--;
-      let ib = b + 1; while (ib < P.length - 1 && segLen(P[ib], r.q) < lpre) ib++;
-      const A = [round2(r.q[0] + n[0] * sA * reach), round2(r.q[1] + n[1] * sA * reach)], B = [round2(r.q[0] - n[0] * sA * reach), round2(r.q[1] - n[1] * sA * reach)];
-      if (ia < 1 || ib > P.length - 2 || segLen(P[ia], r.q) < reach + 6 || segLen(P[ib], r.q) < reach + 6 || !inTerrain(A) || !inTerrain(B)) { a = b + 1; continue; }   // (traversée au bord de la carte : laissée telle quelle)
-      const ax = unit(A, B), d0 = unit(P[ia - 1], P[ia]), d2 = unit(P[ib], P[ib + 1]), net = unit(P[ia], P[ib]);
-      // traversée trop en biais : le pont droit ferait faire un V à la route (plusieurs ponts) → laissée telle quelle, un seul pont
-      if (ax[0] * net[0] + ax[1] * net[1] < .7 || ax[0] * d0[0] + ax[1] * d0[1] < .5 || ax[0] * d2[0] + ax[1] * d2[1] < .5) { a = b + 1; continue; }
       const entree = bez(P[ia], d0, A, ax), sortie = bez(P[ib], [-d2[0], -d2[1]], B, [-ax[0], -ax[1]]).reverse();   // (la sortie est calculée depuis la route d'après, puis retournée)
       const pont = []; const nb = Math.max(1, Math.ceil(segLen(A, B) / 12)); for (let i = 1; i < nb; i++) pont.push([round2(A[0] + (B[0] - A[0]) * i / nb), round2(A[1] + (B[1] - A[1]) * i / nb)]);
       P = [...P.slice(0, ia), ...entree, ...pont, ...sortie, ...P.slice(ib + 1)];
@@ -253,28 +285,12 @@ function riveDe(p) {
       const j = Math.min(P.length - 1, i + 2), t = ptSeg(p, P[i], P[j]), hw = Math.max(HW[i], HW[j]);
       if (best && t.d - hw >= best.d - best.hw) continue;
       const L = segLen(P[i], P[j]) || 1, n = [-(P[j][1] - P[i][1]) / L, (P[j][0] - P[i][0]) / L];
-      best = { d:t.d, q:t.q, n, hw, side:Math.sign((p[0] - t.q[0]) * n[0] + (p[1] - t.q[1]) * n[1]) || 1 };
+      best = { rv, d:t.d, q:t.q, n, hw, side:Math.sign((p[0] - t.q[0]) * n[0] + (p[1] - t.q[1]) * n[1]) || 1 };
     }
   }
   return best;
 }
 const rivePoussee = (r, side) => [round2(r.q[0] + r.n[0] * side * (r.hw + riveMarge())), round2(r.q[1] + r.n[1] * side * (r.hw + riveMarge()))];
-function ecarteDesFleuves(line, side0) {
-  if (!S.rivers.length) return line;
-  const P = resample(line, 16), info = P.map(riveDe);
-  const near = P.map((_, k) => k > 0 && info[k] && info[k].d < info[k].hw + riveMarge());
-  const idx = near.map((v, k) => v ? k : -1).filter(k => k >= 0), side = idx.map(k => info[k].side);
-  // rives : les suites de moins de 12 points proches (~190 m) prennent la rive précédente
-  let prev = side0;
-  for (let a = 0; a < side.length;) {
-    let b = a; while (b + 1 < side.length && side[b + 1] === side[a] && idx[b + 1] === idx[b] + 1) b++;
-    if (b - a + 1 < 12) for (let k = a; k <= b; k++) side[k] = prev;
-    prev = side[b]; a = b + 1;
-  }
-  const out = P.slice(); out[0] = line[0];
-  idx.forEach((k, m) => { out[k] = rivePoussee(info[k], side[m]); });
-  return out;
-}
 
 /* ---- dessin : mer, voile sur les terres voisines, frontière ---- */
 function cheminAnneaux(rings, path = new Path2D()) {
@@ -286,7 +302,7 @@ function cadreEtAnneaux(rings) { const p = new Path2D(), [tx, ty] = toS(0, 0); p
 function seaBands(coast, foam, edge) {
   const sea0 = biomeLook().water || Col.water, bw = Math.max(2, Math.min(5 * view.s, 14));
   ctx.lineJoin = 'round';
-  for (let i = WATER_BANDS + 1; i >= 1; i--) { ctx.strokeStyle = mixWater(sea0, .09 * (WATER_BANDS + 2 - i)); ctx.lineWidth = (foam + edge + bw * i) * 2; ctx.stroke(coast); }
+  // (13/10 : plus de dégradé au bord de l'eau, une seule teinte)
 }
 /* Fleuves = mer. Comme sur le globe (regions-water.topojson), la terre est CREUSÉE à la place de chaque fleuve : le contour des terres de DESSIN (FORME.terresDessin)
    passe de chaque côté du fleuve, et la mer se peint là, avec son rivage, son écume et son dégradé : un fleuve et la mer ne font qu'une seule eau, sans raccord.
@@ -369,15 +385,15 @@ function drawSea() {
   const foam = Math.max(1.2, Math.min(3, s * .9)), edge = 1.5;
   const [tx, ty] = toS(0, 0);
   ctx.save(); ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip();       // (rien hors du terrain)
-  { const sable = Math.max(2, 2.4 * s); ctx.lineJoin = 'round'; ctx.strokeStyle = '#d6b06a'; ctx.lineWidth = 2 * (edge + sable + 1.4); ctx.stroke(coast); ctx.strokeStyle = '#f2dd9e'; ctx.lineWidth = 2 * (edge + sable); ctx.stroke(coast); }   // grève de sable (la mer la recouvre côté eau)
   ctx.save();
   ctx.fillStyle = biomeLook().water || Col.water; ctx.fill(sea, 'evenodd');
   ctx.clip(sea, 'evenodd');
   seaBands(coast, foam, edge);
   drawEauRelief(s);                                                                   // relief de l'eau (même système que le sol), dans la mer déjà découpée
-  ctx.strokeStyle = WATER_FOAM; ctx.lineWidth = (foam + edge) * 2; ctx.stroke(coast);
+  ombreRive(coast);                                                                   // ombre très légère de la terre sur l'eau
+  ctx.strokeStyle = grevSaison(biomeLook().foam); ctx.lineWidth = (foam + edge) * 2; ctx.stroke(coast);
   ctx.restore();
-  ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = edge * 2; ctx.lineJoin = 'round'; ctx.stroke(coast);
+  ctx.strokeStyle = grevSaison(biomeLook().edge); ctx.lineWidth = edge * 2; ctx.lineJoin = 'round'; ctx.stroke(coast);
   ctx.restore();
 }
 /* Bords de la région, calculés une fois par région : le contour est découpé en suites de points tous les 6 m.
@@ -421,7 +437,7 @@ function drawBorder() {
   v.globalCompositeOperation = 'destination-out'; v.lineWidth = 24 * view.s; v.lineCap = 'round'; v.lineJoin = 'round'; v.stroke(cote);
   v.globalCompositeOperation = 'source-over';
   ctx.save(); ctx.clip(land, 'evenodd');
-  ctx.globalAlpha = .45; ctx.drawImage(voileC, 0, 0);
+  ctx.globalAlpha = .16; ctx.drawImage(voileC, 0, 0);          // (voile léger : les régions voisines gardent leur vrai rendu — terre, forêts, fleuves, lacs — sans y être constructibles)
   ctx.globalAlpha = .75; ctx.setLineDash([10, 6]); ctx.strokeStyle = Col.ink; ctx.lineWidth = 2; ctx.stroke(front);
   ctx.restore();
 }

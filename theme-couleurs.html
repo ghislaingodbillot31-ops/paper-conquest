@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thème couleurs</title>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/theme.css">
+<style>
+  *{ box-sizing:border-box }
+  body{ margin:0; background:var(--c-parchemin); color:var(--c-encre); font:14px/1.45 'MedievalSharp', Georgia, serif; padding:20px 16px 40px }
+  main{ max-width:1100px; margin:0 auto }
+  h1{ margin:0 0 4px; font-size:26px } p.sous{ margin:0 0 18px; color:var(--c-brun) }
+  .grille{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px }
+  .c{ border:1px solid rgba(43,38,24,.25); border-radius:8px; overflow:hidden; background:#fffdf6; cursor:pointer }
+  .c .p{ height:84px; display:flex; align-items:flex-end; justify-content:flex-end; padding:6px 8px; font:12px ui-monospace, Consolas, monospace }
+  .c .i{ padding:8px 10px 10px } .c b{ display:block; font-size:15px } .c code{ font:11.5px ui-monospace, Consolas, monospace; color:var(--c-brun) } .c span{ display:block; margin-top:3px; color:var(--c-brun); font-size:12.5px }
+  .essai{ margin-top:22px; display:flex; flex-wrap:wrap; gap:0; border:1px solid rgba(43,38,24,.25); border-radius:8px; overflow:hidden }
+  .essai div{ flex:1 1 0; min-width:40px; height:46px }
+  #msg{ position:fixed; bottom:16px; left:50%; transform:translateX(-50%); background:var(--c-encre); color:var(--c-parchemin); padding:6px 14px; border-radius:6px; opacity:0; transition:opacity .2s }
+  #msg.on{ opacity:1 }
+</style>
+<main>
+  <h1>Thème couleurs — 16 couleurs ternes</h1>
+  <p class="sous">La palette commune à tous les designs, construite à partir des deux couleurs du globe (l’herbe claire et l’herbe foncée), dans la même ambiance sourde. Cliquer une couleur copie son code. Définie dans <code>js/theme.js</code> (JavaScript) et <code>css/theme.css</code> (variables <code>--c-…</code>).</p>
+  <div class="grille" id="grille"></div>
+  <div class="essai" id="essai" title="La palette d’un seul coup d’œil"></div>
+</main>
+<div id="msg" role="status"></div>
+<script src="js/theme.js"></script>
+<script>
+const clair = hex => { const n = parseInt(hex.slice(1), 16), r = n >> 16, g = n >> 8 & 255, b = n & 255; return (r * 299 + g * 587 + b * 114) / 1000 > 140; };
+const grille = document.getElementById('grille'), essai = document.getElementById('essai'), msg = document.getElementById('msg');
+THEME.forEach((c, i) => {
+  const d = document.createElement('div'); d.className = 'c'; d.title = 'Copier ' + c.hex;
+  d.innerHTML = '<div class="p"></div><div class="i"><b></b><code></code><span></span></div>';
+  const p = d.querySelector('.p'); p.style.background = c.hex; p.style.color = clair(c.hex) ? '#2b2618' : '#f3eddd'; p.textContent = c.hex.toUpperCase();
+  d.querySelector('b').textContent = (i + 1) + '. ' + c.nom; d.querySelector('code').textContent = '--c-' + c.id + ' · COULEUR[\'' + c.id + '\']'; d.querySelector('span').textContent = c.usage;
+  d.addEventListener('click', () => { try { navigator.clipboard.writeText(c.hex); } catch (e) {} msg.textContent = c.hex + ' copié'; msg.classList.add('on'); clearTimeout(msg.t); msg.t = setTimeout(() => msg.classList.remove('on'), 1400); });
+  grille.appendChild(d);
+  const e = document.createElement('div'); e.style.background = c.hex; essai.appendChild(e);
+});
+</script>
+</html>

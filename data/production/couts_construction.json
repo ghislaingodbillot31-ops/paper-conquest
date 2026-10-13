@@ -526,22 +526,7 @@
    "entretien": []
   },
   {
-   "atelier": "tonnellerie",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
    "atelier": "fonderie",
-   "niveau": "feu",
-   "entretien": []
-  },
-  {
-   "atelier": "forge",
-   "niveau": "feu",
-   "entretien": []
-  },
-  {
-   "atelier": "bas_fourneau",
    "niveau": "feu",
    "entretien": []
   },
@@ -551,42 +536,12 @@
    "entretien": []
   },
   {
-   "atelier": "atelier_monetaire",
-   "niveau": "noble",
-   "entretien": []
-  },
-  {
-   "atelier": "archerie",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
-   "atelier": "armurerie",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
    "atelier": "tannerie",
    "niveau": "solide",
    "entretien": []
   },
   {
-   "atelier": "cordonnerie",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
    "atelier": "corderie",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
-   "atelier": "atelier_tissage",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
-   "atelier": "teinturerie_foulerie",
    "niveau": "solide",
    "entretien": []
   },
@@ -740,11 +695,6 @@
   },
   {
    "atelier": "garnison",
-   "niveau": "solide",
-   "entretien": []
-  },
-  {
-   "atelier": "scriptorium",
    "niveau": "solide",
    "entretien": []
   }

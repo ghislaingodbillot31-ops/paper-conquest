@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Cultures et saisons</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root{ --cd-bg:#f5f7f2; --cd-ink:#1e3a4c; --cd-soft:#5b7080; --cd-line:#c9d3ce; --cd-btn:#fff; color-scheme:light }
+  @media (prefers-color-scheme: dark){ :root{ --cd-bg:#122029; --cd-ink:#d3e2eb; --cd-soft:#8ea4b2; --cd-line:#2c4150; --cd-btn:#0f1a21; color-scheme:dark } }
+  html,body{ margin:0; height:100%; background:var(--cd-bg) }
+  #app{ height:100% }
+</style>
+<body>
+<div id="app"></div>
+<script src="js/batiments/cultures.js"></script>
+<script src="js/batiments/cultures-dashboard.js"></script>
+<script>montrerCultures(document.getElementById('app'));</script>
+</body>
+</html>

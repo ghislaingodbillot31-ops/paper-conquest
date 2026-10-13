@@ -305,14 +305,15 @@
  {
   "id": "tonnellerie",
   "nom": "Tonnellerie",
-  "statut": "nouveau",
+  "statut": "fusionné dans la menuiserie (13/10)",
   "categorie": "Bois",
   "filiere": "bois",
-  "catalogueId": null,
+  "catalogueId": "menuiserie",
   "banal": null,
   "usureOutils": true,
   "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "catalogue": true,
+  "fusionneDans": "menuiserie"
  },
  {
   "id": "fonderie",
@@ -327,24 +328,26 @@
  {
   "id": "forge",
   "nom": "Forge",
-  "statut": "modifié",
+  "statut": "fusionné dans fonderie (13/10)",
   "categorie": "Métal",
   "filiere": "metal",
-  "catalogueId": "forge",
+  "catalogueId": "fonderie",
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "fusionneDans": "fonderie"
  },
  {
   "id": "bas_fourneau",
   "nom": "Bas fourneau",
-  "statut": "nouveau",
+  "statut": "fusionné dans la fonderie (13/10)",
   "categorie": "Métal",
   "filiere": "metal",
-  "catalogueId": null,
+  "catalogueId": "fonderie",
   "banal": null,
   "usureOutils": true,
   "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "catalogue": true,
+  "fusionneDans": "fonderie"
  },
  {
   "id": "orfevre",
@@ -361,36 +364,39 @@
  {
   "id": "atelier_monetaire",
   "nom": "Atelier monétaire",
-  "statut": "nouveau",
+  "statut": "fusionné dans la fonderie (13/10)",
   "categorie": "Métal",
   "filiere": "metal",
-  "catalogueId": null,
+  "catalogueId": "fonderie",
   "banal": null,
   "usureOutils": true,
   "unique": true,
   "seigneurial": true,
   "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "catalogue": true,
+  "fusionneDans": "fonderie"
  },
  {
   "id": "archerie",
   "nom": "Archerie",
-  "statut": "modifié",
+  "statut": "fusionné dans menuiserie (13/10)",
   "categorie": "Armes",
   "filiere": "armes",
-  "catalogueId": "archerie",
+  "catalogueId": "menuiserie",
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "fusionneDans": "menuiserie"
  },
  {
   "id": "armurerie",
   "nom": "Armurerie",
-  "statut": "modifié",
+  "statut": "fusionné (13/10) : boucliers de bois → menuiserie, armes/armures/boucliers de métal → fonderie",
   "categorie": "Armes",
   "filiere": "armes",
-  "catalogueId": "armurerie",
+  "catalogueId": "fonderie",
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "fusionneDans": "fonderie"
  },
  {
   "id": "tannerie",
@@ -407,12 +413,13 @@
  {
   "id": "cordonnerie",
   "nom": "Atelier de cordonnier",
-  "statut": "modifié",
+  "statut": "fusionné dans couture (13/10)",
   "categorie": "Cuir et textile",
   "filiere": "cuir_textile",
-  "catalogueId": "cordonnerie",
+  "catalogueId": "couture",
   "banal": null,
-  "usureOutils": true
+  "usureOutils": true,
+  "fusionneDans": "couture"
  },
  {
   "id": "corderie",
@@ -429,26 +436,28 @@
  {
   "id": "atelier_tissage",
   "nom": "Atelier de tissage",
-  "statut": "nouveau",
+  "statut": "fusionné dans la corderie (13/10)",
   "categorie": "Cuir et textile",
   "filiere": "cuir_textile",
-  "catalogueId": null,
+  "catalogueId": "corderie",
   "banal": null,
   "usureOutils": true,
   "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "catalogue": true,
+  "fusionneDans": "corderie"
  },
  {
   "id": "teinturerie_foulerie",
   "nom": "Teinturerie-foulerie",
-  "statut": "nouveau",
+  "statut": "fusionné dans la tannerie (13/10)",
   "categorie": "Cuir et textile",
   "filiere": "cuir_textile",
-  "catalogueId": null,
+  "catalogueId": "tannerie",
   "banal": null,
   "usureOutils": true,
   "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "catalogue": true,
+  "fusionneDans": "tannerie"
  },
  {
   "id": "couture",
@@ -675,15 +684,15 @@
  {
   "id": "scriptorium",
   "nom": "Scriptorium",
-  "statut": "nouveau",
+  "statut": "fusionné dans le lieu de culte (13/10)",
   "categorie": "Services",
   "filiere": "commerce",
-  "catalogueId": null,
+  "catalogueId": "eglise",
   "banal": null,
   "usureOutils": true,
   "module": "eglise",
-  "note": "Module de l'Église : manuscrits enluminés.",
-  "dessin": "js/batiments/dessins-production.js",
-  "catalogue": true
+  "note": "Fusionné le 13/10/2026 : c'est le lieu de culte (ex-église) qui copie et enlumine les manuscrits.",
+  "catalogue": false,
+  "fusionneDans": "eglise"
  }
 ]

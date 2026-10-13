@@ -156,7 +156,6 @@ chargeClimat(FORME_ID);
 $('undo').addEventListener('click', undo);
 $('zin').addEventListener('click', () => zoomAt(W / 2, H / 2, 1.35));
 $('zout').addEventListener('click', () => zoomAt(W / 2, H / 2, 1 / 1.35));
-$('zfit').addEventListener('click', () => atelier.on ? fitAtelier() : fit());
 $('zhome').addEventListener('click', () => atelier.on ? fitAtelier() : fitContent());
 // atelier : liste complète des bâtiments (un clic l'affiche seul sur son carré), bouton carte / atelier
 const GALLERY_GROUPS = [['', 'Village'], ['res', 'Ressources'], ['logi', 'Logistique'], ['com', 'Commerce'], ['agri', 'Agriculture'], ['ind', 'Industrie'], ['def', 'Défense']];
@@ -308,26 +307,37 @@ function renderSel() {
   if ($('sdel')) $('sdel').addEventListener('click', deleteSel);
   if ($('sup')) $('sup').addEventListener('click', () => { commit(); o.lvl = Math.min(3, lvlOf(o) + 1); changed(false); flash(`Amélioré : ${FORT_LEVELS[sel.type][o.lvl - 1].toLowerCase()}`); });
 }
+/* Barre d'état : les totaux du village (logements, habitants, routes, murailles…) ne sont recalculés que toutes les STATUS_MS (ou dès que le décor change) ; seul le curseur suit la souris.
+   Avant, tout était recalculé à chaque image (≈ 140 ms/s avec 300 bâtiments, mesuré 13/10). */
+const STATUS_MS = 250;
+let statusTail = '', statusPop = '', statusPlaces = '', statusAt = -1e9, statusV = -1;
 function updateStatus() {
-  const built = S.houses.reduce((s, h) => s + h.w * h.l, 0);
-  const cap = S.houses.reduce((s, h) => s + ((buildingOf(h) || {}).cap || 0), 0); // logements
-  if (freeCells.v !== sceneV) { let n = 0; for (const c of Z.cells) if (c.occ === null) n++; freeCells.n = n; freeCells.v = sceneV; } // (une fois par changement du décor)
-  const free = freeCells.n;
-  const len = S.roads.reduce((s, r) => s + roadLen(r), 0);
+  const now = performance.now();
+  if (statusV !== sceneV || now - statusAt > STATUS_MS) {
+    statusV = sceneV; statusAt = now;
+    const cap = S.houses.reduce((s, h) => s + ((buildingOf(h) || {}).cap || 0), 0); // logements
+    if (freeCells.v !== sceneV) { let n = 0; for (const c of Z.cells) if (c.occ === null) n++; freeCells.n = n; freeCells.v = sceneV; } // (une fois par changement du décor)
+    const len = S.roads.reduce((s, r) => s + roadLen(r), 0), pop = typeof popVillage === 'function' ? popVillage() : null, lg = pop !== null ? logements() : null;
+    statusTail = `<span>Trésor <b>${fmt(S.gold, 0)}</b> Or</span>` +
+      `<span><b>${S.houses.length}</b> bâtiments · logements pour <b>${cap}</b> habitants</span>` +
+      (pop !== null ? `<span>habitants <b>${pop}</b> · places disponibles <b>${placesLibres()}</b>${lg.sansAbri ? ` · <b>${lg.sansAbri}</b> sans abri` : ''}</span>` : '') +
+      `<span><b>${freeCells.n}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
+      `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
+      `<span>1 case = 8 × 8 m</span>`;
+    const p = fmt(pop !== null ? pop : cap, 0), pl = typeof placesLibres === 'function' ? fmt(placesLibres(), 0) : null;
+    if (p !== statusPop) { statusPop = p; $('villageois').textContent = p; }
+    if (pl !== null && pl !== statusPlaces) { statusPlaces = pl; $('places').textContent = pl; }
+  }
+  if (typeof afficherStock === 'function') afficherStock();
+  if (!statusBox) return;                                                                // (la page région n'a pas de barre d'état : rien à écrire, avant le texte était construit puis jeté dans un élément détaché)
   const c = cursor && inTerrain(cursor)
     ? `x <b>${fmt(cursor[0])}</b> · y <b>${fmt(cursor[1])}</b> m` + (RELIEF_ON ? ` · altitude <b>${fmt(hAt(...cursor))}</b> m` : '')
     : 'hors terrain';
-  const html =
-    `<span>${c}</span><span>Trésor <b>${fmt(S.gold, 0)}</b> Or</span>` +
-    `<span><b>${S.houses.length}</b> bâtiments · logements pour <b>${cap}</b> habitants</span>` +
-    (typeof popVillage === 'function' ? `<span>habitants <b>${popVillage()}</b> · places disponibles <b>${placesLibres()}</b>${logements().sansAbri ? ` · <b>${logements().sansAbri}</b> sans abri` : ''}</span>` : '') +
-    `<span><b>${free}</b> cases libres</span><span><b>${fmt(len, 0)}</b> m de routes</span>` +
-    `<span><b>${fmt(S.walls.reduce((s, w) => s + roadLen(w), 0), 0)}</b> m de murailles · <b>${S.towers.length}</b> tours · <b>${S.gates.length}</b> portes</span>` +
-    `<span>1 case = 8 × 8 m</span>`;
+  const html = `<span>${c}</span>` + statusTail;
   // la barre d'état n'est réécrite que si son texte change (pas de mise en page à chaque image)
-  if (typeof afficherStock === 'function') afficherStock();
-  if (html !== lastStatus) { lastStatus = html; $('status').innerHTML = html; $('villageois').textContent = fmt(typeof popVillage === 'function' ? popVillage() : cap, 0); if (typeof placesLibres === 'function') $('places').textContent = fmt(placesLibres(), 0); }
+  if (html !== lastStatus) { lastStatus = html; statusBox.innerHTML = html; }
 }
+const statusBox = document.getElementById('status');
 let lastStatus = '';
 const freeCells = { v:-1, n:0 };
 // carte d'essai enregistrée avec une ancienne version des formes (fleuves, côtes) : régénérée une fois avec le générateur à jour (même région)

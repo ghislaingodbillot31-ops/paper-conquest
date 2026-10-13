@@ -18,6 +18,8 @@ const MATERIAUX = {
 const TOUS = ['primitif', 'cuivre', 'bronze', 'fer', 'acier'];
 /* tete : unités de matériau (pierre, cuivre…) ; manche : bois ; liant : corde (version primitive seulement, sauf corde:1 toujours) ; plus : ajouts pour les versions métalliques ;
    qte : exemplaires par fabrication ; atelier : l'atelier des versions métalliques (les versions primitives se font aussi chez le menuisier). */
+/* FUSIONS DE BÂTIMENTS (13/10) : la FORGE n'existe plus, ses recettes (métal) sont faites par la FONDERIE ; l'ARCHERIE n'existe plus, ses recettes sont faites par la MENUISERIE. Les objets gardent leur atelier d'origine (forge, archerie) ci-dessous ; ce tableau les redirige vers le bâtiment qui les fabrique. */
+const FUSION_ATELIER = { forge:'fonderie', archerie:'menuiserie', armurerie:'fonderie' };   // l'ARMURERIE n'existe plus non plus : ses boucliers de bois (et renforcés) vont à la menuiserie (le primitif est toujours au menuisier), ses boucliers de métal et ses armures à la fonderie
 const OBJETS = {
   hache:    { nom:'Hache',        type:'outil',     arme:true, mats:TOUS, atelier:'forge', tete:2, manche:1, liant:1, dur:100, eff:1, deg:10 },
   pioche:   { nom:'Pioche',       type:'outil',     mats:TOUS, atelier:'forge', tete:3, manche:1, liant:1, dur:100, eff:1, deg:6 },
@@ -53,7 +55,7 @@ function recette(objId, matId) {
   if (m.niv >= 1) add('charbon de bois', m.niv);                                     // les métaux se travaillent au charbon de bois
   const prim = m.niv === 0;
   return { id:objId + ':' + matId, objet:objId, mat:matId, nom:nomObjet(o, matId), type:o.type, cout, qte:o.qte || 1, tps:6 + m.niv * 2,
-    ateliers:prim ? (o.atelier === 'forge' || o.atelier === 'menuiserie' ? ['menuiserie'] : ['menuiserie', o.atelier]) : [o.atelier],   // la forge ne fait QUE le métal : le primitif (silex + bois) et le bois sont au menuisier
+    ateliers:[...new Set(prim ? ['menuiserie', FUSION_ATELIER[o.atelier] || o.atelier] : [FUSION_ATELIER[o.atelier] || o.atelier])].filter(a => a !== 'fonderie' || !prim),   // la forge ne fait QUE le métal : le primitif (silex + bois) et le bois sont au menuisier
     dur:Math.round(o.dur * m.dur), eff:Math.round(o.eff * m.eff * 100) / 100, deg:Math.round(o.deg * m.deg * 10) / 10 };
 }
 // la corde (liant des versions primitives) : fibres tirées de l'écorce, au menuisier
@@ -95,5 +97,5 @@ const meilleurOutil = h => meilleurOutilDe(outilDe(h));
 const outilManque = h => { const t = outilDe(h); return t && !meilleurOutil(h) ? OBJETS[t].nom.toLowerCase() : null; };
 const outilManqueDe = t => t && !meilleurOutilDe(t) ? OBJETS[t].nom.toLowerCase() : null;   // nom de l'outil qui manque, ou null
 const efficaciteOutil = h => { const b = meilleurOutil(h); return b ? b.eff : 1; };
-// recettes qu'un bâtiment peut fabriquer (id du bâtiment : forge, menuiserie, archerie, armurerie ; 'fonderie' : les fusions, selon son niveau)
+// recettes qu'un bâtiment peut fabriquer (id du bâtiment : menuiserie ; 'fonderie' : les fusions, selon son niveau)
 const recettesDe = (atelier, niveau = 0) => atelier === 'fonderie' ? FUSIONS.filter(f => (f.niv || 0) <= niveau) : RECETTES.filter(r => r.ateliers.includes(atelier));

@@ -1151,6 +1151,7 @@ const STOCKS_VALIDES = {
   fromagerie:{viande:40,lait:200,"présure":10,sel:30,"fromage de garde":50},
   four:{farine:20,pain:100},
 };
+for (const [de, vers] of [['forge', 'fonderie'], ['armurerie', 'fonderie'], ['archerie', 'menuiserie'], ['cordonnerie', 'couture']]) if (STOCKS_VALIDES[de]) { STOCKS_VALIDES[vers] = { ...STOCKS_VALIDES[vers], ...STOCKS_VALIDES[de] }; delete STOCKS_VALIDES[de]; }   // fusions de bâtiments du 13/10 : les stocks de la forge et de l'archerie vont à la fonderie et à la menuiserie
 for (const k of Object.keys(STOCKS_VALIDES)) CAP_RES[k] = { ...(CAP_RES[k] || {}), ...STOCKS_VALIDES[k] };
 function maxEntree(h, k) {
   if (h.kind === 'camp_chasse') return Math.max(2, (CHASSE.LANCE[k] || 0) * (Math.max(1, nbReel(h)) + 2));
@@ -1390,7 +1391,7 @@ function stepJob(h, job, dt) {
     if (!w.full && !w.sansOutil && (w.t = (w.t === undefined ? job.every : w.t) - dt) <= 0) { h.stock = (h.stock || 0) + 1; w.t = job.every; save(); }
     return false;                                           // rien à animer
   }
-  if (job.type === 'craft') { (PRODUCTION_AUTO.has(h.kind) ? stepFonte : stepProduction)(h, w, dt); return false; }          // file de production (production.js)
+  if (job.type === 'craft') { (PRODUCTION_AUTO.has(h.kind) && !(h.kind === 'fonderie' && (h.file || []).length && !w.fusion) ? stepFonte : stepProduction)(h, w, dt); return false; }          // file de production (production.js)
   switch (w.state) {
     case 'idle': case 'wait': {
       if ((w.t = (w.t || 0) - dt) > 0) break;               // en attente : on revérifie chaque seconde

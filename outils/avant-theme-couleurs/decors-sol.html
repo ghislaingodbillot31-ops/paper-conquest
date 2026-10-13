@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Décors du sol</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a; --ok:#3f7a3a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px 0 0;color:var(--soft)}
+  #etat{font-weight:600;color:var(--ok)}
+  .barre{display:flex;gap:8px;justify-content:center;margin-top:10px;flex-wrap:wrap}
+  h2.cat{margin:22px 24px 0;font:700 28px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.05em;border-bottom:2px solid var(--edge)}
+  main{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;padding:12px 24px 10px}
+  .carte{background:var(--card);border:1.4px solid var(--edge);border-radius:10px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .carte.on{border-color:var(--ok);box-shadow:0 0 0 2px #3f7a3a44}
+  .duo{display:flex;gap:6px}
+  canvas{display:block;border-radius:6px}
+  .carte h3{margin:0;font:700 21px "Barlow Condensed","Arial Narrow",sans-serif;text-align:center}
+  button{margin-top:4px;padding:6px 14px;border:1.4px solid var(--edge);border-radius:6px;background:#fff8e8;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+  button[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+</style></head>
+<body>
+<header>
+  <h1>DÉCORS DU SOL</h1>
+  <p>Fleurs, touffes d'herbe, buissons, feuilles au sol et divers · <span id="n"></span> modèles dessinés à la main · à gauche le modèle en grand, à droite un semis sur l'herbe.</p>
+  <p>Cliquez <b>Retenir</b> sur ceux que vous voulez : rien n'est encore posé dans le jeu, la liste est seulement enregistrée (decors.valides.v1) pour l'implanter ensuite.</p>
+  <p id="etat"></p>
+  <div class="barre"><button id="aucun" type="button">Tout retirer</button></div>
+</header>
+<div id="page"></div>
+<script src="js/carte/decors.js"></script>
+<script>
+const TAU = Math.PI * 2, D = DECORS_SOL, SOL = '#aacb2a', SOL2 = '#9cc122';
+const seeded = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+/* ---------- planche ---------- */
+const CLE = 'decors.valides.v1';
+let valides = new Set(); try { valides = new Set(JSON.parse(localStorage.getItem(CLE) || '[]')); } catch (e) {}
+const sauve = () => { try { localStorage.setItem(CLE, JSON.stringify([...valides])); } catch (e) {} etat(); };
+const etat = () => { document.getElementById('etat').textContent = valides.size + ' modèle' + (valides.size > 1 ? 's' : '') + ' retenu' + (valides.size > 1 ? 's' : '') + ' sur ' + D.length; };
+document.getElementById('n').textContent = D.length;
+const fond = (c, W, H, seed) => { const g = c.getContext('2d'); g.fillStyle = SOL; g.fillRect(0, 0, W, H); const r = seeded(seed); for (let i = 0; i < 40; i++) { g.fillStyle = r() < .5 ? SOL2 : '#94ad58'; g.globalAlpha = .5; g.beginPath(); g.arc(r() * W, r() * H, 6 + r() * 14, 0, TAU); g.fill(); } g.globalAlpha = 1; return g; };
+function peint(d, big, scatter) {
+  const S = 170, c1 = big, c2 = scatter; c1.width = c1.height = c2.width = c2.height = S;
+  const g1 = fond(c1, S, S, 3), g2 = fond(c2, S, S, 5);
+  const hash = [...d.id + d.nom].reduce((a, ch) => a * 31 + ch.charCodeAt(0) >>> 0, 7);
+  g1.save(); g1.translate(S / 2, S / 2); g1.scale(S * .4, S * .4); d.f(g1, seeded(hash)); g1.restore();
+  const r = seeded(hash + 1), N = 3;
+  for (let j = 0; j < N; j++) for (let i = 0; i < N; i++) {
+    g2.save(); g2.translate((i + .5) * S / N + (r() - .5) * 18, (j + .5) * S / N + (r() - .5) * 18); g2.rotate(r() * TAU); const k = S / N * .32 * (.8 + r() * .35); g2.scale(k, k); d.f(g2, seeded(hash + i * 7 + j * 13)); g2.restore();
+  }
+}
+const page = document.getElementById('page');
+for (const cat of ['Fleurs', 'Touffes', 'Buissons', 'Feuilles', 'Divers']) {
+  const h = document.createElement('h2'); h.className = 'cat'; h.textContent = cat.toUpperCase() + ' (' + D.filter(d => d.cat === cat).length + ')'; page.appendChild(h);
+  const m = document.createElement('main'); page.appendChild(m);
+  for (const d of D.filter(d => d.cat === cat)) {
+    const el = document.createElement('div'); el.className = 'carte' + (valides.has(d.id) ? ' on' : '');
+    el.innerHTML = '<div class="duo"><canvas></canvas><canvas></canvas></div><h3></h3><button type="button"></button>';
+    el.querySelector('h3').textContent = d.id + ' · ' + d.nom;
+    const cs = el.querySelectorAll('canvas'); cs[0].style.cssText = cs[1].style.cssText = 'width:110px;height:110px'; peint(d, cs[0], cs[1]);
+    const b = el.querySelector('button'), maj = () => { b.setAttribute('aria-pressed', valides.has(d.id)); b.textContent = valides.has(d.id) ? 'Retenu ✓' : 'Retenir'; el.classList.toggle('on', valides.has(d.id)); };
+    b.onclick = () => { valides.has(d.id) ? valides.delete(d.id) : valides.add(d.id); maj(); sauve(); }; maj();
+    m.appendChild(el);
+  }
+}
+document.getElementById('aucun').onclick = () => { valides.clear(); sauve(); page.querySelectorAll('.carte').forEach(e => { e.classList.remove('on'); const b = e.querySelector('button'); b.setAttribute('aria-pressed', false); b.textContent = 'Retenir'; }); };
+etat();
+</script>
+</body></html>

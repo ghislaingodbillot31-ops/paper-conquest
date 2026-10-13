@@ -46,7 +46,6 @@
    "verrerie",
    "saloir_fumoir",
    "maison",
-   "maison_cour",
    "grande_maison"
   ]
  },
@@ -175,7 +174,7 @@
   "existant": false,
   "attendu": [
    "tuilerie_poterie",
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -207,7 +206,6 @@
    "brasserie",
    "four",
    "tannerie",
-   "teinturerie_foulerie",
    "four_chaux",
    "chandellerie_savonnerie"
   ]
@@ -223,7 +221,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "bas_fourneau"
+   "fonderie"
   ]
  },
  {
@@ -322,7 +320,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -467,7 +465,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -481,7 +479,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -565,7 +563,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "archerie"
+   "menuiserie"
   ]
  },
  {
@@ -665,7 +663,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "teinturerie_foulerie",
+   "tannerie",
    "maison"
   ]
  },
@@ -759,7 +757,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "archerie"
+   "menuiserie"
   ]
  },
  {
@@ -775,7 +773,8 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "fromagerie"
+   "fromagerie",
+   "etable"
   ]
  },
  {
@@ -789,7 +788,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "atelier_tissage",
+   "corderie",
    "couture"
   ]
  },
@@ -1133,8 +1132,7 @@
   "existant": true,
   "attendu": [
    "menuiserie",
-   "tonnellerie",
-   "armurerie"
+   "fonderie"
   ]
  },
  {
@@ -1170,9 +1168,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "bas_fourneau",
-   "fonderie",
-   "forge"
+   "fonderie"
   ]
  },
  {
@@ -1186,7 +1182,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "forge"
+   "fonderie"
   ]
  },
  {
@@ -1261,7 +1257,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "forge"
+   "fonderie"
   ]
  },
  {
@@ -1286,8 +1282,8 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "forge",
-   "tonnellerie"
+   "fonderie",
+   "menuiserie"
   ]
  },
  {
@@ -1301,9 +1297,8 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "forge",
-   "archerie",
-   "armurerie"
+   "fonderie",
+   "menuiserie"
   ]
  },
  {
@@ -1331,8 +1326,8 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "cordonnerie",
-   "archerie"
+   "couture",
+   "menuiserie"
   ]
  },
  {
@@ -1346,7 +1341,6 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "tonnellerie",
    "menuiserie"
   ]
  },
@@ -1389,7 +1383,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "forge"
+   "fonderie"
   ]
  },
  {
@@ -1461,7 +1455,7 @@
   "existant": true,
   "attendu": [
    "orfevre",
-   "atelier_monetaire"
+   "fonderie"
   ]
  },
  {
@@ -1569,9 +1563,8 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "cordonnerie",
-   "armurerie",
-   "forge"
+   "couture",
+   "fonderie"
   ]
  },
  {
@@ -1596,8 +1589,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "corderie",
-   "atelier_tissage"
+   "corderie"
   ]
  },
  {
@@ -1611,7 +1603,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "archerie",
+   "menuiserie",
    "cabane_peche"
   ]
  },
@@ -1640,7 +1632,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "atelier_tissage"
+   "corderie"
   ]
  },
  {
@@ -1654,7 +1646,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -1669,7 +1661,7 @@
   "existant": false,
   "attendu": [
    "couture",
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -1684,7 +1676,7 @@
   "existant": false,
   "attendu": [
    "couture",
-   "teinturerie_foulerie"
+   "tannerie"
   ]
  },
  {
@@ -1723,7 +1715,7 @@
   "type": "materiau",
   "existant": false,
   "attendu": [
-   "armurerie"
+   "fonderie"
   ]
  },
  {
@@ -1817,7 +1809,7 @@
   "type": "materiau",
   "existant": true,
   "attendu": [
-   "archerie"
+   "menuiserie"
   ]
  },
  {

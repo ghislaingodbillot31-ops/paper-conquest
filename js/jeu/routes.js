@@ -39,12 +39,12 @@ function addVillageNetwork(data){
   map.addLayer({
     id: 'paths', type: 'line', source: 'paths',
     paint: {
-      'line-color': '#6b4a2a', 'line-width': 1.4, 'line-opacity': 0.75,
-      'line-dasharray': [2, 1.5],
+      'line-color': '#c8202a', 'line-width': 1.6, 'line-opacity': 0.9,                 // routes commerciales : un trait plein rouge (12/10)
     },
   });
 
   map.addSource('villages', { type: 'geojson', data: villagesFc });
+  // villages : simple point
   map.addLayer({
     id: 'villages-halo', type: 'circle', source: 'villages',
     paint: { 'circle-radius': 5.5, 'circle-color': '#f6efe0', 'circle-opacity': 0.9 },

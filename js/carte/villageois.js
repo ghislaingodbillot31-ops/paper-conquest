@@ -24,9 +24,9 @@ const VILLAGEOIS_DEFAUT = JSON.parse(JSON.stringify(VILLAGEOIS));
 try { const o = JSON.parse(localStorage.getItem('villageois.v1') || '{}'); for (const k in o) if (VILLAGEOIS[k]) VILLAGEOIS[k] = { ...VILLAGEOIS_DEFAUT[k], ...o[k], chapeau:{ ...VILLAGEOIS_DEFAUT[k].chapeau, ...(o[k].chapeau || {}) }, outil:{ ...VILLAGEOIS_DEFAUT[k].outil, ...(o[k].outil || {}) } }; } catch (e) {}
 // le métier d'un villageois d'après le bâtiment où il travaille (bâtiment inconnu : villageois simple)
 const VILLAGEOIS_DE = { camp_mineur:'mineur', cabane_peche:'pecheur', camp_colon:'villageois', camp_bucherons:'bucheron', loge_bucheron:'bucheron', hutte_forestier:'forestier', scierie:'menuisier', menuisier:'menuisier', pecherie:'pecheur', camp_chasse:'soldat', hutte_cueillette:'villageois',
-  rucher:'villageois', fromagerie:'boulanger', hutte_charbonnier:'bucheron', tailleur_pierre:'mineur', fosse_miniere:'mineur', ferme:'paysan', recolte:'paysan', agriculture:'paysan', bergerie:'berger', moulin:'boulanger', four:'boulanger', boulangerie:'boulanger',
+  rucher:'villageois', fromagerie:'boulanger', hutte_charbonnier:'bucheron', tailleur_pierre:'mineur', fosse_miniere:'mineur', ferme:'paysan', etable:'paysan', recolte:'paysan', agriculture:'paysan', bergerie:'berger', moulin:'boulanger', four:'boulanger', boulangerie:'boulanger',
   forgeron:'forgeron', armurier:'forgeron', fonderie:'forgeron', tailleur:'tailleur', cordonnier:'tailleur', marche:'marchand', comptoir:'marchand', comptoir_betail:'marchand', relais:'marchand',
-  entrepot:'marchand', grange:'paysan', defense:'soldat', maison:'villageois', maison_cour:'villageois', potager:'paysan', poulailler:'paysan', verger:'paysan', chevres:'berger', brasserie:'villageois' };
+  entrepot:'marchand', grange:'paysan', defense:'soldat', maison:'villageois', potager:'paysan', poulailler:'paysan', verger:'paysan', chevres:'berger', brasserie:'villageois' };
 const villageoisDe = kind => VILLAGEOIS_DE[kind] || 'villageois';
 const VI_INK = '#2b2118';
 const vsMel = (a, b, t) => '#' + [1, 3, 5].map(i => Math.round(parseInt(a.substr(i, 2), 16) * (1 - t) + parseInt(b.substr(i, 2), 16) * t).toString(16).padStart(2, '0')).join('');

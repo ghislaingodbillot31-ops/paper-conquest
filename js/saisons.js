@@ -54,6 +54,7 @@ function tempDuJour(r, doy) {
 }
 function meteo(r, doy) {
   const temp = tempDuJour(r, doy);
+  if (typeof location !== 'undefined' && /[?&]apercu/.test(location.search)) return { doy, saison:'ete', temp:Math.max(16, Math.round(temp * 10) / 10), neige:0, gel:false };   // aperçu des biomes : toujours l'été, sans neige ni gel
   let froid = 0; for (let k = 0; k < 21; k++) froid += Math.max(0, -tempDuJour(r, ((doy - 1 - k + 365) % 365) + 1));   // 21 derniers jours
   const neige = Math.max(0, Math.min(1, froid / 21 / 6)) * (.35 + .65 * Math.max(0, Math.min(1, r.hum)));
   return { doy, saison:saisonDe(r.lat, doy), temp:Math.round(temp * 10) / 10, neige:Math.round(neige * 100) / 100, gel:temp < -4 };

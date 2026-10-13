@@ -2,22 +2,17 @@
    INFOS : fiche par id de bâtiment (rôle, production, besoin, main-d'œuvre max, notes). */
 const INFOS = {
   camp_colon: { role:'Premier bâtiment à construire : accueille les premiers habitants et lance le village.', prod:'Aucune', besoin:'Aucun', cap:5, notes:['Peut être détruit quand les habitations prennent le relais.'] },
-  maison: { role:'Logement des habitants.', cap:2 },
-  maison_cour: { role:'Logement des habitants, avec une arrière-cour (décor : les extensions de maison n’existent plus, chaque métier est un bâtiment à part).', cap:4 },
+  maison: { role:'Logement d’une famille.', cap:4 },
   grande_maison: { role:'Logement des habitants, avec jardin et arrière-cour (décor).', cap:4 },
   manoir: { role:'Grande habitation pour accueillir davantage d’habitants.', cap:6, notes:["Peut être agrandi jusqu'à 10 habitants."] },
   mairie: { role:'Siège de la gestion du village : les décisions s’y prennent et les nouveaux arrivants s’y présentent.', prod:'Aucune', besoin:'Aucun', notes:['Les arrivants viennent à pied depuis le bord de la région, par les routes d’entrée, et attendent votre décision devant la mairie.', 'Sans mairie, plus personne ne se présente.'] },
-  menuiserie: { role:'Atelier de menuisier : fabrique les objets en bois depuis sa file de production.', prod:'Corde, outils et armes primitifs (bois, silex), gourdin, boucliers de bois, flèches de bois', besoin:'Bois, planches, pierre, corde', main:2 },
-  forge: { role:'Forge : outils et armes en métal, depuis sa file de production.', prod:'Outils et armes en cuivre, bronze, fer, acier', besoin:'Métaux de la fonderie + bois pour les manches', main:2 },
-  archerie: { role:'Archerie : arcs, arbalètes et flèches, depuis sa file de production.', prod:'Arc, arbalète, flèches (bois, pierre, cuivre, bronze, fer, acier)', besoin:'Bois, corde, pointes', main:2 },
-  armurerie: { role:'Armurerie : boucliers et armures, depuis sa file de production.', prod:'Boucliers (bois à acier), armures', besoin:'Planches, métaux, peaux', main:2 },
-  cordonnerie: { role:'Atelier de cordonnier : transforme les peaux en chaussures.', prod:'Chaussures', besoin:'Peaux (extension enclos à chèvres d’une ferme à moins de 500 m)', main:2 },
-  couture: { role:'Atelier de tailleur : transforme la laine en vêtements.', prod:'Vêtements', besoin:'Laine (bergerie à moins de 500 m)', main:2 },
+  menuiserie: { role:'Atelier de menuisier : fabrique les objets en bois depuis sa file de production.', prod:'Corde, outils et armes primitifs (bois, silex), gourdin, boucliers de bois, arcs, arbalètes et flèches (ex-archerie), tonneaux et cuves (ex-tonnellerie)', besoin:'Bois, planches, pierre, corde', main:2 },
+  couture: { role:'Atelier de tailleur : transforme la laine en vêtements et les peaux en chaussures (ex-cordonnerie).', prod:'Vêtements, chaussures', besoin:'Laine (bergerie à moins de 500 m), peaux', main:2 },
   brasserie: { role:'Brasserie : brasse la bière avec les céréales.', prod:'Bière', besoin:'Grain (ferme à moins de 500 m)', main:2 },
   fonderie: { role:'Allumée (ON), elle fond en continu les minerais du stock en métaux et en alliages ; éteinte (OFF), elle s’arrête.', prod:'Fer, cuivre, étain, plomb, argent, or, bronze (cuivre + étain) ; acier avec le haut fourneau', besoin:'Minerais (fosse minière) et charbon de bois', main:6, notes:['Les fondeurs fondent ; les porteurs vont chercher les minerais (fosses) et le charbon de bois, à pied, à la charrette ou au chariot.', 'Choisissez la fabrication dans la fenêtre : elle se répète tant que les ressources du village le permettent.', 'Haut fourneau (amélioration) : débloque l’acier, obtenu à partir du fer.'] },
   marche: { role:'Vente de produits alimentaires (poisson, viande, pain, fromages…) : 12 emplacements, un étal par case.', main:'1 habitant par étal', notes:["Après la fin du travail, un ouvrier d'un bâtiment qui a de la nourriture en stock installe un étal.", "L'étal est permanent ; il disparaît avec son bâtiment. Il vend pendant les horaires du marché."] },
   taverne: { role:'Lieu de repos et de vie sociale.', prod:'Aucune', besoin:'Boissons produites par la brasserie', main:2 },
-  eglise: { role:'Lieu de culte qui améliore le moral.', prod:'Moral', besoin:'Un homme de foi chargé de prêcher', main:'1 homme de foi' },
+  eglise: { role:'Lieu de culte qui améliore le moral ; on y copie aussi les manuscrits (ex-scriptorium).', prod:'Moral, manuscrits', besoin:'Un homme de foi chargé de prêcher', main:'1 homme de foi' },
   cimetiere: { role:'Lieu d’inhumation des habitants décédés.', prod:'Aucune', besoin:'Tissu / lin', main:1 },
   puits: { role:"Eau potable quand aucune rivière ou source n'est accessible.", prod:'Eau potable', besoin:'Aucun', notes:["Les habitants viennent chercher l'eau pour les habitations et bâtiments ; tous peuvent l'utiliser."] },
   camp_bucherons: { role:'Exploite les ressources forestières : les bûcherons abattent, le porteur ramasse le bois.', prod:'Bois, branches', besoin:'Zone forestière exploitable', main:8 },
@@ -30,7 +25,7 @@ const INFOS = {
   tailleur_pierre: { role:'Extrait et travaille la pierre et le silex.', prod:'Pierre de construction, pointes de flèches en silex', besoin:'Zone riche en pierre / silex', main:2 },
   camp_mineur: { role:'Décharge les fosses minières et stocke toutes leurs ressources (minerais, silex, sel…) jusqu’à ce que les bâtiments viennent les prendre.', prod:'Stockage des ressources des mines (2000)', besoin:'Des fosses minières à moins de 600 m', main:4 },
   fosse_miniere: { role:'Posée sur un gisement : le mineur descend dans la mine, remonte 4 kg de minerai toutes les 30 secondes et les range dans la cabane.', prod:'Minerai de fer, cuivre, étain, plomb, argent, or ; sel, alun, ambre (selon le gisement)', besoin:'Gisement à portée + pioche (sans pioche : travail à la main, lent)', main:6 },
-  hutte_charbonnier: { role:'Coupe du bois dans sa zone, le stocke, puis le brûle en charbon de bois, gardé sur place pour la forge et la fonderie.', prod:'Charbon de bois', besoin:'Zone forestière : les bûcherons coupent, les charbonniers brûlent', main:6 },
+  hutte_charbonnier: { role:'Coupe du bois dans sa zone, le stocke, puis le brûle en charbon de bois, gardé sur place pour la fonderie (et sa forge).', prod:'Charbon de bois', besoin:'Zone forestière : les bûcherons coupent, les charbonniers brûlent', main:6 },
   scierie: { role:'Transforme le bois de son stock en planches (bouton ON / OFF, pas de file d’attente).', prod:'1 bois → 3 planches', besoin:'Bois', main:2 },
   grange: { role:'Stocke les ressources périssables : viande, poissons, céréales, nourriture…', besoin:'Des habitants chargés de récupérer les ressources auprès des sites de production ; de 6 h à 7 h et de 17 h 30 à 21 h 30 ils tiennent les étals du marché, le reste du temps ils gèrent les points de collecte', main:6 },
   entrepot: { role:'Stocke les ressources non périssables et les surplus : bois, planches, minerais, matériaux…', besoin:'Des habitants chargés de récupérer les ressources ; de 6 h à 7 h et de 17 h 30 à 21 h 30 ils tiennent les étals du marché, le reste du temps ils récoltent les ressources', main:6 },
@@ -40,6 +35,7 @@ const INFOS = {
   comptoir_betail: { role:"Importe des animaux d'élevage d'autres régions ou joueurs.", prod:'Aucune', besoin:"Commerce avec d'autres régions / joueurs", main:5 },
   ferme: { role:'Cultive des céréales de saison et accueille jusqu’à 3 extensions (jardin, verger, poulailler, enclos à chèvres, porcherie).', prod:'Céréales (grain) + produits des extensions (légumes, fruits, œufs, peaux, viande)', besoin:'Faux pour la récolte ; houe pour le jardin, serpe pour le verger', main:8 },
   bergerie: { role:'Élève des chèvres ou des moutons.', prod:'Laine, lait', besoin:'Animaux importés', main:3 },
+  etable: { role:'Élève des vaches et en tire le lait.', prod:'Lait', besoin:'Animaux importés', main:3 },
   moulin: { role:'Transforme les céréales des champs.', prod:'Farine', besoin:'Céréales', main:3 },
   fromagerie: { role:'Transforme le lait en fromages : caillage, décaillage, égouttage, salage, puis affinage en cave.', prod:'Fromage frais, pâte molle, fromage de garde', besoin:'Lait des fermes, présure, sel', main:3 },
   four: { role:'Transforme la farine en pain.', prod:'Pain', besoin:'Farine', main:2 },
@@ -154,7 +150,7 @@ function gestionCulture(h) {
 // ferme : extensions (jusqu'à FERME_EXT_MAX, une de chaque sorte)
 function gestionFerme(h) {
   if (h.kind !== 'ferme') return '';
-  const L = h.ext || [], libres = Object.entries(FERME_EXT).filter(([k]) => !L.some(e => e.k === k));
+  const L = h.ext || [], libres = Object.entries(FERME_EXT).filter(([k, d]) => !d.cap && !L.some(e => e.k === k));
   const lignes = L.map(e => {
     const d = FERME_EXT[e.k]; let sel = '', st = d.use, capt = '';
     if (d.cap) { const n = e.n === undefined ? 2 : e.n; st = `${n} / ${d.cap} animaux · ${d.use}`; capt = ` <button data-g="capture:${e.k}"${n >= d.cap ? ' disabled' : ''} title="Un fermier part capturer un animal sauvage de la carte">Capturer</button>`; }
@@ -302,7 +298,8 @@ function batHtml(o) {
     if (portageOK(o)) sections.push(portageHtml(o));
   }
   if (b && b.cap) sections.push(`<h4>Type</h4><div class="bat-ligne"><span>${gEsc(b.name)}</span></div><h4>Habitants</h4><div class="bat-ligne"><span>Habitants</span><b>${typeof occupation === 'function' ? occupation(o) : 0} / ${b.cap}</b></div><h4>Réserves</h4>${[...new Set(['viande', 'œufs', 'lait', 'pain', ...Object.keys(o.vivres || {}).filter(k => (o.vivres[k] || 0) > .004)])].map(k => `<div class="bat-ligne"><span>${gEsc(k[0].toUpperCase() + k.slice(1))}</span><b>${vivreTexte(k, (o.vivres || {})[k] || 0, capAliment(o, k))}</b></div>`).join('')}`);
-  if (o.kind === 'ferme') { const cur = (o.ext || [])[0]; sections.push(`<h4>Type d'exploitation</h4><select data-fermetype><option value=""${cur ? '' : ' selected'}>Céréales (champs)</option>${Object.entries(FERME_EXT).map(([k, d]) => `<option value="${k}"${cur && cur.k === k ? ' selected' : ''}>${gEsc(d.nom)}${coutTexte(d.cout) ? ' (' + coutTexte(d.cout) + ')' : ''}</option>`).join('')}</select>${gestionFerme(o)}`); }
+  if (o.kind === 'ferme') { const L = o.ext || [], libres = Object.entries(FERME_EXT).filter(([k, d]) => !d.cap && !L.some(e => e.k === k));   // plusieurs extensions possibles (jusqu'à FERME_EXT_MAX) ; sans extension : céréales (champs)
+    sections.push(`<h4>Extensions (${L.length} / ${FERME_EXT_MAX})</h4>${gestionFerme(o) || '<div class="bat-ligne"><span>Céréales (champs)</span><b>aucune extension</b></div>'}${L.length < FERME_EXT_MAX && libres.length ? `<select data-extadd><option value="">+ Ajouter une extension…</option>${libres.map(([k, d]) => `<option value="${k}">${gEsc(d.nom)}${coutTexte(d.cout) ? ' (' + coutTexte(d.cout) + ')' : ''}</option>`).join('')}</select>` : ''}`); }
   if (ACTIVITES[o.kind]) sections.push(`<h4>Type d'exploitation</h4><select data-actsel>${ACTIVITES[o.kind].map(([id, nom]) => `<option value="${id}"${actDe(o) === id ? ' selected' : ''}>${gEsc(nom)}</option>`).join('')}</select>`);
   const ani = (o.ext || []).filter(e => ANIMAUX_NOM[e.k] && FERME_EXT[e.k] && FERME_EXT[e.k].cap).map(e => `<div class="bat-ligne"><span>${ANIMAUX_NOM[e.k]}</span><b>${e.n === undefined ? 2 : e.n}</b></div>`).join('');
   if (ani) sections.push('<h4>Animaux</h4>' + ani);

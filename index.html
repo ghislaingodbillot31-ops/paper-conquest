@@ -4,11 +4,12 @@
 <title>DOMINIUM</title>
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&family=Caveat:wght@500;600;700&family=Nunito:ital,wght@0,400;0,600;0,700;0,800;1,600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/maplibre-gl@5/dist/maplibre-gl.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@turf/turf@7/turf.min.js"></script>
 <link rel="stylesheet" href="css/maplibre-gl.css">
+<link rel="stylesheet" href="css/theme.css">
 <link rel="stylesheet" href="css/jeu.css">
 
 <div class="app">
@@ -96,7 +97,6 @@
         <div class="capital-body" id="capview-body"></div>
         <div class="cap-retour">
           <button type="button" id="cap-globe" title="Revenir à la carte">← Carte</button>
-          <button type="button" id="cap-gestion" title="Stocks, caravanes, voyages, plan de la région">Gestion</button>
         </div>
       </div>
     </section>
@@ -106,7 +106,7 @@
 
 <div class="start-bar" id="start-bar" hidden>
                 <span id="start-bar-text"></span>
-                <button class="start-ok" id="start-confirm" type="button">Confirmer</button>
+                <button class="start-ok" id="start-confirm" type="button">Rejoindre</button>
               </div>
 
 <div class="capital-modal" id="capital-modal" hidden>
@@ -120,7 +120,9 @@
 <script src="js/jeu/joueur.js"></script>
 <script>if (!lireJoueur()) location.replace('accueil.html');   // pas de personnage : écran d'accueil</script>
 <script src="js/saisons.js"></script>
+<script src="js/theme.js"></script>
 <script src="js/jeu/interface.js"></script>
+<script src="js/jeu/analyse-routes-base.js"></script>
 <script src="js/jeu/globe.js"></script>
 <script src="js/jeu/donnees-regions.js"></script>
 <script src="js/jeu/routes.js"></script>
@@ -128,9 +130,13 @@
 <script src="js/jeu/caravane.js"></script>
 <script src="js/jeu/ressources.js"></script>
 <script src="js/jeu/faune.js"></script>
+<script src="js/jeu/faune-marine.js"></script>
 <script src="js/jeu/peche.js"></script>
 <script src="js/jeu/eau.js"></script>
 <script src="js/jeu/developpeur.js"></script>
+<script src="js/jeu/routes-geo.js"></script>
+<script src="js/jeu/analyse-routes.js"></script>
+<script src="js/jeu/icones-carte.js"></script>
 <script src="js/jeu/regions.js"></script>
 <script src="js/jeu/capitale.js"></script>
 <script src="js/jeu/construction.js"></script>

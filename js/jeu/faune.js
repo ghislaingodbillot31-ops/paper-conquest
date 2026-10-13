@@ -28,9 +28,11 @@ function initAnimalZones(){
     paint:{ 'fill-color':['get', 'color'], 'fill-opacity':0.55 } }, 'regions-outline');
   map.addLayer({ id:'animal-line', type:'line', source:'animal-zones', layout:{ visibility:'none' },
     paint:{ 'line-color':'#3c2a14', 'line-width':1.6, 'line-opacity':0.8 } }, 'regions-selected');
-  map.addLayer({ id:'animal-label', type:'symbol', source:'animal-labels', layout:{ visibility:'none', 'text-field':['get', 'name'],
-    'text-font':['Open Sans Regular'], 'text-size':11, 'text-max-width':8 },
-    paint:{ 'text-color':'#2b1d0e', 'text-halo-color':'#f6efe0', 'text-halo-width':1.4 } });
+  loadMapFont().then(() => {   // noms en police medievale (images creees une fois la police chargee)
+    map.getSource('animal-labels').setData(turf.featureCollection(ANIMAL_ZONES.map(z => turf.point(z.anchors[0], { name:z.name, animals:',' + zoneAnimals(z).join(',') + ',', img:textImage(map, z.name, { size:11, color:'#f0e2b0', maxChars:12 }) }))));
+    map.addLayer({ id:'animal-label', type:'symbol', source:'animal-labels', layout:{ visibility:'none', 'icon-image':['get', 'img'] } });
+    updateAnimalLayers();
+  });
   updateAnimalLayers();
 }
 // Affichage: une espece choisie -> ses zones; sinon toutes si l'interrupteur est actif
@@ -39,7 +41,7 @@ function updateAnimalLayers(){
   const sp = resourceFilter && LAND_ANIMALS[resourceFilter] ? resourceFilter : null;
   const show = !!sp || devState.animals;
   const filter = sp ? ['in', ',' + sp + ',', ['get', 'animals']] : ['has', 'name'];
-  ['animal-fill', 'animal-line', 'animal-label'].forEach(id => { setLayerVisible(id, show); map.setFilter(id, filter); });
+  ['animal-fill', 'animal-line', 'animal-label'].filter(id => map.getLayer(id)).forEach(id => { setLayerVisible(id, show); map.setFilter(id, filter); });
   // une espece choisie: seules les regions, colorees selon son abondance (pas de contour de zone)
   if(sp) ['animal-fill', 'animal-line', 'animal-label'].forEach(id => setLayerVisible(id, false));
 }

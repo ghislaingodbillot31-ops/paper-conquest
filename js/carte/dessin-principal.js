@@ -22,9 +22,9 @@ function draw() {
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   if (atelier.on) { ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H); drawAtelier(); drawScale(); return; } // atelier : le bâtiment seul, sans la carte
   const pending = presentScene();                         // décor (tuiles)
+  if ((tool === 'house' || tool === 'road' || deplacer) && !opts.grid) drawZones(true);   // quadrillage des cases le long des routes : visible dès qu'on trace une route, pose ou déplace un bâtiment (sur le canevas du dessus : rien à repeindre dans les tuiles)
   /* ORDRE : ce qui vit sous les arbres d'abord (animaux, bateaux, personnages — drawWorkers peint aussi la couche de cimes par-dessus eux), PUIS tout ce qui doit rester lisible et au-dessus des arbres : sélection, zones de travail, aperçus, noms, textes. */
   const dev = typeof JR !== 'undefined' && JR.actif;                                        // (zones de pêche et lignes de circulation : mode développeur seulement)
-  if (dev && typeof drawRidesPeche === 'function') drawRidesPeche();    // rides légères sur les spots de pêche (poissons à la surface) : sous les bateaux et les personnages
   if (typeof drawFaune === 'function') drawFaune();
   if (typeof drawBateaux === 'function') drawBateaux();
   if (typeof drawTerrestres === 'function') drawTerrestres();
@@ -62,8 +62,8 @@ function draw() {
   if (typeof drawRessources === 'function') drawRessources();   // repères de la map test : à chaque image (pas dans les tuiles : taille d'écran constante)
   if (typeof drawEtiquettes === 'function') drawEtiquettes();   // noms des gisements et des arbres fruitiers (etiquettes.js)
   drawDraft();
-  drawScale();
-  updateStatus();
+  if (typeof drawTroncons === 'function') drawTroncons();   // longueur (m) de chaque tronçon de route (mode développeur / éditeur de routes)
+  drawScale(); updateStatus();
   if (typeof drawLumieres === 'function') drawLumieres();                              // nuit : voile et sources de lumière (lumieres.js)
   if (pending) requestDraw();                             // tuiles restantes : aux images suivantes
 }

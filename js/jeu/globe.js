@@ -15,6 +15,14 @@ const ISO3_CONTINENT = {
 const CODE_TO_CONTINENT = {};
 for(const id in ISO3_CONTINENT) ISO3_CONTINENT[id].forEach(code => { CODE_TO_CONTINENT[code] = id; });
 
+// limites du globe : mer au-delà des dernières terres (ouest, est, sud) ; le zoom arrière s'arrête quand ce cadre remplit exactement la carte
+const BORNES_GLOBE = { L0:-182, L1:200, N:85, S:-63 };
+const mercY = la => (1 - Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360)) / Math.PI) / 2;
+function zoomMinGlobe(){
+  const el = document.getElementById('map'); if(!el || !el.clientWidth) return 1;
+  const zw = Math.log2(el.clientWidth * 360 / ((BORNES_GLOBE.L1 - BORNES_GLOBE.L0) * 512)), zh = Math.log2(el.clientHeight / ((mercY(BORNES_GLOBE.S) - mercY(BORNES_GLOBE.N)) * 512));
+  return Math.max(zw, zh);
+}
 const map = new maplibregl.Map({
   container: 'map',
   style: {
@@ -22,25 +30,39 @@ const map = new maplibregl.Map({
     glyphs: 'https://tiles.basemaps.cartocdn.com/fonts/{fontstack}/{range}.pbf',
     sources: {},
     layers: [
-      { id: 'background', type: 'background', paint: { 'background-color': '#27479f' } },
+      { id: 'background', type: 'background', paint: { 'background-color': COULEUR['herbe-sombre'] } },
     ],
   },
   projection: 'mercator',
   renderWorldCopies: false,
+  // limites du déplacement : de la mer au-delà des dernières terres (ouest, est, sud) ; fonction à nous car maxBounds ne tolère pas plus d'un tour du monde
+  minZoom: 0,
+  transformConstrain: (c, zoomDemande) => {
+    const zoom = Math.max(zoomMinGlobe(), Math.min(22, zoomDemande));   // (comme le contrôle par défaut : le zoom arrière s'arrête au cadre du globe)
+    const el = document.getElementById('map'), cw = el ? el.clientWidth : 1000, ch = el ? el.clientHeight : 700, world = 512 * Math.pow(2, zoom);
+    const { L0, L1, N: LAT_N, S: LAT_S } = BORNES_GLOBE, my = mercY, la = y => (2 * Math.atan(Math.exp(Math.PI * (1 - 2 * y))) - Math.PI / 2) * 180 / Math.PI;
+    const hw = cw / 2 / world * 360, hy = ch / 2 / world, y0 = my(LAT_N) + hy, y1 = my(LAT_S) - hy;
+    const lng = L1 - L0 > 2 * hw ? Math.min(L1 - hw, Math.max(L0 + hw, c.lng)) : (L0 + L1) / 2;
+    const y = Math.min(y1, Math.max(y0, my(Math.max(-85, Math.min(85, c.lat))))), lat = y1 > y0 ? la(y) : la((y0 + y1) / 2);
+    return { center: new maplibregl.LngLat(lng, lat), zoom };
+  },
   center: [12, 25],
   zoom: 1.3,
   attributionControl: true,
+  dragRotate: false, pitchWithRotate: false, touchPitch: false, maxPitch: 0, // vue fixe : zoom et déplacement seulement
 });
+map.touchZoomRotate.disableRotation(); map.keyboard.disableRotation();
 map.on('error', (e) => console.error('MAPLIBRE ERROR:', e && e.error && e.error.message, e));
 // Le conteneur (carte dans une mise en page flex/grid) peut ne pas avoir
 // sa taille finale au moment ou MapLibre mesure le canvas -- on force un
 // resize des que la taille reelle est connue, et a chaque changement
 // (redimensionnement de fenetre, bascule responsive).
 if(window.ResizeObserver){
-  new ResizeObserver(() => map.resize()).observe(document.querySelector('.map-wrap'));
+  new ResizeObserver(() => { map.resize(); map.setMinZoom(zoomMinGlobe()); }).observe(document.querySelector('.map-wrap'));
 }
 
 map.on('style.load', () => {
+  map.setMinZoom(zoomMinGlobe());
   addRegions();
 });
 
@@ -66,7 +88,7 @@ function unwrapGeometry(geom){
 let regionsFc = null;
 
 async function addRegions(){
-  const [topo, navGrid, waterTopo, water, fishing, regionsData, animalZones, roads] = await Promise.all([
+  const [topo, navGrid, waterTopo, water, fishing, regionsData, animalZones, roads, frontieres] = await Promise.all([
     fetch('data/monde/admin1.topojson').then(r => r.json()),
     fetch('data/monde/nav-grid.json').then(r => r.json()).catch(e => { console.warn('Grille de navigation indisponible:', e); return null; }),
     fetch('data/monde/regions-water.topojson').then(r => r.json()).catch(e => { console.warn('Rivieres indisponibles:', e); return null; }),
@@ -75,6 +97,7 @@ async function addRegions(){
     fetch('data/regions/regions.json').then(r => r.json()),
     fetch('data/regions/zones-animales.json').then(r => r.json()),
     fetch('data/monde/routes.json').then(r => r.json()),
+    fetch('data/monde/frontieres.json').then(r => r.json()).catch(e => null),   // frontieres entre regions (outils/build-frontieres.js)
   ]);
   loadRegionData(regionsData, animalZones);
   const objName = Object.keys(topo.objects)[0];
@@ -87,6 +110,7 @@ async function addRegions(){
     // couleur du climat de la region (data/regions/regions.json) ; comptoirs en violet
     f.properties.isNpc = NPC_REGION_IDS.has(f.id);
     f.properties.fillColor = f.properties.isNpc ? NPC_COLOR : regionInfo(f.id).climat.couleur;
+    f.properties.fillColorSel = eclaircir(f.properties.fillColor, 0.28);   // region selectionnee : meme aplat, plus clair (pas de voile translucide : ses triangles se recouvrant laissaient des biseaux clairs)
     unwrapGeometry(f.geometry);
     f.properties.clusterArea = regionInfo(f.id).aire_km2 || f.properties.clusterArea; // surface precalculee (data/regions)
   });
@@ -110,27 +134,24 @@ async function addRegions(){
   // frontieres lues dans les regions deja creusees : aucun trait ne traverse l'eau des fleuves et des lacs
   const bTopo = waterData ? waterTopo : topo;
   bTopo.objects[Object.keys(bTopo.objects)[0]].geometries.forEach(g => countArcs(g.arcs));
-  const borderLines = topojson.mesh(bTopo, { type: 'MultiLineString', arcs: [...arcUse].filter(([, c]) => c > 1).map(([k]) => [k]) });
-  borderLines.coordinates = borderLines.coordinates.map(unwrapRingLongitudes);   // meme correction de l'antimeridien que les regions
+  const borderLines = frontieres ? { type: 'MultiLineString', coordinates: frontieres } : topojson.mesh(bTopo, { type: 'MultiLineString', arcs: [...arcUse].filter(([, c]) => c > 1).map(([k]) => [k]) });
+  if (!frontieres) borderLines.coordinates = borderLines.coordinates.map(unwrapRingLongitudes);   // meme correction de l'antimeridien que les regions
   const zoomW = (...v) => ['interpolate', ['exponential', 1.6], ['zoom'], 0, v[0], 3, v[1], 6, v[2], 10, v[3]];
   const lineLayout = { 'line-join': 'round', 'line-cap': 'round' };
   map.addSource('borders', { type: 'geojson', data: borderLines });
   map.addLayer({
     id: 'regions', type: 'fill', source: 'regions',
-    paint: { 'fill-color': ['get', 'fillColor'] },
+    paint: { 'fill-color': ['case', ['boolean', ['feature-state', 'selected'], false], ['get', 'fillColorSel'], ['get', 'fillColor']] },
   });
   // frontieres entre regions : fines, douces, a peine plus sombres que la terre
   map.addLayer({
     id: 'regions-outline', type: 'line', source: 'borders', layout: lineLayout,
-    paint: { 'line-color': 'rgba(60,53,39,0.32)', 'line-width': zoomW(0.35, 0.6, 1, 1.8), 'line-blur': zoomW(0, 0.2, 0.4, 0.8) },
+    paint: { 'line-color': 'rgba(60,53,39,0.5)', 'line-width': zoomW(0.5, 0.8, 1.2, 2), 'line-blur': zoomW(0, 0.2, 0.4, 0.8) },
   });
   map.addLayer({
     id: 'regions-selected', type: 'fill', source: 'regions',
-    // region selectionnee: plus de contour noir, juste un leger eclaircissement
-    paint: {
-      'fill-color': '#ffffff',
-      'fill-opacity': ['case', ['boolean', ['feature-state', 'selected'], false], 0.28, 0],
-    },
+    // (couche gardee vide : d'autres couches s'inserent avant elle ; l'eclaircissement de la region selectionnee est dans la couche 'regions')
+    paint: { 'fill-color': '#ffffff', 'fill-opacity': 0 },
   });
   // Numero de chaque region affiche dessus -- sert a reperer/signaler une
   // region precise (ex. pour un bug de trace ou de couleur).
@@ -155,18 +176,11 @@ async function addRegions(){
     if(interactionBusy() || !e.features.length) return;
     selectRegion(e.features[0].id);
   });
-  // clic droit : sélectionne la région ET ouvre sa carte (« ← Carte » ramène au globe) ; le clic gauche, lui, ne fait que la sélectionner pendant le choix du départ
-  map.on('contextmenu', 'regions', (e) => {
-    e.preventDefault();
-    if(interactionBusy() || !e.features.length) return;
-    selectRegion(e.features[0].id);
-    capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale');
-  });
-  map.getCanvas().addEventListener('contextmenu', ev => ev.preventDefault());   // (pas de menu du navigateur sur la carte)
   map.on('mouseenter', 'regions', () => { if(!interactionBusy()) map.getCanvas().style.cursor = 'pointer'; });
   map.on('mouseleave', 'regions', () => { map.getCanvas().style.cursor = ''; });
 
   // routes entre capitales : precalculees (data/monde/routes.json, outils/build-routes.js)
+  if(typeof appliquerAnalyseRoutes === 'function') roads.routes = appliquerAnalyseRoutes(roads.routes);   // décisions de l'analyse des routes (js/jeu/analyse-routes.js) : suppressions et routes modifiées
   addVillageNetwork(roads);
 
   const loadingEl = document.getElementById('map-loading');

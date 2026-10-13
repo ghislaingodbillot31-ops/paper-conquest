@@ -12,16 +12,16 @@
     "semantic_hash": "29c85f65c76da1014fa0a1f19789b561"
   },
   "data/monde/routes.json": {
-    "mtime": 1791131105.0,
-    "seen": 1791385390.293234,
-    "ast_hash": "06ea4f621dfb89426872318135fbf115",
-    "semantic_hash": "06ea4f621dfb89426872318135fbf115"
+    "mtime": 1791823045.1102698,
+    "seen": 1791841705.436255,
+    "ast_hash": "a4c6b810d6cb70f446418fd054ec8594",
+    "semantic_hash": "a4c6b810d6cb70f446418fd054ec8594"
   },
   "data/regions/regions.json": {
-    "mtime": 1791410094.9033854,
-    "seen": 1791548867.4320877,
-    "ast_hash": "6e60373f9012f1ad97b617a3b97567d6",
-    "semantic_hash": "6e60373f9012f1ad97b617a3b97567d6"
+    "mtime": 1791806021.2316315,
+    "seen": 1791841705.4362764,
+    "ast_hash": "f030ae9c5448618d466b74ae0c20da27",
+    "semantic_hash": "f030ae9c5448618d466b74ae0c20da27"
   },
   "data/regions/zones-animales.json": {
     "mtime": 1790779967.0,
@@ -30,70 +30,70 @@
     "semantic_hash": "8c465f9629057a65835b74b1b0fef132"
   },
   "js/batiments/atelier.js": {
-    "mtime": 1790778558.0,
-    "seen": 1791385390.2932405,
+    "mtime": 1791742549.789542,
+    "seen": 1791763915.7725203,
     "ast_hash": "46a98b984c74a4a959f05f93226e5ef9",
     "semantic_hash": "46a98b984c74a4a959f05f93226e5ef9"
   },
   "js/batiments/catalogue.js": {
-    "mtime": 1791416413.778114,
-    "seen": 1791548867.4323332,
-    "ast_hash": "ac250a969595d2bbdff03f98330200cf",
-    "semantic_hash": "ac250a969595d2bbdff03f98330200cf"
+    "mtime": 1791549297.683146,
+    "seen": 1791841705.43628,
+    "ast_hash": "3ade39b9de8f9c734f1c71a7b23f7e1c",
+    "semantic_hash": "3ade39b9de8f9c734f1c71a7b23f7e1c"
   },
   "js/batiments/dessins.js": {
-    "mtime": 1791417750.3357823,
-    "seen": 1791548867.4326386,
+    "mtime": 1791742549.790546,
+    "seen": 1791763915.7726517,
     "ast_hash": "caabcae6fc0a22dde09c57dc3f99e3a0",
     "semantic_hash": "caabcae6fc0a22dde09c57dc3f99e3a0"
   },
   "js/batiments/elements.js": {
-    "mtime": 1791483221.2668564,
-    "seen": 1791548867.43264,
+    "mtime": 1791742549.79255,
+    "seen": 1791763915.7726533,
     "ast_hash": "976a2b4f763ad82299bcf2bbb48a790b",
     "semantic_hash": "976a2b4f763ad82299bcf2bbb48a790b"
   },
   "js/carte/actions.js": {
-    "mtime": 1791411904.0542972,
-    "seen": 1791548867.4326448,
+    "mtime": 1791848796.8965325,
+    "seen": 1791850563.601318,
     "ast_hash": "7007f9e15c927a1957ae4f5b96f4b5c0",
     "semantic_hash": "7007f9e15c927a1957ae4f5b96f4b5c0"
   },
   "js/carte/animaux.js": {
-    "mtime": 1791280031.9459717,
-    "seen": 1791385390.2932494,
-    "ast_hash": "7a2b2b47039f6a3d7b6034edc36842f5",
-    "semantic_hash": "7a2b2b47039f6a3d7b6034edc36842f5"
+    "mtime": 1791847694.5726068,
+    "seen": 1791850563.6013186,
+    "ast_hash": "dff160d13c1893389f271922d4c5d074",
+    "semantic_hash": "dff160d13c1893389f271922d4c5d074"
   },
   "js/carte/arbres.js": {
-    "mtime": 1791492938.2511692,
-    "seen": 1791548867.432765,
-    "ast_hash": "3b12287d5b8c447da6924710e7097671",
-    "semantic_hash": "3b12287d5b8c447da6924710e7097671"
+    "mtime": 1791752729.6554348,
+    "seen": 1791841705.4362926,
+    "ast_hash": "eab3d43827813a56b5493b80b9aefd48",
+    "semantic_hash": "eab3d43827813a56b5493b80b9aefd48"
   },
   "js/carte/arrivants.js": {
-    "mtime": 1791409745.6626768,
-    "seen": 1791548867.4327662,
-    "ast_hash": "97bc80aca24dafe632e3c74ce278446e",
-    "semantic_hash": "97bc80aca24dafe632e3c74ce278446e"
+    "mtime": 1791843673.9148543,
+    "seen": 1791850563.6013203,
+    "ast_hash": "3a94e78bdd68e6ef29e54885fc8b5d27",
+    "semantic_hash": "3a94e78bdd68e6ef29e54885fc8b5d27"
   },
   "js/carte/baies.js": {
-    "mtime": 1791374961.6605828,
-    "seen": 1791385390.293252,
+    "mtime": 1791742549.7795177,
+    "seen": 1791763915.773395,
     "ast_hash": "94e98f78b122f2cd2ce30787970c8838",
     "semantic_hash": "94e98f78b122f2cd2ce30787970c8838"
   },
   "js/carte/base.js": {
-    "mtime": 1791538765.1614149,
-    "seen": 1791548867.4328814,
-    "ast_hash": "d84f91392a46cae2bff13b55777662d8",
-    "semantic_hash": "d84f91392a46cae2bff13b55777662d8"
+    "mtime": 1791830672.5017607,
+    "seen": 1791841705.4362957,
+    "ast_hash": "0f97972c18e2f70dac44f01c02bfafec",
+    "semantic_hash": "0f97972c18e2f70dac44f01c02bfafec"
   },
   "js/carte/cadre.js": {
-    "mtime": 1791539081.038067,
-    "seen": 1791548867.432882,
-    "ast_hash": "7f17709a82af945f049d684ac1fde09d",
-    "semantic_hash": "7f17709a82af945f049d684ac1fde09d"
+    "mtime": 1791758578.9910007,
+    "seen": 1791841705.4362967,
+    "ast_hash": "fd329971d16cd8da446d69461bbc219f",
+    "semantic_hash": "fd329971d16cd8da446d69461bbc219f"
   },
   "js/carte/capitale.js": {
     "mtime": 1791381097.6207838,
@@ -102,8 +102,8 @@
     "semantic_hash": "56e7ac3d074190bed876f37d1f728be0"
   },
   "js/carte/chariots.js": {
-    "mtime": 1791332418.410015,
-    "seen": 1791385390.2932577,
+    "mtime": 1791742549.7698529,
+    "seen": 1791763915.773669,
     "ast_hash": "cc18669e5905a5aed03e99d42957d019",
     "semantic_hash": "cc18669e5905a5aed03e99d42957d019"
   },
@@ -120,122 +120,122 @@
     "semantic_hash": "174238fd1b9705c38cb71b0da689b7e4"
   },
   "js/carte/dessin-principal.js": {
-    "mtime": 1791540290.7529612,
-    "seen": 1791548867.4332266,
-    "ast_hash": "fb6907c7a9f49468091be85e973d5f8c",
-    "semantic_hash": "fb6907c7a9f49468091be85e973d5f8c"
+    "mtime": 1791849059.708812,
+    "seen": 1791850563.6013296,
+    "ast_hash": "3885063f590748596b28e7091bdf6798",
+    "semantic_hash": "3885063f590748596b28e7091bdf6798"
   },
   "js/carte/dessin.js": {
-    "mtime": 1791492859.1765718,
-    "seen": 1791548867.433227,
-    "ast_hash": "980288ffa53a4997d51f5c5c1cbe620e",
-    "semantic_hash": "980288ffa53a4997d51f5c5c1cbe620e"
+    "mtime": 1791848974.0086195,
+    "seen": 1791850563.6013305,
+    "ast_hash": "2724fe96f0b5716323e497b6b7b6ec59",
+    "semantic_hash": "2724fe96f0b5716323e497b6b7b6ec59"
   },
   "js/carte/eau.js": {
-    "mtime": 1791493769.328892,
-    "seen": 1791548867.4332285,
-    "ast_hash": "e185ddd25b1894447de33726d34e1bc0",
-    "semantic_hash": "e185ddd25b1894447de33726d34e1bc0"
+    "mtime": 1791806670.8410182,
+    "seen": 1791841705.4363065,
+    "ast_hash": "65613beb24b75086e5b64ffc00fd1a3b",
+    "semantic_hash": "65613beb24b75086e5b64ffc00fd1a3b"
   },
   "js/carte/faune.js": {
-    "mtime": 1791493160.6955464,
-    "seen": 1791548867.4332302,
-    "ast_hash": "7fc867d80fbcbfe421e0917c56811c3d",
-    "semantic_hash": "7fc867d80fbcbfe421e0917c56811c3d"
+    "mtime": 1791848796.8940187,
+    "seen": 1791850563.6013339,
+    "ast_hash": "3765e8af58a10a3384efb3f24c9da3a7",
+    "semantic_hash": "3765e8af58a10a3384efb3f24c9da3a7"
   },
   "js/carte/forme.js": {
-    "mtime": 1791538754.602635,
-    "seen": 1791548867.4332309,
-    "ast_hash": "3ca9311dbb5842726d27021001da5340",
-    "semantic_hash": "3ca9311dbb5842726d27021001da5340"
+    "mtime": 1791832386.225706,
+    "seen": 1791841705.436309,
+    "ast_hash": "4b2dd0a74818eeac62eaf8f4651439e9",
+    "semantic_hash": "4b2dd0a74818eeac62eaf8f4651439e9"
   },
   "js/carte/fortifications-dessin.js": {
-    "mtime": 1790796504.0,
-    "seen": 1791385390.2932646,
+    "mtime": 1791742549.7845223,
+    "seen": 1791763915.7740307,
     "ast_hash": "76bb69a3fdec88f6e78520cca34ae5fc",
     "semantic_hash": "76bb69a3fdec88f6e78520cca34ae5fc"
   },
   "js/carte/fortifications.js": {
-    "mtime": 1791409749.335027,
-    "seen": 1791548867.4333453,
-    "ast_hash": "1d194df8c5fe3cf21a2dfcf99dd6b6f7",
-    "semantic_hash": "1d194df8c5fe3cf21a2dfcf99dd6b6f7"
+    "mtime": 1791849640.0723116,
+    "seen": 1791850563.6013362,
+    "ast_hash": "128aff337e9513ddbcb681e7e32974ce",
+    "semantic_hash": "128aff337e9513ddbcb681e7e32974ce"
   },
   "js/carte/generateur.js": {
-    "mtime": 1791493777.7720163,
-    "seen": 1791548867.433346,
-    "ast_hash": "4402ab041dbb50b60313f8d7dd8b4bbb",
-    "semantic_hash": "4402ab041dbb50b60313f8d7dd8b4bbb"
+    "mtime": 1791804177.0686052,
+    "seen": 1791841705.4363115,
+    "ast_hash": "251a2b9fc92d2067f91109e921bc8df4",
+    "semantic_hash": "251a2b9fc92d2067f91109e921bc8df4"
   },
   "js/carte/geometrie.js": {
-    "mtime": 1791412992.2608523,
-    "seen": 1791548867.4333467,
-    "ast_hash": "eb7aa7601ae18fa3f04037154ea598b6",
-    "semantic_hash": "eb7aa7601ae18fa3f04037154ea598b6"
+    "mtime": 1791849317.8460581,
+    "seen": 1791850563.6013377,
+    "ast_hash": "810f406d78faf0fee6c84387d4172477",
+    "semantic_hash": "810f406d78faf0fee6c84387d4172477"
   },
   "js/carte/gisements.js": {
-    "mtime": 1791493568.4264991,
-    "seen": 1791548867.4333482,
-    "ast_hash": "7f302f742f0d16cf23c220eecce284b5",
-    "semantic_hash": "7f302f742f0d16cf23c220eecce284b5"
+    "mtime": 1791791516.725766,
+    "seen": 1791841705.4363134,
+    "ast_hash": "70510bdba718827f4f904e127facc3aa",
+    "semantic_hash": "70510bdba718827f4f904e127facc3aa"
   },
   "js/carte/navigation.js": {
-    "mtime": 1791492859.1791513,
-    "seen": 1791548867.4333506,
+    "mtime": 1791742549.7770154,
+    "seen": 1791763915.7743835,
     "ast_hash": "9a7d1871a92ce9b9d284cade8120daf6",
     "semantic_hash": "9a7d1871a92ce9b9d284cade8120daf6"
   },
   "js/carte/panneau.js": {
-    "mtime": 1791538754.6076467,
-    "seen": 1791548867.4333515,
-    "ast_hash": "46e461d1809b2009a2c36e60e796be4e",
-    "semantic_hash": "46e461d1809b2009a2c36e60e796be4e"
+    "mtime": 1791850143.53041,
+    "seen": 1791850563.6013422,
+    "ast_hash": "588bf238a61323693db4919936f930fe",
+    "semantic_hash": "588bf238a61323693db4919936f930fe"
   },
   "js/carte/paysage.js": {
-    "mtime": 1791493769.330901,
-    "seen": 1791548867.4333522,
-    "ast_hash": "24686edc7953bed8c52a4bde393cb942",
-    "semantic_hash": "24686edc7953bed8c52a4bde393cb942"
+    "mtime": 1791793091.3745534,
+    "seen": 1791841705.4363194,
+    "ast_hash": "0382b52f971ef57b63dffcef2106d0eb",
+    "semantic_hash": "0382b52f971ef57b63dffcef2106d0eb"
   },
   "js/carte/pointeur.js": {
-    "mtime": 1791381273.6755428,
-    "seen": 1791385390.2932713,
+    "mtime": 1791848796.8940187,
+    "seen": 1791850563.6013436,
     "ast_hash": "a40a5e873bb5d0a76396dbed4da4d1ee",
     "semantic_hash": "a40a5e873bb5d0a76396dbed4da4d1ee"
   },
   "js/carte/poissons.js": {
-    "mtime": 1791493657.5068007,
-    "seen": 1791548867.4334664,
-    "ast_hash": "858c3323ea5a40e07de4688117c03ce7",
-    "semantic_hash": "858c3323ea5a40e07de4688117c03ce7"
+    "mtime": 1791742549.7815223,
+    "seen": 1791841705.4363213,
+    "ast_hash": "d329216083def35220fd4d11a57bce56",
+    "semantic_hash": "d329216083def35220fd4d11a57bce56"
   },
   "js/carte/rendu.js": {
-    "mtime": 1791538375.2486107,
-    "seen": 1791548867.433468,
-    "ast_hash": "30fb16a36379cb99e020c44c5804efc9",
-    "semantic_hash": "30fb16a36379cb99e020c44c5804efc9"
+    "mtime": 1791849540.0492995,
+    "seen": 1791850563.601346,
+    "ast_hash": "c4d5f65b284737b6e2d8f58d0b7aece6",
+    "semantic_hash": "c4d5f65b284737b6e2d8f58d0b7aece6"
   },
   "js/carte/ressources-test.js": {
-    "mtime": 1791492944.9513097,
-    "seen": 1791548867.4334688,
+    "mtime": 1791742549.7622116,
+    "seen": 1791763915.7745025,
     "ast_hash": "bad261dd641354911e774d1d6ed49928",
     "semantic_hash": "bad261dd641354911e774d1d6ed49928"
   },
   "js/carte/routes.js": {
-    "mtime": 1791536111.3415956,
-    "seen": 1791548867.4334698,
-    "ast_hash": "b471fbbe06324801d28fed043f86227f",
-    "semantic_hash": "b471fbbe06324801d28fed043f86227f"
+    "mtime": 1791805394.9431603,
+    "seen": 1791841705.4363246,
+    "ast_hash": "c133ca3c932ed50297a31e54d2a1040d",
+    "semantic_hash": "c133ca3c932ed50297a31e54d2a1040d"
   },
   "js/carte/simulation.js": {
-    "mtime": 1791538754.6121452,
-    "seen": 1791548867.4334702,
+    "mtime": 1791848796.8955274,
+    "seen": 1791850563.6013486,
     "ast_hash": "4b0121cc5193dc456f69842b8f04b978",
     "semantic_hash": "4b0121cc5193dc456f69842b8f04b978"
   },
   "js/carte/terrestres.js": {
-    "mtime": 1791540290.7534606,
-    "seen": 1791548867.433472,
+    "mtime": 1791742549.771858,
+    "seen": 1791763915.7746215,
     "ast_hash": "968bac6bba065ef36389b2e5d03ec98e",
     "semantic_hash": "968bac6bba065ef36389b2e5d03ec98e"
   },
@@ -246,58 +246,58 @@
     "semantic_hash": "e15830ec41619056d3a8b1e254a49cbd"
   },
   "js/carte/tuiles.js": {
-    "mtime": 1791539113.2122884,
-    "seen": 1791548867.4334736,
-    "ast_hash": "26956f1f2c5860d12ca1996a88bbef12",
-    "semantic_hash": "26956f1f2c5860d12ca1996a88bbef12"
+    "mtime": 1791850346.9193215,
+    "seen": 1791850563.601352,
+    "ast_hash": "fed6822b80acca1f469558b063891b84",
+    "semantic_hash": "fed6822b80acca1f469558b063891b84"
   },
   "js/carte/vehicules.js": {
-    "mtime": 1791283454.9042997,
-    "seen": 1791385390.2932794,
+    "mtime": 1791742549.7845223,
+    "seen": 1791763915.7747362,
     "ast_hash": "c3c9e5aca2076a1902b89c6f316d254d",
     "semantic_hash": "c3c9e5aca2076a1902b89c6f316d254d"
   },
   "js/carte/villageois.js": {
-    "mtime": 1791401760.4381847,
-    "seen": 1791548867.4335828,
+    "mtime": 1791742549.7750144,
+    "seen": 1791763915.7747371,
     "ast_hash": "6b079e039eb58a30f6abfa39e169664a",
     "semantic_hash": "6b079e039eb58a30f6abfa39e169664a"
   },
   "js/carte/vue.js": {
-    "mtime": 1791412992.2618568,
-    "seen": 1791548867.4335842,
-    "ast_hash": "18fc8ee2bea389221336e92f8b35cccc",
-    "semantic_hash": "18fc8ee2bea389221336e92f8b35cccc"
+    "mtime": 1791850346.920352,
+    "seen": 1791850563.6013546,
+    "ast_hash": "31362e914402b0f5b2e1be3395715a3c",
+    "semantic_hash": "31362e914402b0f5b2e1be3395715a3c"
   },
   "js/carte/zonage.js": {
-    "mtime": 1791412992.2628562,
-    "seen": 1791548867.433585,
-    "ast_hash": "c1fa59a2ae61bc89a58807aa1fa4c595",
-    "semantic_hash": "c1fa59a2ae61bc89a58807aa1fa4c595"
+    "mtime": 1791849317.8475668,
+    "seen": 1791850563.6013553,
+    "ast_hash": "603269d1e5b04a2216cb7dad80b814b0",
+    "semantic_hash": "603269d1e5b04a2216cb7dad80b814b0"
   },
   "js/jeu/bateaux.js": {
-    "mtime": 1791538754.6246655,
-    "seen": 1791548867.4335864,
-    "ast_hash": "3368051069d8ed1453107a902fc048b2",
-    "semantic_hash": "3368051069d8ed1453107a902fc048b2"
+    "mtime": 1791742549.7965505,
+    "seen": 1791841705.4363372,
+    "ast_hash": "3a284dafae29fbd4fc2a689c75722fb1",
+    "semantic_hash": "3a284dafae29fbd4fc2a689c75722fb1"
   },
   "js/jeu/capitale.js": {
-    "mtime": 1791540290.751961,
-    "seen": 1791548867.4335876,
-    "ast_hash": "d494a7df02363343b58cfaf468123191",
-    "semantic_hash": "d494a7df02363343b58cfaf468123191"
+    "mtime": 1791763399.0132334,
+    "seen": 1791841705.4363384,
+    "ast_hash": "13842294c6b24a977d3669e74f048141",
+    "semantic_hash": "13842294c6b24a977d3669e74f048141"
   },
   "js/jeu/caravane.js": {
-    "mtime": 1791538754.62868,
-    "seen": 1791548867.4335883,
-    "ast_hash": "a908d6f84686042c8672b7b666fb40ae",
-    "semantic_hash": "a908d6f84686042c8672b7b666fb40ae"
+    "mtime": 1791742549.79755,
+    "seen": 1791841705.4363391,
+    "ast_hash": "1a24730f8d5934251f625842380b9c16",
+    "semantic_hash": "1a24730f8d5934251f625842380b9c16"
   },
   "js/jeu/carte-region.js": {
-    "mtime": 1791540831.766853,
-    "seen": 1791548867.433589,
-    "ast_hash": "f8a35002dbca6fb8042e2d6c21194d42",
-    "semantic_hash": "f8a35002dbca6fb8042e2d6c21194d42"
+    "mtime": 1791818818.3068202,
+    "seen": 1791841705.4363403,
+    "ast_hash": "9a5d2a491f20d084d742752a77a3702c",
+    "semantic_hash": "9a5d2a491f20d084d742752a77a3702c"
   },
   "js/jeu/construction.js": {
     "mtime": 1791538754.632184,
@@ -306,16 +306,16 @@
     "semantic_hash": "1ebe9c5f2b9d0ad28c5979a3a08c721d"
   },
   "js/jeu/developpeur.js": {
-    "mtime": 1791538754.6356845,
-    "seen": 1791548867.4335904,
-    "ast_hash": "f0029523d0ce4341eb2ddbd67dbb74d1",
-    "semantic_hash": "f0029523d0ce4341eb2ddbd67dbb74d1"
+    "mtime": 1791824896.7107618,
+    "seen": 1791841705.4363427,
+    "ast_hash": "f27ca32c943ce0c7806da9b7e69b2ecd",
+    "semantic_hash": "f27ca32c943ce0c7806da9b7e69b2ecd"
   },
   "js/jeu/donnees-regions.js": {
-    "mtime": 1791247452.863754,
-    "seen": 1791385390.293289,
-    "ast_hash": "501f4b13730f6e5b31cab17c9b02de18",
-    "semantic_hash": "501f4b13730f6e5b31cab17c9b02de18"
+    "mtime": 1791758301.538535,
+    "seen": 1791841705.436344,
+    "ast_hash": "47427311ad211f7383e8177825f75406",
+    "semantic_hash": "47427311ad211f7383e8177825f75406"
   },
   "js/jeu/eau.js": {
     "mtime": 1791215832.12552,
@@ -330,124 +330,64 @@
     "semantic_hash": "8ff769f3b580651448ed0d6ec018e373"
   },
   "js/jeu/faune.js": {
-    "mtime": 1790779810.0,
-    "seen": 1791385390.2932918,
-    "ast_hash": "420d2bffb87f6b4e9a07fc9e5dbab066",
-    "semantic_hash": "420d2bffb87f6b4e9a07fc9e5dbab066"
+    "mtime": 1791742549.8063345,
+    "seen": 1791841705.4363475,
+    "ast_hash": "2298d82e85453980cdfa1094698e3c5b",
+    "semantic_hash": "2298d82e85453980cdfa1094698e3c5b"
   },
   "js/jeu/globe.js": {
-    "mtime": 1791540199.0955439,
-    "seen": 1791548867.4339323,
-    "ast_hash": "05d9429b86b49a4dabadcddbed046bc0",
-    "semantic_hash": "05d9429b86b49a4dabadcddbed046bc0"
+    "mtime": 1791830038.9197218,
+    "seen": 1791841705.4363484,
+    "ast_hash": "c5637516c970389e043510d1c2e07e7f",
+    "semantic_hash": "c5637516c970389e043510d1c2e07e7f"
   },
   "js/jeu/interface.js": {
-    "mtime": 1790787793.0,
-    "seen": 1791385390.2932932,
-    "ast_hash": "dff5dfd6fa0d75518687188772dca6c6",
-    "semantic_hash": "dff5dfd6fa0d75518687188772dca6c6"
+    "mtime": 1791824896.7097583,
+    "seen": 1791841705.43635,
+    "ast_hash": "428474fd188e7bdeb58b150579b14be4",
+    "semantic_hash": "428474fd188e7bdeb58b150579b14be4"
   },
   "js/jeu/peche.js": {
-    "mtime": 1791131744.0,
-    "seen": 1791385390.2932944,
-    "ast_hash": "e595e6dc84e5c5955759ddcaf8ca5a1c",
-    "semantic_hash": "e595e6dc84e5c5955759ddcaf8ca5a1c"
+    "mtime": 1791793310.0055919,
+    "seen": 1791841705.4363523,
+    "ast_hash": "011e3364920f12df715ec4ee45a1b215",
+    "semantic_hash": "011e3364920f12df715ec4ee45a1b215"
   },
   "js/jeu/regions.js": {
-    "mtime": 1791540520.55205,
-    "seen": 1791548867.434182,
-    "ast_hash": "5d44a0ef587ad88805a587f989839047",
-    "semantic_hash": "5d44a0ef587ad88805a587f989839047"
+    "mtime": 1791818196.100312,
+    "seen": 1791841705.436353,
+    "ast_hash": "3b78d8ad8f58699bc548917ea41cd3b3",
+    "semantic_hash": "3b78d8ad8f58699bc548917ea41cd3b3"
   },
   "js/jeu/ressources.js": {
-    "mtime": 1791131823.0,
-    "seen": 1791385390.293296,
-    "ast_hash": "bb92f05bcbbf0113aefbd48d7a8a24ae",
-    "semantic_hash": "bb92f05bcbbf0113aefbd48d7a8a24ae"
+    "mtime": 1791758301.5350268,
+    "seen": 1791841705.4363542,
+    "ast_hash": "cb6fe5e07ea77e95e14273a2c97652b6",
+    "semantic_hash": "cb6fe5e07ea77e95e14273a2c97652b6"
   },
   "js/jeu/routes.js": {
-    "mtime": 1790794136.0,
-    "seen": 1791385390.2932968,
-    "ast_hash": "c6fed1ee43e211a26cd101930c8b096c",
-    "semantic_hash": "c6fed1ee43e211a26cd101930c8b096c"
+    "mtime": 1791818818.3068202,
+    "seen": 1791841705.4363573,
+    "ast_hash": "c33a8cd7942cff65ec81bc508e6c7df9",
+    "semantic_hash": "c33a8cd7942cff65ec81bc508e6c7df9"
   },
   "js/jeu/tableaux.js": {
-    "mtime": 1791140981.0,
-    "seen": 1791385390.293298,
-    "ast_hash": "643331b71d59bb5261d8a886564aeaa1",
-    "semantic_hash": "643331b71d59bb5261d8a886564aeaa1"
+    "mtime": 1791720767.8061059,
+    "seen": 1791841705.4363585,
+    "ast_hash": "92bc3a396ccb5460409feb421679a708",
+    "semantic_hash": "92bc3a396ccb5460409feb421679a708"
   },
   "js/saisons.js": {
-    "mtime": 1791538754.6472113,
-    "seen": 1791548867.434534,
-    "ast_hash": "ea1c0098f5c8ad0a9bec68cdb3bc5d77",
-    "semantic_hash": "ea1c0098f5c8ad0a9bec68cdb3bc5d77"
-  },
-  "outils/_cdp.js": {
-    "mtime": 1791246747.8105817,
-    "seen": 1791385390.2932997,
-    "ast_hash": "c799ff320d1818fec3669c0b2a266bc1",
-    "semantic_hash": "c799ff320d1818fec3669c0b2a266bc1"
-  },
-  "outils/_chaine-lacs.sh": {
-    "mtime": 1791239981.3560257,
-    "seen": 1791385390.2933004,
-    "ast_hash": "1b63bf925e612373f9d4fb5e14ea90d1",
-    "semantic_hash": "1b63bf925e612373f9d4fb5e14ea90d1"
-  },
-  "outils/_charge-page.js": {
-    "mtime": 1791243626.361407,
-    "seen": 1791385390.2933016,
-    "ast_hash": "b1b189e947ad32a32426bbb9c6ce7b54",
-    "semantic_hash": "b1b189e947ad32a32426bbb9c6ce7b54"
-  },
-  "outils/_controle-bords.js": {
-    "mtime": 1791218751.4011645,
-    "seen": 1791385390.2933023,
-    "ast_hash": "1369a1b4baabff553cda1b6855fb2ebb",
-    "semantic_hash": "1369a1b4baabff553cda1b6855fb2ebb"
-  },
-  "outils/_controle-fleuves.js": {
-    "mtime": 1791215041.897653,
-    "seen": 1791385390.2933033,
-    "ast_hash": "4b7e87102535bdf994e329a9c229f7b8",
-    "semantic_hash": "4b7e87102535bdf994e329a9c229f7b8"
-  },
-  "outils/_croisements.js": {
-    "mtime": 1791234558.130644,
-    "seen": 1791385390.2933042,
-    "ast_hash": "f108390985a16dc22777ad7ddbeebaae",
-    "semantic_hash": "f108390985a16dc22777ad7ddbeebaae"
-  },
-  "outils/_lacs.js": {
-    "mtime": 1791238140.822047,
-    "seen": 1791385390.2933052,
-    "ast_hash": "02abbc206cfdd5e1e4d08e8732119ab8",
-    "semantic_hash": "02abbc206cfdd5e1e4d08e8732119ab8"
-  },
-  "outils/_lent.js": {
-    "mtime": 1791228568.0622392,
-    "seen": 1791385390.293306,
-    "ast_hash": "04769ac8289d0a3fb4b1e87a371623a3",
-    "semantic_hash": "04769ac8289d0a3fb4b1e87a371623a3"
-  },
-  "outils/_region-page.js": {
-    "mtime": 1791243538.4470394,
-    "seen": 1791385390.2933073,
-    "ast_hash": "0ddeb5ef0321cc092baf5130f0c7d7bf",
-    "semantic_hash": "0ddeb5ef0321cc092baf5130f0c7d7bf"
-  },
-  "outils/_rendu.js": {
-    "mtime": 1791214267.3008304,
-    "seen": 1791385390.2933085,
-    "ast_hash": "c62181d30a18dbda32944083c947ac1b",
-    "semantic_hash": "c62181d30a18dbda32944083c947ac1b"
+    "mtime": 1791793367.3559906,
+    "seen": 1791841705.4363592,
+    "ast_hash": "20d26893f298ff0ed51dce42243ff79c",
+    "semantic_hash": "20d26893f298ff0ed51dce42243ff79c"
   },
   "outils/arrondir-cotes.js": {
-    "mtime": 1791227160.1343746,
-    "seen": 1791385390.2933092,
-    "ast_hash": "6c219ae5de5563ee9be79a63859ad190",
-    "semantic_hash": "6c219ae5de5563ee9be79a63859ad190"
+    "mtime": 1791842163.1317768,
+    "seen": 1791850563.6013784,
+    "ast_hash": "a793aadbfdcc1bb03635f78a0d9753c0",
+    "semantic_hash": "a793aadbfdcc1bb03635f78a0d9753c0"
   },
   "outils/build-fishing.js": {
     "mtime": 1790779618.0,
@@ -528,10 +468,10 @@
     "semantic_hash": "0bf3eaf3749e1110430a3eb3336c2922"
   },
   "outils/reparer-croisements.js": {
-    "mtime": 1791222253.5715256,
-    "seen": 1791385390.2933223,
-    "ast_hash": "3b3b5008d5c3da366eb498e859a33626",
-    "semantic_hash": "3b3b5008d5c3da366eb498e859a33626"
+    "mtime": 1791824301.8106177,
+    "seen": 1791841705.4363909,
+    "ast_hash": "412b0d5b9e7056c4025d6b740fd68738",
+    "semantic_hash": "412b0d5b9e7056c4025d6b740fd68738"
   },
   "outils/reseau-routes.js": {
     "mtime": 1791123099.0,
@@ -564,20 +504,20 @@
     "semantic_hash": "df4518c6ac82487cb581d04544710cdf"
   },
   "README.md": {
-    "mtime": 1791539445.0712976,
-    "seen": 1791548867.4384782,
-    "ast_hash": "eef352cab0d68ada4bcfa8a3e7d7a13e",
-    "semantic_hash": "eef352cab0d68ada4bcfa8a3e7d7a13e"
+    "mtime": 1791842163.1246,
+    "seen": 1791850563.6014156,
+    "ast_hash": "e784af87efac4953fdc90a2a3173c17b",
+    "semantic_hash": "e784af87efac4953fdc90a2a3173c17b"
   },
   "arbres-fruitiers.html": {
-    "mtime": 1791539445.0753098,
-    "seen": 1791548867.4384809,
+    "mtime": 1791742549.8223746,
+    "seen": 1791763915.7794445,
     "ast_hash": "a0917d478582bf6fcb5bfd75326edf44",
     "semantic_hash": "a0917d478582bf6fcb5bfd75326edf44"
   },
   "arbustes-baies.html": {
-    "mtime": 1791309429.4911804,
-    "seen": 1791548867.4384818,
+    "mtime": 1791742549.8223746,
+    "seen": 1791763915.7794454,
     "ast_hash": "8edc999fc8efa4eaa42b53737c42d97d",
     "semantic_hash": "8edc999fc8efa4eaa42b53737c42d97d"
   },
@@ -588,70 +528,64 @@
     "semantic_hash": "f6ffa27e401699c15fc92a46dc00f1aa"
   },
   "editeur-animaux.html": {
-    "mtime": 1791287666.7513142,
-    "seen": 1791548867.4384856,
-    "ast_hash": "4ef2dd6ea58608ade81701f6c021127b",
-    "semantic_hash": "4ef2dd6ea58608ade81701f6c021127b"
+    "mtime": 1791764095.2497554,
+    "seen": 1791841705.4364028,
+    "ast_hash": "fa4ac41368e728ebb17ceb82bf15867e",
+    "semantic_hash": "fa4ac41368e728ebb17ceb82bf15867e"
   },
   "editeur-batiments.html": {
-    "mtime": 1791492938.2531748,
-    "seen": 1791548867.4384863,
-    "ast_hash": "a152b5e412aefc05acf834fb23cddd86",
-    "semantic_hash": "a152b5e412aefc05acf834fb23cddd86"
+    "mtime": 1791549297.68423,
+    "seen": 1791841705.4364038,
+    "ast_hash": "01a5ba7de7106370ee4b14564c3efa4f",
+    "semantic_hash": "01a5ba7de7106370ee4b14564c3efa4f"
   },
   "editeur-carte.html": {
-    "mtime": 1791492938.2531748,
-    "seen": 1791548867.438487,
-    "ast_hash": "698225c3014a730ea09df0a01d46c968",
-    "semantic_hash": "698225c3014a730ea09df0a01d46c968"
+    "mtime": 1791805448.21853,
+    "seen": 1791841705.4364045,
+    "ast_hash": "fb31098685933bac99e5f1015abca730",
+    "semantic_hash": "fb31098685933bac99e5f1015abca730"
   },
   "editeur-routes.html": {
-    "mtime": 1791388600.266932,
-    "seen": 1791414535.5819523,
-    "ast_hash": "eaf96aa1e6711c6971c331586d75fe91",
-    "semantic_hash": ""
+    "mtime": 1791804049.864109,
+    "seen": 1791841705.4364064,
+    "ast_hash": "f752ddfb14035748bc00f1187c7d67c8",
+    "semantic_hash": "f752ddfb14035748bc00f1187c7d67c8"
   },
   "editeur-vehicules.html": {
-    "mtime": 1791290256.0636635,
-    "seen": 1791309847.3237164,
+    "mtime": 1791742549.813362,
+    "seen": 1791841705.4364073,
     "ast_hash": "148dd47a9aa3744769bda6f3f1f0281b",
-    "semantic_hash": ""
+    "semantic_hash": "148dd47a9aa3744769bda6f3f1f0281b"
   },
   "editeur-villageois.html": {
-    "mtime": 1791289216.5440912,
-    "seen": 1791309847.323717,
+    "mtime": 1791742549.821374,
+    "seen": 1791841705.436408,
     "ast_hash": "5a3a75be09d0443b85f3fed71a90b669",
-    "semantic_hash": ""
+    "semantic_hash": "5a3a75be09d0443b85f3fed71a90b669"
   },
   "index.html": {
-    "mtime": 1791246490.8259766,
-    "seen": 1791309847.3237176,
-    "ast_hash": "4494fcd3949400fd552466b1629e1be6",
-    "semantic_hash": ""
+    "mtime": 1791820251.4258218,
+    "seen": 1791841705.4364088,
+    "ast_hash": "1722a1ae9995ad8d40c2ea7815249f99",
+    "semantic_hash": "1722a1ae9995ad8d40c2ea7815249f99"
   },
   "map-test.html": {
-    "mtime": 1791388600.266431,
-    "seen": 1791414535.5822926,
-    "ast_hash": "16bac651bddc3d7975908f735f798c6f",
-    "semantic_hash": ""
-  },
-  "outils/_cap.html": {
-    "mtime": 1791228654.4537165,
-    "seen": 1791309847.323719,
-    "ast_hash": "d37d78ad41e0fd2dd9fc801fc559a91d",
-    "semantic_hash": ""
+    "mtime": 1791805448.217822,
+    "seen": 1791841705.4364107,
+    "ast_hash": "89a91928374ebe2473363b54acfa2067",
+    "semantic_hash": "89a91928374ebe2473363b54acfa2067"
   },
   "region.html": {
-    "mtime": 1791407104.4841292,
-    "seen": 1791414535.5824063,
-    "ast_hash": "c73515ee5c71b7be970fe770fb6db090",
-    "semantic_hash": ""
+    "mtime": 1791850143.5319421,
+    "seen": 1791850563.6014173,
+    "ast_hash": "e1103209c2229c34d1543e0ef595e78c",
+    "semantic_hash": "e1103209c2229c34d1543e0ef595e78c"
   },
   "studio.html": {
-    "mtime": 1791374517.6722896,
-    "seen": 1791414535.5824075,
-    "ast_hash": "6764f5073e1eb6c63e1025975fa6d1e6",
-    "semantic_hash": ""
+    "mtime": 1791842163.124185,
+    "seen": 1791850563.601418,
+    "ast_hash": "2703b28711e14ed837efd27674411150",
+    "semantic_hash": "2703b28711e14ed837efd27674411150"
   },
   "REFERENCE/34f0330e-733d-4e42-90ff-e223cb288314.png": {
     "mtime": 1790042166.0,
@@ -684,8 +618,8 @@
     "semantic_hash": "1f69a1bf87950e4709e8d05855701342"
   },
   "js/batiments/cultures-dashboard.js": {
-    "mtime": 1791374853.2878451,
-    "seen": 1791385390.2932427,
+    "mtime": 1791742549.791546,
+    "seen": 1791763915.7725224,
     "ast_hash": "3c492268d01e1930bd4246b72895ccf4",
     "semantic_hash": "3c492268d01e1930bd4246b72895ccf4"
   },
@@ -708,32 +642,32 @@
     "semantic_hash": "a564c1db00e25889a53e3a596244fe40"
   },
   "editeur-cultures.html": {
-    "mtime": 1791328843.242029,
-    "seen": 1791336258.1985,
+    "mtime": 1791742549.8093557,
+    "seen": 1791841705.4364054,
     "ast_hash": "10e7a498888cbe0ceb27b4afbb1c44c5",
-    "semantic_hash": ""
+    "semantic_hash": "10e7a498888cbe0ceb27b4afbb1c44c5"
   },
   "data/monde/water.json": {
-    "mtime": 1791242391.1400023,
-    "seen": 1791548867.4320726,
-    "ast_hash": "4eab9f12d1f819d58784fe7b41954841",
-    "semantic_hash": "4eab9f12d1f819d58784fe7b41954841"
+    "mtime": 1791828057.8205428,
+    "seen": 1791841705.436257,
+    "ast_hash": "c9f1336ffe9cb719410f65a0b63adfdd",
+    "semantic_hash": "c9f1336ffe9cb719410f65a0b63adfdd"
   },
   "data/regions/formes.json": {
-    "mtime": 1791242406.3827705,
-    "seen": 1791548867.4320862,
-    "ast_hash": "85308c4e3b1973ca9e5ddab58f8dd6aa",
-    "semantic_hash": "85308c4e3b1973ca9e5ddab58f8dd6aa"
+    "mtime": 1791832075.4731457,
+    "seen": 1791841705.436276,
+    "ast_hash": "a471f7d9e1a18762c5ed802947c7012f",
+    "semantic_hash": "a471f7d9e1a18762c5ed802947c7012f"
   },
   "js/carte/capture.js": {
-    "mtime": 1791384874.7241316,
-    "seen": 1791385390.2932556,
+    "mtime": 1791742549.7652106,
+    "seen": 1791763915.7736669,
     "ast_hash": "ac3edfe4b34ac0c9023ea34e91b0ad5a",
     "semantic_hash": "ac3edfe4b34ac0c9023ea34e91b0ad5a"
   },
   "js/carte/champs.js": {
-    "mtime": 1791392327.8634417,
-    "seen": 1791548867.433112,
+    "mtime": 1791742549.7780147,
+    "seen": 1791763915.773668,
     "ast_hash": "2f125bb1d0d8fa63e1f17fa170180811",
     "semantic_hash": "2f125bb1d0d8fa63e1f17fa170180811"
   },
@@ -744,22 +678,22 @@
     "semantic_hash": "e80bca96a863db335e243c12fe65fbbe"
   },
   "js/carte/lumieres.js": {
-    "mtime": 1791536437.2321985,
-    "seen": 1791548867.4333498,
+    "mtime": 1791742549.7880263,
+    "seen": 1791763915.7743824,
     "ast_hash": "2ba5c023c4c9f4337ff3b4ae5a931e48",
     "semantic_hash": "2ba5c023c4c9f4337ff3b4ae5a931e48"
   },
   "js/carte/dev.js": {
-    "mtime": 1791540850.3432343,
-    "seen": 1791548867.4332278,
-    "ast_hash": "1c1f0d2d31333c2a96b8f3951b8b1cd6",
-    "semantic_hash": "1c1f0d2d31333c2a96b8f3951b8b1cd6"
+    "mtime": 1791842163.1278572,
+    "seen": 1791850563.6013312,
+    "ast_hash": "259078a43ce861387d93ed0785aec672",
+    "semantic_hash": "259078a43ce861387d93ed0785aec672"
   },
   "js/carte/logs.js": {
-    "mtime": 1791408412.7901938,
-    "seen": 1791548867.4333491,
-    "ast_hash": "8c30a79d53abc3c90b862d527772a58b",
-    "semantic_hash": "8c30a79d53abc3c90b862d527772a58b"
+    "mtime": 1791842163.1287253,
+    "seen": 1791850563.601339,
+    "ast_hash": "6449313ca16d54b7b623ea5dd9260c0d",
+    "semantic_hash": "6449313ca16d54b7b623ea5dd9260c0d"
   },
   "js/carte/stats.js": {
     "mtime": 1791538754.620656,
@@ -767,23 +701,17 @@
     "ast_hash": "ac0b7f6a205c7e84a3e14a9254ff0e4c",
     "semantic_hash": "ac0b7f6a205c7e84a3e14a9254ff0e4c"
   },
-  "tools/serveur-logs.js": {
-    "mtime": 1791538765.1609159,
-    "seen": 1791548867.4384758,
-    "ast_hash": "49f2d4cc82363082728ee44fc7d79960",
-    "semantic_hash": "49f2d4cc82363082728ee44fc7d79960"
-  },
   "arbre-ressources.html": {
-    "mtime": 1791548447.457873,
-    "seen": 1791548867.43848,
+    "mtime": 1791742549.8153605,
+    "seen": 1791763915.7794433,
     "ast_hash": "be04e6bd58a8c724711c0719aef6a62f",
     "semantic_hash": "be04e6bd58a8c724711c0719aef6a62f"
   },
   "data/production/ateliers.json": {
-    "mtime": 1791548350.274026,
-    "seen": 1791548867.432075,
-    "ast_hash": "ff836ea8c75ac94f7a0d791c976e4ec9",
-    "semantic_hash": "ff836ea8c75ac94f7a0d791c976e4ec9"
+    "mtime": 1791549393.644475,
+    "seen": 1791841705.4362583,
+    "ast_hash": "4c56605c729bed21615150cfcfb83388",
+    "semantic_hash": "4c56605c729bed21615150cfcfb83388"
   },
   "data/production/besoins_foyers.json": {
     "mtime": 1791548350.2750263,
@@ -870,28 +798,28 @@
     "semantic_hash": "4be50997d4b733ad2dfdf9aeb0e9cab1"
   },
   "js/batiments/validation-production.js": {
-    "mtime": 1791548405.833183,
-    "seen": 1791548867.432644,
-    "ast_hash": "1eeb2b1f587e34c38f0a5efc67235746",
-    "semantic_hash": "1eeb2b1f587e34c38f0a5efc67235746"
+    "mtime": 1791842163.1256196,
+    "seen": 1791850563.6013167,
+    "ast_hash": "9d6259f44e8ca688d1c852a9cd038123",
+    "semantic_hash": "9d6259f44e8ca688d1c852a9cd038123"
   },
   "js/carte/decors.js": {
-    "mtime": 1791492191.0334196,
-    "seen": 1791548867.4332232,
-    "ast_hash": "acf34015897906f19527f5a166e5bdfc",
-    "semantic_hash": "acf34015897906f19527f5a166e5bdfc"
+    "mtime": 1791787714.2370338,
+    "seen": 1791841705.436301,
+    "ast_hash": "a69e492f1d0847d6d1fba6e65521cf2d",
+    "semantic_hash": "a69e492f1d0847d6d1fba6e65521cf2d"
   },
   "js/carte/etiquettes.js": {
-    "mtime": 1791492934.546494,
-    "seen": 1791548867.4332292,
+    "mtime": 1791848796.8955274,
+    "seen": 1791850563.601333,
     "ast_hash": "8c069ec0a7163a263f171f7d3a773d5a",
     "semantic_hash": "8c069ec0a7163a263f171f7d3a773d5a"
   },
   "js/carte/regles.js": {
-    "mtime": 1791493970.9684467,
-    "seen": 1791548867.4334674,
-    "ast_hash": "824885a52a3f891b4ef2ea31b6948bc0",
-    "semantic_hash": "824885a52a3f891b4ef2ea31b6948bc0"
+    "mtime": 1791849540.0513532,
+    "seen": 1791850563.6013453,
+    "ast_hash": "5e9c5e7d5d8479a791feae9108d810f4",
+    "semantic_hash": "5e9c5e7d5d8479a791feae9108d810f4"
   },
   "js/jeu/accueil.js": {
     "mtime": 1791539527.1417923,
@@ -900,33 +828,267 @@
     "semantic_hash": "bf07831c80d609e0ee49da207181e264"
   },
   "js/jeu/joueur.js": {
-    "mtime": 1791540850.3452349,
-    "seen": 1791548867.434041,
+    "mtime": 1791742549.79455,
+    "seen": 1791763915.775502,
     "ast_hash": "348fc03685b1607af0faf048cf8880a2",
     "semantic_hash": "348fc03685b1607af0faf048cf8880a2"
   },
-  "tools/valider-production.js": {
-    "mtime": 1791548387.8408885,
-    "seen": 1791548867.4384773,
-    "ast_hash": "8507b271b579d207ecffca1f05f122b2",
-    "semantic_hash": "8507b271b579d207ecffca1f05f122b2"
-  },
   "accueil.html": {
-    "mtime": 1791540831.766853,
-    "seen": 1791548867.4384792,
-    "ast_hash": "34428fc127942ef210c8115fd9a320eb",
-    "semantic_hash": "34428fc127942ef210c8115fd9a320eb"
+    "mtime": 1791742549.8203745,
+    "seen": 1791841705.4364014,
+    "ast_hash": "9558dbffd879cbafc5b077406d0559b7",
+    "semantic_hash": "9558dbffd879cbafc5b077406d0559b7"
   },
   "biomes-couleurs.html": {
-    "mtime": 1791490945.7214756,
-    "seen": 1791548867.4384828,
-    "ast_hash": "659461f3ed5da78826b23587f353fa41",
-    "semantic_hash": "659461f3ed5da78826b23587f353fa41"
+    "mtime": 1791787412.772247,
+    "seen": 1791841705.4364018,
+    "ast_hash": "83bc0bed671ca3a00d7080e11528809e",
+    "semantic_hash": "83bc0bed671ca3a00d7080e11528809e"
   },
   "decors-sol.html": {
-    "mtime": 1791486826.3211436,
-    "seen": 1791548867.4384844,
+    "mtime": 1791742549.8063345,
+    "seen": 1791763915.7796028,
     "ast_hash": "20410af0a9cfaa9a897e2548d3e5b807",
     "semantic_hash": "20410af0a9cfaa9a897e2548d3e5b807"
+  },
+  "js/batiments/dessins-production.js": {
+    "mtime": 1791742549.789031,
+    "seen": 1791841705.4362836,
+    "ast_hash": "28d2520daa81e01d2aa28df68dd95a82",
+    "semantic_hash": "28d2520daa81e01d2aa28df68dd95a82"
+  },
+  "js/jeu/faune-marine.js": {
+    "mtime": 1791793310.0045917,
+    "seen": 1791841705.4363465,
+    "ast_hash": "454bb0beda991c484d3e21c158331b90",
+    "semantic_hash": "454bb0beda991c484d3e21c158331b90"
+  },
+  "js/jeu/icones-carte.js": {
+    "mtime": 1791742549.8048306,
+    "seen": 1791841705.4363494,
+    "ast_hash": "71c4433d7ea05bc61986a7fa4eca9e8d",
+    "semantic_hash": "71c4433d7ea05bc61986a7fa4eca9e8d"
+  },
+  "js/theme.js": {
+    "mtime": 1791793367.3896449,
+    "seen": 1791841705.4363596,
+    "ast_hash": "cc75c4c4232318264579252cd792edff",
+    "semantic_hash": "cc75c4c4232318264579252cd792edff"
+  },
+  "outils/appliquer-theme.js": {
+    "mtime": 1791741870.1361804,
+    "seen": 1791841705.4363708,
+    "ast_hash": "b2848e2196aaee5ac521657081c5c430",
+    "semantic_hash": "b2848e2196aaee5ac521657081c5c430"
+  },
+  "outils/retirer-etangs-regions.js": {
+    "mtime": 1791719948.1046348,
+    "seen": 1791841705.4363933,
+    "ast_hash": "1c7df1bbe0432161d09e5de0471d5c4a",
+    "semantic_hash": "1c7df1bbe0432161d09e5de0471d5c4a"
+  },
+  "map-globale.html": {
+    "mtime": 1791793310.0045917,
+    "seen": 1791841705.4364097,
+    "ast_hash": "58fad716d6db890bff9d841bda68b743",
+    "semantic_hash": "58fad716d6db890bff9d841bda68b743"
+  },
+  "regles-generation.html": {
+    "mtime": 1791742549.8103604,
+    "seen": 1791841705.4364135,
+    "ast_hash": "c252bd4bac4b429513019962b14c949c",
+    "semantic_hash": "c252bd4bac4b429513019962b14c949c"
+  },
+  "theme-couleurs.html": {
+    "mtime": 1791741480.8420496,
+    "seen": 1791841705.4364152,
+    "ast_hash": "1a6726a28e84f6b6feb754629822df93",
+    "semantic_hash": "1a6726a28e84f6b6feb754629822df93"
+  },
+  "validation-production.html": {
+    "mtime": 1791742549.8123622,
+    "seen": 1791841705.436416,
+    "ast_hash": "63f28801a80791fe1761147e64f8888f",
+    "semantic_hash": "63f28801a80791fe1761147e64f8888f"
+  },
+  "data/monde/analyse-routes.json": {
+    "mtime": 1791823045.0921135,
+    "seen": 1791841705.4362414,
+    "ast_hash": "6907efac40bf5988c846b098c7527f3f",
+    "semantic_hash": "6907efac40bf5988c846b098c7527f3f"
+  },
+  "data/monde/frontieres.json": {
+    "mtime": 1791832071.7084782,
+    "seen": 1791841705.436251,
+    "ast_hash": "9f8219646853a6eb42c161a272c57ccc",
+    "semantic_hash": "9f8219646853a6eb42c161a272c57ccc"
+  },
+  "js/carte/monde-plat.js": {
+    "mtime": 1791806791.2974515,
+    "seen": 1791841705.4363165,
+    "ast_hash": "575bfd263bfcc6f078a65d18462b635c",
+    "semantic_hash": "575bfd263bfcc6f078a65d18462b635c"
+  },
+  "js/jeu/analyse-routes-base.js": {
+    "mtime": 1791820251.425317,
+    "seen": 1791841705.4363353,
+    "ast_hash": "a369c9833d52bfd6b91d030d8aa22a0f",
+    "semantic_hash": "a369c9833d52bfd6b91d030d8aa22a0f"
+  },
+  "js/jeu/analyse-routes.js": {
+    "mtime": 1791842163.1261284,
+    "seen": 1791850563.601358,
+    "ast_hash": "80c31f5db0d13b0c4325fb963a968f45",
+    "semantic_hash": "80c31f5db0d13b0c4325fb963a968f45"
+  },
+  "js/jeu/routes-geo.js": {
+    "mtime": 1791818196.1008716,
+    "seen": 1791841705.4363549,
+    "ast_hash": "68dfbc844149ee5ecde92f2dfb949946",
+    "semantic_hash": "68dfbc844149ee5ecde92f2dfb949946"
+  },
+  "outils/build-frontieres.js": {
+    "mtime": 1791830024.3228407,
+    "seen": 1791841705.4363759,
+    "ast_hash": "e785a4e2ec857a39941bbeb8ca0f0b93",
+    "semantic_hash": "e785a4e2ec857a39941bbeb8ca0f0b93"
+  },
+  "outils/ceder-eclats.js": {
+    "mtime": 1791831019.9370089,
+    "seen": 1791841705.4363801,
+    "ast_hash": "ab1f4ae01ebcf29f089f2f73bee52d74",
+    "semantic_hash": "ab1f4ae01ebcf29f089f2f73bee52d74"
+  },
+  "outils/lisser-routes.js": {
+    "mtime": 1791811888.8229206,
+    "seen": 1791841705.4363859,
+    "ast_hash": "29c332883815d3bcf4c217bb694f7685",
+    "semantic_hash": "29c332883815d3bcf4c217bb694f7685"
+  },
+  "outils/nettoyer-anneaux.js": {
+    "mtime": 1791830277.6615348,
+    "seen": 1791841705.4363873,
+    "ast_hash": "14571162f67a398f83893207d042d529",
+    "semantic_hash": "14571162f67a398f83893207d042d529"
+  },
+  "outils/placer-capitales.js": {
+    "mtime": 1791806012.067661,
+    "seen": 1791841705.436388,
+    "ast_hash": "797572bdc11bb7e2d782d72a9a79abf5",
+    "semantic_hash": "797572bdc11bb7e2d782d72a9a79abf5"
+  },
+  "outils/recentrer-etangs.js": {
+    "mtime": 1791828035.4421625,
+    "seen": 1791841705.436389,
+    "ast_hash": "6e87b4578943bc8b18a48e010f17f5ac",
+    "semantic_hash": "6e87b4578943bc8b18a48e010f17f5ac"
+  },
+  "outils/recreuser-fleuve.js": {
+    "mtime": 1791825269.7324648,
+    "seen": 1791841705.4363897,
+    "ast_hash": "ddc75f29ff154ad4d003660f6f9b2868",
+    "semantic_hash": "ddc75f29ff154ad4d003660f6f9b2868"
+  },
+  "outils/recreuser-lacs.js": {
+    "mtime": 1791827804.8074355,
+    "seen": 1791841705.4363902,
+    "ast_hash": "622dea5ed967c37484a0085d88f144d7",
+    "semantic_hash": "622dea5ed967c37484a0085d88f144d7"
+  },
+  "outils/retirer-fausse-terre.js": {
+    "mtime": 1791832060.673685,
+    "seen": 1791841705.436394,
+    "ast_hash": "ae5e99823db823e724142eeddbf86a83",
+    "semantic_hash": "ae5e99823db823e724142eeddbf86a83"
+  },
+  "outils/rouvrir-regions.js": {
+    "mtime": 1791825226.6296086,
+    "seen": 1791841705.4363964,
+    "ast_hash": "6dc7e47fed7ba2b438de2734b4462045",
+    "semantic_hash": "6dc7e47fed7ba2b438de2734b4462045"
+  },
+  "outils/valider-regions.js": {
+    "mtime": 1791824630.320005,
+    "seen": 1791841705.436397,
+    "ast_hash": "ae2b75722518ca2b19a4da52348dd7d2",
+    "semantic_hash": "ae2b75722518ca2b19a4da52348dd7d2"
+  },
+  "outils/controle/cdp.js": {
+    "mtime": 1791842163.1191244,
+    "seen": 1791850563.6013887,
+    "ast_hash": "7a12eacfa7045300e580b9fa13d17bfc",
+    "semantic_hash": "7a12eacfa7045300e580b9fa13d17bfc"
+  },
+  "outils/controle/chaine-lacs.sh": {
+    "mtime": 1791239981.3560257,
+    "seen": 1791850563.60139,
+    "ast_hash": "1b63bf925e612373f9d4fb5e14ea90d1",
+    "semantic_hash": "1b63bf925e612373f9d4fb5e14ea90d1"
+  },
+  "outils/controle/charge-page.js": {
+    "mtime": 1791842163.1191244,
+    "seen": 1791850563.601392,
+    "ast_hash": "15c2bc7ac4dccb4dddf2b23a986b7321",
+    "semantic_hash": "15c2bc7ac4dccb4dddf2b23a986b7321"
+  },
+  "outils/controle/controle-bords.js": {
+    "mtime": 1791842163.120131,
+    "seen": 1791850563.6013927,
+    "ast_hash": "5481cb38cb0de8e4fb051e8b1bd9e347",
+    "semantic_hash": "5481cb38cb0de8e4fb051e8b1bd9e347"
+  },
+  "outils/controle/controle-fleuves.js": {
+    "mtime": 1791215041.897653,
+    "seen": 1791850563.6013935,
+    "ast_hash": "4b7e87102535bdf994e329a9c229f7b8",
+    "semantic_hash": "4b7e87102535bdf994e329a9c229f7b8"
+  },
+  "outils/controle/croisements.js": {
+    "mtime": 1791842163.1206343,
+    "seen": 1791850563.601394,
+    "ast_hash": "7aca1db12778f3f999c913287e72f959",
+    "semantic_hash": "7aca1db12778f3f999c913287e72f959"
+  },
+  "outils/controle/lacs.js": {
+    "mtime": 1791842163.1206343,
+    "seen": 1791850563.6013947,
+    "ast_hash": "5026fe47e6fbcaf21d58c3faaa54a9ad",
+    "semantic_hash": "5026fe47e6fbcaf21d58c3faaa54a9ad"
+  },
+  "outils/controle/lent.js": {
+    "mtime": 1791842163.121639,
+    "seen": 1791850563.6013951,
+    "ast_hash": "cad7a888741b49dead8bb860d8d7b71a",
+    "semantic_hash": "cad7a888741b49dead8bb860d8d7b71a"
+  },
+  "outils/controle/region-page.js": {
+    "mtime": 1791842163.12265,
+    "seen": 1791850563.601396,
+    "ast_hash": "cd01e0109ef5b1415ed3e7c85d307dfd",
+    "semantic_hash": "cd01e0109ef5b1415ed3e7c85d307dfd"
+  },
+  "outils/controle/rendu.js": {
+    "mtime": 1791842163.12265,
+    "seen": 1791850563.6013968,
+    "ast_hash": "41e6d69326de5c20bb3c4a0e52ca8be5",
+    "semantic_hash": "41e6d69326de5c20bb3c4a0e52ca8be5"
+  },
+  "outils/serveur-logs.js": {
+    "mtime": 1791842163.1297464,
+    "seen": 1791850563.6014118,
+    "ast_hash": "a2efdc151d64d2ca12a8a8a437ab6704",
+    "semantic_hash": "a2efdc151d64d2ca12a8a8a437ab6704"
+  },
+  "outils/valider-production.js": {
+    "mtime": 1791842163.1297464,
+    "seen": 1791850563.6014125,
+    "ast_hash": "f6cd1cb87073dca88511578c058fe2d2",
+    "semantic_hash": "f6cd1cb87073dca88511578c058fe2d2"
+  },
+  "outils/controle/cap.html": {
+    "mtime": 1791842163.1176164,
+    "seen": 1791850563.6014163,
+    "ast_hash": "3016adeb4c68412cd668b8f9db6f8c68",
+    "semantic_hash": "3016adeb4c68412cd668b8f9db6f8c68"
   }
 }

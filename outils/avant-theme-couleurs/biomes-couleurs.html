@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Couleurs des biomes</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px 0 0;color:var(--soft)}
+  main{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;padding:14px 24px 30px}
+  .carte{background:var(--card);border:1.4px solid var(--edge);border-radius:10px;padding:10px}
+  .carte h2{margin:0 0 6px;font:700 22px "Barlow Condensed","Arial Narrow",sans-serif}
+  .ligne{display:flex;align-items:center;gap:8px;margin:3px 0;font-size:13px}
+  .ligne b{width:92px;font-weight:600;color:var(--soft)}
+  .pastille{width:26px;height:26px;border-radius:5px;border:1px solid #0004;flex:none}
+  code{font:600 13px ui-monospace,Consolas,monospace;cursor:pointer}
+  .echelle{display:flex;margin-top:6px;border-radius:6px;overflow:hidden;border:1px solid #0004}
+  .echelle div{flex:1;height:34px;font:10px ui-monospace,Consolas,monospace;color:#0008;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px}
+  #msg{color:#3f7a3a;font-weight:600;height:18px}
+</style></head>
+<body>
+<header>
+  <h1>COULEURS DES BIOMES</h1>
+  <p>Lues directement dans <code>js/carte/generateur.js</code> : toujours à jour. Cliquez un code pour le copier. Pour en changer un, modifiez-le dans ce fichier (ou demandez-le-moi).</p>
+  <p>L'échelle du bas est le relief du sol : 6 teintes, de la plus sombre (fond des vallées) à la plus claire (sommets) ; la 3<sup>e</sup> est la couleur du sol.</p>
+  <p id="msg"></p>
+</header>
+<main id="liste"></main>
+<script>
+const F = [-.17, -.09, 0, .1, .2, .3];                          // mêmes paliers que le relief du sol (cadre.js)
+const hex = s => s.match(/[0-9a-f]{2}/gi).slice(0, 3).map(v => parseInt(v, 16));
+const teinte = (A, f) => '#' + A.map((v, k) => { let c = f > 0 ? v + (255 - v) * f : v * (1 + f); c += (k === 0 ? 1 : k === 2 ? -1 : 0) * f * 30; return Math.round(Math.max(0, Math.min(255, c))).toString(16).padStart(2, '0'); }).join('');
+fetch('js/carte/generateur.js').then(r => r.text()).then(t => {
+  const m = t.match(/ground:'(#[0-9a-f]{6})', groundDark:'(#[0-9a-f]{6})'/), def = { ground:m[1], dark:m[2] };
+  const liste = document.getElementById('liste');
+  const blocs = [...t.matchAll(/^  ([a-z_]+):\s*\{ name:'([^']+)'([\s\S]*?)(?=^  [a-z_]+:\s*\{ name:|^\};)/gm)];
+  for (const [, id, nom, corps] of blocs) {
+    if (!corps.includes('rivers:')) continue;                    // (les classes de cours d'eau ne sont pas des biomes)
+    const g = corps.match(/ground:'(#[0-9a-f]{6})'/), d = corps.match(/groundDark:'(#[0-9a-f]{6})'/), w = corps.match(/water:'(#[0-9a-f]{6})'/), pt = corps.match(/patch:'(#[0-9a-f]{6})'/);
+    const sol = g ? g[1] : def.ground, fonce = d ? d[1] : def.dark, eau = w ? w[1] : '#38acd3';
+    const ligne = (lib, c) => '<div class="ligne"><b>' + lib + '</b><span class="pastille" style="background:' + c + '"></span><code data-c="' + c + '">' + c + '</code></div>';
+    const el = document.createElement('div'); el.className = 'carte';
+    el.innerHTML = '<h2></h2>' + ligne('Sol', sol) + ligne('Sol foncé', fonce) + ligne('Eau', eau) + (pt ? ligne('Taches', pt[1]) : '') +
+      '<div class="echelle">' + F.map(f => { const c = teinte(hex(sol), f); return '<div style="background:' + c + '" title="' + c + '"><span>' + c.slice(1) + '</span></div>'; }).join('') + '</div>';
+    el.querySelector('h2').textContent = nom + (g ? '' : ' (sol par défaut)');
+    liste.appendChild(el);
+  }
+  liste.onclick = e => { const c = e.target.closest('code'); if (!c) return; try { navigator.clipboard.writeText(c.dataset.c); document.getElementById('msg').textContent = c.dataset.c + ' copié'; } catch (x) {} };
+});
+</script>
+</body></html>

@@ -9,12 +9,12 @@
    en parallèle du reste de la file ; il n'est terminé (rangé dans h.inv) qu'à la fin de l'affinage (affinerCave).
    Pour ajouter un produit à un bâtiment : une ligne dans PRODUCTIONS ; pour un nouveau bâtiment de production : son type de job est { type:'craft' } et une entrée dans PRODUCTIONS. Rien d'autre. */
 const PRODUCTIONS = {
-  menuiserie: h => recettesDe('menuiserie', niveau(h)), forge: h => recettesDe('forge', niveau(h)), archerie: h => recettesDe('archerie', niveau(h)), armurerie: h => recettesDe('armurerie', niveau(h)),
+  menuiserie: h => recettesDe('menuiserie', niveau(h)),   // (la menuiserie fait aussi l'ex-archerie : outils.js, FUSION_ATELIER)
+  fonderie: h => RECETTES.filter(r => r.ateliers.includes('fonderie')),                                      // (la fonderie fait aussi l'ex-forge : ses outils et armes de métal, en FILE d'attente, en plus de ses fontes automatiques ON / OFF)
   moulin:[{ id:'farine', nom:'Farine', type:'materiau', cout:{ grain:2 }, sort:{ farine:2 }, tps:8 }],
   four:[{ id:'pain', nom:'Pain', type:'materiau', cout:{ farine:2 }, sort:{ pain:3 }, tps:10 }],
   brasserie:[{ id:'biere', nom:'Bière', type:'materiau', cout:{ grain:3 }, sort:{ 'bière':1 }, tps:15 }],
-  cordonnerie:[{ id:'chaussures', nom:'Chaussures', type:'materiau', cout:{ peaux:2 }, sort:{ chaussures:1 }, tps:12 }],
-  couture:[{ id:'vetements', nom:'Vêtements', type:'materiau', cout:{ laine:3 }, sort:{ 'vêtements':1 }, tps:12 }],
+  couture:[{ id:'vetements', nom:'Vêtements', type:'materiau', cout:{ laine:3 }, sort:{ 'vêtements':1 }, tps:12 }, { id:'chaussures', nom:'Chaussures', type:'materiau', cout:{ peaux:2 }, sort:{ chaussures:1 }, tps:12 }],   // (+ les chaussures de l'ex-cordonnerie, fusionnée le 13/10)
   /* Fromagerie : lait → caillage (présure, ferments) → décaillage et brassage → égouttage et moulage (pressage pour les pâtes pressées) → salage → affinage à la cave (en jours de jeu). La présure animale se prépare ici. */
   fromagerie:[
     { id:'presure', nom:'Présure animale', type:'materiau', cout:{ viande:1 }, sort:{ 'présure':3 }, tps:6 },
@@ -43,11 +43,11 @@ function stepAutoSimple(h, w, dt) {
 }
 function stepFonte(h, w, dt) {
   if (AUTO_SIMPLE[h.kind]) return stepAutoSimple(h, w, dt);
-  if (w.enCours) { if ((w.t -= dt) > 0) { w.etat = 'fabrique'; return; } const R = fusionDe(w.cur); h.inv = h.inv || {}; if (R) for (const [k, q] of Object.entries(R.sort)) h.inv[k] = (h.inv[k] || 0) + q; w.enCours = false; w.etat = null; save(); }
+  if (w.enCours) { if ((w.t -= dt) > 0) { w.etat = 'fabrique'; return; } w.fusion = false; const R = fusionDe(w.cur); h.inv = h.inv || {}; if (R) for (const [k, q] of Object.entries(R.sort)) h.inv[k] = (h.inv[k] || 0) + q; w.enCours = false; w.etat = null; save(); }
   const R = recettesDe('fonderie', niveau(h)).find(r => (!h.fonte || h.fonte[r.id] !== false) && !sortiePleine(h, r.sort) && !manqueFonte(h, r.cout));   // (chaque métal a son maximum)   // (fontes éteintes : ignorées ; elle ne fond que ce que ses porteurs ont rapporté)
   if (!R) { w.etat = stockPlein(h) ? 'plein' : nbPorteurs(h) ? 'attend les porteurs' : 'aucun porteur'; return; }                                              // (pas assez de minerai ou de charbon de bois : elle attend)
   for (const [k, q] of Object.entries(R.cout)) utiliseFonte(h, k, q);
-  w.enCours = true; w.cur = R.id; w.tTot = R.tps / nbFond(h); w.t = w.tTot; w.etat = 'fabrique';
+  w.enCours = true; w.fusion = true; w.cur = R.id; w.tTot = R.tps / nbFond(h); w.t = w.tTot; w.etat = 'fabrique';
 }
 const produitsDe = h => { const p = PRODUCTIONS[h.kind]; return typeof p === 'function' ? p(h) : (p || []); };
 const produitDe = (h, id) => produitsDe(h).find(r => r.id === id) || null;
@@ -82,7 +82,7 @@ function stepProduction(h, w, dt) {
 }
 const etapeTexte = (h, R, w) => R && R.etapes && w ? `étape ${(w.etape || 0) + 1}/${R.etapes.length} : ${R.etapes[w.etape || 0][0]}` : '';
 // bâtiments qui avaient un stock « produit » (ancien système de transformation) : il passe dans leur contenu, où la production range désormais ses produits
-const ANCIEN_PRODUIT = { scierie:'planches', hutte_charbonnier:'charbon de bois', moulin:'farine', four:'pain', brasserie:'bière', cordonnerie:'chaussures', couture:'vêtements' };
+const ANCIEN_PRODUIT = { scierie:'planches', hutte_charbonnier:'charbon de bois', moulin:'farine', four:'pain', brasserie:'bière', couture:'vêtements' };
 setTimeout(() => { try { let n = 0; for (const h of S.houses) { const p = ANCIEN_PRODUIT[h.kind]; if (p && h.stock > 0) { h.inv = h.inv || {}; h.inv[p] = (h.inv[p] || 0) + h.stock; h.stock = 0; n++; } } if (n) save(); } catch (e) {} }, 0);
 // minerais au kilo : les stocks enregistrés avant (unités de 4 kg) sont multipliés par 4, une seule fois
 setTimeout(() => { try { if (S.minerauxEnKg) return; for (const h of S.houses) for (const m of [h.inv, h.mat]) for (const k of Object.keys(m || {})) if (k.startsWith('minerai')) m[k] = Math.round(m[k] * MINERAI_KG); S.minerauxEnKg = 1; save(); } catch (e) {} }, 0);

@@ -34,13 +34,13 @@ const regionBuildings = id => buildings[id] || [];
 
 // Une interaction en cours (bateau, placement d'un batiment) a priorite
 // sur la selection des regions au clic.
-const interactionBusy = () => placement.active || boat.placing || boat.selected || send.active || caravanSend.active;
+const interactionBusy = () => placement.active || boat.placing || boat.selected || send.active || caravanSend.active || (typeof analyseRoutes !== 'undefined' && analyseRoutes.A.actif && (analyseRoutes.A.choix || analyseRoutes.A.ajout));   // (analyse des routes : un clic sur la carte choisit une route ou une ville, il ne sélectionne pas de région)
 
 // Tant que le joueur n'a pas confirmé sa région de départ, un clic sur une région ne fait que l'afficher (fiche à droite) ; elle n'est validée qu'au bouton Confirmer (barre du bas)
 const choixDepart = () => ownedRegions.size === 0;
 function updateRibbon(){
   const ribbon = document.getElementById('map-ribbon');
-  ribbon.textContent = choixDepart() ? (selectedId !== null ? '📍 Région ' + selectedId + ' · appuyez sur Confirmer pour commencer ici' : '📍 Choisissez votre région de départ : cliquez sur les régions pour les voir')
+  ribbon.textContent = choixDepart() ? (selectedId !== null ? '📍 Région ' + selectedId + ' · appuyez sur Rejoindre pour commencer ici' : '📍 Choisissez votre région de départ : cliquez sur les régions pour les voir')
     : selectedId !== null ? '📍 Région ' + selectedId : "📍 Cliquez sur une région pour l'afficher";
   updateStartBar();
 }
@@ -48,12 +48,12 @@ function updateStartBar(){
   const bar = document.getElementById('start-bar'); if(!bar) return;
   bar.hidden = !(choixDepart() && selectedId !== null);
   if(bar.hidden) return;
-  const npc = NPC_REGION_IDS.has(selectedId);
-  document.getElementById('start-bar-text').textContent = npc ? 'Région ' + selectedId + ' : comptoir de commerce, non jouable' : 'Région ' + selectedId + ' sélectionnée';
-  document.getElementById('start-confirm').disabled = npc;
+  const npc = NPC_REGION_IDS.has(selectedId), polaire = regionInfo(selectedId).climat.biome === 'polaire';
+  document.getElementById('start-bar-text').textContent = npc ? 'Région ' + selectedId + ' : comptoir de commerce, non jouable' : polaire ? 'Région ' + selectedId + ' : désert polaire, région d’expansion (pas de départ)' : 'Région ' + selectedId + ' sélectionnée';
+  document.getElementById('start-confirm').disabled = npc || polaire;
 }
 function confirmerDepart(){
-  if(!choixDepart() || selectedId === null || NPC_REGION_IDS.has(selectedId)) return;
+  if(!choixDepart() || selectedId === null || NPC_REGION_IDS.has(selectedId) || regionInfo(selectedId).climat.biome === 'polaire') return;
   ownedRegions.add(selectedId); savePlayerState(); refreshOwnershipLayers();
   capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale');
 }
@@ -74,8 +74,7 @@ function selectRegion(id){
   map.setFeatureState({ source:'regions', id }, { selected:true });
   renderRegionPanel();
   updateRibbon();
-  // plus d'achat : un clic sur une région l'affiche (sa carte de région s'ouvre ; « ← Carte » ramene a la planete)
-  capitalRegion = id; capitalTab = 'carte'; showView('capitale');
+  // le clic gauche n'affiche que la fiche ; la carte de la région s'ouvre par « Voir la région »
 }
 
 function renderRegionPanel(){
@@ -110,11 +109,11 @@ function renderRegionPanel(){
       (() => { const pr = Object.entries(regionProduction(selectedId)); return '<div class="region-row"><span>Production / jour</span><span class="v">' +
         (pr.length ? pr.map(([k, q]) => q + ' ' + goodName(k)).join(', ') : 'aucune') + '</span></div>'; })() : '') +
     regionResourcesHtml(selectedId) +
-    '<button class="boat-btn" id="explore-btn" type="button">🏰 Carte de la région</button>' +
     (owned
       ? '<div class="owned-note">' + iconCheck() + 'Vous possédez cette région.</div>' +
         '<div class="region-section-title">Test bateau</div><div class="boat-box"><div class="boat-status" id="boat-status"></div><button class="boat-btn" id="boat-place-btn">Placer le bateau</button></div>'
-      : '');
+      : '') +
+    '<div class="region-actions"><button class="boat-btn" id="explore-btn" type="button">Voir la région</button></div>';
   const explore = document.getElementById('explore-btn');
   if(explore) explore.addEventListener('click', () => { capitalRegion = selectedId; capitalTab = 'carte'; showView('capitale'); });
   const boatBtn = document.getElementById('boat-place-btn');
@@ -154,29 +153,6 @@ function initOwnership(){
     paint:{ 'circle-radius':10, 'circle-color':['case', ['get', 'valid'], '#2f9e44', '#e03131'], 'circle-opacity':0.85,
       'circle-stroke-color':'#ffffff', 'circle-stroke-width':2.5 } });
   refreshOwnershipLayers();
-}
-// Atelier de mineur: pioche blanche sur disque brun
-function drawMineIcon(){
-  const c = document.createElement('canvas'); c.width = c.height = 44;
-  const g = c.getContext('2d');
-  g.fillStyle = '#6b4a2b'; g.strokeStyle = '#ffffff'; g.lineWidth = 3;
-  g.beginPath(); g.arc(22, 22, 18, 0, Math.PI * 2); g.fill(); g.stroke();
-  g.strokeStyle = '#ffffff'; g.lineWidth = 2.8; g.lineCap = 'round';
-  g.beginPath(); g.moveTo(15, 31); g.lineTo(28, 16); g.stroke();                 // manche
-  g.beginPath(); g.moveTo(17, 11); g.quadraticCurveTo(29, 11, 33, 23); g.stroke(); // fer de la pioche
-  return g.getImageData(0, 0, 44, 44);
-}
-function drawPortIcon(color = '#1c3d5a'){
-  const c = document.createElement('canvas'); c.width = c.height = 44;
-  const g = c.getContext('2d');
-  g.fillStyle = color; g.strokeStyle = '#ffffff'; g.lineWidth = 3;
-  g.beginPath(); g.arc(22, 22, 18, 0, Math.PI * 2); g.fill(); g.stroke();
-  g.strokeStyle = '#ffffff'; g.lineWidth = 2.6; g.lineCap = 'round';
-  g.beginPath(); g.arc(22, 13, 3.2, 0, Math.PI * 2); g.stroke();          // anneau
-  g.beginPath(); g.moveTo(22, 16.5); g.lineTo(22, 32); g.stroke();        // verge
-  g.beginPath(); g.moveTo(15, 21); g.lineTo(29, 21); g.stroke();          // jas
-  g.beginPath(); g.arc(22, 25, 8, 0.15 * Math.PI, 0.85 * Math.PI); g.stroke(); // bras
-  return g.getImageData(0, 0, 44, 44);
 }
 function renderBuildingsLayer(){
   if(!map.getSource('buildings')) return;

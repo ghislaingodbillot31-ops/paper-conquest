@@ -16,15 +16,15 @@ function strokeLine(pts, lw, color) {
 }
 /* Étiquettes de la carte (noms des ressources, animaux, gisements, bateaux, poissons, habitants, chariots) : UNE seule police et UNE seule taille, en pixels d'écran :
    elles ont donc la même taille quel que soit le zoom, avec un liseré clair (haloText) qui les garde lisibles sur tous les fonds. Affichées dès ETIQ_ZOOM_MIN. */
-const FONT_ETIQ = '600 14px "Barlow Condensed", sans-serif', ETIQ_ZOOM_MIN = .3;
+const FONT_ETIQ = '600 14px "MedievalSharp", serif', ETIQ_ZOOM_MIN = .3;
 function haloText(t, x, y, color, halo) {
   ctx.lineWidth = 3; ctx.strokeStyle = halo; ctx.lineJoin = 'round'; ctx.strokeText(t, x, y);
   ctx.fillStyle = color; ctx.fillText(t, x, y);
 }
 const fmt = (v, d = 1) => v.toLocaleString('fr-FR', { maximumFractionDigits:d });
 
-function drawZones(highlight) {
-  if (!opts.grid) return; // quadrillage masqué (les cases restent actives)
+function drawZones(construction) {
+  if (!opts.grid && !construction) return; // quadrillage masqué (les cases restent actives) ; construction : affiché le temps de bâtir ou de déplacer un bâtiment, sans repeindre les tuiles
   const s = view.s, inset = Math.min(.6, 1.2 / s * 1.5);
   ctx.fillStyle = Col['zone-fill']; ctx.strokeStyle = Col['zone-line']; ctx.lineWidth = 1;
   ctx.beginPath();
@@ -41,7 +41,7 @@ function drawHouse(h, mode) {
   const s = view.s, C = corners(h);
   if ((mode === 'normal' || mode === 'selected' || mode === 'hover') && !buildingOf(h)) { // les bâtiments du catalogue dessinent leurs propres ombres
     ctx.fillStyle = Col.shadow; ctx.beginPath();
-    C.forEach((p, i) => { const X = (p[0] + .8) * s + view.ox, Y = (p[1] + .8) * s + view.oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
+    C.forEach((p, i) => { const X = (p[0] + .3) * s + view.ox, Y = (p[1] + .3) * s + view.oy; i ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y); });
     ctx.closePath(); ctx.fill();
   }
   polyPath(C); ctx.closePath();
@@ -49,6 +49,7 @@ function drawHouse(h, mode) {
     ctx.globalAlpha = .45; ctx.fillStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.fill(); ctx.globalAlpha = 1;
     ctx.setLineDash([5, 4]); ctx.strokeStyle = mode === 'bad' ? Col.bad : Col.accent; ctx.lineWidth = 1.5; ctx.stroke(); ctx.setLineDash([]);
   } else if (BUILD_DRAW[h.kind]) {
+    if (h.kind !== 'fosse_miniere' && typeof solCourLT === 'function') solCourLT(h);   // cour de terre battue sous tous les bâtiments (la fosse minière a la sienne)
     BUILD_DRAW[h.kind](h); // dessin propre au bâtiment (façade côté rue)
   } else {
     ctx.fillStyle = Col.house; ctx.fill();
@@ -67,7 +68,7 @@ function drawHouse(h, mode) {
   if (bk && bk.zone && !h.zone && h.id !== -1 && (mode === 'normal' || mode === 'selected' || mode === 'hover') && s > .6) {
     const [X, Y] = toS(h.x, h.y), r = Math.max(6, 2.5 * s);
     ctx.beginPath(); ctx.arc(X, Y, r, 0, Math.PI * 2); ctx.fillStyle = Col.bad; ctx.fill();
-    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(r * 1.4)}px "Barlow Condensed", sans-serif`;
+    ctx.fillStyle = '#fff'; ctx.font = `700 ${Math.round(r * 1.4)}px "MedievalSharp", serif`;
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText('!', X, Y + 1);
   }
   if (!BUILD_DRAW[h.kind] && Math.min(h.w, h.l) * s > 9) {

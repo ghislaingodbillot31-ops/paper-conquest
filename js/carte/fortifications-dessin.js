@@ -25,7 +25,7 @@ function coneS(X, Y, R, hi, lo, s) {
   ctx.beginPath(); ctx.arc(X, Y, R, 0, Math.PI * 2); ctx.strokeStyle = FORT.edge; ctx.lineWidth = Math.max(1, .1 * s); ctx.stroke();
   ctx.beginPath(); ctx.arc(X, Y, Math.max(1, .18 * s), 0, Math.PI * 2); ctx.fillStyle = '#3b3a36'; ctx.fill();   // épi
 }
-const SLATE_HI = [140, 146, 151], SLATE_LO = [78, 84, 89];
+const SLATE_HI = [150, 112, 74], SLATE_LO = [92, 64, 38];   // (cônes des tours : bardeaux de bois dur)
 // tour ronde de pierre (coordonnées écran, rayon R en px) : parapet crénelé, chemin de ronde, toit conique
 function roundTowerS(X, Y, R, s, sh) {
   if (sh) { ctx.beginPath(); ctx.arc(X + sh[0] * s, Y + sh[1] * s, R, 0, Math.PI * 2); ctx.fillStyle = FORT.shadow; ctx.fill(); } // ombre (sh null : déjà faite)

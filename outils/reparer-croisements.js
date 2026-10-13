@@ -19,8 +19,8 @@ function find(){ // tous les croisements : [arc i, seg j, arc k, seg l]
   return res;
 }
 let n0=0;
-for(let it=0;it<30;it++){
-  const X=find();if(!it)n0=X.length;if(!X.length){console.log('plus aucun croisement, passes',it);break;}
+let prec=1e9;for(let it=0;it<30;it++){
+  const X=find();if(!it)n0=X.length;if(!X.length||X.length>=prec){console.log('stop, passes',it,'croisements',X.length);break;}prec=X.length;   // (sans progres : on s'arrete, sinon les arcs sont vides de leurs points et deviennent des cordes droites)
   const touched=new Set();
   for(const [i,j,k,l] of X){
     if(i===k){ if(touched.has(i)||touched.has(k))continue; touched.add(i); const a=arcs[i],[lo,hi]=j<l?[j,l]:[l,j]; // coupe la boucle lo+1..hi

@@ -22,7 +22,7 @@
 <header>
   <h1>COULEURS DES BIOMES</h1>
   <p>Lues directement dans <code>js/carte/generateur.js</code> : toujours à jour. Cliquez un code pour le copier. Pour en changer un, modifiez-le dans ce fichier (ou demandez-le-moi).</p>
-  <p>L'échelle du bas est le relief du sol : 6 teintes, de la plus sombre (fond des vallées) à la plus claire (sommets) ; la 3<sup>e</sup> est la couleur du sol.</p>
+  <p>L'échelle du bas est le sol tel qu'il est dessiné : le fond, puis les deux couleurs des zones de relief (très proches, sans texture ni liseré de rive : la rive et l'écume reprennent la couleur du sol). Les points colorés sont les arbres (feuillage de chaque teinte).</p>
   <p id="msg"></p>
 </header>
 <main id="liste"></main>
@@ -36,13 +36,14 @@ fetch('js/carte/generateur.js').then(r => r.text()).then(t => {
   const blocs = [...t.matchAll(/^  ([a-z_]+):\s*\{ name:'([^']+)'([\s\S]*?)(?=^  [a-z_]+:\s*\{ name:|^\};)/gm)];
   for (const [, id, nom, corps] of blocs) {
     if (!corps.includes('rivers:')) continue;                    // (les classes de cours d'eau ne sont pas des biomes)
-    const g = corps.match(/ground:'(#[0-9a-f]{6})'/), d = corps.match(/groundDark:'(#[0-9a-f]{6})'/), w = corps.match(/water:'(#[0-9a-f]{6})'/), pt = corps.match(/patch:'(#[0-9a-f]{6})'/);
+    const g = corps.match(/ground:'(#[0-9a-f]{6})'/), d = corps.match(/groundDark:'(#[0-9a-f]{6})'/), w = corps.match(/water:'(#[0-9a-f]{6})'/), pt = corps.match(/patch:'(#[0-9a-f]{6})'/), q = k => { const x = corps.match(new RegExp(k + ":'(#[0-9a-f]{6})'")); return x && x[1]; }, rt = corps.match(/route:\['(#[0-9a-f]{6})', '(#[0-9a-f]{6})'\]/), garde = corps.includes('garde:true'), valide = corps.includes('relief2:') && !corps.includes('aValider:1'), rz = corps.match(/relief2:\['(#[0-9a-f]{6})', '(#[0-9a-f]{6})'\]/), arbres = [...((corps.match(/pal:\[(\[.*?\])\],/s) || ['', ''])[1]).matchAll(/\['(#[0-9a-f]{6})'/g)].map(x => x[1]);
     const sol = g ? g[1] : def.ground, fonce = d ? d[1] : def.dark, eau = w ? w[1] : '#38acd3';
     const ligne = (lib, c) => '<div class="ligne"><b>' + lib + '</b><span class="pastille" style="background:' + c + '"></span><code data-c="' + c + '">' + c + '</code></div>';
     const el = document.createElement('div'); el.className = 'carte';
-    el.innerHTML = '<h2></h2>' + ligne('Sol', sol) + ligne('Sol foncé', fonce) + ligne('Eau', eau) + (pt ? ligne('Taches', pt[1]) : '') +
-      '<div class="echelle">' + F.map(f => { const c = teinte(hex(sol), f); return '<div style="background:' + c + '" title="' + c + '"><span>' + c.slice(1) + '</span></div>'; }).join('') + '</div>';
-    el.querySelector('h2').textContent = nom + (g ? '' : ' (sol par défaut)');
+    el.innerHTML = '<h2></h2>' + ligne('Sol', sol) + ligne('Sol foncé', fonce) + ligne('Eau', eau) + (rt ? ligne('Route', rt[1]) + ligne('Bord de route', rt[2]) : '') + (rz ? ligne('Zones 1', rz[1]) + ligne('Zones 2', rz[2]) : '') + (arbres.length ? '<div class="ligne"><b>Arbres</b>' + arbres.map(c => '<span class="pastille" style="background:' + c + '"></span>').join('') + '</div>' : '') +
+      '<div class="echelle">' + (rz ? [sol, rz[1], rz[2]] : F.map(f => teinte(hex(sol), f))).map(c => '<div style="background:' + c + '" title="' + c + '"><span>' + c.slice(1) + '</span></div>').join('') + '</div>';
+    el.querySelector('h2').textContent = nom + (valide ? ' ✓ validé' : ' · à valider');
+    el.style.borderColor = valide ? '#3f7a3a' : garde ? '#d08a20' : '';
     liste.appendChild(el);
   }
   liste.onclick = e => { const c = e.target.closest('code'); if (!c) return; try { navigator.clipboard.writeText(c.dataset.c); document.getElementById('msg').textContent = c.dataset.c + ' copié'; } catch (x) {} };

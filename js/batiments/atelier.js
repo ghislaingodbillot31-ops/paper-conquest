@@ -22,7 +22,7 @@ function fitAtelier() {
 function drawAtelier() {
   const s = view.s, half = atelierSide() / 2, look = biomeLook();
   const [X0, Y0] = toS(-half, -half), Z = half * 2 * s;
-  ctx.fillStyle = 'rgba(40,34,24,.25)'; ctx.fillRect(X0 + 6, Y0 + 8, Z, Z);                 // ombre du carré
+  ctx.fillStyle = 'rgba(40,34,24,.25)'; ctx.fillRect(X0 + 2, Y0 + 3, Z, Z);                 // ombre du carré
   ctx.fillStyle = look.ground; ctx.fillRect(X0, Y0, Z, Z);                                  // terrain
   alignPatterns();
   if (s > 3 && PAT.herbe) { ctx.fillStyle = PAT.herbe; ctx.fillRect(X0, Y0, Z, Z); }       // brins d'herbe

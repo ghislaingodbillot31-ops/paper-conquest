@@ -77,5 +77,57 @@
   "courges": [
    "js/batiments/cultures.js:25 (courge, produit « courges »)"
   ]
- }
+ },
+ "fusionsBatiments": [
+  {
+   "de": "forge",
+   "vers": "fonderie",
+   "note": "Décision du 13/10/2026 : la forge est supprimée ; la fonderie fabrique à la commande les outils et armes en métal (file d'attente), en plus de ses fontes automatiques ON / OFF."
+  },
+  {
+   "de": "archerie",
+   "vers": "menuiserie",
+   "note": "Décision du 13/10/2026 : l'archerie est supprimée ; la menuiserie fabrique arcs, arbalètes et flèches."
+  },
+  {
+   "de": "armurerie",
+   "vers": "fonderie",
+   "note": "Décision du 13/10/2026 : l'armurerie est supprimée ; ses boucliers de bois vont à la menuiserie, ses armes, armures et boucliers de métal à la fonderie (forge)."
+  },
+  {
+   "de": "cordonnerie",
+   "vers": "couture",
+   "note": "Décision du 13/10/2026 : la cordonnerie est supprimée ; l'atelier de tailleur (couture) fabrique aussi les chaussures."
+  },
+  {
+   "de": "scriptorium",
+   "vers": "eglise",
+   "note": "Décision du 13/10/2026 : le scriptorium est supprimé ; le lieu de culte (id eglise) fait ce genre de travail : copie et enluminure des manuscrits (recette « manuscrit »)."
+  },
+  {
+   "de": "atelier_monetaire",
+   "vers": "fonderie",
+   "note": "Décision du 13/10/2026 : l'atelier monétaire est supprimé ; c'est la fonderie qui frappe la monnaie (recette de metal.json)."
+  },
+  {
+   "de": "tonnellerie",
+   "vers": "menuiserie",
+   "note": "Décision du 13/10/2026 : la tonnellerie est supprimée ; la menuiserie fabrique tonneaux et cuves."
+  },
+  {
+   "de": "bas_fourneau",
+   "vers": "fonderie",
+   "note": "Décision du 13/10/2026 : le bas fourneau est supprimé ; la fonderie (ex-forge, agrandie à 3 × 3) a son propre bas fourneau pour le premier travail du minerai."
+  },
+  {
+   "de": "atelier_tissage",
+   "vers": "corderie",
+   "note": "Décision du 13/10/2026 : l'atelier de tissage est supprimé ; la corderie file la laine et tisse drap brut et toile, en plus de la corde."
+  },
+  {
+   "de": "teinturerie_foulerie",
+   "vers": "tannerie",
+   "note": "Décision du 13/10/2026 : la teinturerie-foulerie est supprimée ; la tannerie teint et foule aussi les étoffes."
+  }
+ ]
 }

@@ -17,10 +17,10 @@ function hint(text) {
 let reliefSolC = null, reliefEauC = null;
 const reliefSol = () => reliefChamp(true), reliefEau = () => reliefChamp(false);   // le sol (vallées le long de l'eau) et l'eau (reflets et fonds, plus petits)
 function reliefChamp(sol) {
-  const key = S.landSeed + '|' + S.rivers.map(r => r.pts.length + ',' + r.pts[0]).join(';') + '|' + S.lakes.map(l => l.c).join(';') + (sol ? 's' : 'e');
+  const key = S.landSeed + '|' + S.rivers.map(r => r.pts.length + ',' + r.pts[0]).join(';') + '|' + S.lakes.map(l => l.c).join(';') + (sol ? 's' : 'e') + (sol && biomeLook().relief2 ? '2' + biomeLook().relief2.length + (biomeLook().reliefK || 1) : '');
   const cache = sol ? reliefSolC : reliefEauC;
   if (cache && cache.key === key) return cache.niv;
-  const CS = sol ? 6 : 4, W0 = Math.ceil(TW / CS) + 1, H0 = Math.ceil(TH / CS) + 1, PD = 3, W = W0 + 2 * PD, H = H0 + 2 * PD, v1 = valueNoise(S.landSeed + (sol ? 4441 : 9341)), v2 = valueNoise(S.landSeed + (sol ? 5557 : 9457)), v3 = valueNoise(S.landSeed + (sol ? 6661 : 9561));
+  const KR = biomeLook().reliefK || 1, CS = sol ? 6 : 4, W0 = Math.ceil(TW / CS) + 1, H0 = Math.ceil(TH / CS) + 1, PD = 3, W = W0 + 2 * PD, H = H0 + 2 * PD, v1 = valueNoise(S.landSeed + (sol ? 4441 : 9341)), v2 = valueNoise(S.landSeed + (sol ? 5557 : 9457)), v3 = valueNoise(S.landSeed + (sol ? 6661 : 9561));
   // distance à l'eau (en cases), par balayage aller-retour
   const dist = new Float32Array(W * H).fill(1e4), cell = (x, y) => (Math.round(y / CS) + PD) * W + Math.round(x / CS) + PD;
   const marque = (x, y) => { const i = Math.round(x / CS) + PD, j = Math.round(y / CS) + PD; if (i >= 0 && j >= 0 && i < W && j < H) dist[j * W + i] = 0; };
@@ -31,11 +31,11 @@ function reliefChamp(sol) {
   const h = new Float32Array(W * H);
   for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) {
     const x = (i - PD) * CS, y = (j - PD) * CS, d = dist[j * W + i] * CS;
-    h[j * W + i] = !sol ? v1(x / 150 + 3, y / 150 + 8) * .5 + v2(x / 62 + 11, y / 62 + 2) * .32 + v3(x / 26 + 5, y / 26 + 9) * .18 : v1(x / 420 + 3, y / 420 + 8) * .55 + v2(x / 170 + 11, y / 170 + 2) * .3 + v3(x / 70 + 5, y / 70 + 9) * .15 + .28 * (1 - Math.exp(-d / 140));   // les vallées longent l'eau
+    h[j * W + i] = !sol ? v1(x / 150 + 3, y / 150 + 8) * .5 + v2(x / 62 + 11, y / 62 + 2) * .32 + v3(x / 26 + 5, y / 26 + 9) * .18 : biomeLook().relief2 ? v1(x / (300 * KR) + 3, y / (300 * KR) + 8) * .6 + v2(x / (130 * KR) + 11, y / (130 * KR) + 2) * .3 + v3(x / (60 * KR) + 5, y / (60 * KR) + 9) * .1 : GAME && GAME.region === 123 ? v1(x / 120 + 3, y / 120 + 8) * .45 + v2(x / 48 + 11, y / 48 + 2) * .35 + v3(x / 22 + 5, y / 22 + 9) * .2 + .2 * (1 - Math.exp(-d / 60)) : v1(x / 420 + 3, y / 420 + 8) * .55 + v2(x / 170 + 11, y / 170 + 2) * .3 + v3(x / 70 + 5, y / 70 + 9) * .15 + .28 * (1 - Math.exp(-d / 140));   // les vallées longent l'eau
   }
   // champ adouci (deux passes de moyenne 3 × 3) : des contours sans angles ni segments droits, même en gros plan
   for (let pass = 0; pass < 2; pass++) { const o = new Float32Array(W * H); for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) { let t = 0, n = 0; for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const ii = i + di, jj = j + dj; if (ii >= 0 && jj >= 0 && ii < W && jj < H) { t += h[jj * W + ii]; n++; } } o[j * W + i] = t / n; } h.set(o); }
-  const tri = Float32Array.from(h).sort(), Q = (sol ? [.2, .4, .6, .78, .9] : [.6]).map(q => tri[Math.floor(q * (tri.length - 1))]);   // l'eau : un seul palier (deux couleurs)
+  const tri = Float32Array.from(h).sort(), Q = (sol ? (biomeLook().relief2 ? (biomeLook().relief2.length > 1 ? [.42, .78] : [.5]) : [.2, .4, .6, .78, .9]) : [.6]).map(q => tri[Math.floor(q * (tri.length - 1))]);   // l'eau : un seul palier (deux couleurs)
   const niv = [];
   for (const t of Q) {
     // marching squares : un segment par case, entre des milieux d'arêtes interpolés ; les bords du champ sont fermés par une marge basse
@@ -66,10 +66,13 @@ function reliefChamp(sol) {
 }
 /* Douglas-Peucker d'un contour fermé (tolérance eps, en m) : les contours du relief ont un point tous les ~0,5 m (jusqu'à 100 000 points) ; à l'échelle d'une tuile, la plupart ne se voient pas. */
 function simplifieAnneau(P, eps) {
-  const n = P.length, keep = new Uint8Array(n), pile = [[0, n - 1]]; keep[0] = 1; keep[n - 1] = 1;
-  const Q = i => P[i === n ? 0 : i];
+  const n = P.length, keep = new Uint8Array(n), Q = i => P[i === n ? 0 : i];
+  let m = 1, far = 0;
+  for (let k = 1; k < n; k++) { const d = (P[k][0] - P[0][0]) ** 2 + (P[k][1] - P[0][1]) ** 2; if (d > far) { far = d; m = k; } }   // (contour fermé : on le coupe en deux au point le plus éloigné du départ, sinon départ = arrivée et la distance à la corde vaut toujours 0)
+  keep[0] = 1; keep[m] = 1;
+  const pile = [[0, m], [m, n]];
   while (pile.length) {
-    const [a, b] = pile.pop(), A = P[a], B = Q(b + 1 > n - 1 ? n : b), dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1; let md = 0, mi = -1;
+    const [a, b] = pile.pop(), A = Q(a), B = Q(b), dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy) || 1; let md = 0, mi = -1;
     for (let k = a + 1; k < b; k++) { const d = Math.abs(dx * (A[1] - P[k][1]) - (A[0] - P[k][0]) * dy) / L; if (d > md) { md = d; mi = k; } }
     if (mi >= 0 && md > eps) { keep[mi] = 1; pile.push([a, mi], [mi, b]); }
   }
@@ -105,7 +108,7 @@ function teintesRelief(base, F, chaud, saison) {
 }
 function drawFormesSol(s) {
   if (MONDE_PLAT) return;
-  const [tx, ty] = toS(0, 0), f = teintesRelief(biomeLook().ground, [-.17, -.09, 0, .1, .2, .3], 30, true), col = (n, p) => f(n, p) + ')';
+  const [tx, ty] = toS(0, 0), neige = biomeLook().neigeTex, look2 = biomeLook().relief2, f = neige ? teintesRelief(biomeLook().ground, [-.05, -.035, -.022, -.012, -.004, .01], 0, false) : teintesRelief(biomeLook().ground, [-.17, -.09, 0, .1, .2, .3], 30, true), col = look2 ? n => grevSaison(n ? look2[Math.min(n, look2.length) - 1] : biomeLook().ground) : (n, p) => f(n, p) + ')';   // relief2 : le sol puis les couleurs de la liste, un palier chacune
   ctx.save(); ctx.beginPath(); ctx.rect(tx, ty, TW * s, TH * s); ctx.clip();
   peindreNiveaux(reliefSol(), col, s, true, false);   // (pas d'ombre portée)
   ctx.restore();
@@ -125,6 +128,7 @@ function drawGround() {
   if (PAT.biome !== S.biome) { makePatterns(); PAT.biome = S.biome; } // brins aux couleurs du biome
   alignPatterns();
   drawFormesSol(s);
+  if (PAT.neige) { PAT.neige.setTransform(new DOMMatrix().translate(view.ox, view.oy).scale(s * 20 / 128)); const x0 = Math.max(tx, 0), y0 = Math.max(ty, 0), x1 = Math.min(tx + TW*s, W), y1 = Math.min(ty + TH*s, H); if (x1 > x0 && y1 > y0) { ctx.fillStyle = PAT.neige; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); } }   // texture de neige
   if (s > 3 && PAT.herbe) { // brins d'herbe : seulement sur la partie visible du terrain
     const x0 = Math.max(tx, 0), y0 = Math.max(ty, 0), x1 = Math.min(tx + TW*s, W), y1 = Math.min(ty + TH*s, H);
     if (x1 > x0 && y1 > y0) { ctx.fillStyle = PAT.herbe; ctx.fillRect(x0, y0, x1 - x0, y1 - y0); }
@@ -160,6 +164,6 @@ function drawScale() {
   const nx = W - 26, ny = 38;
   ctx.beginPath(); ctx.moveTo(nx, ny - 16); ctx.lineTo(nx + 7, ny + 6); ctx.lineTo(nx, ny + 1); ctx.lineTo(nx - 7, ny + 6); ctx.closePath();
   ctx.fillStyle = Col.ink; ctx.fill();
-  ctx.font = '600 15px "Barlow Condensed", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+  ctx.font = '600 15px "MedievalSharp", serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
   ctx.fillText('N', nx, ny - 18);
 }

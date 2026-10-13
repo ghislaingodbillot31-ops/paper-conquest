@@ -2,9 +2,7 @@
 // [nom, lon, lat, rang]: 1 ocean (visible de loin), 2 grande mer, 3 mer
 // ou golfe plus petit (apparait en zoomant).
 const SEA_LABELS = [
-  ['Océan Atlantique', -38, 32, 1], ['Océan Atlantique', -22, -22, 1], ['Océan Pacifique', -150, 15, 1], ['Océan Pacifique', 170, 28, 1],
-  ['Océan Pacifique', -118, -28, 1], ['Océan Indien', 80, -22, 1], ['Océan Arctique', 60, 81, 1], ['Océan Austral', 20, -60, 1],
-  ['Océan Austral', 140, -60, 1], ['Océan Austral', -100, -62, 1],
+  ['Océan Atlantique', -38, 32, 1], ['Océan Pacifique', -150, 15, 1], ['Océan Indien', 80, -22, 1], ['Océan Arctique', 60, 81, 1], ['Océan Austral', 20, -60, 1],   // UN SEUL nom par océan
   ['Mer Méditerranée', 18, 34.5, 2], ['Mer du Nord', 3.5, 56, 2], ['Mer Baltique', 19, 57.5, 2], ['Mer Noire', 34.5, 43.2, 2],
   ['Mer Caspienne', 50.8, 42, 2], ['Mer Rouge', 38.2, 20.5, 2], ['Golfe Persique', 51.3, 27.2, 2], ["Mer d'Arabie", 64, 15, 2],
   ['Golfe du Bengale', 89, 15, 2], ['Mer de Chine méridionale', 114, 13, 2], ['Mer de Chine orientale', 125.5, 29, 2],
@@ -21,14 +19,13 @@ const SEA_LABELS = [
   ['Mer Celtique', -7.5, 50.5, 3], ['Golfe du Saint-Laurent', -62, 48, 3], ['Grande Baie australienne', 130, -35.8, 3],
   ['Golfe de Carpentarie', 139, -14, 3], ['Mer de Banda', 127, -5.5, 3], ['Mer de Marmara', 28, 40.75, 3], ['Mer de Ligurie', 8.8, 43.6, 3],
 ];
-function initSeaLabels(){
-  map.addSource('sea-names', { type:'geojson', data:turf.featureCollection(SEA_LABELS.map(([name, lon, lat, rank]) => turf.point([lon, lat], { name, rank }))) });
+// Noms des mers en police medievale (textImage, interface.js)
+async function initSeaLabels(){
+  await loadMapFont();
+  map.addSource('sea-names', { type:'geojson', data:turf.featureCollection(SEA_LABELS.map(([name, lon, lat, rank]) => turf.point([lon, lat], { name, rank, img:textImage(map, name, rank === 1 ? { size:24, ls:4, color:'#f0e2b0', upper:true } : { size:rank === 2 ? 17 : 14, ls:rank === 2 ? 1.5 : 0.5 }) }))) });
   map.addLayer({ id:'sea-names', type:'symbol', source:'sea-names',
     filter:['any', ['==', ['get', 'rank'], 1], ['all', ['==', ['get', 'rank'], 2], ['>=', ['zoom'], 1.6]], ['all', ['==', ['get', 'rank'], 3], ['>=', ['zoom'], 3]]],
-    layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-max-width':7,
-      'text-size':['match', ['get', 'rank'], 1, 17, 2, 12.5, 10.5],
-      'text-letter-spacing':['match', ['get', 'rank'], 1, 0.25, 2, 0.12, 0.05], 'text-transform':['match', ['get', 'rank'], 1, 'uppercase', 'none'] },
-    paint:{ 'text-color':['match', ['get', 'rank'], 1, '#dfe8ff', '#c6d6ff'], 'text-halo-color':'rgba(14,26,76,0.85)', 'text-halo-width':1.3 } });
+    layout:{ 'icon-image':['get', 'img'], 'icon-allow-overlap':false, 'icon-padding':2 } });
   applyDevFilters();
 }
 
@@ -43,17 +40,19 @@ function initFishingZones(){
     properties:{ name:z.name, type:z.type, fish:',' + z.fish.join(',') + ',' }, geometry:z.geometry })));
   // pas de doublon avec le nom de la mer (ex. Mer Rouge)
   const seaNames = new Set(SEA_LABELS.map(l => l[0]));
-  const labels = turf.featureCollection(FISHING_ZONES.map((z, i) => turf.point(z.label, { name:z.name, zone:i })).filter(f => !seaNames.has(f.properties.name)));
   map.addSource('fishing', { type:'geojson', data:fishingFc });
-  map.addSource('fishing-labels', { type:'geojson', data:labels });
   const color = ['match', ['get', 'type'], ...Object.entries(FISH_ZONE_COLORS).flat(), '#2a9d8f'];
   map.addLayer({ id:'fishing-fill', type:'fill', source:'fishing', paint:{ 'fill-color':color, 'fill-opacity':0.12 } }, 'regions');
   map.addLayer({ id:'fishing-line', type:'line', source:'fishing', paint:{ 'line-color':color, 'line-width':1.2, 'line-dasharray':[2, 2], 'line-opacity':0.8 } }, 'regions');
-  map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:3.5,
-    layout:{ 'text-field':['get', 'name'], 'text-font':['Open Sans Regular'], 'text-size':10, 'text-max-width':8 },
-    paint:{ 'text-color':'#d4e0ff', 'text-halo-color':'rgba(14,26,76,0.85)', 'text-halo-width':1.2 } });
+  loadMapFont().then(() => {
+    const labels = turf.featureCollection(FISHING_ZONES.map((z, i) => turf.point(z.label, { name:z.name, zone:i, img:textImage(map, z.name, { size:11, color:'#cfdcc0', maxChars:12 }) })).filter(f => !seaNames.has(f.properties.name)));
+    map.addSource('fishing-labels', { type:'geojson', data:labels });
+    map.addLayer({ id:'fishing-label', type:'symbol', source:'fishing-labels', minzoom:3.5, layout:{ 'icon-image':['get', 'img'] } });
+    applyDevFilters();
+  });
   initFreshWaters();
   initSeaLabels();
+  initFauneMarine();
   // clic hors des regions: fleuve / lac d'abord, sinon zone de peche en mer
   map.on('click', (e) => {
     if(interactionBusy() || map.queryRenderedFeatures(e.point, { layers:['regions'] }).length) return;

@@ -36,6 +36,7 @@ function fruitiersDuBiome(biome, seed, max = 4) {
 }
 // un bosquet (1 à 5 arbres) de chaque espèce de keys, en clairière
 function placeFruitiers(seed, keys) {
+  if (S.biome === 'polaire') return [];
   const rnd = seeded(seed * 23 + 11), out = [], M = 140, R = 28, fz = forestNoise(), B = biomeOf().flora, grosBois = B.forest - .1, groves = [];
   const water = [...(Z.water.river || []), ...(Z.water.lake || [])];
   const libre = c => {
@@ -70,25 +71,10 @@ function arbreLisse(P) {
   for (let i = 0; i < n; i++) { const m = mid(P[i], P[(i + 1) % n]); ctx.quadraticCurveTo(P[i][0], P[i][1], m[0], m[1]); }
   ctx.closePath();
 }
-function arbreFruit(f, x, y, t, R, k) {
-  const r = t * R, lw = (w, mini = .8) => Math.max(mini, w * k);
-  ctx.beginPath(); ctx.ellipse(x + r * .3, y + r * .45, r, r * .55, 0, 0, 7); ctx.fillStyle = 'rgba(30,36,18,.3)'; ctx.fill();
+function arbreFruit(f, x, y, t, R, k) {                                       // (13/10 : tous les fruits sont de simples ronds de couleur ; formes, reflets, tiges et ombres supprimés)
+  const r = t * R;
   ctx.lineWidth = Math.max(1, r * .22); ctx.strokeStyle = ARBRE_INK; ctx.fillStyle = f.c; ctx.lineJoin = 'round';
-  const hl = (dx, dy, q) => { ctx.beginPath(); ctx.arc(x + dx * r, y + dy * r, r * q, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); };
-  const tige = (x1, y1, x2, y2) => { ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.lineWidth = Math.max(.8, r * .15); ctx.strokeStyle = '#3d5026'; ctx.stroke(); ctx.lineWidth = Math.max(1, r * .22); ctx.strokeStyle = ARBRE_INK; };
-  switch (f.f) {
-    case 'poire': { const b = r * 1.05, h = r * .65; ctx.beginPath(); ctx.arc(x, y + r * .35, b, 0, 7); ctx.moveTo(x + h, y - r * .5); ctx.arc(x, y - r * .55, h, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y + r * .35, b, 0, 7); ctx.fill(); hl(-.4, .05, .3); return; }
-    case 'cerise': { for (const dx of [-1, 1]) { ctx.beginPath(); ctx.moveTo(x + dx * r * 1.1, y + r * .6); ctx.quadraticCurveTo(x + dx * r * .4, y - r * 1.8, x, y - r * 1.9); ctx.lineWidth = Math.max(.8, r * .15); ctx.strokeStyle = '#3d5026'; ctx.stroke(); }
-      ctx.lineWidth = Math.max(1, r * .22); ctx.strokeStyle = ARBRE_INK; for (const dx of [-1, 1]) { ctx.beginPath(); ctx.arc(x + dx * r * 1.1, y + r * .6, r, 0, 7); ctx.fillStyle = f.c; ctx.fill(); ctx.stroke(); hl(dx * 1.1 - .35, .3, .28); } return; }
-    case 'ovale': ctx.beginPath(); ctx.ellipse(x, y, r * .8, r * 1.15, .5, 0, 7); ctx.fill(); ctx.stroke(); hl(-.25, -.35, .26); return;
-    case 'citron': ctx.beginPath(); ctx.moveTo(x - r * 1.35, y); ctx.quadraticCurveTo(x, y - r * 1.6, x + r * 1.35, y); ctx.quadraticCurveTo(x, y + r * 1.6, x - r * 1.35, y); ctx.closePath(); ctx.fill(); ctx.stroke(); hl(-.3, -.35, .28); return;
-    case 'grenade': { ctx.beginPath(); ctx.arc(x, y + r * .1, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); for (const a of [-.9, 0, .9]) { ctx.moveTo(x + Math.sin(a) * r * .35, y - r * .85); ctx.lineTo(x + Math.sin(a) * r * .65, y - r * 1.4); } ctx.lineWidth = Math.max(1, r * .3); ctx.strokeStyle = f.c; ctx.stroke(); hl(-.35, -.3, .28); return; }
-    case 'noix': ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.moveTo(x, y - r); ctx.lineTo(x, y + r); ctx.lineWidth = Math.max(.7, r * .14); ctx.stroke(); hl(-.4, -.4, .25); return;
-    case 'noisette': ctx.beginPath(); ctx.arc(x, y + r * .15, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(x, y - r * .55, r * 1.05, r * .55, 0, Math.PI, 0); ctx.closePath(); ctx.fillStyle = '#7a9a3a'; ctx.fill(); ctx.stroke(); return;
-    case 'bogue': { ctx.beginPath(); for (let i = 0; i < 20; i++) { const a = i / 20 * Math.PI * 2, q = i % 2 ? .78 : 1.45; ctx.lineTo(x + Math.cos(a) * r * q, y + Math.sin(a) * r * q); } ctx.closePath(); ctx.fill(); ctx.lineWidth = Math.max(.8, r * .16); ctx.stroke(); hl(-.3, -.3, .3); return; }
-    case 'mure': { for (const [dx, dy] of [[-.55, -.4], [.55, -.4], [0, .55], [-.55, .35], [.55, .35], [0, -.5]]) { ctx.beginPath(); ctx.arc(x + dx * r * 1.2, y + dy * r * 1.2, r * .62, 0, 7); ctx.fill(); ctx.lineWidth = Math.max(.6, r * .1); ctx.stroke(); } hl(-.55, -.5, .22); return; }
-    default: ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); hl(-.35, -.35, .3); tige(x, y - r * .75, x + r * .1, y - r * 1.3);
-  }
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
 }
 // feuilles : petits traits en quinconce (jamais de points au hasard), clippés dans le houppier
 function arbreFeuilles(cx, cy, R, col, mode, rnd, k) {

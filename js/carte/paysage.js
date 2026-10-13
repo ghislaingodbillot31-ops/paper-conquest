@@ -125,8 +125,8 @@ function forestNoise() {
 function floraCandidates() {
   const wk = S.lakes.map(l => l.c.join(',')).join(';') + '|' + S.rivers.map(r => r.pts.length + ':' + r.pts[0]).join(';');
   const base = S.roads.filter(r => !r.libre);   // routes de base : les seules dont dépend la végétation fixe ; celles du joueur ne la font qu'effacer (computeFlora)
-  const fk = S.landSeed + ':' + S.biome + ':' + (typeof decorsSignature === 'function' ? decorsSignature() : '') + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';') + '|' + (typeof baiesSignature === 'function' ? baiesSignature() : '');
-  if (MONDE_PLAT) return floraCands = [];                                       // monde plat : aucune végétation
+  const fk = regle('foret_min') + '#' + S.landSeed + ':' + S.biome + ':' + (typeof decorsSignature === 'function' ? decorsSignature() : '') + ':' + wk + '|' + base.map(r => r.id + ':' + r.pts.length + ':' + r.pts[0] + ':' + r.pts[r.pts.length - 1]).join(';') + '|' + (typeof baiesSignature === 'function' ? baiesSignature() : '');
+  if (MONDE_PLAT || S.biome === 'polaire') return floraCands = [];   // (désert polaire : rien du tout)                                       // monde plat : aucune végétation
   if (floraCands && floraSeed === fk) return floraCands;
   const rnd = seeded(S.landSeed * 7 + 3), nz = landNoise(), fz = forestNoise(), out = [], B = biomeOf().flora, look = biomeLook();
   // essence de chaque arbre (tirée selon les parts du biome) et taille propre à l'essence :
@@ -154,10 +154,20 @@ function floraCandidates() {
     if (i > 0) push(c - 1); if (i < NX - 1) push(c + 1); if (j > 0) push(c - NX); if (j < NY - 1) push(c + NX);
   }
   for (let c = 0; c < woodAt.length; c++) if (!woodAt[c] && !open[c]) woodAt[c] = 1;
+  /* Une forêt a une surface minimale (règle foret_min, en cases) : un petit groupe de cases n'est PAS une forêt (aucun masque sombre sur trois arbres) ; ses arbres restent de vrais arbres posés un à un (bosquet). */
+  const petit = new Uint8Array(NX * NY), seuil = regle('foret_min'), vu = new Uint8Array(NX * NY), pile = [];
+  if (seuil > 0) for (let c0 = 0; c0 < woodAt.length; c0++) {
+    if (!woodAt[c0] || vu[c0]) continue;
+    const comp = [c0]; vu[c0] = 1; pile.length = 0; pile.push(c0);
+    while (pile.length) { const c = pile.pop(), i = c % NX, j = (c - i) / NX;
+      for (let dj = -1; dj <= 1; dj++) for (let di = -1; di <= 1; di++) { const a = i + di, b = j + dj, q = b * NX + a; if (a >= 0 && b >= 0 && a < NX && b < NY && woodAt[q] && !vu[q]) { vu[q] = 1; comp.push(q); pile.push(q); } } }
+    if (comp.length < seuil) for (const q of comp) { woodAt[q] = 0; petit[q] = 1; }
+  }
   const woodCellAt = (x, y) => { const i = Math.floor((x - 3) / 6), j = Math.floor((y - 3) / 6); return i >= 0 && j >= 0 && i < NX && j < NY && woodAt[j * NX + i]; };
   for (let j = 0, y = 3; j < NY; j++, y += 6) for (let i = 0, x = 3; i < NX; i++, x += 6) {
     // grandes forêts : un arbre par case, presque centré (pas d'écart qui laisserait un trou)
     if (woodAt[j * NX + i]) { tree(x + 1.5 + rnd() * 3, y + 1.5 + rnd() * 3, 3.2 + rnd() * 2.6, true); continue; }
+    if (petit[j * NX + i]) { tree(x + 1.5 + rnd() * 3, y + 1.5 + rnd() * 3, 3.2 + rnd() * 2.6, false); continue; }   // bosquet : de vrais arbres, sans masque
     const px = x + rnd() * 5, py = y + rnd() * 5, n = nz(px, py), r = rnd();
     const fn = fz(px, py);
     // prés dégagés : de rares arbres isolés seulement. Plus de bosquets ni de couronne d'arbres autour des forêts : une grande forêt n'a que sa lisière (2 rangées, voir classifyWoods) et son massif.
@@ -257,6 +267,7 @@ function floraCandidates() {
    Dégradé de verts (demande du 29/09) : les arbres seuls sont vert clair, la lisière
    un peu plus foncée, et la forêt fonce jusqu'à son cœur — [teinte, reflet, ombre]. */
 const TREE_EDGE = '#223020', TREE_DROP = 'rgba(30,45,25,.3)';
+const SPRQ = 3; // les modèles sont peints à 3x la résolution : nets même au zoom maximum
 const SPR = 96, SPR_C = 40, SPR_R = 28, SHAPES = 5; // taille du modèle, centre et rayon du houppier (px)
 let treeSprites = null;
 function crown(rnd, bush) {
@@ -268,8 +279,8 @@ function crown(rnd, bush) {
   return out;
 }
 function makeSprite(pal, bumps, rnd) {
-  const c = document.createElement('canvas'); c.width = c.height = SPR;
-  const g = c.getContext('2d'), C = SPR_C, R = SPR_R;
+  const c = document.createElement('canvas'); c.width = c.height = SPR * SPRQ;
+  const g = c.getContext('2d'), C = SPR_C, R = SPR_R; g.scale(SPRQ, SPRQ);
   const union = (dx, dy, k, grow) => { g.beginPath(); for (const b of bumps) { g.moveTo(C + (b.x + dx) * R + b.r * R * k + grow, C + (b.y + dy) * R); g.arc(C + (b.x + dx) * R, C + (b.y + dy) * R, b.r * R * k + grow, 0, Math.PI * 2); } };
   union(.17, .21, 1, 0); g.fillStyle = TREE_DROP; g.fill();                   // ombre portée
   union(0, 0, 1, 1.8); g.fillStyle = TREE_EDGE; g.fill();                     // contour
@@ -282,7 +293,7 @@ function makeSprite(pal, bumps, rnd) {
   g.restore();
   return c;
 }
-const newSprite = () => { const c = document.createElement('canvas'); c.width = c.height = SPR; return [c, c.getContext('2d')]; };
+const newSprite = () => { const c = document.createElement('canvas'); c.width = c.height = SPR * SPRQ; const g = c.getContext('2d'); g.scale(SPRQ, SPRQ); return [c, g]; };
 // conifère vu du dessus : étoile de branches, cœur plus clair (pointe de l'arbre)
 function makeConifer(pal, rnd) {
   const [c, g] = newSprite(), C = SPR_C, R = SPR_R, n = 8 + Math.floor(rnd() * 3), jit = Array.from({ length:n * 2 }, () => .9 + rnd() * .2);
@@ -325,7 +336,8 @@ function makePalm(pal, rnd) {
 // rocher : bloc anguleux gris, facette éclairée au nord-ouest
 // (galet arrondi gris clair, cerné de sombre, ombre en bas à droite : comme la référence)
 function makeRock(rnd) {
-  const [c, g] = newSprite(), C = SPR_C, R = SPR_R, n = 9 + Math.floor(rnd() * 3), sq = .75 + rnd() * .25;
+  const [c, g] = newSprite(), Q = 4, C = SPR_C, R = SPR_R, n = 9 + Math.floor(rnd() * 3), sq = .75 + rnd() * .25;
+  c.width = c.height = SPR * Q; g.scale(Q, Q);                                       // 4x la résolution : net même quand on zoome sur un gros rocher
   const P = Array.from({ length:n }, (_, i) => { const a = i / n * Math.PI * 2 + (rnd() - .5) * .3, r = R * (.82 + rnd() * .18); return [Math.cos(a) * r, Math.sin(a) * r * sq]; });
   // contour arrondi : courbes passant par le milieu des côtés
   const poly = (dx, dy, k) => {
@@ -400,7 +412,7 @@ function classifyWoods() {
     f.tone = f.depth === 0 ? 1 : 2;
   }
 }
-const CORE_DEPTH = 6; // cases (6 m) du bord à partir desquelles le bois passe au ton sombre
+const CORE_DEPTH = 2; // cases (6 m) du bord au-delà desquelles l'intérieur du massif est un aplat sans aucun détail
 function drawWoods(g, list, s, ox, oy) {
   if (!list.length) return;
   const circles = (dx, dy, k, grow, sel) => {
@@ -426,9 +438,9 @@ function drawWoods(g, list, s, ox, oy) {
   g.fillStyle = st[0]; g.fill(circles(0, 0, 1.25, 0, inner));
   if (s > .9) {   // mêmes détails que les arbres isolés, au hasard, sur le premier ton (entre la lisière et le cœur)
     const edge = f => f.inner && f.depth < CORE_DEPTH;
-    g.fillStyle = 'rgba(170,205,140,.3)'; g.fill(circles(-.3, -.35, .4, 0, f => edge(f) && f.v < .22));       // reflets
+    g.fillStyle = 'rgba(170,205,140,.3)'; g.fill(circles(-.3, -.35, .4, 0, f => edge(f) && f.v < .1));       // reflets
     g.lineWidth = 1; g.strokeStyle = 'rgba(18,32,20,.3)'; g.beginPath();                                   // touffes
-    for (const f of list) if (edge(f) && f.v > .83) { const X = f.x * s + ox, Y = f.y * s + oy, R = f.r * .8 * s; g.moveTo(X + R * Math.cos(.2), Y + R * Math.sin(.2)); g.arc(X, Y, R, .2, 1.9); }
+    for (const f of list) if (edge(f) && f.v > .92) { const X = f.x * s + ox, Y = f.y * s + oy, R = f.r * .8 * s; g.moveTo(X + R * Math.cos(.2), Y + R * Math.sin(.2)); g.arc(X, Y, R, .2, 1.9); }
     g.stroke();
   }
   g.restore();
@@ -509,10 +521,16 @@ function computeFlora() {
     S.towers.forEach(t => add(towerPoly(t)));
     S.gates.forEach(g => add(gatePoly(g)));
     polys.push(...Z.water.river, ...Z.water.lake);
+    /* l'eau telle qu'elle est PEINTE : disques le long des rivières + disques des jonctions (les polygones de Z.water les ratent aux confluences et dans les virages serrés) : jamais de végétation dedans */
+    const dEau = new Map(), GD = 24, mx = 6;   // chaque disque est rangé dans toutes les cases qu'il touche : une recherche = une seule case
+    for (const d of [...S.rivers.flatMap(rv => riverDiscs(rv)), ...riverJunctions()]) { const R = d[2] + mx;
+      for (let gx = Math.floor((d[0] - R) / GD); gx <= Math.floor((d[0] + R) / GD); gx++) for (let gy = Math.floor((d[1] - R) / GD); gy <= Math.floor((d[1] + R) / GD); gy++) { const k = gx + ',' + gy; (dEau.get(k) || dEau.set(k, []).get(k)).push(d); } }
+    const dansEau = (x, y, m) => { for (const d of dEau.get(Math.floor(x / GD) + ',' + Math.floor(y / GD)) || []) if ((x - d[0]) ** 2 + (y - d[1]) ** 2 < (d[2] + m) ** 2) return true; return false; };
     const surRoute = obstacleTest(routes), blocked = obstacleTest(polys), nearWater = obstacleTest([...Z.water.river, ...Z.water.lake]);
     staticFlora = floraCandidates().filter(f => {
       const h = f.r * .6;
       if (!(f.x - h >= 0 && f.y - h >= 0 && f.x + h <= TW && f.y + h <= TH && surTerre([f.x, f.y]) && (f.kind === 'rock' || loinDeLaMer(f)))) return false;
+      if (dansEau(f.x, f.y, f.wet || f.edge ? 0 : f.r * .5)) return false;                  // (jamais dans l'eau peinte, cailloux de berge compris)
       if (!(f.wet || f.edge || !blocked(f))) return false;                                 // (cailloux de berge et de chemin : exemptés de ce test général)
       // distances entre types : voir js/carte/regles.js (modifiables dans l'onglet Règles de génération)
       const eau = m => nearWater({ x:f.x, y:f.y, r:(m + f.r) / .6 }), route = m => surRoute({ x:f.x, y:f.y, r:(m + f.r) / .6 });
@@ -522,6 +540,17 @@ function computeFlora() {
       else if (f.kind === 'bush') { if (eau(regle('buisson_eau'))) return false; if (route(regle('buisson_route'))) return false; }
       return true;
     }).sort((a, b) => a.y - b.y); // du nord au sud, pour que les houppiers se recouvrent bien
+    /* Forêts amputées : l'eau, les routes et les ponts découpent les forêts ; un morceau resté sous la surface minimale (règle foret_min, en cases de 6 m) cesse d'être une forêt : ses arbres sont de vrais arbres isolés,
+       sans masque sombre. */
+    { const seuil = regle('foret_min'), cases = new Map();
+      for (const f of staticFlora) if (f.wood) { const k = Math.floor(f.x / 6) * 100003 + Math.floor(f.y / 6); (cases.get(k) || cases.set(k, []).get(k)).push(f); }   // (cases de 6 m : plusieurs arbres par case possibles)
+      const vu = new Set(), pile = [];
+      for (const [c0] of cases) { if (vu.has(c0)) continue;
+        const comp = []; let n = 0; vu.add(c0); pile.push(c0);
+        while (pile.length) { const c = pile.pop(), i = Math.round(c / 100003), j = c - i * 100003; comp.push(...cases.get(c)); n++;
+          for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) { const q = (i + a) * 100003 + j + b; if (cases.has(q) && !vu.has(q)) { vu.add(q); pile.push(q); } } }
+        if (n < seuil) for (const f of comp) delete f.wood;      // (n : nombre de cases, pas d'arbres)
+      } }
     /* cailloux : jamais l'un sur l'autre — au moins regle('roche_roche') m de vide entre les deux bords (les plus gros sont gardés d'abord) */
     { const grille = new Map(), G = 12, gardes = new Set();
       for (const f of staticFlora.filter(roche).sort((a, b) => b.r - a.r)) {
@@ -531,6 +560,22 @@ function computeFlora() {
         gardes.add(f); const k = gx + ',' + gy; (grille.get(k) || grille.set(k, []).get(k)).push(f);
       }
       staticFlora = staticFlora.filter(f => !roche(f) || gardes.has(f)); }
+    /* buissons : jamais dans les cailloux (buisson_roche) */
+    { const G = 12, grille = new Map(), gap = regle('buisson_roche');
+      for (const f of staticFlora) if (roche(f)) { const k = Math.floor(f.x / G) + ',' + Math.floor(f.y / G); (grille.get(k) || grille.set(k, []).get(k)).push(f); }
+      staticFlora = staticFlora.filter(f => { if (f.kind !== 'bush') return true; const gx = Math.floor(f.x / G), gy = Math.floor(f.y / G);
+        for (let i = gx - 1; i <= gx + 1; i++) for (let j = gy - 1; j <= gy + 1; j++) for (const o of grille.get(i + ',' + j) || []) if ((f.x - o.x) ** 2 + (f.y - o.y) ** 2 < (f.r + o.r + gap) ** 2) return false;
+        return true; }); }
+    /* décors du sol (fleurs, touffes, herbes, buissons décoratifs, feuilles, champignons) : jamais l'un sur l'autre (fleur_fleur) ni sur le reste de la végétation (fleur_veg) ;
+       le reste est gardé d'abord, les décors s'écartent. Feuilles, champignons et souches restent sous leur arbre. */
+    { const G = 12, grille = new Map(), gF = regle('fleur_fleur'), gV = regle('fleur_veg'), dec = f => f.kind === 'deco' && !roche(f);
+      const proche = (f, marge, decors) => { const gx = Math.floor(f.x / G), gy = Math.floor(f.y / G);
+        for (let i = gx - 1; i <= gx + 1; i++) for (let j = gy - 1; j <= gy + 1; j++) for (const o of grille.get(i + ',' + j) || []) if (dec(o) === decors && !(f.sa && o.kind === 'tree') && (f.x - o.x) ** 2 + (f.y - o.y) ** 2 < (f.r + o.r + marge) ** 2) return true; return false; };
+      const mets = f => { const k = Math.floor(f.x / G) + ',' + Math.floor(f.y / G); (grille.get(k) || grille.set(k, []).get(k)).push(f); };
+      for (const f of staticFlora) if (!dec(f)) mets(f);
+      const gardees = new Set();
+      for (const f of staticFlora) if (dec(f) && !proche(f, gV, false) && !proche(f, gF, true)) { mets(f); gardees.add(f); }
+      staticFlora = staticFlora.filter(f => !dec(f) || gardees.has(f)); }
     staticKey = key;
   }
   // forêts permanentes : un arbre ne disparaît que s'il a été abattu (S.cut, enregistré avec
@@ -544,8 +589,7 @@ function computeFlora() {
   flora = staticFlora.filter(keep);                       // déjà triée du nord au sud
   if (grown.length) flora = flora.concat(grown.filter(keep)).sort((a, b) => a.y - b.y);
   classifyWoods(); // intérieur des bois / lisière
-  // dans le massif, au-delà de la rangée de la lisière (profondeur 0) et de deux rangées de plus, un arbre sur deux seulement (en damier) : le massif est peint en aplat, le reste ne servait qu'à le dessiner
-  flora = flora.filter(f => !f.wood || f.depth <= 2 || ((Math.floor((f.x - 3) / 6) + Math.floor((f.y - 3) / 6)) & 1) === 0);
+  // (plus d'éclaircie en damier dans le massif : les arbres sont décalés de ±1,5 m dans leur case, et un arbre sur deux laissait des trous de 1 m où l'on voyait l'ombre sombre du massif)
   floraVersion++; // les habitants au travail repartiront des nouveaux arbres
   floraIdx = null;
   // décor : on ne repeint qu'autour des arbres qui apparaissent ou disparaissent (le dégradé
@@ -558,6 +602,9 @@ function computeFlora() {
   if (diff.length > 40) { const b = bbox(diff.map(f => [f.x, f.y])); markDirty([b[0] - 110, b[1] - 110, b[2] + 110, b[3] + 110]); return; } // (un seul rectangle)
   for (const f of diff) invalidateTiles(f.x, f.y, f.wood ? 110 : 12);
 }
+// couleur de grève : celle du sol, avec le même décalage de saison (sinon un liseré vert reste autour d'un sol d'automne)
+const grevSaison = hex => { if (biomeLook().relief2 && !biomeLook().saison) return hex;   // (sol à zones de couleur fixes : pas de décalage de saison, sauf look.saison)
+  const sai = teinteSol(METEO, REGION_METEO.hum); return 'rgb(' + (hex.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']).slice(0, 3).map((v, k) => Math.max(0, Math.min(255, Math.round(parseInt(v, 16) + sai[k])))).join(',') + ')'; };
 // sol peint une fois (2 m par pixel), redessiné à l'échelle
 let groundImg = null, groundSeed = null;
 function groundImage() {

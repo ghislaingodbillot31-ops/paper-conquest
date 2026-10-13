@@ -333,9 +333,12 @@ function initNpcPorts(){
   map.addLayer({ id:'npc-ports-dir', type:'line', source:'npc-ports', filter:['==', ['geometry-type'], 'LineString'],
     paint:{ 'line-color':'#6b3fa0', 'line-width':2.5 } });
   const npcLayout = size => ({ 'icon-image':'npc-port-icon', 'icon-size':size, 'icon-allow-overlap':true, 'icon-ignore-placement':true,
-    'text-field':['get', 'label'], 'text-font':['Open Sans Regular'], 'text-size':11, 'text-offset':[0, 1.6 * size], 'text-anchor':'top', 'text-optional':true });
-  const npcPaint = { 'text-color':'#4a2b73', 'text-halo-color':'#f6efe0', 'text-halo-width':1.4 };
+    });
+  const npcPaint = {};
   map.addLayer({ id:'npc-ports', type:'symbol', source:'npc-ports', filter:portFilter([], false), layout:npcLayout(1), paint:npcPaint });
+  // noms des comptoirs (police medievale), sous l'icone ; le texte attend le chargement de la police
+  loadMapFont().then(() => { feats.forEach(ft => { if(ft.properties.label) ft.properties.img = textImage(map, ft.properties.label, { size:11, color:'#e6dcc0', maxChars:20 }); }); map.getSource('npc-ports').setData({ type:'FeatureCollection', features:feats });
+    map.addLayer({ id:'npc-ports-text', type:'symbol', source:'npc-ports', filter:['==', ['geometry-type'], 'Point'], layout:{ 'icon-image':['get', 'img'], 'icon-anchor':'top', 'icon-offset':[0, 14], 'icon-optional':false } }); });
   map.addLayer({ id:'npc-ports-halo', type:'circle', source:'npc-ports', filter:portFilter([], true), paint:PORT_HALO_PAINT });
   map.addLayer({ id:'npc-ports-hl', type:'symbol', source:'npc-ports', filter:portFilter([], true), layout:npcLayout(PORT_HL_SIZE), paint:npcPaint });
 }

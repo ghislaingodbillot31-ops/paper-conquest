@@ -9,6 +9,19 @@ const ROADS = [
   // chemin : réservé aux piétons (ni charrette ni chariot ne s'y garent), deux fois moins large, marron ; mêmes propriétés que la terre mais aucune case constructible sur ses bords (zonage.js)
   { id:'chemin',  name:'Chemin',  w:CELL / 2, surf:CELL / 2, pieton:true },
 ];
+/* Retire d'une polyligne les points inutiles (Douglas-Peucker, tolérance eps m : 5 cm par défaut, la forme ne bouge pas). Une route tracée est rééchantillonnée tous les 12 m (ponts, forme.js) : sans ce nettoyage chacun de ces
+   points coupait le quadrillage des cases (zonage.js : un tronçon de 12 m n'a pas de colonne entière) et la route n'avait plus aucune case constructible. */
+function simplifie(pts, eps = .05) {
+  if (pts.length < 3) return pts;
+  const garde = new Uint8Array(pts.length); garde[0] = garde[pts.length - 1] = 1;
+  const pile = [[0, pts.length - 1]];
+  while (pile.length) {
+    const [i, j] = pile.pop(); let dm = 0, k = -1;
+    for (let m = i + 1; m < j; m++) { const d = ptSeg(pts[m], pts[i], pts[j]).d; if (d > dm) { dm = d; k = m; } }
+    if (k >= 0 && dm > eps) { garde[k] = 1; pile.push([i, k], [k, j]); }
+  }
+  return pts.filter((_, i) => garde[i]);
+}
 const typeName = (f, d) => (PRESETS.find(p => p.f === f && p.d === d) || { name:'Sur mesure' }).name;
 
 /* ---------- géométrie ---------- */

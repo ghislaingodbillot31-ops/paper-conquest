@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Map Global — icônes</title>
+<link href="https://fonts.googleapis.com/css2?family=MedievalSharp&display=swap" rel="stylesheet">
+<style>
+  :root{ --terre:#a59e72; --mer:#3f493b; --papier:#f3eddd; --encre:#2b2618; --ligne:#cfc3a2; --doux:#6b5f45; }
+  *{ box-sizing:border-box }
+  body{ margin:0; background:var(--papier); color:var(--encre); font:14px/1.45 'MedievalSharp', Georgia, serif; padding:20px 16px 40px }
+  main{ max-width:1100px; margin:0 auto }
+  h1{ margin:0 0 4px; font-size:26px } p.sous{ margin:0 0 18px; color:var(--doux) }
+  h2{ margin:26px 0 8px; font-size:18px; border-bottom:1px solid var(--ligne); padding-bottom:4px }
+  .grille{ display:grid; grid-template-columns:repeat(auto-fill, minmax(190px, 1fr)); gap:12px }
+  .carte{ border:1px solid var(--ligne); border-radius:8px; background:#fffdf6; overflow:hidden }
+  .vue{ min-height:130px; display:flex; align-items:center; justify-content:center }
+  .vue.terre{ background:var(--terre) } .vue.mer{ background:var(--mer) }
+  .infos{ padding:8px 10px 10px; font-size:12.5px }
+  .infos b{ display:block; font-size:14px; margin-bottom:2px }
+  .infos code{ font:11.5px/1.3 ui-monospace, Consolas, monospace; color:var(--doux); word-break:break-all }
+  .infos span{ display:block; color:var(--doux); margin-top:2px }
+  .note{ color:var(--doux); font-size:12.5px; margin:-2px 0 8px }
+</style>
+<main>
+  <h1>Map Global — icônes</h1>
+  <p class="sous">Toutes les images et marqueurs de la carte du monde (globe), dessinés par le vrai code du jeu. Nom technique, couche et fichier source sous chaque icône.</p>
+  <div id="contenu"></div>
+</main>
+<script src="js/jeu/faune-marine.js"></script>
+<script src="js/jeu/icones-carte.js"></script>
+<script type="module">
+try { await document.fonts.load('20px MedievalSharp'); } catch (e) {}   // (les textes sont dessinés sur canevas : la police doit être prête)
+const SECTIONS = [];
+// canevas à la résolution x pr, affiché en pixels CSS w x h (zoom z)
+const pic = (w, h, pr, fn, z = 1) => { const c = document.createElement('canvas'); c.width = w * pr; c.height = h * pr; c.style.width = w * z + 'px'; c.style.height = h * z + 'px'; const g = c.getContext('2d'); g.scale(pr, pr); fn(g); return c; };
+const depuisImage = (im, z = 1) => { const c = document.createElement('canvas'); c.width = im.width; c.height = im.height; c.getContext('2d').putImageData(im, 0, 0); c.style.width = im.width / 2 * z + 'px'; c.style.height = im.height / 2 * z + 'px'; return c; };
+const disque = (couleur, bord, r, bw, halo) => pic(70, 70, 2, g => { if (halo) { g.fillStyle = halo; g.beginPath(); g.arc(35, 35, r + 8, 0, 6.3); g.fill(); } g.fillStyle = couleur; g.strokeStyle = bord; g.lineWidth = bw; g.beginPath(); g.arc(35, 35, r, 0, 6.3); g.fill(); if (bw) g.stroke(); });
+const texte = (t, taille, couleur, majus, ls) => pic(180, 60, 2, g => { g.font = taille + 'px MedievalSharp, serif'; g.letterSpacing = ls + 'px'; g.textAlign = 'center'; g.textBaseline = 'middle'; g.lineJoin = 'round'; g.lineWidth = 3; g.strokeStyle = 'rgba(30,36,26,.85)'; const s = majus ? t.toUpperCase() : t; g.strokeText(s, 90, 30); g.fillStyle = couleur; g.fillText(s, 90, 30); });
+
+// Faune marine
+const faune = [];
+for (const n of Object.keys(FAUNE_MARINE)) { const { w, h } = FAUNE_MARINE[n];
+  faune.push({ vue:pic(w, h, 2, g => dessinFaune(g, n, w, h), 1.5), fond:'mer', nom:{ baleine:'Baleine', requin:'Requin', dauphin:'Dauphin', tortue:'Tortue de mer', poulpe:'Poulpe', serpent:'Serpent de mer', kraken:'Kraken' }[n], id:'mer:' + n + ':1 / :-1', couche:'faune-marine', src:'js/jeu/faune-marine.js · dessinFaune', note:'moitié dans l’eau ; deux sens (gauche/droite), inclinaison au hasard ; décor sans clic' }); }
+SECTIONS.push(['Faune marine', 'Créatures décoratives posées au large, sous les terres.', faune]);
+
+// Repères ronds (images ajoutées à la carte)
+SECTIONS.push(['Repères (images)', 'Icônes de 44 px (pixelRatio 2) ajoutées à la carte.', [
+  { vue:depuisImage(drawPortIcon(), 2), fond:'terre', nom:'Port (joueur)', id:'port-icon', couche:'buildings-icon, buildings-icon-hl', src:'js/jeu/icones-carte.js · drawPortIcon', note:'ancre blanche sur disque bleu marine ; halo jaune au survol' },
+  { vue:depuisImage(drawPortIcon('#6b3fa0'), 2), fond:'terre', nom:'Port de comptoir', id:'npc-port-icon', couche:'npc-ports, npc-ports-hl', src:'js/jeu/icones-carte.js · drawPortIcon(violet)', note:'même ancre sur disque violet' },
+  { vue:depuisImage(drawMineIcon(), 2), fond:'terre', nom:'Mine', id:'mine-icon', couche:'buildings-icon', src:'js/jeu/icones-carte.js · drawMineIcon', note:'pioche blanche sur disque brun' },
+  { vue:depuisImage(drawCaravanIcon(), 2), fond:'terre', nom:'Caravane', id:'caravan-icon', couche:'caravan', src:'js/jeu/icones-carte.js · drawCaravanIcon', note:'chameau sur disque ocre' },
+]]);
+
+// Marqueurs en cercle (couches de la carte)
+SECTIONS.push(['Marqueurs en cercle', 'Dessinés directement par les couches de la carte (pas d’image).', [
+  { vue:disque('#4a3418', '#000', 6, 0, '#f6efe0'), fond:'terre', nom:'Village / capitale', id:'villages (+ villages-halo)', couche:'villages', src:'js/jeu/routes.js', note:'point brun, halo clair, rayon 3 px (halo 5,5)' },
+  { vue:disque('#f2a900', '#3c3527', 14, 4), fond:'terre', nom:'Capitale possédée', id:'capitals-owned', couche:'capitals-owned', src:'js/jeu/regions.js', note:'rond orange à bord sombre, rayon 7 px' },
+  { vue:disque('#6b3fa0', '#ffffff', 14, 4), fond:'terre', nom:'Capitale de comptoir', id:'npc-capitals', couche:'npc-capitals (+ -hl, -halo)', src:'js/jeu/caravane.js', note:'rond violet à bord blanc, rayon 7 px (9,5 en surbrillance)' },
+  { vue:disque('#e8590c', '#ffffff', 16, 5, 'rgba(255,212,59,.55)'), fond:'mer', nom:'Bateau', id:'boat (+ boat-halo)', couche:'boat', src:'js/jeu/bateaux.js', note:'rond orange à bord blanc, halo jaune quand sélectionné' },
+  { vue:disque('#2f9e44', '#ffffff', 20, 5), fond:'terre', nom:'Aperçu de construction', id:'build-preview', couche:'build-preview', src:'js/jeu/regions.js', note:'vert si valide, rouge sinon' },
+]]);
+
+// Textes
+SECTIONS.push(['Textes de la carte', 'Noms dessinés en MedievalSharp (textImage, interface.js).', [
+  { vue:texte('Océan', 24, '#f0e2b0', true, 4), fond:'mer', nom:'Nom de mer — rang 1', id:'txt:24:… (sea-names)', couche:'sea-names', src:'js/jeu/peche.js · textImage', note:'majuscules, 24 px, toujours visible' },
+  { vue:texte('Mer du Nord', 17, '#e2d3a0', false, 1.5), fond:'mer', nom:'Nom de mer — rang 2', id:'txt:17:… (sea-names)', couche:'sea-names', src:'js/jeu/peche.js · textImage', note:'visible dès le zoom 1,6' },
+  { vue:texte('Golfe de Gascogne', 14, '#e2d3a0', false, .5), fond:'mer', nom:'Nom de mer — rang 3', id:'txt:14:… (sea-names)', couche:'sea-names', src:'js/jeu/peche.js · textImage', note:'visible dès le zoom 3' },
+  { vue:texte('Zone de pêche', 11, '#cfdcc0', false, .5), fond:'mer', nom:'Zone de pêche', id:'txt:11:#cfdcc0 (fishing-label)', couche:'fishing-label', src:'js/jeu/peche.js', note:'dès le zoom 3,5' },
+  { vue:texte('Comptoir 12', 11, '#e6dcc0', false, .5), fond:'terre', nom:'Nom de comptoir', id:'txt:11:#e6dcc0 (npc-ports-text)', couche:'npc-ports-text', src:'js/jeu/bateaux.js', note:'sous l’icône de port' },
+  { vue:texte('Zone animale', 11, '#f0e2b0', false, .5), fond:'terre', nom:'Nom de zone animale', id:'txt:11:#f0e2b0 (animal-label)', couche:'animal-label', src:'js/jeu/faune.js', note:'seulement quand les zones animales sont affichées (Dev)' },
+]]);
+
+const racine = document.getElementById('contenu');
+const afficher = () => {
+  racine.innerHTML = '';
+  for (const [titre, note, liste] of SECTIONS) {
+    const h = document.createElement('h2'); h.textContent = titre + ' (' + liste.length + ')'; racine.appendChild(h);
+    const p = document.createElement('p'); p.className = 'note'; p.textContent = note; racine.appendChild(p);
+    const grille = document.createElement('div'); grille.className = 'grille'; if (/village/i.test(titre)) grille.style.gridTemplateColumns = 'minmax(300px, 420px)'; racine.appendChild(grille);
+    for (const it of liste) {
+      const d = document.createElement('div'); d.className = 'carte';
+      const v = document.createElement('div'); v.className = 'vue ' + it.fond; v.appendChild(it.vue); d.appendChild(v);
+      const i = document.createElement('div'); i.className = 'infos'; i.innerHTML = '<b></b><code></code><span></span><span></span>';
+      i.querySelector('b').textContent = it.nom; i.querySelector('code').textContent = it.id;
+      const sp = i.querySelectorAll('span'); sp[0].textContent = 'Couche : ' + it.couche + ' · ' + it.src; sp[1].textContent = it.note;
+      d.appendChild(i); grille.appendChild(d);
+    }
+  }
+};
+afficher();
+</script>
+</html>

@@ -3,6 +3,11 @@
 // batiments et fortifications) generee pour CETTE region : biome et cours d'eau lus dans
 // data/regions/regions.json, graine = numero de la region (meme region, meme carte). Chaque
 // region garde son propre plan (sauvegarde locale de la page, une cle par region).
+// Déchargement de la région : on quitte la vue Capitale (retour au globe) ; la page de la région enregistre sa progression (pagehide) puis le cadre est détruit : seule la carte affichée reste en mémoire.
+function dechargerRegion(){
+  document.querySelectorAll('iframe.region-map').forEach(f => { try{ f.contentWindow.dispatchEvent(new Event('pagehide')); }catch(e){} f.src = 'about:blank'; f.remove(); });
+  const body = document.getElementById('capview-body'); if(body){ body.classList.remove('has-map'); if(body.querySelector('.region-map') === null && body.dataset.carte) { body.innerHTML = ''; } }
+}
 function renderRegionMapTab(el, regionId){
   if(!regionFeature(regionId)){ el.innerHTML = ''; return; }
   const { biome } = regionInfo(regionId).climat, river = regionInfo(regionId).eau.cours_eau_carte;
@@ -45,7 +50,7 @@ function renderPlanTab(el, regionId){
   svg += '<path d="' + geomPath(f.geometry) + '" fill="' + f.properties.fillColor + '" fill-rule="evenodd" stroke="#3c3527" stroke-width="2.2"/>';
   // routes qui partent de la capitale
   (roadGraph.get(regionId) || []).forEach(r => {
-    svg += '<path d="M' + r.coords.map(([x, y]) => X(x) + ' ' + Y(y)).join('L') + '" fill="none" stroke="#6b4a2a" stroke-width="2.4" stroke-dasharray="7 5" stroke-linecap="round" opacity="0.85"/>';
+    svg += '<path d="M' + r.coords.map(([x, y]) => X(x) + ' ' + Y(y)).join('L') + '" fill="none" stroke="#c8202a" stroke-width="2.4" stroke-linecap="round" opacity="0.9"/>';
   });
   // numeros des regions voisines
   svg += others.map(o => { let c; try{ c = turf.pointOnFeature(o).geometry.coordinates; }catch(e){ return ''; }

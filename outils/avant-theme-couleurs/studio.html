@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="fr">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DOMINIUM Studio</title>
+<style>
+  :root { --bg:#14212b; --bar:#1d2d3a; --bar2:#18262f; --ink:#e9e4d3; --soft:#9fb0bb; --on:#d9b25f; }
+  * { box-sizing:border-box }
+  html, body { margin:0; height:100%; background:var(--bg); color:var(--ink); font:500 15px/1.3 system-ui, sans-serif }
+  body { display:flex; flex-direction:column }
+  nav { display:flex; align-items:center; gap:4px; padding:6px 12px; background:var(--bar); border-bottom:1px solid #0006 }
+  nav b { margin-right:14px; letter-spacing:.04em }
+  nav button { background:none; border:0; color:var(--soft); padding:8px 14px; border-radius:6px; font:inherit; cursor:pointer }
+  nav button:hover { color:var(--ink) }
+  nav button:focus-visible { outline:2px solid var(--on); outline-offset:1px }
+  nav button[aria-selected="true"] { background:#0004; color:var(--on) }
+  nav.principal button { text-transform:uppercase; letter-spacing:.08em; font-weight:700 }
+  nav.sous { background:var(--bar2); padding:4px 12px 4px 24px; flex-wrap:wrap }
+  nav.sous button { padding:6px 12px; font-size:14px }
+  nav button:disabled { opacity:.4; cursor:default }
+  #msg { margin-left:auto; color:var(--on); font-size:14px; opacity:0; transition:opacity .3s }
+  #msg.on { opacity:1 }
+  main { flex:1; position:relative; min-height:0 }
+  iframe { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--bg); display:none }
+  iframe.on { display:block }
+</style>
+<nav class="principal" role="tablist" aria-label="Sections">
+  <b>DOMINIUM</b>
+  <button role="tab" data-section="dev" aria-selected="true" title="Options développeur, globe, routes, journal">Dev</button>
+  <button role="tab" data-section="donnees" aria-selected="false" title="Toutes les données chiffrées : ressources, arbre de production, règles de génération">Données</button>
+  <button role="tab" data-section="design" aria-selected="false" title="Tous les designs : bâtiments, habitants, décors, couleurs…">Design</button>
+  <span id="msg" role="status"></span>
+</nav>
+<nav class="sous" id="sous" role="tablist" aria-label="Sous-onglets"></nav>
+<main id="cadres"></main>
+<script>
+/* STUDIO permanent (adresse studio.html, ne change jamais). Trois onglets, chacun avec ses sous-onglets ; un sous-onglet = une page existante dans un cadre, chargée à la première visite puis gardée.
+   - JEU    : le jeu complet version joueur. Les cadres portent le nom « jeu-joueur » : le mode développeur y est interdit (joueur.js estDev, dev.js JR.actif), même si le réglage est activé ailleurs.
+   - DEV    : les options de développement (mode développeur actif d'office dans les pages marquées « ?dev »), générateurs, tests, règles, journal du jeu.
+   - DESIGN : tous les designs (bâtiments, habitants, animaux, véhicules, végétation, décors, couleurs, écran d'accueil).
+   Adresses : #jeu/<sous-onglet>, #dev/<…>, #design/<…> ; les anciennes (#testjeu, #edition/<outil>) sont reprises. Pour ajouter un outil : une ligne dans ONGLETS.
+   Les pages partagent le stockage du navigateur : « Appliquer au jeu » (éditeur de carte) enregistre la carte de la région là où le jeu la lit ; les cadres de région sont alors rechargés à leur prochaine visite. */
+const R123 = 'region=123&biome=tempere&river=riviere&seed=974138&lon=-0.31&lat=48.16&tm=8&hum=1';
+const ONGLETS = {
+  dev: { onglets:[
+    { id:'globe', label:'Globe (dev)', src:'index.html?dev', region:true },
+    { id:'routes', label:'Routes', src:'editeur-routes.html' },
+    { id:'journal', label:'Journal du jeu', src:'http://localhost:8001/tail?n=400', recharger:true, titre:'Journal du jeu (serveur de logs : node tools/serveur-logs.js)' },
+  ] },
+  donnees: { onglets:[
+    { id:'maptest', label:'Ressources', src:'map-test.html' },
+    { id:'arbre', label:'Arbre des ressources', src:'arbre-ressources.html' },
+    { id:'regles', label:'Règles de génération', src:'regles-generation.html' },
+    { id:'production', label:'Validation production', src:'validation-production.html', recharger:true },
+  ] },
+  design: { onglets:[
+    { id:'batiments', label:'Bâtiments', src:'editeur-batiments.html' },
+    { id:'villageois', label:'Habitants', src:'editeur-villageois.html' },
+    { id:'animaux', label:'Animaux', src:'editeur-animaux.html' },
+    { id:'vehicules', label:'Véhicules', src:'editeur-vehicules.html' },
+    { id:'arbres', label:'Végétation', src:'arbres-fruitiers.html' },
+    { id:'baies', label:'Arbustes à baies', src:'arbustes-baies.html', baies:true },
+    { id:'decors', label:'Décors du sol', src:'decors-sol.html' },
+    { id:'mapglobale', label:'Map Global', src:'map-globale.html' },
+    { id:'theme', label:'Thème couleurs', src:'theme-couleurs.html' },
+    { id:'biomes', label:'Couleurs des biomes', src:'biomes-couleurs.html' },
+    { id:'accueil', label:'Écran d\'accueil', src:'accueil.html' },
+  ] },
+};
+// anciennes adresses : #edition/<outil> → nouvel emplacement
+const ANCIEN = { carte:'dev/globe', routes:'dev/routes', maptest:'donnees/maptest', arbre:'donnees/arbre', regles:'donnees/regles', batiments:'design/batiments', villageois:'design/villageois', animaux:'design/animaux', vehicules:'design/vehicules', arbres:'design/arbres', baies:'design/baies', decors:'design/decors', biomes:'design/biomes' };
+const cadres = document.getElementById('cadres'), sous = document.getElementById('sous'), frames = {}, perimes = new Set();
+let section = 'dev', dernier = { dev:'globe', donnees:'maptest', design:'batiments' };
+function cadre(sec, o) {
+  const k = sec + '/' + o.id;
+  if (!frames[k]) { const f = document.createElement('iframe'); f.title = o.titre || o.label; if (ONGLETS[sec].joueur) f.name = 'jeu-joueur'; f.dataset.src = o.src; cadres.appendChild(f); frames[k] = f; }
+  return frames[k];
+}
+function afficher() {
+  const o = ONGLETS[section].onglets.find(x => x.id === dernier[section]), k = section + '/' + o.id;
+  for (const [n, f] of Object.entries(frames)) f.classList.toggle('on', n === k);
+  const f = cadre(section, o); f.classList.add('on');
+  if (!f.src || o.recharger || perimes.has(k)) { f.src = f.dataset.src; perimes.delete(k); }
+}
+function show(sec, id) {
+  section = ONGLETS[sec] ? sec : 'dev';
+  if (id && ONGLETS[section].onglets.some(x => x.id === id)) dernier[section] = id;
+  for (const b of document.querySelectorAll('nav.principal [data-section]')) b.setAttribute('aria-selected', String(b.dataset.section === section));
+  sous.innerHTML = '';
+  for (const o of ONGLETS[section].onglets) {
+    const b = document.createElement('button'); b.type = 'button'; b.setAttribute('role', 'tab'); b.dataset.id = o.id; b.textContent = o.label; b.setAttribute('aria-selected', String(o.id === dernier[section]));
+    sous.appendChild(b);
+  }
+  afficher();
+  try { history.replaceState(null, '', '#' + section + '/' + dernier[section]); } catch (e) {}
+}
+function dire(t) { const m = document.getElementById('msg'); m.textContent = t; m.classList.add('on'); clearTimeout(dire.t); dire.t = setTimeout(() => m.classList.remove('on'), 5000); }
+document.querySelector('nav.principal').addEventListener('click', e => { const b = e.target.closest('[data-section]'); if (b) show(b.dataset.section); });
+sous.addEventListener('click', e => { const b = e.target.closest('[data-id]'); if (b) show(section, b.dataset.id); });
+// les pages du jeu (région, globe, accueil) sont rechargées à leur prochaine visite quand une carte ou des arbustes ont été appliqués
+function perimerJeu() { for (const sec of ['dev']) for (const o of ONGLETS[sec].onglets) if (o.region) perimes.add(sec + '/' + o.id); }
+addEventListener('message', e => {
+  if (e.origin !== location.origin || !e.data) return;
+  if (e.data.studio === 'baies') { perimerJeu(); dire('Arbustes à baies mis à jour : visibles dans Dev'); }
+  else if (e.data.studio === 'applique') { perimerJeu(); dire(e.data.region === 123 ? 'Région 123 appliquée : visible dans Dev' : 'Région ' + e.data.region + ' enregistrée (les tests utilisent la région 123)'); }
+});
+let [sec, id] = location.hash.slice(1).split('/');
+if (sec === 'testjeu') [sec, id] = ['dev', 'globe'];
+else if (sec === 'edition' && ANCIEN[id]) [sec, id] = ANCIEN[id].split('/');
+show(sec, id);
+</script>

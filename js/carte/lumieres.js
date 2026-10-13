@@ -9,7 +9,7 @@ const LUMIERES = {
   puits:[['torche', 1.5, 1.5, 6]],
   mairie:[['torche', -5, 1.2, 10], ['torche', 5, 1.2, 10]], manoir:[['torche', -5, 1.2, 10], ['torche', 5, 1.2, 10]], eglise:[['torche', -3, 1.2, 10], ['torche', 3, 1.2, 10]],
   camp_bucherons:[['feu', -4.3, 7.1, 11]], camp_chasse:[['feu', -3.6, 6.3, 11]], hutte_charbonnier:[['feu', 4.2, 14.2, 10], ['feu', 3.4, 8.6, 9]],
-  forge:[['torche', -4, 1.2, 8], ['torche', 4, 1.2, 8]], fonderie:[['torche', -4, 1.2, 9], ['torche', 4, 1.2, 9]], cabane_peche:[['torche', 0, 1.2, 7]], fosse_miniere:[['torche', -5.5, 9, 9], ['torche', -2.5, 13.4, 9]],
+  fonderie:[['torche', -4, 1.2, 9], ['torche', 4, 1.2, 9]], cabane_peche:[['torche', 0, 1.2, 7]], fosse_miniere:[['torche', -5.5, 9, 9], ['torche', -2.5, 13.4, 9]],
   fromagerie:[['torche', -4, 1.2, 8], ['torche', 4, 1.2, 8]], grange:[['torche', 0, 1.2, 8]], entrepot:[['torche', 0, 1.2, 8]],
 };
 const SANS_TOIT = new Set(['marche', 'camp_colon', 'camp_bucherons', 'camp_chasse', 'hutte_charbonnier', 'puits', 'fosse_miniere', 'cimetiere']);   // lieux à ciel ouvert : pas de toit à garder dans l'ombre

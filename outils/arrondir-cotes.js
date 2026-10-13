@@ -2,7 +2,7 @@
 // avec la meme regle que outils/build-formes.js : tout sommet qui tourne de plus de 15 deg devient une courbe (conge quadratique),
 // rayon 27 km au plus (150 m de carte a 5,5 m/km), 0,45 de chaque segment au plus, jamais sous 0,5 km.
 // Les frontieres entre regions et les jonctions ne bougent pas (pas de trou entre regions).
-// Sans risque a relancer a partir de outils/regions-water.avant-arrondi.topojson. Apres : node outils/_controle-bords.js ; node outils/reparer-croisements.js
+// Sans risque a relancer a partir de outils/regions-water.avant-arrondi.topojson. Apres : node outils/controle/controle-bords.js ; node outils/reparer-croisements.js
 // Usage : node outils/arrondir-cotes.js [fichier=data/monde/regions-water.topojson]
 const fs = require('fs'), F = process.argv[2] || 'data/monde/regions-water.topojson', t = JSON.parse(fs.readFileSync(F));
 const MAXKM = 27, FRAC = .45, MINKM = .5, ANGLE = 15, KM = 111.19;

@@ -94,22 +94,9 @@ function baiesCandidats(fz, B) {
 
 // ---- dessin : vue de dessus, comme les arbres fruitiers ----
 const BAIE_INK = '#2f2a24';
-function baieFruit(f, x, y, r) {
-  const lw = Math.max(.6, r * .16);
-  ctx.lineWidth = lw; ctx.strokeStyle = BAIE_INK; ctx.fillStyle = f.c; ctx.lineJoin = 'round';
-  const bille = (bx, by, q) => { ctx.beginPath(); ctx.arc(bx, by, q, 0, 7); ctx.fillStyle = f.c; ctx.fill(); ctx.stroke(); if (q > 1.6) { ctx.beginPath(); ctx.arc(bx, by - q * .3, q * .32, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); } };
-  switch (f.f) {
-    case 'ovale': ctx.beginPath(); ctx.ellipse(x, y, r * .75, r * 1.1, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y - r * .3, r * .25, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
-    case 'grappe': for (const [dx, dy] of [[0, -1.1], [-.8, -.2], [.8, -.2], [-.4, .7], [.4, .7], [0, .1]]) bille(x + dx * r * .9, y + dy * r * .9, r * .55); return;
-    case 'raisin': for (const [dx, dy] of [[-.7, -1], [.7, -1], [0, -.5], [-1, 0], [0, 0], [1, 0], [-.5, .6], [.5, .6], [0, 1.2]]) bille(x + dx * r * .7, y + dy * r * .7, r * .5); return;
-    case 'mure': for (const [dx, dy] of [[-.55, -.4], [.55, -.4], [0, .55], [-.55, .35], [.55, .35], [0, -.5]]) bille(x + dx * r, y + dy * r, r * .55); return;
-    case 'epine': for (const [dx, dy] of [[0, -.9], [-.8, -.3], [.8, -.3], [0, .1], [-.5, .75], [.5, .75]]) bille(x + dx * r, y + dy * r, r * .5); return;
-    case 'fraise': ctx.beginPath(); ctx.moveTo(x - r * .9, y - r * .5); ctx.quadraticCurveTo(x, y - r * 1.2, x + r * .9, y - r * .5); ctx.quadraticCurveTo(x + r * .6, y + r * 1.1, x, y + r * 1.3); ctx.quadraticCurveTo(x - r * .6, y + r * 1.1, x - r * .9, y - r * .5); ctx.fill(); ctx.stroke();
-      if (r > 2) { ctx.fillStyle = '#f2e27a'; for (const [dx, dy] of [[-.3, -.2], [.3, -.2], [0, .3], [-.25, .7], [.25, .7]]) ctx.fillRect(x + dx * r - .4, y + dy * r - .4, .9, .9); ctx.beginPath(); ctx.arc(x, y - r * .8, r * .35, 0, 7); ctx.fillStyle = '#4a8a3a'; ctx.fill(); } return;
-    case 'kiwi': ctx.beginPath(); ctx.ellipse(x, y, r * 1.05, r * .75, 0, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.ellipse(x, y - r * .15, r * .45, r * .3, 0, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); return;
-    case 'passion': ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke(); ctx.beginPath(); ctx.arc(x, y, r * .55, 0, 7); ctx.fillStyle = f.c2; ctx.fill(); ctx.beginPath(); ctx.arc(x, y - r * .1, r * .18, 0, 7); ctx.fillStyle = '#e8d870'; ctx.fill(); return;
-    default: bille(x, y, r);
-  }
+function baieFruit(f, x, y, r) {                                              // (13/10 : tous les fruits sont de simples ronds de couleur ; grappes, formes et reflets supprimés)
+  ctx.lineWidth = Math.max(.6, r * .16); ctx.strokeStyle = BAIE_INK; ctx.fillStyle = f.c; ctx.lineJoin = 'round';
+  ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.stroke();
 }
 function baieFeuillage(a, cx, cy, R, rnd) {
   const [base, clair, bord] = a.f, n = a.lobes * 2, ph = -Math.PI / 2, P = [];   // symétrie : mêmes lobes tout autour, un lobe pointe vers le haut

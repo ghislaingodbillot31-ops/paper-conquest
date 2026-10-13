@@ -1,4 +1,4 @@
-/* ---------- logs du jeu envoyés au serveur de logs (tools/serveur-logs.js, port 8001) ----------
+/* ---------- logs du jeu envoyés au serveur de logs (outils/serveur-logs.js, port 8001) ----------
    Chargé en premier sur la page : il capte les erreurs (window.onerror, promesses rejetées), console.error / warn / log, et chaque 15 s un état résumé du village (jeuLog('état', …)). Les messages partent par paquets toutes les 2 s
    (sans serveur : nouvel essai toutes les 30 s, silencieux). jeuLog(message, donnée) : un message à soi, depuis n'importe quel code. */
 (function () {

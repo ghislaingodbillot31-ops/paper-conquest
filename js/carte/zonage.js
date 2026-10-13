@@ -28,6 +28,7 @@ function repeindreGrille(anciennes, neuves) {
   markDirty([r[0] - 4, r[1] - 4, r[2] + 4, r[3] + 4]);
 }
 function computeZones() {
+  for (const r of S.roads) if (r.libre && !r.simple) { r.simple = 1; const p = simplifie(r.pts); if (p.length < r.pts.length) r.pts = p; }   // (routes déjà tracées avec un point tous les 12 m : nettoyées une fois)
   const foot = [], anciennes = Z.cells;
   for (const r of S.roads) for (let k = 0; k < r.pts.length - 1; k++) {
     const P = segRect(r.pts[k], r.pts[k+1], r.w); foot.push({ P, bb:bbox(P) });
@@ -268,7 +269,7 @@ function roadIssue(a, b, w) {
   return null;
 }
 // marge de 2 m au bord de l'eau : une route ne longe pas une rivière de plus près ; elle ne
-// s'en approche que pour la franchir par un pont, assez franchement (30° au moins)
+// s'en approche que pour la franchir par un pont, perpendiculairement (règle pont_angle)
 function riverMarginIssue(a, b, w) {
   const L = segLen(a, b), n = Math.max(1, Math.ceil(L)), lim = w / 2 + WATER_MARGIN;
   const bb = [Math.min(a[0], b[0]) - 40, Math.min(a[1], b[1]) - 40, Math.max(a[0], b[0]) + 40, Math.max(a[1], b[1]) + 40];
@@ -296,7 +297,8 @@ function riverMarginIssue(a, b, w) {
       }
       const d = [P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]], dl = Math.hypot(...d) || 1;
       const sin = Math.abs(((b[0] - a[0]) * d[1] - (b[1] - a[1]) * d[0]) / (L * dl));
-      if (sin < .5) return 'Le pont doit franchir la rivière plus franchement (30° au moins)';
+      const dev = typeof regle === 'function' ? regle('pont_angle') : 15;   // le pont ne traverse jamais en diagonale : perpendiculaire à la rivière, à dev° près
+      if (sin < Math.cos(dev * Math.PI / 180) - 1e-6) return 'Un pont ne traverse jamais une rivière en diagonale : il doit être perpendiculaire (à ' + dev + '° près)';
     }
   }
   return null;

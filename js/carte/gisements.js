@@ -17,7 +17,8 @@ const GISEMENTS = {
   ambre:   { nom:'Ambre de la Baltique',  couleur:'#d6861a', clair:'#ffc861', roche:['#a8895c', '#6e5638'] },
 };
 // pose les gisements (une fois chacun) ; à appeler quand la carte (routes, eau) est calculée
-function placeDeposits(seed, kinds = Object.keys(GISEMENTS), out = []) {   // (UN SEUL gisement de chaque type par région)                  // (out : les gisements déjà posés, à éviter ; kinds : ceux à ajouter)
+function placeDeposits(seed, kinds = Object.keys(GISEMENTS), out = []) {
+  if (S.biome === 'polaire') return out;   // désert polaire : aucune ressource   // (UN SEUL gisement de chaque type par région)                  // (out : les gisements déjà posés, à éviter ; kinds : ceux à ajouter)
   const rnd = seeded(seed * 17 + 3), M = 160;
   kinds = kinds.filter((k, i) => kinds.indexOf(k) === i && !out.some(o => o.kind === k));   // (un type déjà posé n'est pas reposé)
   const cw = (TW - 2 * M) / 3, ch = (TH - 2 * M) / 3, cells = kinds.map((_, i) => i % 9);
@@ -29,8 +30,16 @@ function placeDeposits(seed, kinds = Object.keys(GISEMENTS), out = []) {   // (U
     for (let k = 0; k < 9; k++) { const q = k < 8 ? [c[0] + Math.cos(k * Math.PI / 4) * R, c[1] + Math.sin(k * Math.PI / 4) * R] : c; if (fz(q[0], q[1]) > B.forest - .004) return false; }   // (jamais dans ni sous une forêt)
     if (c[0] < M / 2 || c[1] < M / 2 || c[0] > TW - M / 2 || c[1] > TH - M / 2) return false;
     for (let k = 0; k < 8; k++) { const a = k * Math.PI / 4, q = [c[0] + Math.cos(a) * R, c[1] + Math.sin(a) * R]; if (!dansRegion(q) || !surTerre(q)) return false; }
-    if (!dansRegion(c) || distToRoads(c) < R + 15) return false;
+    const rr = r * 1.3, G = n => typeof regle === 'function' ? regle(n) : 25;                           // rr : rayon réel du contour irrégulier
+    if (!dansRegion(c) || distToRoads(c) < rr + G('gisement_route')) return false;                       // route
     if (water.length && hitsAny([[c[0] - R, c[1] - R], [c[0] + R, c[1] - R], [c[0] + R, c[1] + R], [c[0] - R, c[1] + R]], water)) return false;
+    { const dm = rr + G('gisement_eau');                                                                  // lacs et mer : jamais dedans ni à moins de dm
+      if (!surTerre(c)) return false;
+      for (let k = 0; k < 16; k++) { const a = k * Math.PI / 8; if (!surTerre([c[0] + Math.cos(a) * dm, c[1] + Math.sin(a) * dm])) return false; }
+      for (const lk of S.lakes) { const P = lakeShape(lk); if (inPoly(c, P) || P.some((p, i) => ptSeg(c, p, P[(i + 1) % P.length]).d < dm)) return false; } }
+    { const dm = rr + G('gisement_riviere');                                                              // rivières et fleuves : depuis la berge (axe − demi-largeur)
+      for (const rv of S.rivers) { const HW = riverHW(rv); for (let i = 0; i < rv.pts.length - 1; i++) if (ptSeg(c, rv.pts[i], rv.pts[i + 1]).d - Math.max(HW[i], HW[i + 1]) < dm) return false; } }
+    if (typeof bridges === 'function') { const dm = rr + G('gisement_pont'); for (const b of bridges()) if (ptSeg(c, b.a, b.b).d - b.w < dm) return false; }   // ponts
     return out.every(o => segLen(o.c, c) > o.r + r + (o.kind === kind ? dMeme : dAutre) * k);   // deux gisements du même minerai : jamais côte à côte
   };
   kinds.forEach((kind, i) => {

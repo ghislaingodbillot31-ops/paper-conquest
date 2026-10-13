@@ -1,5 +1,5 @@
 /* ---------- validateur de la production (données : data/production/*.json) ----------
-   Une seule fonction, validerProduction(donnees), utilisée par la page validation-production.html (onglet Dev du studio) et par la commande tools/valider-production.js.
+   Une seule fonction, validerProduction(donnees), utilisée par la page validation-production.html (onglet Dev du studio) et par la commande outils/valider-production.js.
    Elle ne modifie rien : elle lit les ressources, les ateliers et les recettes, et rend un rapport.
 
    donnees = { index, ressources, ateliers, recettes, couts, foyers, services, commerce }  (les quatre derniers : couts_construction.json, besoins_foyers.json, besoins_services.json, commerce.json ; facultatifs)

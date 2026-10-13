@@ -47,7 +47,7 @@
   @media (max-width:900px) { body { flex-direction:column } #editeur { width:auto; border-left:0; border-top:1px solid #0006 } }
 </style>
 <div id="liste">
-  <header><h1>Animaux</h1><div class="style"><label>Taille <select id="echelle"><option value="reelle">Réelle (même échelle)</option><option value="ajustee">Ajustée à la carte</option></select></label><label>Style <select id="style"><option value="lisse">Lisse</option><option value="low-poly">Low-poly</option></select></label></div><p id="total"></p><p>Clique un animal pour le modifier : les réglages sont enregistrés dans ce navigateur et appliqués partout (carte, map test).</p></header>
+  <header><h1>Animaux</h1><div class="style"><label>Taille <select id="echelle"><option value="reelle">Réelle (même échelle)</option><option value="ajustee">Ajustée à la carte</option></select></label></div><p id="total"></p><p>Clique un animal pour le modifier : les réglages sont enregistrés dans ce navigateur et appliqués partout (carte, map test).</p></header>
   <main id="main"></main>
 </div>
 <aside id="editeur"><p id="aide">Choisis un animal dans la liste.</p></aside>
@@ -83,14 +83,6 @@ function rafraichit(k) {
 PXM = Math.min(...Object.keys(ANIMAUX).map(k => { const [ar, av] = animalEtendue(k); return (H0 - 36) / ((ar + av) * ANIMAUX[k].T); }));
 document.getElementById('echelle').addEventListener('change', e => { ECHELLE_REELLE = e.target.value === 'reelle'; for (const k in cartes) peint(k, cartes[k].cv, W0, H0, 190, true); });
 
-// ---- style : lisse ou low-poly ----
-const selStyle = document.getElementById('style'); selStyle.value = ANIMAL_STYLE;
-selStyle.addEventListener('change', () => {
-  ANIMAL_STYLE = selStyle.value; try { localStorage.setItem('animaux.style', ANIMAL_STYLE); } catch (e) {}
-  for (const k in cartes) peint(k, cartes[k].cv, W0, H0, 190, true);
-  if (choisi) peint(choisi, document.getElementById('apercu'), 330, 340, 250);
-});
-
 // ---- la liste ----
 const main = document.getElementById('main');
 let total = 0, choisi = null;
@@ -110,16 +102,16 @@ document.getElementById('total').textContent = total + ' animaux terrestres · v
 
 // ---- l'éditeur ----
 const O = (...l) => l.map(x => Array.isArray(x) ? x : [x, x]);
-const OREILLES = O(['', 'par défaut'], 'pointe', 'long', 'rond', 'grand', 'penche', 'horiz', 'tuft', ['aucune', 'aucune']);
+const OREILLES = O(['', 'par défaut'], 'pointe', 'long', 'rond', 'grand', 'penche', 'horiz', 'tuft', 'dos', 'banane', ['aucune', 'aucune']);
 const SCHEMA_QUAD = [
   ['Corps', [['r', 'T', 'Taille réelle (m)', .15, 4, .05], ['r', 'w', 'Largeur du corps', .08, .6, .01], ['r', 'nl', 'Longueur du cou', 0, .4, .01], ['r', 'hl', 'Longueur de tête', .1, .4, .01], ['r', 'hw', 'Largeur de tête', .06, .3, .01],
-    ['c', 'c', 'Couleur du corps'], ['c', 'hcol', 'Couleur de la tête', 'c'], ['c', 'd', 'Pattes'], ['c', 'm', 'Museau', 'd'], ['k', 'laine', 'Pelage laineux (boucles)'], ['s', 'pattes', 'Pattes', O(['', 'cachées (défaut)'], ['sabots', 'petits bouts'], ['ovales', 'ovales (anciennes)'])]]],
-  ['Oreilles', [['s', 'ear', 'Forme', OREILLES], ['r', 'es', 'Taille (grandes)', .5, 1.4, .05], ['c', 'ec', 'Couleur', 'hcol']]],
+    ['c', 'c', 'Couleur du corps'], ['c', 'hcol', 'Couleur de la tête', 'c'], ['c', 'd', 'Pattes'], ['c', 'm', 'Museau', 'd'], ['k', 'laine', 'Pelage laineux (boucles)'], ['s', 'pattes', 'Pattes', O(['', 'en marche (défaut)'], ['ovales', 'ovales (anciennes)'], ['aucune', 'cachées'])], ['c', 'pc', 'Couleur des pattes', 'd'], ['c', 'nez', 'Truffe']]],
+  ['Oreilles', [['s', 'ear', 'Forme', OREILLES], ['r', 'es', 'Taille (grandes)', .5, 1.8, .05], ['c', 'ec', 'Couleur', 'hcol']]],
   ['Queue', [['s', 'queue', 'Forme', O('fin', 'touffe', 'fournie', 'court', 'longue', 'epaisse', 'palette', 'anneaux', 'boucle', 'aucune')], ['c', 'qc', 'Couleur', 'c'], ['c', 'qt', 'Bout de queue', 'qc'], ['c', 'qd', 'Rayures / bout', 'd']]],
   ['Cornes, bois, défenses', [['s', 'corne', 'Cornes', O(['', 'aucune'], 'cornes', 'bouc', 'lyre', 'droites', 'bois', 'palme', 'rhino')], ['r', 'hs', 'Taille', .4, 2, .05], ['r', 'tines', 'Pointes (bois)', 1, 6, 1], ['c', 'hc', 'Couleur', 'c'],
     ['s', 'defense', 'Défenses', O(['', 'aucune'], 'courte', 'longue')], ['r', 'trompe', 'Trompe', 0, 1, .5]]],
   ['Pelage', [['s', 'deco', 'Motif', O(['', 'aucun'], 'rayures', 'taches', 'rosettes', 'plaques', 'dos', 'flancs', 'croupe', 'selle')], ['c', 'dc', 'Couleur du motif', 'd'], ['k', 'big', 'Grandes rosettes'],
-    ['s', 'mane', 'Crinière', O(['', 'aucune'], 'bande', 'lion', 'hirsute')], ['c', 'mc', 'Couleur crinière', 'd'],
+    ['s', 'mane', 'Crinière', O(['', 'aucune'], 'bande', 'lion', 'hirsute', 'col')], ['c', 'mc', 'Couleur crinière', 'd'],
     ['s', 'bosses', 'Bosses', O(['0', 'aucune'], '1', '2')], ['c', 'bc', 'Couleur bosses', 'c']]],
 ];
 const SCHEMA_OISEAU = [

@@ -48,7 +48,7 @@ const LAND_ANIMALS = {
   lemurien:{ name:'Lémurien', cat:'faune', uses:'curiosité, fourrure' },
   // predateurs
   loup:{ name:'Loup', cat:'predateur', uses:'menace les troupeaux, fourrure' }, ours_brun:{ name:'Ours brun', cat:'predateur', uses:'danger, fourrure, graisse' },
-  ours_polaire:{ name:'Ours polaire', cat:'predateur', uses:'danger, fourrure' }, ours_noir:{ name:'Ours noir', cat:'predateur', uses:'danger, fourrure' },
+  manchot:{ name:'Manchot', cat:'faune', uses:'viande, plumes' }, phoque:{ name:'Phoque', cat:'faune', uses:'viande, graisse, peau' }, morse:{ name:'Morse', cat:'faune', uses:'viande, graisse, ivoire' }, ours_polaire:{ name:'Ours polaire', cat:'predateur', uses:'danger, fourrure' }, ours_noir:{ name:'Ours noir', cat:'predateur', uses:'danger, fourrure' },
   lion:{ name:'Lion', cat:'predateur', uses:'danger, peau' }, tigre:{ name:'Tigre', cat:'predateur', uses:'danger, peau' },
   leopard:{ name:'Léopard', cat:'predateur', uses:'danger, peau' }, guepard:{ name:'Guépard', cat:'predateur', uses:'danger, peau' },
   hyene:{ name:'Hyène', cat:'predateur', uses:'menace les troupeaux' }, jaguar:{ name:'Jaguar', cat:'predateur', uses:'danger, peau' },

@@ -1,2 +1,4 @@
 # données générées, une par région (doublon de data/regions/formes.json) : 500 fichiers qui noieraient le graphe
 data/regions/formes/
+# sauvegarde du thème de couleurs abandonné : copie de tout le code, elle doublerait chaque fonction dans le graphe
+outils/avant-theme-couleurs/

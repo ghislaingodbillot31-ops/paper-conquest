@@ -5,7 +5,7 @@
 // outils/modele-regions.js (regenerer : node outils/build-regions.js).
 const REGION_DATA = new Map();   // numero de region -> fiche de regions.json
 const EMPTY_REGION = { climat:{ biome:'tempere', couleur:'#a9db8e' }, sol:{ qualite:0 }, ressources:{}, agriculture:{},
-  animaux:{ zone:null, elevage:{}, faune:{}, predateurs:{} }, peche:{ eau_douce:{}, mer:[] }, eau:{ fleuves:[], lacs:0, cotiere:false, cours_eau_carte:'petite' } };
+  animaux:{ zone:null, elevage:{}, faune:{ manchot:1, phoque:1, morse:1 }, predateurs:{ ours_polaire:1 } }, peche:{ eau_douce:{}, mer:[] }, eau:{ fleuves:[], lacs:0, cotiere:false, cours_eau_carte:'petite' } };
 const regionInfo = id => REGION_DATA.get(id) || EMPTY_REGION;
 // climat d'une region pour js/saisons.js : latitude de sa capitale, temperature annuelle moyenne, humidite
 const regionClimat = id => { const r = regionInfo(id), c = r.climat || {}; return { lon:(r.centre || [0, 48])[0], lat:(r.centre || [0, 48])[1], tm:c.temperature_c ?? 10, hum:c.humidite ?? .7 }; };
@@ -14,6 +14,7 @@ const regionMeteo = id => meteo(regionClimat(id), aujourdhui());                
 function loadRegionData(list, zones){
   ANIMAL_ZONES = zones.map(z => ({ name:z.nom, macro:z.ensemble, anchors:z.ancrages, elevage:z.elevage, faune:z.faune, predateur:z.predateurs, regions:[] }));
   list.forEach(r => {
+    if (r.climat.biome === 'polaire') r = { ...r, sol:{ fertilite:0, qualite:0 }, ressources:{}, agriculture:{}, animaux:{ zone:null, elevage:{}, faune:{}, predateurs:{} }, peche:{ eau_douce:{}, mer:[] } };   // désert polaire : aucune ressource, région d'expansion
     REGION_DATA.set(r.id, r);
     regionResources.set(r.id, { ...r.ressources, ...r.agriculture, ...r.animaux.elevage, ...r.animaux.faune, ...r.animaux.predateurs, ...r.peche.eau_douce });
     regionSoil.set(r.id, r.sol.qualite);

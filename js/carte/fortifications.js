@@ -127,8 +127,17 @@ function finishDraft() {
     return;
   }
   if (draft.pts.length >= 2) {
+    const essai = { id:S.nextId, kind:draft.kind, w:draft.w, pts:simplifie(draft.pts.map(p => p.slice())), libre:true };
+    S.roads.push(essai); touchScene();                                                                   // (essai : la route est posée un instant pour tester ses ponts et sa distance aux rivières)
+    const conflit = typeof pontsConflits === 'function' ? pontsConflits().find(c => c.a === essai.id || c.b === essai.id) : null;
+    const deux = typeof routesDoubleTraversee === 'function' ? routesDoubleTraversee().find(c => c.road === essai.id) : null;
+    const proche = typeof routesTropPresDeLEau === 'function' ? routesTropPresDeLEau(true).find(c => c.road === essai.id) : null;
+    S.roads.pop(); touchScene();
+    if (deux) { flash('Route refusée : elle traverse deux fois la même rivière', true); return; }
+    if (proche) { flash('Route refusée : elle passe à ' + proche.d + ' m ' + ({ 'rivière':'d’une rivière', lac:'d’un lac', mer:'de la mer' })[proche.eau] + ' (minimum ' + regle(proche.eau === 'rivière' ? 'route_rive_joueur' : 'route_lac_joueur') + ' m' + (proche.eau === 'rivière' ? ' sans la traverser' : ', jamais dedans') + ')', true); return; }
+    if (conflit) { flash('Route refusée : un de ses ponts croise ou touche un autre pont (' + regle('pont_distance') + ' m d’écart minimum)', true); return; }
     commit();
-    const r = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:draft.pts, libre:true };
+    const r = { id:S.nextId++, kind:draft.kind, w:draft.w, pts:simplifie(draft.pts.map(p => p.slice())), libre:true };   // (la route est gardée EXACTEMENT comme tracée : angles vifs, aucun arrondi ni rééchantillonnage ; un pont n'est jamais en diagonale, le tracé est déjà refusé sinon)
     S.roads.push(r);
     draft = null; changed(true);
     flash(`${{ terre:'Route en terre', gravier:'Route en gravier', pave:'Route pavée' }[r.kind]} de ${fmt(roadLen(r))} m ajoutée`);

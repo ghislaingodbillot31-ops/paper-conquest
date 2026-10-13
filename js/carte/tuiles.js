@@ -11,10 +11,20 @@
      attendant, les tuiles de vue d'ensemble (0,5 px/m, toujours gardées) bouchent les trous.
    - Ce qui bouge (habitants, aperçu, tracés, sélection, graduations) est dessiné à chaque
      image par-dessus, sur le canevas transparent de la carte (voir draw). */
-const TILE_PX = 512, TILE_LEVELS = [.5, 1, 2, 4, 8, 16, 32, 64], TILE_MAX = 80, TILE_MS = 8;
+const TILE_PX = 512, TILE_COTE = TILE_PX + 1, TILE_LEVELS = ZOOMS ? [.5, ...ZOOMS] : [.5, 1, 2, 4, 8, 16, 32, 64], TILE_MAX = 80, TILE_MS = 8;   // (TILE_COTE : la tuile garde un texel de plus à droite et en bas, celui de sa voisine : recouvrement exact, sans étirer l'image)
+let tileDpr = 1;
+/* Page région : un niveau de tuile = un zoom fixe × la densité de l'écran, donc un texel de la tuile = un pixel de l'écran (net, sans rééchantillonnage). Recalculé si la densité change (zoom du navigateur). */
+function niveauxMaj() {
+  if (!ZOOMS) return; tileDpr = dpr;
+  TILE_LEVELS.length = 0; TILE_LEVELS.push(.5, ...ZOOMS.map(z => +(z * dpr).toFixed(4)));
+  for (const t of [...tiles.values()]) if (!TILE_LEVELS.includes(t.L)) dropTile(t);
+  prefQ = []; prefSig = ''; lastShown = []; lastDoneL = null;
+}
 const tiles = new Map();                  // 'L:i:j' → { L, i, j, x0, y0, m, c (décor), cc (cimes : houppiers des arbres isolés et de lisière, transparent), dirty:[rects], used, seen, spr }
 const tileKey = (L, i, j) => L + ':' + i + ':' + j;
-let tileClock = 0, tileFrame = 0, lastShown = [];   // lastShown : tuiles du dernier niveau de zoom entièrement peint (affichées dessous le temps que le nouveau niveau se peigne)
+const FONDU_MS = 200;                                                // durée du fondu d'apparition d'une tuile
+let fadeEnd = 0;                                                    // fin du fondu en cours
+let tileClock = 0, tileFrame = 0, lastShown = [], lastDoneL = null, tileCap = TILE_MAX;   // tileCap : nombre de tuiles gardées (au moins TILE_MAX ; plus si l'écran en demande davantage)   // lastShown : tuiles du dernier niveau de zoom entièrement peint (affichées dessous le temps que le nouveau niveau se peigne)
 
 /* ---- peinture d'un rectangle du terrain dans une image ----
    Le code de dessin de la carte dessine dans ctx, avec la vue (view, W, H) : on les remplace le
@@ -47,6 +57,7 @@ function drawDecor() {
   drawContours();
   drawWater();
   drawMouths();
+  if (typeof drawBlocsGlace === 'function') drawBlocsGlace();   // (désert polaire : blocs de glace sur l'eau)
   drawPlantesEau();                                             // nénuphars, roseaux et plantes de berge (sous les routes)
   drawDeposits();
   if (typeof drawChamps === 'function') drawChamps();             // champs : sous les routes
@@ -91,7 +102,7 @@ function presentCimes(P) {
 // repeint le rectangle r (m) d'une tuile
 function paintTile(t, r) {
   const L = t.L, px0 = Math.max(0, Math.floor((r[0] - t.x0) * L)), py0 = Math.max(0, Math.floor((r[1] - t.y0) * L));
-  const px1 = Math.min(TILE_PX, Math.ceil((r[2] - t.x0) * L)), py1 = Math.min(TILE_PX, Math.ceil((r[3] - t.y0) * L));
+  const px1 = Math.min(TILE_COTE, Math.ceil((r[2] - t.x0) * L)), py1 = Math.min(TILE_COTE, Math.ceil((r[3] - t.y0) * L));
   if (px1 <= px0 || py1 <= py0) return;
   const g = t.c.getContext('2d');
   g.save(); g.setTransform(1, 0, 0, 1, px0, py0); g.beginPath(); g.rect(0, 0, px1 - px0, py1 - py0); g.clip();
@@ -106,15 +117,15 @@ function paintTile(t, r) {
   }
   if (t.spr) t.spr.texture.baseTexture.update();          // la carte graphique reprend l'image
 }
-const tileRect = t => [t.x0, t.y0, t.x0 + t.m, t.y0 + t.m];
+const tileRect = t => [t.x0, t.y0, t.x0 + t.m + 1 / t.L, t.y0 + t.m + 1 / t.L];   // (avec le texel de recouvrement)
 function newTile(L, i, j) {
-  const m = TILE_PX / L, c = document.createElement('canvas'); c.width = c.height = TILE_PX;
-  const cc = document.createElement('canvas'); cc.width = cc.height = TILE_PX;
+  const m = TILE_PX / L, c = document.createElement('canvas'); c.width = c.height = TILE_COTE;
+  const cc = document.createElement('canvas'); cc.width = cc.height = TILE_COTE;
   const t = { L, i, j, x0:i * m, y0:j * m, m, c, cc, dirty:[], used:++tileClock, spr:null };
   paintTile(t, tileRect(t));                                      // (d'un bloc : le coût d'une peinture est surtout fixe, découper en morceaux le multipliait)
   tiles.set(tileKey(L, i, j), t);
-  if (tiles.size > TILE_MAX) {                                   // on libère les moins récentes (jamais la vue d'ensemble)
-    const old = [...tiles.values()].filter(o => o.L !== .5).sort((a, b) => a.used - b.used).slice(0, tiles.size - TILE_MAX);
+  if (tiles.size > tileCap) {                                   // on libère les moins récentes (jamais la vue d'ensemble)
+    const old = [...tiles.values()].filter(o => o.L !== .5).sort((a, b) => a.used - b.used).slice(0, tiles.size - tileCap);
     for (const o of old) dropTile(o);
   }
   return t;
@@ -183,8 +194,8 @@ const GPU = (() => {
 })();
 function tileSprite(t, layer) {
   if (!t.spr) {
-    t.spr = new PIXI.Sprite(PIXI.Texture.from(t.c));
-    t.spr.position.set(t.x0, t.y0); t.spr.scale.set((TILE_PX + 1) / TILE_PX / t.L); // 1 texel de recouvrement : pas de fente entre tuiles (elle laissait voir la vue d'ensemble, plus sombre)
+    t.spr = new PIXI.Sprite(PIXI.Texture.from(t.c, { mipmap:PIXI.MIPMAP_MODES.OFF, scaleMode:PIXI.SCALE_MODES.LINEAR }));   // (sans mipmaps : repeintes partielles et zoom sans niveau flou périmé, et pas de recalcul à chaque repeinte)
+    t.spr.position.set(t.x0, t.y0); t.spr.scale.set(1 / t.L);   // (le texel de recouvrement est dans l'image même : pas de fente entre tuiles, et aucun étirement)
     layer.addChild(t.spr);
   }
   return t.spr;
@@ -192,8 +203,10 @@ function tileSprite(t, layer) {
 // prépare et affiche le décor ; renvoie vrai s'il reste des tuiles à peindre (nouvelle image demandée)
 function presentScene() {
   const t0 = performance.now(), over = () => performance.now() - t0 > TILE_MS;
+  if (ZOOMS && tileDpr !== dpr) niveauxMaj();
   tileFrame++;
-  const s = view.s, L = TILE_LEVELS.find(l => l >= s * dpr) || TILE_LEVELS[TILE_LEVELS.length - 1];
+  const s = view.s, sd = s * dpr, brut = TILE_LEVELS.find(l => l >= sd - 1e-4) || TILE_LEVELS[TILE_LEVELS.length - 1];
+  const L = brut;                                                    // (page région : le zoom ne s'arrête que sur un niveau, donc pas d'hésitation entre deux niveaux ; 0,5 : vue d'ensemble de fond, jamais visée)
   // vue d'ensemble : toujours présente (peinte au premier affichage), repeinte en priorité
   const baseTiles = [];
   for (let j = 0; j * TILE_PX / .5 < TH; j++) for (let i = 0; i * TILE_PX / .5 < TW; i++) baseTiles.push(tiles.get(tileKey(.5, i, j)) || newTile(.5, i, j));
@@ -209,6 +222,8 @@ function presentScene() {
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) want.push([i, j]);
     const ci = (wx0 + wx1) / 2 / m, cj = (wy0 + wy1) / 2 / m;
     want.sort((a, b) => (a[0] + .5 - ci) ** 2 + (a[1] + .5 - cj) ** 2 - ((b[0] + .5 - ci) ** 2 + (b[1] + .5 - cj) ** 2));
+    tileCap = Math.max(TILE_MAX, want.length + baseTiles.length + 24 + PREFETCH_MAX);   // (sinon, à un zoom où les tuiles sont les plus petites à l'écran, les tuiles visibles dépassent le plafond : elles sont libérées puis repeintes sans fin = la carte qui « s'actualise en boucle »)
+    if (PAGE !== 'batiments') planPrefetch(L, i0, i1, j0, j1);
     let painted = false;
     for (const [i, j] of want) {
       let t = tiles.get(tileKey(L, i, j));
@@ -219,9 +234,22 @@ function presentScene() {
     }
   }
   // zoom : tant que le nouveau niveau n'est pas fini, les tuiles de l'ancien restent affichées dessous (plus de vue d'ensemble floue)
-  const dessous = pending && lastShown.length && lastShown[0].L !== L ? lastShown.filter(t => tiles.get(tileKey(t.L, t.i, t.j)) === t) : [];
-  if (!pending) lastShown = shown;
+  // (aussi dans un même niveau : les tuiles voisines d'autres niveaux déjà peintes bouchent les trous, au lieu de laisser passer la vue d'ensemble floue)
+  const dessous = [], now = performance.now();
+  if ((pending || now < fadeEnd) && L !== .5) for (const t of tiles.values()) if (t.L !== .5 && t.L !== L && t.x0 < wx1 && t.x0 + t.m > wx0 && t.y0 < wy1 && t.y0 + t.m > wy0 && !t.dirty.length) dessous.push(t);
+  dessous.sort((a, b) => Math.abs(Math.log2(b.L / L)) - Math.abs(Math.log2(a.L / L)));   // les plus éloignés d'abord, les plus proches par-dessus
+  if (!pending) { lastShown = shown; lastDoneL = L; }
+  // changement de niveau de zoom : les nouvelles tuiles se peignent une par image ; on ne les montre que toutes prêtes, d'un seul coup (sinon un balayage de tuiles qui clignotent à chaque zoom)
+  const montrer = !(pending && lastDoneL !== null && lastDoneL !== L && dessous.length);
   cimesVues = L === .5 ? baseTiles : shown;                          // (tuiles de cimes à afficher par-dessus les personnages)
+  /* Fondu : une tuile qui apparaît (zoom, déplacement vers une zone pas encore peinte) monte de 0 à 1 en FONDU_MS au lieu de surgir d'un coup ; l'ancien niveau reste dessous le temps du fondu. */
+  for (const t of shown) {
+    if (!montrer) { t.fondu = null; continue; }
+    if (t.vuImg !== tileFrame - 1 && t.fondu == null) { t.fondu = now; fadeEnd = Math.max(fadeEnd, now + FONDU_MS); }
+    t.vuImg = tileFrame;
+    t.alpha = t.fondu == null ? 1 : Math.min(1, (now - t.fondu) / FONDU_MS); if (t.alpha >= 1) t.fondu = null;
+  }
+  const fondant = now < fadeEnd;
   if (GPU) {
     const { renderer, stage, world, base, cur } = GPU;
     if (renderer.width !== Math.round(W * dpr) || renderer.height !== Math.round(H * dpr)) renderer.resize(W, H);
@@ -229,16 +257,45 @@ function presentScene() {
     for (const t of baseTiles) tileSprite(t, base);
     for (const c of cur.children) c.visible = false;
     cur.sortableChildren = true;
-    for (const t of dessous) { const sp = tileSprite(t, cur); sp.visible = true; sp.zIndex = 0; }
-    for (const t of shown) { const sp = tileSprite(t, cur); sp.visible = true; sp.zIndex = 1; }
+    dessous.forEach((t, k) => { const sp = tileSprite(t, cur); sp.visible = true; sp.zIndex = k; });
+    for (const t of shown) { const sp = tileSprite(t, cur); sp.visible = montrer; sp.alpha = t.alpha; sp.zIndex = dessous.length + 1; }
     world.scale.set(s); world.position.set(view.ox, view.oy);
+    if (typeof gpuFaune === 'function') gpuFaune(GPU);              // (les animaux : sprites par-dessus le décor)
     renderer.render(stage);
     ctx.clearRect(0, 0, W, H);                                  // le canevas du dessus ne garde que ce qui bouge
   } else {
     ctx.fillStyle = Col.sheet; ctx.fillRect(0, 0, W, H);
     ctx.imageSmoothingEnabled = true;
-    const put = t => ctx.drawImage(t.c, t.x0 * s + view.ox, t.y0 * s + view.oy, t.m * s + .6, t.m * s + .6);
-    baseTiles.forEach(put); dessous.forEach(put); shown.forEach(put);
+    const put = t => ctx.drawImage(t.c, t.x0 * s + view.ox, t.y0 * s + view.oy, TILE_COTE / t.L * s, TILE_COTE / t.L * s);
+    baseTiles.forEach(put); dessous.forEach(put);
+    if (montrer) for (const t of shown) { ctx.globalAlpha = t.alpha; put(t); } ctx.globalAlpha = 1;
   }
-  return pending;
+  prefOK = !pending; if (prefQ.length && prefOK && !prefId && !document.hidden) prefId = idleTask(runPrefetch);
+  return pending || fondant;
+}
+/* PRÉCHARGEMENT : quand la vue est entièrement peinte, les tuiles voisines sont peintes en tâche de fond, une par moment calme : un anneau autour de la vue au niveau de zoom actuel, puis la vue au niveau
+   inférieur et au niveau supérieur (un cran de zoom). Un déplacement ou un cran de zoom trouve alors les tuiles prêtes (plus d'apparition ni de flou). Au plus PREFETCH_MAX tuiles d'avance (≈ 3 Mo chacune). */
+const PREFETCH_MAX = 36, PREFETCH_LIBRE_MS = 10, PREFETCH_PAS_MS = 150;   // (tuiles d'avance ; temps calme minimal pour oser peindre une tuile ; au plus 150 ms d'attente : une tuile au moins toutes les 150 ms même quand le jeu anime sans cesse)
+let prefQ = [], prefSig = '', prefOK = false, prefId = 0, prefDernier = 0;
+const idleTask = f => window.requestIdleCallback ? requestIdleCallback(f, { timeout:PREFETCH_PAS_MS }) : setTimeout(() => f({ didTimeout:true, timeRemaining:() => 0 }), 150);
+function planPrefetch(L, i0, i1, j0, j1) {
+  const sig = L + ':' + i0 + ',' + i1 + ',' + j0 + ',' + j1; if (sig === prefSig) return;
+  prefSig = sig;
+  const k = TILE_LEVELS.indexOf(L), m = TILE_PX / L, x0 = i0 * m, y0 = j0 * m, x1 = (i1 + 1) * m, y1 = (j1 + 1) * m, ring = [], autres = [];
+  const ajoute = (liste, Lv, a0, a1, b0, b1) => {
+    const mv = TILE_PX / Lv, ni = Math.ceil(TW / mv), nj = Math.ceil(TH / mv), cx = (x0 + x1) / 2 / mv, cy = (y0 + y1) / 2 / mv;
+    for (let j = Math.max(0, b0); j <= Math.min(nj - 1, b1); j++) for (let i = Math.max(0, a0); i <= Math.min(ni - 1, a1); i++)
+      if (!tiles.has(tileKey(Lv, i, j))) liste.push([Lv, i, j, (i + .5 - cx) ** 2 + (j + .5 - cy) ** 2]);
+  };
+  ajoute(ring, L, i0 - 1, i1 + 1, j0 - 1, j1 + 1);
+  for (const Lv of [TILE_LEVELS[k - 1], TILE_LEVELS[k + 1]]) if (Lv && Lv !== .5) { const mv = TILE_PX / Lv; ajoute(autres, Lv, Math.floor(x0 / mv), Math.ceil(x1 / mv) - 1, Math.floor(y0 / mv), Math.ceil(y1 / mv) - 1); }
+  const tri = (a, b) => a[3] - b[3];
+  prefQ = [...ring.sort(tri), ...autres.sort(tri)].slice(0, PREFETCH_MAX);
+}
+function runPrefetch(dl) {
+  prefId = 0;
+  if (!prefOK || document.hidden) return;                          // (presentScene relance quand la vue est prête)
+  const now = performance.now();
+  if (dl.timeRemaining() >= PREFETCH_LIBRE_MS || now - prefDernier >= PREFETCH_PAS_MS) { prefDernier = now; const [Lv, i, j] = prefQ.shift() || []; if (Lv && !tiles.has(tileKey(Lv, i, j))) newTile(Lv, i, j); }
+  if (prefQ.length) prefId = idleTask(runPrefetch);
 }

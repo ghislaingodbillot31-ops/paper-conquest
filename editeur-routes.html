@@ -50,12 +50,21 @@
 <!-- éditeur de routes : un monde plat et vert (plan à part, clé editeurRoutes.v1), quelques routes de départ, toutes modifiables -->
 <aside class="reglage-heure" id="routes-outils">
   <b>Éditeur de routes</b>
-  <button id="routes-reset" type="button">Remettre les routes de départ</button>
+  <div id="routes-graine" style="margin:4px 0;font-size:13px"></div>
+  <button id="routes-nouvelle" type="button">🎲 Nouvelle graine</button>
+  <label style="display:block;margin:4px 0;font-size:12px">Graine <input id="routes-graine-saisie" type="number" min="1" step="1" style="width:110px"> <button id="routes-graine-ok" type="button">Charger</button></label>
+  <button id="routes-reset" type="button">Régénérer cette graine</button>
 </aside>
 <script>
+const graine = () => { try { return +localStorage.getItem(PLAT_SEED_CLE) || 20261012; } catch (e) { return 20261012; } };
+window.addEventListener('load', () => { document.getElementById('routes-graine').textContent = 'Graine : ' + graine() + (FORME && FORME.cotes && FORME.cotes.length ? ' · mer : ' + FORME.cotes.join(', ') : ' · sans mer'); });
+window.addEventListener('load', () => { document.getElementById('routes-graine-saisie').value = graine(); });
+const chargeGraine = g => { try { localStorage.setItem(PLAT_SEED_CLE, String(g)); localStorage.removeItem(KEY); localStorage.removeItem(KEY + '.arrivants'); } catch (e) {} location.reload(); };
+document.getElementById('routes-nouvelle').addEventListener('click', () => chargeGraine(1 + Math.floor(Math.random() * 999999)));
+document.getElementById('routes-graine-ok').addEventListener('click', () => { const g = Math.floor(+document.getElementById('routes-graine-saisie').value); if (g > 0) chargeGraine(g); });
 document.getElementById('routes-reset').addEventListener('click', function () {
-  const txt = "Remettre les routes de départ";
-  if (this.dataset.arme !== '1') { this.dataset.arme = '1'; this.textContent = 'Confirmer : efface tout'; setTimeout(() => { this.dataset.arme = ''; this.textContent = txt; }, 4000); return; }
+  const txt = "Régénérer cette graine";
+  if (this.dataset.arme !== '1') { this.dataset.arme = '1'; this.textContent = 'Confirmer : efface vos modifications'; setTimeout(() => { this.dataset.arme = ''; this.textContent = txt; }, 4000); return; }
   try { localStorage.removeItem(KEY); localStorage.removeItem(KEY + '.arrivants'); } catch (e) {}
   location.reload();
 });
@@ -158,6 +167,7 @@ document.getElementById('routes-reset').addEventListener('click', function () {
 <script src="js/carte/baies.js"></script>
 <script src="js/carte/animaux.js"></script>
 <script src="js/carte/villageois.js"></script>
+<script src="js/carte/monde-plat.js"></script>
 <script src="js/carte/generateur.js"></script>
 <script src="js/carte/vue.js"></script>
 <script src="js/batiments/atelier.js"></script>

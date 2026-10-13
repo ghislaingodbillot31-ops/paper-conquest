@@ -20,10 +20,15 @@ const ANG_STEP = Math.PI / 18; // routes orientées uniquement par pas de 10°
    - 'carte'     : éditeur du générateur de carte (editeur-carte.html) ;
    - 'batiments' : éditeur des bâtiments (editeur-batiments.html), sans carte. */
 const GAME = (() => { try { const p = new URLSearchParams(location.search), r = +p.get('region');
-  return r ? { region:r, biome:p.get('biome') || 'tempere', river:p.get('river') || 'auto', seed:+p.get('seed') || r * 7919 + 101 } : null; } catch (e) { return null; } })();
+  return r ? { region:r, biome:p.get('biome') || 'tempere', river:p.get('river') || 'auto', seed:+p.get('seed') || r * 7919 + 101, essai:p.has('essai') } : null; } catch (e) { return null; } })();
 // éditeur de routes (editeur-routes.html déclare EDIT_ROUTES) : un monde plat et vert, sans carte ni végétation, avec son propre plan
 const MONDE_PLAT = typeof EDIT_ROUTES !== 'undefined';
-const KEY = MONDE_PLAT ? 'editeurRoutes.v1' : PAGE === 'carte' ? (typeof MAPTEST !== 'undefined' ? 'mapTest.v1' : 'editeurCarte.v1') : GAME ? 'dominiumRegionMap.' + GAME.region : 'planVillageZonage.v11';
-/* RÉGÉNÉRATION GÉNÉRALE UNIQUE (demandée le 07/10) : toutes les régions générées (plans sauvegardés, noms de village, arrivants, drapeaux) sont effacées une seule fois ;
-   chaque région sera regénérée d'après sa forme avec les paramètres actuels (échelle du terrain, routes, végétation). À supprimer ensuite. */
-try { if (PAGE === 'region' && !localStorage.getItem('regen.tout.v1')) { for (const k of Object.keys(localStorage)) if (k.startsWith('dominiumRegionMap.')) localStorage.removeItem(k); localStorage.setItem('regen.tout.v1', '1'); } } catch (e) {}
+const KEY = MONDE_PLAT ? 'editeurRoutes.v12' : GAME && GAME.essai ? 'biomeEssai.' + GAME.biome : PAGE === 'carte' ? (typeof MAPTEST !== 'undefined' ? 'mapTest.v1' : 'editeurCarte.v1') : GAME ? 'dominiumRegionMap.' + GAME.region : 'planVillageZonage.v11';
+if (GAME && GAME.essai) { try { localStorage.removeItem(KEY); } catch (e) {} document.head.insertAdjacentHTML('beforeend', '<style>body > :not(.canvas-wrap){display:none!important}</style>'); }   // page Dev « Biomes générés » : région regénérée à chaque ouverture, jamais gardée
+/* RÉGÉNÉRATION GÉNÉRALE UNIQUE (demandée le 07/10, rejouée le 12/10 : clé regen.tout.v5) : toutes les cartes générées sont effacées une seule fois — régions du jeu (plans, noms de village, arrivants, drapeaux)
+   ET cartes d'essai des pages Dev (map-test : mapTest.v1, éditeur de carte : editeurCarte.v1), qui gardaient d'anciens tracés. Elles sont regénérées avec le générateur actuel. Pour la rejouer : changer le numéro de clé. */
+const REGEN_CLE = 'regen.tout.v8';   // (13/10 : les 18 biomes validés — sol à zones de couleur, textures rendues — régions regénérées)
+/* Régénération de certaines régions seulement (« regen la 80 ») : leur carte enregistrée est effacée une fois ; pour une autre région, ajouter son numéro ET changer la clé. */
+const REGEN_REGIONS = { cle:'regen.regions.v2', ids:[80, 47] };
+try { if (PAGE === 'region' && !localStorage.getItem(REGEN_REGIONS.cle)) { for (const id of REGEN_REGIONS.ids) localStorage.removeItem('dominiumRegionMap.' + id); localStorage.setItem(REGEN_REGIONS.cle, '1'); } } catch (e) {}
+try { if ((PAGE === 'region' || PAGE === 'carte') && !localStorage.getItem(REGEN_CLE)) { for (const k of Object.keys(localStorage)) if (/^(dominiumRegionMap.|mapTest.v1|editeurCarte.v1)/.test(k)) localStorage.removeItem(k); localStorage.setItem(REGEN_CLE, '1'); } } catch (e) {}

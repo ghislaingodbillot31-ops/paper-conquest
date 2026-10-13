@@ -9,22 +9,33 @@ const DEV_FILTERS = [
   { id:'numbers', label:'Numéro' },
   { id:'fishing', label:'Zones de pêche' },
   { id:'seas', label:'Noms des mers' },
+  { id:'marine', label:'Faune marine' },
   { id:'animals', label:'Zones animales' },
+  { id:'colors', label:'Couleurs des régions' },
 ];
-const DEV_STORAGE_KEY = 'dominiumDevFilters';
-const devState = { land:true, towns:true, numbers:true, fishing:true, seas:true, animals:false };
+const DEV_STORAGE_KEY = 'dominiumDevFilters.v2';   // (v2 : nouveaux réglages par défaut du 12/10 — les anciens choix enregistrés sont abandonnés)
+// carte globale par défaut : seulement les terres et les noms des mers (ni villes, ni routes, ni numéros, ni zones)
+const devState = { land:false, towns:false, numbers:false, fishing:false, seas:true, marine:true, animals:false, colors:false };
 try{ Object.assign(devState, JSON.parse(localStorage.getItem(DEV_STORAGE_KEY)) || {}); }catch(e){}
 
 function setLayerVisible(layerId, visible){
   if(map.getLayer(layerId)) map.setLayoutProperty(layerId, 'visibility', visible ? 'visible' : 'none');
 }
-function applyDevFilters(){
+// tout ce qui représente une ville : villages, comptoirs et ports, capitales (créés par plusieurs fichiers, parfois après coup)
+const COUCHES_VILLES = ['villages', 'villages-halo', 'npc-ports', 'npc-ports-dir', 'npc-ports-text', 'npc-ports-halo', 'npc-ports-hl', 'npc-capitals', 'npc-capitals-halo', 'npc-capitals-hl', 'capitals-owned', 'capitals-owned-halo'];
+function applyLayerVisibility(){
   setLayerVisible('paths', devState.land);
-  setLayerVisible('villages', devState.towns);
-  setLayerVisible('villages-halo', devState.towns);
+  COUCHES_VILLES.forEach(id => setLayerVisible(id, devState.towns));
+  setLayerVisible('faune-marine', devState.marine);
+}
+map.on('idle', applyLayerVisibility);   // (les couches créées plus tard prennent aussi le réglage ; sans effet si rien ne change)
+function applyDevFilters(){
+  applyLayerVisibility();
   setLayerVisible('regions-label', devState.numbers);
   ['fishing-fill', 'fishing-line', 'fishing-label'].forEach(id => setLayerVisible(id, devState.fishing));
   setLayerVisible('sea-names', devState.seas);
+  // terre unie (couleur du crâne de la carte au trésor) ; en dev, couleur du climat de chaque région
+  if(map.getLayer('regions')) { const sel = ['boolean', ['feature-state', 'selected'], false]; map.setPaintProperty('regions', 'fill-color', devState.colors ? ['case', sel, ['get', 'fillColorSel'], ['get', 'fillColor']] : ['case', sel, ['case', ['get', 'isNpc'], eclaircir(NPC_COLOR, 0.28), eclaircir(COULEUR.herbe, 0.28)], ['case', ['get', 'isNpc'], NPC_COLOR, COULEUR.herbe]]); }
   if(typeof updateAnimalLayers === 'function') updateAnimalLayers();
 }
 

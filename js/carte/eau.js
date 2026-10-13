@@ -26,9 +26,8 @@ function riverHW(rv) {
     // variation de taille accentuée : lente respiration ±40 % (bassins et étranglements),
     // virages jusqu'à +100 %
     // (plus de respiration ni d'élargissement dans les virages : c'est ce qui ondulait les berges)
-    hw[i] = base * 1.15; // berges lisses (demande du 08/10) : largeur régulière, qui grossit seulement et doucement vers l'aval
+    hw[i] = base * 1.15;   // largeur constante (demande du 12/10) : tous les cours d'eau ont w0 = w1
     // en aval d'une confluence, la rivière principale a reçu l'eau de l'affluent : +25 %
-    for (const c of rv.confl || []) if (i > c) { const x = Math.min(1, (i - c) / 30); hw[i] *= 1 + .25 * x * x * (3 - 2 * x); }
   }
   // embouchure d'un affluent : il s'évase en trompette sur ses 100 derniers mètres (jusqu'à
   // ×2,4) : les coins de la jonction s'arrondissent et la pointe de terre s'émousse
@@ -89,7 +88,7 @@ const WATER_FOAM = '#2b8db6'; // liseré clair le long des berges
 // dégradé léger au bord (demande du 05/10) : l'eau s'éclaircit vers la berge, en bandes étroites.
 // mixWater(couleur, a) : la teinte de l'eau tirée de a (0 à 1) vers un bleu franc plus clair (pas vers le blanc).
 const WATER_BANDS = 3, WATER_SHALLOW = '#38acd3';
-const mixWater = (c, a) => { const h = x => (x.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']).slice(0, 3).map(v => parseInt(v, 16)), p = h(c), q = h(WATER_SHALLOW); return 'rgb(' + p.map((v, i) => Math.round(v + (q[i] - v) * a)).join(',') + ')'; };
+const mixWater = (c, a) => { const h = x => (x.match(/[0-9a-f]{2}/gi) || ['80', '80', '80']).slice(0, 3).map(v => parseInt(v, 16)), p = h(c), q = h(biomeLook().shallow || WATER_SHALLOW); return 'rgb(' + p.map((v, i) => Math.round(v + (q[i] - v) * a)).join(',') + ')'; };
 // contour d'un lac pour le dessin : ses 40 points lissés (Chaikin fermé, 3 passes), sans coin
 const lakeShapeCache = new WeakMap();
 function lakeShape(lk) {
@@ -243,7 +242,8 @@ function makeRiverPath(a, b, o) {
   const L = segLen(a, b), n = Math.max(2, Math.round(L / 4)), u = [(b[0]-a[0]) / L, (b[1]-a[1]) / L], nv = [-u[1], u[0]], pts = [];
   for (let i = 0; i <= n; i++) {
     const t = i / n, env = Math.sin(Math.PI * t) ** .6;
-    const off = env * (o.amp * Math.sin(2 * Math.PI * o.cycles * t + o.phase) + o.amp * (o.harm === undefined ? .3 : o.harm) * Math.sin(2 * Math.PI * o.cycles * 3.1 * t + o.phase * 2));
+    const tt = t + .07 * Math.sin(2 * Math.PI * 1.3 * t + o.phase * 3), mod = 1 + .4 * Math.sin(2 * Math.PI * .85 * t + o.phase * 5);   // méandres irrégulières : boucles inégales, tantôt amples tantôt serrées
+    const off = env * mod * (o.amp * Math.sin(2 * Math.PI * o.cycles * tt + o.phase) + o.amp * (o.harm === undefined ? .3 : o.harm) * Math.sin(2 * Math.PI * o.cycles * 3.1 * t + o.phase * 2));
     pts.push([round2(a[0] + (b[0]-a[0]) * t + nv[0] * off), round2(a[1] + (b[1]-a[1]) * t + nv[1] * off)]);
   }
   return { pts, w0:o.w0, w1:o.w1 };
@@ -331,6 +331,7 @@ function plantesDuLac(lk, idx) {
   return L;
 }
 function drawPlantesEau() {
+  return;   // nénuphars et roseaux supprimés (11/10)
   if (!S.lakes.length || view.s < .6) return;
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
   S.lakes.forEach((lk, idx) => {
@@ -359,4 +360,71 @@ function drawPlantesEau() {
       }
     }
   });
+}
+
+/* ---------- blocs de glace (désert polaire) ----------
+   Comme si la banquise s'était rompue : des plaques de glace anguleuses flottent sur la mer, les lacs et les rivières, par groupes de 3 à 9 plaques de tailles inégales, avec toujours un espace d'eau entre deux plaques
+   (BLOC_ECART) et au large des berges. Même graine => mêmes blocs. Les animaux ne se posent jamais dessus : fauneEau() les compte comme de l'eau. */
+let blocsMem = { cle:null, list:[], grille:new Map() };
+function blocsGlace() {
+  if (!S || S.biome !== 'polaire' || typeof fauneEauCalc !== 'function') return [];
+  const cle = regle('glace_ecart') + '|' + S.landSeed + '|' + S.rivers.length + '|' + S.lakes.length + '|' + (Z.water ? Z.water.river.length + ',' + Z.water.lake.length : 0) + '|' + (typeof FORME_ID !== 'undefined' ? FORME_ID : '');
+  if (blocsMem.cle === cle) return blocsMem.list;
+  const rnd = seeded(S.landSeed * 17 + 3), list = [], grille = new Map(), G = 16, BLOC_ECART = regle('glace_ecart');   // (règle glace_ecart : eau libre minimum entre deux plaques)
+  const eau = (x, y) => inTerrain([x, y]) && (!surTerre([x, y]) || fauneEauCalc(x, y, -.4));
+  const libre = (x, y, r) => { for (let k = 0; k < 8; k++) { const a = k * .785; if (!eau(x + Math.cos(a) * (r + 2.5), y + Math.sin(a) * (r + 2.5))) return false; } return eau(x, y); };
+  const voisin = (x, y, r) => { const gx = Math.floor(x / G), gy = Math.floor(y / G); for (let i = gx - 2; i <= gx + 2; i++) for (let j = gy - 2; j <= gy + 2; j++) for (const o of grille.get(i + ',' + j) || []) if ((x - o.x) ** 2 + (y - o.y) ** 2 < (r + o.r + BLOC_ECART) ** 2) return true; return false; };
+  const pose = (x, y, r) => {
+    const n = 5 + Math.floor(rnd() * 3), a0 = rnd() * 6.283, pts = [];
+    for (let i = 0; i < n; i++) { const a = a0 + i / n * 6.283 + (rnd() - .5) * .5, q = r * (.7 + rnd() * .3); pts.push([round2(x + Math.cos(a) * q), round2(y + Math.sin(a) * q * .85)]); }
+    const f = { x, y, r, pts, v:rnd() }; list.push(f); const k = Math.floor(x / G) + ',' + Math.floor(y / G); (grille.get(k) || grille.set(k, []).get(k)).push(f);
+  };
+  const groupes = Math.round(TW * TH / 100000);                // ~ un groupe pour 300 × 300 m
+  for (let g = 0; g < groupes; g++) {
+    const cx = rnd() * TW, cy = rnd() * TH; if (!eau(cx, cy)) continue;
+    const nb = 10 + Math.floor(rnd() * 19), rayon = 40 + rnd() * 50;
+    for (let m = 0, ok = 0; m < nb * 25 && ok < nb; m++) {
+      const a = rnd() * 6.283, d = rayon * Math.sqrt(rnd()), x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d, r = rnd() < .25 ? 13 + rnd() * 14 : 5 + rnd() * 8;
+      if (libre(x, y, r) && !voisin(x, y, r)) { pose(round2(x), round2(y), round2(r)); ok++; }
+    }
+  }
+  blocsMem = { cle, list, grille };
+  return list;
+}
+// true si le point (rayon rad) touche une plaque de glace
+function surBlocGlace(x, y, rad = 0) {
+  if (!S || S.biome !== 'polaire' || blocsMem.cle === null) return false;
+  const gx = Math.floor(x / 16), gy = Math.floor(y / 16);
+  for (let i = gx - 1; i <= gx + 1; i++) for (let j = gy - 1; j <= gy + 1; j++) for (const o of blocsMem.grille.get(i + ',' + j) || []) if ((x - o.x) ** 2 + (y - o.y) ** 2 < (o.r + rad + .4) ** 2) return true;
+  return false;
+}
+function drawBlocsGlace() {
+  const L = blocsGlace(); if (!L.length) return;
+  const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
+  for (const f of L) {
+    if (f.x + f.r < x0 || f.x - f.r > x1 || f.y + f.r < y0 || f.y - f.r > y1) continue;
+    const P = f.pts.map(q => toS(q[0], q[1])), lw = Math.max(.7, Math.min(1.6, s * .3));
+    const trace = (dx, dy, k) => { ctx.beginPath(); P.forEach(([X, Y], i) => { const cx = toS(f.x, f.y); const px = cx[0] + (X - cx[0]) * k + dx, py = cx[1] + (Y - cx[1]) * k + dy; i ? ctx.lineTo(px, py) : ctx.moveTo(px, py); }); ctx.closePath(); };
+    trace(s * .5, s * .7, 1); ctx.fillStyle = 'rgba(24,50,78,.30)'; ctx.fill();            // ombre sur l'eau
+    trace(0, 0, 1); ctx.fillStyle = '#e4eff8'; ctx.fill(); ctx.strokeStyle = '#8fb4d0'; ctx.lineWidth = lw; ctx.lineJoin = 'round'; ctx.stroke();
+    trace(-s * .25, -s * .3, .62); ctx.fillStyle = f.v < .5 ? '#f7fbfe' : '#f0f7fc'; ctx.fill();   // face éclairée (nord-ouest)
+  }
+}
+
+/* Distance d'un point au plan d'eau sans pont le plus proche : lacs (0 si dedans) et rivage de la mer (le bord du terrain n'est pas un rivage). Retourne { d, quoi:'lac'|'mer' }. Sert aux règles route_lac (rendu.js, monde-plat.js). */
+function distLacMer(q) {
+  let d = Infinity, quoi = null;
+  for (const lk of S.lakes) { const P = lk.pts; if (inPoly(q, P)) return { d:0, quoi:'lac' }; for (let i = 0; i < P.length; i++) { const t = ptSeg(q, P[i], P[(i + 1) % P.length]).d; if (t < d) { d = t; quoi = 'lac'; } } }
+  if (typeof FORME !== 'undefined' && FORME && FORME.terres) for (const ring of FORME.terres) for (let i = 0; i < ring.length; i++) {
+    const a = ring[i], c = ring[(i + 1) % ring.length], bord = v => v[0] < 2 || v[1] < 2 || v[0] > TW - 2 || v[1] > TH - 2;
+    if (bord(a) && bord(c)) continue;                                                           // (le bord du terrain n'est pas un rivage)
+    if (Math.min(a[0], c[0]) - d > q[0] || Math.max(a[0], c[0]) + d < q[0] || Math.min(a[1], c[1]) - d > q[1] || Math.max(a[1], c[1]) + d < q[1]) continue;
+    const t = ptSeg(q, a, c).d; if (t < d) { d = t; quoi = 'mer'; } }
+  return { d, quoi };
+}
+
+// ombre très légère de la terre sur l'eau : la terre (path, opaque) est dessinée avec son ombre portée dans une zone d'eau déjà découpée (clip) : seule l'ombre reste visible
+function ombreRive(terre) {
+  ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.16)'; ctx.shadowBlur = Math.max(3, Math.min(view.s * 2.5, 12)); ctx.shadowOffsetX = ctx.shadowOffsetY = Math.max(1, Math.min(view.s * .6, 3));
+  ctx.fillStyle = '#000'; ctx.fill(terre, 'evenodd'); ctx.restore();
 }

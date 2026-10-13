@@ -63,9 +63,7 @@ function drawWater() {
   };
   // grève de sable le long des berges (image de référence) : bande claire, liseré plus foncé à l'extérieur
   const sable = Math.max(2, 2.4 * s);
-  ctx.fillStyle = '#d6b06a'; ctx.fill(discs(edge + sable + 1.4)); ctx.fillStyle = '#f2dd9e'; ctx.fill(discs(edge + sable));
-  for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.lineJoin = 'round'; ctx.strokeStyle = '#d6b06a'; ctx.lineWidth = 2 * (edge + sable + 1.4); ctx.stroke(); ctx.strokeStyle = '#f2dd9e'; ctx.lineWidth = 2 * (edge + sable); ctx.stroke(); }
-  ctx.fillStyle = Col['water-edge']; ctx.fill(discs(edge));
+  ctx.fillStyle = grevSaison(biomeLook().edge); ctx.fill(discs(edge));
   ctx.lineWidth = edge * 2;
   for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.stroke(); }
   /* Eau en dégradé : claire au bord (hauts-fonds), de plus en plus foncée vers le milieu
@@ -75,24 +73,22 @@ function drawWater() {
   // liseré presque blanc juste à l'intérieur de la berge (écume, comme la carte de référence),
   // puis le dégradé qui part un peu en retrait
   const foam = Math.max(1.2, Math.min(3, s * .9));
-  ctx.fillStyle = WATER_FOAM; ctx.fill(discs(0));
+  ctx.fillStyle = grevSaison(biomeLook().foam); ctx.fill(discs(0));
   // eau d'une seule teinte (dégradé retiré à la demande de l'utilisateur, 29/09)
   // rivières et lacs : exactement l'eau de la mer (mêmes bandes, mêmes teintes, voir seaBands, forme.js) : un fleuve se fond dans la mer sans raccord
   const bw = Math.max(2, Math.min(5 * s, 14));                                        // largeur d'une bande de dégradé (px)
-  for (let i = 1; i <= WATER_BANDS + 1; i++) { ctx.fillStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.fill(discs(-foam - bw * (i - 1))); } // du plus large (le plus clair) au plus étroit
-  ctx.fillStyle = water; ctx.fill(discs(-foam - bw * (WATER_BANDS + 1)));
+  ctx.fillStyle = water; ctx.fill(discs(-foam));
   for (const lk of S.lakes) { shape(lakeShape(lk), true); ctx.fill(); }
   if (s >= .4) {                                                                      // relief de l'eau (même système que le sol) : fonds et reflets, découpés dans l'eau
-    ctx.save(); ctx.clip(discs(-foam - bw * (WATER_BANDS + 1))); drawEauRelief(s); ctx.restore();
-    for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); drawEauRelief(s); ctx.restore(); }
+    ctx.save(); ctx.clip(discs(-foam)); drawEauRelief(s); const hors = new Path2D(); hors.rect(-1e5, -1e5, 2e5, 2e5); hors.addPath(discs(0)); ombreRive(hors); ctx.restore();
+    for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); drawEauRelief(s); const hors = new Path2D(); hors.rect(-1e5, -1e5, 2e5, 2e5); lakeShape(lk).forEach((p, i) => { const [X, Y] = toS(p[0], p[1]); i ? hors.lineTo(X, Y) : hors.moveTo(X, Y); }); hors.closePath(); ombreRive(hors); ctx.restore(); }
   }
   for (const lk of S.lakes) { ctx.save(); shape(lakeShape(lk), true); ctx.clip(); ctx.lineJoin = 'round';
-    for (let i = WATER_BANDS + 1; i >= 1; i--) { ctx.strokeStyle = mixWater(water, .09 * (WATER_BANDS + 2 - i)); ctx.lineWidth = 2 * (foam + bw * i); ctx.stroke(); }
     ctx.restore(); }
   for (const lk of S.lakes) { // lacs : le même liseré, tracé à l'intérieur du bord, puis la berge sombre
     ctx.save(); shape(lakeShape(lk), true); ctx.clip();
-    ctx.strokeStyle = WATER_FOAM; ctx.lineWidth = foam * 2 + edge * 2; ctx.stroke(); ctx.restore();
-    shape(lakeShape(lk), true); ctx.strokeStyle = Col['water-edge']; ctx.lineWidth = edge * 2; ctx.stroke();
+    ctx.strokeStyle = grevSaison(biomeLook().foam); ctx.lineWidth = foam * 2 + edge * 2; ctx.stroke(); ctx.restore();
+    shape(lakeShape(lk), true); ctx.strokeStyle = grevSaison(biomeLook().edge); ctx.lineWidth = edge * 2; ctx.stroke();
   }
   // (le fil du courant en pointillés est supprimé : la mer n'en a pas)
   if (false) {
@@ -111,7 +107,7 @@ function drawWater() {
    berge. Ces deux points sont sur la route : le pont les relie en ligne droite, il dépasse donc bien des deux berges
    et la route s'arrête à son entrée et reprend à sa sortie (elle n'est pas dessinée sous le tablier : voir
    roadPieces dans routes.js). Calculés une fois, refaits seulement si routes ou rivières changent. */
-const PONT_BORD = 4.5, PONT_PAS = 1.5;
+const PONT_BORD = 8, PONT_PAS = 1.5;
 /* Jonctions de rivières : là où deux cours se rejoignent, se croisent ou se touchent, on pose un disque de la largeur du
    plus large (x 1,15) : le coin de terre aigu entre les deux cours disparaît, la jonction est arrondie. Calculé une fois. */
 let junctionCache = { key:null, list:[] };
@@ -170,7 +166,7 @@ function bridges() {
   });
   const lacs = (S.lakes || []).map(lk => { const poly = lakeShape(lk); return { poly, bb:bbox(poly) }; });
   for (const r of S.roads) {
-    const RP = smoothPts(r), P = resample(RP, PONT_PAS), n = P.length, rbb = bbox(RP), w = roadType(r).surf / 2 + 1.2;
+    const RP = smoothPts(r), P = resample(RP, PONT_PAS), n = P.length, rbb = bbox(RP), w = roadType(r).surf / 2 + .8;   // (tablier = chaussée : même largeur que la route qui y entre ; les parapets font .8 m)
     if (n < 6) continue;
     // chaque rivière et chaque lac dont l'emprise touche la route
     const near = rivs.filter(v => !(rbb[0] > v.bb[2] + v.hmax + w || rbb[2] < v.bb[0] - v.hmax - w || rbb[1] > v.bb[3] + v.hmax + w || rbb[3] < v.bb[1] - v.hmax - w));
@@ -198,6 +194,43 @@ function bridges() {
   }
   bridgeCache = { key, list, v:sceneV, S };
   return list;
+}
+/* Conflits entre ponts : deux ponts qui se croisent ou se touchent (bords à moins de pont_distance m l'un de l'autre), ou une route qui passe SUR le tablier d'un autre pont (hors des 8 m d'entrée et de sortie, où les routes se raccordent).
+   Retourne la liste des conflits { a, b } (a, b : numéros de route ; b = 'route' + numéro quand c'est une route sur un tablier). */
+function pontsConflits() {
+  const L = bridges(), marge = regle('pont_distance'), out = [];
+  const segDist = (p, q, r, s) => segCross(p, q, r, s) ? 0 : Math.min(ptSeg(p, r, s).d, ptSeg(q, r, s).d, ptSeg(r, p, q).d, ptSeg(s, p, q).d);
+  for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) {
+    const A = L[i], B = L[j];
+    if (segDist(A.a, A.b, B.a, B.b) < A.w + B.w + marge) out.push({ a:A.road, b:B.road, c:A.c });
+  }
+  for (const A of L) {
+    const L2 = segLen(A.a, A.b), u = [(A.b[0] - A.a[0]) / (L2 || 1), (A.b[1] - A.a[1]) / (L2 || 1)], a = [A.a[0] + u[0] * 8, A.a[1] + u[1] * 8], b = [A.b[0] - u[0] * 8, A.b[1] - u[1] * 8];
+    for (const r of S.roads) { if (r.id === A.road) continue; const P = smoothPts(r); for (let k = 0; k < P.length - 1; k++) if (segDist(a, b, P[k], P[k + 1]) < A.w * .5) { out.push({ a:A.road, b:'route ' + r.id, c:A.c }); k = P.length; } }
+  }
+  return out;
+}
+/* Distance de sécurité route ↔ plan d'eau (règles route_rive pour les rivières et fleuves, route_lac pour les lacs et la mer — 100 m par défaut) :
+   - rivière : une route qui ne la traverse pas reste à route_rive m de sa berge ; une route qui la traverse s'en approche forcément, la zone de 130 m autour de son pont est exemptée ;
+   - lac et mer : jamais à moins de route_lac m (ni dedans : aucun pont n'y est possible), sauf aux deux bouts d'une route posés au bord du terrain.
+   Retourne les points fautifs { road, p, d, eau:'rivière'|'lac'|'mer' } (un seul par route et par sorte d'eau : le plus proche). */
+/* Une même route ne traverse jamais deux fois la même rivière : retourne { road, p } pour chaque route dont deux ponts franchissent la même rivière (p : centre du second pont). */
+function routesDoubleTraversee() {
+  const vu = new Map(), out = [];
+  for (const b of bridges()) { const w = riveDe(b.c); if (!w || !w.rv) continue; const k = b.road + ':' + S.rivers.indexOf(w.rv);
+    if (vu.has(k)) out.push({ road:b.road, p:b.c }); else vu.set(k, 1); }
+  return out;
+}
+function routesTropPresDeLEau(joueur = false) {                                    // joueur : distances des routes tracées par le joueur (route_rive_joueur, route_lac_joueur), sinon celles de la génération
+  const D = regle(joueur ? 'route_rive_joueur' : 'route_rive'), DL = regle(joueur ? 'route_lac_joueur' : 'route_lac'), L = bridges(), out = [], vus = new Set();
+  for (const r of S.roads) { const P = resample(smoothPts(r), 6), ponts = L.filter(b => b.road === r.id);
+    for (const q of P) {
+      const w = riveDe(q);
+      if (w && w.d - w.hw < D && !ponts.some(b => segLen(b.c, q) < 130 + b.half) && !vus.has(r.id + 'r')) { vus.add(r.id + 'r'); out.push({ road:r.id, p:q, d:Math.round(w.d - w.hw), eau:'rivière' }); }
+      const e = distLacMer(q);
+      if (e.d < DL && !vus.has(r.id + e.quoi)) { vus.add(r.id + e.quoi); out.push({ road:r.id, p:q, d:Math.round(e.d), eau:e.quoi }); }
+    } }
+  return out;
 }
 const BRIDGE = { deck:'#bdb6a8', course:'rgba(120,112,98,.45)', wall:'#a39c8e', joint:'rgba(63,69,69,.55)', edge:'#3f4545', shadow:'rgba(28,40,44,.32)' };
 function drawBridges() {

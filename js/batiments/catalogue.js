@@ -4,10 +4,8 @@
 const PRESETS = [
   { id:'camp_colon', name:'Camp de colon', f:3, d:3, cap:5, turn:true, unique:true, ownShadow:true,
     use:'Point de départ : il faut le poser avant tout autre bâtiment, et il installe 5 villageois' },
-  { id:'maison',      name:'Maison simple',            f:2, d:2, cap:2, turn:true, ownShadow:true,
-    use:'Logement : 2 habitants au plus' },
-  { id:'maison_cour', name:'Maison avec arrière-cour', f:2, d:3, cap:4, turn:false, ownShadow:true,
-    use:"Logement d'une famille (4 habitants au plus), avec une arrière-cour" },
+  { id:'maison',      name:'Maison',                   f:2, d:3, cap:4, turn:true, ownShadow:true,
+    use:"Logement d'une famille : 4 habitants au plus (remplace l'ancienne maison avec arrière-cour)" },
   { id:'manoir',      name:'Manoir',                   f:3, d:3, turn:true, unique:true,
     use:"Siège du pouvoir : permet la taxation et l'administration" },
   { id:'mairie',      name:'Mairie',                   f:3, d:3, turn:true, unique:true,
@@ -18,8 +16,8 @@ const PRESETS = [
     use:"12 emplacements (2 × 6) : les ouvriers y installent après le travail un étal permanent de produits alimentaires" },
   { id:'taverne',     name:'Taverne',                  f:2, d:2, turn:true,
     use:'Comble le besoin de divertissement ; stocke la bière' },
-  { id:'eglise',      name:'Église en bois',           f:3, d:4, turn:false,
-    use:'Comble le besoin spirituel ; fournit un cimetière' },
+  { id:'eglise',      name:'Lieu de culte',             f:3, d:4, turn:false,
+    use:'Comble le besoin spirituel ; fournit un cimetière. Fait aussi le travail d’écriture : copie et enlumine les manuscrits (ancien scriptorium, fusionné le 13/10 — la recette « manuscrit » de data/production y sera rattachée)' },
   { id:'cimetiere',   name:'Cimetière',                f:2, d:2, turn:true,
     use:'Cimetière supplémentaire : là où reposent les morts' },
   { id:'grande_maison', name:'Maison avec cour et jardin', f:3, d:3, cap:6, turn:false,
@@ -45,7 +43,7 @@ const PRESETS = [
     use:'Récolte les pierres de sa zone de travail (3 pierres au moins) et les verse au stock du village' },
   { id:'fosse_miniere', cat:'res', name:'Fosse minière',     f:3, d:3, turn:false, sur:'gisement', job:{ type:'site', on:'gisement', reach:0, work:30, product:'minerai' },
     use:"Se pose sur une zone de pépites (gisement) : le mineur descend dans la mine, remonte 4 kg de minerai toutes les 30 secondes (1 unité de pierre, silex, sel, alun ou ambre ; sur une carrière, la pierre est illimitée) et le range dans la cabane (stockage provisoire) ; il faut une pioche" },
-  { id:'camp_mineur', cat:'res', name:'Camp de mineur', f:2, d:2, turn:true, job:{ type:'collect', accepts:'nonfood', from:['fosse_miniere'], reach:600, cap:2000, product:'minerais' },
+  { id:'camp_mineur', cat:'res', name:'Camp de mineur', f:3, d:2, turn:true, job:{ type:'collect', accepts:'nonfood', from:['fosse_miniere'], reach:600, cap:2000, product:'minerais' },
     use:'Décharge les fosses minières (à moins de 600 m) et stocke toutes leurs ressources : minerais, silex, sel, alun, ambre' },
   // (ownShadow : le dessin fait lui-même ses ombres — pas d'ombre rectangulaire sous la cour)
   { id:'scierie', cat:'res', name:'Scierie', f:3, d:4, turn:true, ownShadow:true,
@@ -78,7 +76,7 @@ function needIssue(b, h) {
   return null;
 }
 const FOOD_LIST = ['fromage frais', 'fromage à pâte molle', 'fromage de garde', 'lait', 'baies', 'légumes', 'œufs', 'pommes', 'pain', 'poisson', 'viande'];
-/* Les extensions de maison et de bâtiment n'existent plus : chaque métier est un bâtiment à part (menuiserie, forge, archerie, armurerie, cordonnerie, couture, brasserie, fonderie).
+/* Les extensions de maison et de bâtiment n'existent plus : chaque métier est un bâtiment à part (menuiserie, couture, brasserie, fonderie ; décision du 13/10 : la teinturerie-foulerie est fusionnée dans la tannerie ; décision du 13/10 : l'atelier de tissage est fusionné dans la corderie ; décision du 13/10 : la tonnellerie est fusionnée dans la menuiserie et le bas fourneau dans la fonderie, agrandie à 3 × 3 ; décision du 13/10 : la cordonnerie est fusionnée dans l'atelier de tailleur (couture) ; décision du 13/10 : la forge est fusionnée dans la fonderie, l'archerie dans la menuiserie, l'armurerie répartie entre la menuiserie — boucliers de bois — et la fonderie — armes, armures et boucliers de métal).
    EXT ne reste que pour le DÉCOR de l'arrière-cour dessinée (dessins.js : yardLT) ; les fermes ont leurs propres extensions (FERME_EXT). */
 const EXT = {
   potager:    { name:'Potager', grp:'Production' },
@@ -90,7 +88,7 @@ const EXT = {
    Cultures : jardin et verger suivent les saisons (cultures.js ; outil : houe, serpe). Élevage : l'enclos ne produit que s'il contient des animaux, capturés sur la carte par les fermiers
    (option Capture de la fiche) : chaque animal donne une unité toutes les `every` secondes ; cap = animaux au plus ; especes = espèces sauvages capturables (faune.js).
    Les céréales ne sont pas une extension : la ferme cultive des CHAMPS (champs.js). */
-const FERME_EXT_MAX = 1;                       // une seule extension par ferme, qui occupe tout l'espace libre de la parcelle
+const FERME_EXT_MAX = 3;                       // jusqu'à trois extensions par ferme, qui se partagent l'espace libre de la parcelle (en colonnes égales)
 const FERME_EXT = {
   jardin:     { nom:'Jardin potager',   cult:'legume', outil:'houe',  cout:{ bois:15 },            use:'légumes de saison (choisir la culture)' },
   verger:     { nom:'Verger',           cult:'fruit',  outil:'serpe', cout:{ bois:20, planches:5 }, use:'fruits de saison (choisir l’arbre)' },
@@ -177,20 +175,12 @@ PRESETS.push(
     use:'Commerce du bétail ; son parc sert de pâturage aux bergeries et ses bœufs accélèrent les ouvriers à moins de 200 m' },
 );
 
-// Ateliers (chacun un bâtiment à part) : fabrication à la commande (outils.js) pour la menuiserie, la forge, l'archerie et l'armurerie ; les autres transforment une matière prise chez un producteur
+// Ateliers (chacun un bâtiment à part) : fabrication à la commande (outils.js) pour la menuiserie (qui fait aussi l'archerie et les boucliers de bois) et la fonderie (qui fait aussi la forge et l'armurerie de métal) ; les autres transforment une matière prise chez un producteur
 PRESETS.push(
   { id:'menuiserie', cat:'ind', name:'Atelier de menuiserie', f:3, d:3, turn:true, job:{ type:'craft' },
-    use:'Grand atelier de menuisier (3 × 3 cases, gros stock de matières) : corde, outils et armes primitifs (bois, silex), gourdin, boucliers de bois, flèches de bois, charrettes et chariots' },
-  { id:'forge',      cat:'ind', name:'Forge',                 f:2, d:2, turn:true, job:{ type:'craft' },
-    use:'Forgeron : outils et armes en cuivre, bronze, fer et acier (métaux de la fonderie)' },
-  { id:'archerie',   cat:'ind', name:'Archerie',              f:2, d:2, turn:true, job:{ type:'craft' },
-    use:'Fléchier : arcs, arbalètes et flèches de tous les matériaux' },
-  { id:'armurerie',  cat:'ind', name:'Armurerie',             f:2, d:2, turn:true, job:{ type:'craft' },
-    use:'Armurier : boucliers et armures' },
-  { id:'cordonnerie', cat:'ind', name:'Atelier de cordonnier', f:2, d:2, turn:true, job:{ type:'craft' },
-    use:'Fabrique des chaussures avec des peaux (file de production)' },
+    use:'Grand atelier de menuisier (3 × 3 cases, gros stock de matières) : corde, outils et armes primitifs (bois, silex), gourdin, boucliers de bois, charrettes et chariots. Intègre l’ancienne tonnellerie (tonneaux, cuves), l’ancienne archerie et les boucliers de bois : arcs, arbalètes, flèches et boucliers de bois' },
   { id:'couture',    cat:'ind', name:'Atelier de tailleur',   f:2, d:2, turn:true, job:{ type:'craft' },
-    use:'Fabrique des vêtements avec de la laine (file de production)' },
+    use:'Fabrique des vêtements avec de la laine et des chaussures avec des peaux (intègre l’ancienne cordonnerie ; file de production)' },
   { id:'brasserie',  cat:'ind', name:'Brasserie',             f:2, d:3, turn:true, job:{ type:'craft' },
     use:'Brasse de la bière avec du grain (file de production ; la taverne en a besoin)' },
 );
@@ -203,8 +193,8 @@ PRESETS.push(
 
 // Métallurgie (outils.js : FUSIONS) : minerai → métal, cuivre + étain → bronze ; fer → acier avec le haut fourneau (amélioration)
 PRESETS.push(
-  { id:'fonderie', cat:'ind', name:'Fonderie', f:2, d:3, turn:true, job:{ type:'craft' },
-    use:'Fait fondre les minerais en métaux (fer, cuivre, étain, plomb, argent, or), allie cuivre et étain en bronze ; le haut fourneau (amélioration) donne l’acier' },
+  { id:'fonderie', cat:'ind', name:'Fonderie', f:3, d:3, turn:true, job:{ type:'craft' },
+    use:'Fait fondre les minerais en métaux (fer, cuivre, étain, plomb, argent, or), allie cuivre et étain en bronze ; le haut fourneau (amélioration) donne l’acier. Intègre l’ancienne forge et l’armurerie de métal : forge à la commande les outils, les armes, les armures et les boucliers en métal. Intègre aussi le bas fourneau (premier travail du minerai) et l’ancien atelier monétaire : frappe la monnaie avec l’argent (atelier du seigneur, fusionné le 13/10)' },
 );
 
 /* Agriculture. Les bâtiments ont un métier (job) : aller travailler les terres autour
@@ -213,11 +203,13 @@ PRESETS.push(
 PRESETS.push(
   { id:'ferme',    cat:'agri', name:'Ferme',    f:3, d:4, turn:true, job:{ type:'site', on:'champ', reach:250, work:4, product:'grain' },
     use:'Cultive des céréales sur des champs (zones entourées de routes, outil Champ) et élève des animaux capturés dans son extension (une seule : jardin, verger ou enclos, sur tout l’espace libre)' },
-  { id:'bergerie', cat:'agri', name:'Bergerie', f:2, d:3, turn:true, job:{ type:'site', on:'paturage', reach:250, work:3, product:'laine' },
+  { id:'bergerie', cat:'agri', name:'Bergerie', f:3, d:4, turn:true, job:{ type:'site', on:'paturage', reach:250, work:3, product:'laine' },
     use:'Récolte la laine des moutons qui paissent autour de la bergerie (ou au parc d’un comptoir de bétail)' },
+  { id:'etable', cat:'agri', name:'Étable', f:3, d:4, turn:true, job:{ type:'site', on:'paturage', reach:250, work:3, product:'lait' },
+    use:'Élève des vaches et en tire le lait (même base que la ferme, avec son abri à vaches)' },
   { id:'moulin',   cat:'agri', name:'Moulin à vent', f:2, d:2, turn:true, job:{ type:'craft' },
     use:'Transforme le grain en farine (file de production)' },
-  { id:'fromagerie', cat:'agri', name:'Fromagerie', f:2, d:3, turn:true, job:{ type:'craft' },
+  { id:'fromagerie', cat:'agri', name:'Fromagerie', f:3, d:4, turn:true, job:{ type:'craft' },
     use:'Transforme le lait des fermes en fromages (frais, pâte molle, pâte pressée) : caillage, décaillage, égouttage, salage, puis affinage en cave (file de production)' },
   { id:'four',     cat:'agri', name:'Four communal', f:2, d:2, turn:true, job:{ type:'craft' },
     use:'Transforme la farine en pain (file de production)' },
@@ -237,22 +229,12 @@ PRESETS.push(
     use:"Sale, fume et sèche la viande, le poisson et les légumes pour les conserver" },
   { id:'chandellerie_savonnerie', cat:'ind', name:'Chandellerie-savonnerie', f:2, d:2, turn:true,
     use:"Fabrique chandelles, cierges et savon avec le suif, la cire et la potasse" },
-  { id:'tonnellerie', cat:'ind', name:'Tonnellerie', f:2, d:2, turn:true,
-    use:"Assemble les tonneaux avec des douelles et des cercles de fer" },
-  { id:'bas_fourneau', cat:'ind', name:'Bas fourneau', f:2, d:2, turn:true,
-    use:"Réduit le minerai de fer au charbon de bois en loupe de fer" },
   { id:'orfevre', cat:'ind', name:'Orfèvre', f:2, d:2, turn:true,
     use:"Travaille l’argent, l’or et l’ambre : bijoux, chapelets, objets liturgiques" },
-  { id:'atelier_monetaire', cat:'ind', name:'Atelier monétaire', f:2, d:2, turn:true,
-    use:"Frappe la monnaie avec l’argent (atelier du seigneur, unique)" },
   { id:'tannerie', cat:'ind', name:'Tannerie', f:3, d:3, turn:true,
-    use:"Transforme les peaux en cuir avec de l’écorce, de l’eau et de la chaux ; parchemin" },
+    use:"Transforme les peaux en cuir avec de l’écorce, de l’eau et de la chaux ; parchemin. Intègre l’ancienne teinturerie-foulerie : cuves de teinture, foulage et séchage des étoffes" },
   { id:'corderie', cat:'ind', name:'Corderie', f:2, d:4, turn:true,
-    use:"Prépare la filasse de lin et de chanvre, puis la corde et les filets" },
-  { id:'atelier_tissage', cat:'ind', name:'Atelier de tissage', f:2, d:2, turn:true,
-    use:"File la laine et tisse drap brut et toile" },
-  { id:'teinturerie_foulerie', cat:'ind', name:'Teinturerie-foulerie', f:3, d:2, turn:true,
-    use:"Foule le drap et le teint avec la guède, la garance et l’alun" },
+    use:"Prépare la filasse de lin et de chanvre, puis la corde et les filets ; intègre l’ancien atelier de tissage : file la laine et tisse drap brut et toile" },
   { id:'four_chaux', cat:'ind', name:'Four à chaux', f:2, d:2, turn:true,
     use:"Cuit le calcaire en chaux, et fait le mortier" },
   { id:'tuilerie_poterie', cat:'ind', name:'Tuilerie-poterie', f:3, d:2, turn:true,
@@ -261,19 +243,17 @@ PRESETS.push(
     use:"Fond le sable et la potasse en verre ; vitraux avec des feuilles de plomb" },
   { id:'garnison', cat:'def', name:'Garnison', f:3, d:3, turn:true,
     use:"Équipe et ravitaille les soldats du village (module du manoir)" },
-  { id:'scriptorium', cat:'', name:'Scriptorium', f:2, d:2, turn:true,
-    use:"Copie et enlumine des manuscrits (module de l’église)" },
 );
 
 /* Coût de construction (ressources du village) et stock donné par le camp de colon.
    Le stock du village est S.stock { ressource: quantité } ; le camp le remplit une fois, à sa pose. */
 const COUTS = {
-  maison:{ bois:10 }, maison_cour:{ bois:25 }, grande_maison:{ bois:40, planches:10 }, manoir:{ bois:60, planches:40, pierre:30 }, mairie:{ bois:50, planches:30, pierre:20 },
+  maison:{ bois:10 }, grande_maison:{ bois:40, planches:10 }, manoir:{ bois:60, planches:40, pierre:30 }, mairie:{ bois:50, planches:30, pierre:20 },
   puits:{ pierre:15 }, marche:{ bois:40, planches:10 }, taverne:{ bois:35, planches:15 }, eglise:{ bois:60, planches:30, pierre:20 }, cimetiere:{ pierre:10 },
   camp_bucherons:{ bois:15 }, loge_bucheron:{ bois:8 }, hutte_forestier:{ bois:6 }, camp_chasse:{ bois:12 }, hutte_cueillette:{ bois:8 }, rucher:{ bois:5 },
-  tailleur_pierre:{ bois:15 }, fromagerie:{ bois:35, pierre:15 }, hutte_charbonnier:{ bois:30 }, cabane_peche:{ bois:20 }, fosse_miniere:{ bois:25 }, camp_mineur:{ bois:25, pierre:10 }, scierie:{ bois:40, pierre:10 }, fonderie:{ bois:50, pierre:40 }, menuiserie:{ bois:40, planches:10 }, forge:{ bois:30, pierre:30 }, archerie:{ bois:35, planches:10 }, armurerie:{ bois:30, pierre:30, planches:10 }, cordonnerie:{ bois:30 }, couture:{ bois:30 }, brasserie:{ bois:40, pierre:10 },
+  tailleur_pierre:{ bois:15 }, fromagerie:{ bois:35, pierre:15 }, hutte_charbonnier:{ bois:30 }, cabane_peche:{ bois:20 }, fosse_miniere:{ bois:25 }, camp_mineur:{ bois:25, pierre:10 }, scierie:{ bois:40, pierre:10 }, fonderie:{ bois:50, pierre:40 }, menuiserie:{ bois:40, planches:10 }, couture:{ bois:30 }, brasserie:{ bois:40, pierre:10 },
   grange:{ bois:30 }, entrepot:{ bois:40, planches:10 }, relais:{ bois:20 }, poteau:{ bois:5 }, comptoir:{ bois:30, planches:10 }, comptoir_betail:{ bois:40 },
-  ferme:{ bois:30 }, bergerie:{ bois:25 }, moulin:{ bois:30, pierre:15 }, four:{ bois:5, pierre:20 },
+  ferme:{ bois:30 }, bergerie:{ bois:25 }, etable:{ bois:25, planches:5 }, moulin:{ bois:30, pierre:15 }, four:{ bois:5, pierre:20 },
 };
 PRESETS.forEach(p => { if (COUTS[p.id]) p.cout = COUTS[p.id]; });
 const STOCK_DEPART = { silex:60, 'charbon de bois':20, bois:150, planches:20, pierre:40, corde:20, 'hache (silex)':2, 'pioche (silex)':2, 'pelle (silex)':1, 'houe (silex)':1, 'faux (silex)':1, 'serpe (silex)':1, 'couteau (silex)':1, 'faucille (silex)':1, 'canne à pêche (bois)':1, légumes:40, pain:30, pommes:20 };   // (outils primitifs de départ ; corde : pas encore produite)
@@ -293,9 +273,9 @@ const buildingOf = h => PRESETS.find(p => p.id === h.kind) || null;
 const BUILD_MENUS = [
   { id:'recolte',     name:'Récolte',     ids:['camp_bucherons', 'loge_bucheron', 'hutte_forestier', 'camp_chasse', 'hutte_cueillette', 'rucher', 'cabane_peche', 'tailleur_pierre', 'fosse_miniere', 'camp_mineur'] },
   { id:'stockage',    name:'Stockage',    ids:['grange', 'entrepot', 'relais', 'poteau', 'comptoir', 'comptoir_betail'] },
-  { id:'residentiel', name:'Résidentiel', ids:['camp_colon', 'maison', 'maison_cour', 'grande_maison', 'manoir', 'mairie', 'marche', 'taverne', 'eglise'] },
-  { id:'agriculture', name:'Agriculture', tools:[['champ', 'Champ']], ids:['ferme', 'bergerie', 'fromagerie'] },
-  { id:'industrie',   name:'Industrie',   ids:['scierie', 'hutte_charbonnier', 'fonderie', 'menuiserie', 'forge', 'archerie', 'armurerie', 'cordonnerie', 'couture', 'brasserie', 'moulin', 'four'] },
+  { id:'residentiel', name:'Résidentiel', ids:['camp_colon', 'maison', 'grande_maison', 'manoir', 'mairie', 'marche', 'taverne', 'eglise'] },
+  { id:'agriculture', name:'Agriculture', tools:[['champ', 'Champ']], ids:['ferme', 'bergerie', 'etable', 'fromagerie'] },
+  { id:'industrie',   name:'Industrie',   ids:['scierie', 'hutte_charbonnier', 'fonderie', 'menuiserie', 'couture', 'brasserie', 'moulin', 'four'] },
   { id:'decoratif',   name:'Décoratif',   ids:['puits', 'cimetiere'] },
   { id:'defense',     name:'Défense',     tools:[['wall', 'Fortification'], ['tower', 'Tour'], ['gate', 'Porte']] },
 ];

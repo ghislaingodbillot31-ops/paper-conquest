@@ -621,7 +621,7 @@
   },
   {
    "id": "tonneau",
-   "atelier": "tonnellerie",
+   "atelier": "menuiserie",
    "entrees": [
     {
      "ressource": "planches",

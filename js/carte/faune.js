@@ -25,12 +25,12 @@ const FAUNE = {
   nandou:{ g:[3, 6], r:110 }, emeu:{ g:[3, 6], r:110 }, casoar:{ g:[1, 2], bois:1, t:'solitaire', r:70 }, elephant_afrique:{ g:[4, 8], r:170 },
   hippopotame:{ g:[4, 8], eau:1, r:50 }, rhinoceros:{ g:[1, 2], t:'solitaire', r:120 }, tapir:{ g:[1, 2], bois:1, eau:1, t:'solitaire' }, capybara:{ g:[6, 12], eau:1, r:60 },
   guanaco:{ g:[6, 10] }, kangourou:{ g:[4, 8] }, lemurien:{ g:[6, 10], bois:1, r:50 },
-  loup:{ g:[4, 7], t:'meute', bois:1, r:200 }, ours_brun:{ bois:1 }, ours_polaire:{}, ours_noir:{ bois:1 }, lion:{ g:[4, 7], t:'meute', r:200 }, tigre:{ bois:1 },
+  loup:{ g:[4, 7], t:'meute', bois:1, r:200 }, ours_brun:{ bois:1 }, ours_polaire:{}, manchot:{ g:[14, 26], eau:1, r:50 }, phoque:{ g:[3, 6], eau:1, r:60 }, morse:{ g:[3, 5], eau:1, r:60 }, ours_noir:{ bois:1 }, lion:{ g:[4, 7], t:'meute', r:200 }, tigre:{ bois:1 },
   leopard:{ bois:1 }, guepard:{ g:[2, 3] }, hyene:{ g:[5, 9], t:'meute', r:180 }, jaguar:{ bois:1, eau:1 }, puma:{ bois:1 }, crocodile:{ g:[2, 3], eau:1, r:50, t:'embuscade' },
   lynx:{ bois:1 }, panthere_neige:{}, dingo:{ g:[3, 5], t:'meute', r:180 },
 };
 const fauneParam = (cat, key) => ({ ...FAUNE_CAT[cat], ...FAUNE[key] });
-const FAUNE_NOM = key => (typeof LAND_ANIMALS !== 'undefined' && LAND_ANIMALS[key] && LAND_ANIMALS[key].name) || key;
+const FAUNE_NOM = key => { const n = ((typeof LAND_ANIMALS !== 'undefined' && LAND_ANIMALS[key] && LAND_ANIMALS[key].name) || key).replace(/[_-]/g, ' '); return n[0].toUpperCase() + n.slice(1); };   // (sans _ ni -, première lettre en majuscule)
 
 // ---- terrain : où un animal peut poser le pied ----
 let fauneFzCache = { seed:null, f:null };
@@ -52,7 +52,8 @@ function fauneEau(x, y, rad = .4) {
   if (cle !== eauCle || eauMem.size > 300000) { eauMem = new Map(); eauCle = cle; }
   const k = ((Math.floor(x * 2) + 1000) * 16384 + Math.floor(y * 2) + 1000) * 1024 + Math.round(rad * 10), v = eauMem.get(k);
   if (v !== undefined) return v;
-  const r = fauneEauCalc(x, y, rad); eauMem.set(k, r); return r;
+  if (typeof blocsGlace === 'function') blocsGlace();                                     // (désert polaire : les plaques de glace comptent comme de l'eau : aucun animal dessus)
+  const r = fauneEauCalc(x, y, rad) || (typeof surBlocGlace === 'function' && surBlocGlace(x, y, rad)); eauMem.set(k, r); return r;
 }
 function fauneEauCalc(x, y, rad) {
   const m = rad + .6;
@@ -285,36 +286,56 @@ function fauneSousArbres(vus) {
   if (masse.length) { ctx.fillStyle = biomeLook().steps[0]; ctx.beginPath(); for (const f of masse) { const X = f.x * s + view.ox, Y = f.y * s + view.oy, R = Math.max(f.r * 1.25, 6.6) * s; ctx.moveTo(X + R, Y); ctx.arc(X, Y, R, 0, Math.PI * 2); } ctx.fill(); }
   for (const f of arbres) if (!f.inner) stampTree(ctx, f, f.x * s + view.ox, f.y * s + view.oy, s);
 }
+const animauxVus = () => {                                                              // les animaux de la vue, du nord au sud
+  const [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 30, vus = [];
+  for (const h of troupeaux) for (const a of h.an) if (a.x > x0 - m && a.x < x1 + m && a.y > y0 - m && a.y < y1 + m) vus.push([h, a]);
+  return vus.sort((p, q) => p[1].y - q[1].y);
+};
+/* Sur la carte graphique (WebGL) les animaux sont des sprites posés entre le décor et le canevas du dessus (qui garde les arbres repeints par-dessus, les noms, les habitants, la nuit) : même ordre qu'avant, sans retracer
+   leurs courbes à chaque image. Appelé par presentScene juste avant le rendu ; la liste des animaux vus est gardée pour drawFaune (points lointains, arbres par-dessus). */
+let fauneVus = null; const fauneSprites = [];
+function gpuFaune(G) {
+  if (!G.fx) { G.fx = new PIXI.Container(); G.fx.sortableChildren = true; G.stage.addChild(G.fx); }
+  const vus = fauneVus = troupeaux.length ? animauxVus() : [], s = view.s; let n = 0;
+  for (const [h, a] of vus) {
+    const L = h.T * a.s * s; if (L < 3) continue;
+    const e = animalTexture(h.key, L * dpr); let sp = fauneSprites[n];
+    if (!sp) { sp = fauneSprites[n] = new PIXI.Sprite(); G.fx.addChild(sp); }
+    const [X, Y] = toS(a.x, a.y);
+    sp.texture = e.tex; sp.anchor.set(e.ax, e.ay); sp.position.set(X, Y); sp.rotation = a.a + (a.v > .05 ? Math.sin(a.ph) * .05 : 0); sp.scale.set(L / e.Lq); sp.zIndex = n; sp.visible = true; n++;
+  }
+  for (let i = n; i < fauneSprites.length; i++) fauneSprites[i].visible = false;
+}
 function drawFaune() {
   if (!troupeaux.length) return;
-  const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H), m = 30, vus = [];
-  for (const h of troupeaux) for (const a of h.an) if (a.x > x0 - m && a.x < x1 + m && a.y > y0 - m && a.y < y1 + m) vus.push([h, a]);
-  vus.sort((p, q) => p[1].y - q[1].y);
-  for (const [h, a] of vus) {
-    const [X, Y] = toS(a.x, a.y), L = h.T * a.s * s;
+  const s = view.s, vus = GPU && fauneVus ? fauneVus : animauxVus(), grands = [];
+  for (const v of vus) {
+    const [h, a] = v, [X, Y] = toS(a.x, a.y), L = h.T * a.s * s;
     if (L < 3) { ctx.fillStyle = ANIMAUX[h.key].c; ctx.beginPath(); ctx.arc(X, Y, Math.max(1.2, L * .6), 0, 7); ctx.fill(); continue; }
-    peintAnimal(h.key, X, Y, L, a.a + (a.v > .05 ? Math.sin(a.ph) * .05 : 0));
+    grands.push(v); if (!GPU) peintAnimal(h.key, X, Y, L, a.a + (a.v > .05 ? Math.sin(a.ph) * .05 : 0));
   }
-  fauneSousArbres(vus);
+  fauneSousArbres(grands);                                                            // (les points lointains n'ont pas d'arbre à repasser par-dessus)
 }
 // les noms des groupes : dessinés après la couche de cimes (draw), donc par-dessus les arbres
+try { document.fonts.load('14px "IM Fell English"').then(() => requestDraw()); } catch (e) {}   // (police des noms : on repeint une fois chargée)
 function drawFauneNoms() {
   if (!troupeaux.length) return;
   const s = view.s, [x0, y0] = toW(0, 0), [x1, y1] = toW(W, H);
   if (s > ETIQ_ZOOM_MIN) for (const h of troupeaux) {
     if (!h.c || h.c[0] < x0 - 60 || h.c[0] > x1 + 60 || h.c[1] < y0 - 60 || h.c[1] > y1 + 60) continue;
     const [X, Y] = toS(h.c[0], h.c[1] - h.spread - h.T * 1.2);
-    ctx.font = FONT_ETIQ; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    haloText(FAUNE_NOM(h.key) + (h.an.length > 1 ? ' ×' + h.an.length : '') + (h.mode === 'fuite' ? ' !' : ''), X, Y, Col.ink, Col.sheet);
+    ctx.font = '14px "IM Fell English", Georgia, serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; ctx.fillStyle = '#000';   // petit, noir, sans ombre ni contour
+    ctx.fillText(FAUNE_NOM(h.key) + (h.an.length > 1 ? ' ×' + h.an.length : '') + (h.mode === 'fuite' ? ' !' : ''), X, Y);
   }
 }
 
 // ---- régions du jeu : les animaux de la fiche de la région (data/regions/regions.json), posés une fois, à l'ouverture de la carte ----
 if (typeof GAME !== 'undefined' && GAME && typeof MAPTEST === 'undefined' && !S.fauneInit && typeof fetch === 'function') {
   fetch('data/regions/regions.json').then(r => r.json()).then(all => {
-    const fiche = (Array.isArray(all) ? all : Object.values(all)).find(r => r.id === GAME.region); if (!fiche || !fiche.animaux) return;
+    const fiche = (Array.isArray(all) ? all : Object.values(all)).find(r => r.id === GAME.region); if (!fiche || !fiche.animaux) return; if (fiche.climat.biome === 'polaire') fiche.animaux = { faune:{ manchot:1, phoque:1, morse:1 }, predateurs:{ ours_polaire:1 } };
     const items = [];
     for (const [src, cat] of [['elevage', 'elevage'], ['faune', 'faune'], ['predateurs', 'predateur']]) for (const [key, ab] of Object.entries(fiche.animaux[src] || {})) items.push({ cat, key, ab });
+    if (fiche.climat.biome === 'polaire') items.push({ cat:'faune', key:'manchot', ab:1 }, { cat:'faune', key:'manchot', ab:1 });   // trois colonies de manchots
     S.ressources = (S.ressources || []).concat(placeFoyers(GAME.seed, items)); S.fauneInit = 1; save(); requestDraw();
   }).catch(() => {});
 }

@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Liste des bâtiments</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px 0 0;color:var(--soft)}
+  h2.cat{margin:18px 24px 0;font:700 28px "Barlow Condensed","Arial Narrow",sans-serif;border-bottom:2px solid var(--edge);letter-spacing:.03em}
+  h2.cat small{font:500 14px system-ui;color:var(--soft);margin-left:8px}
+  main{display:grid;grid-template-columns:repeat(auto-fill,minmax(760px,1fr));gap:14px;padding:12px 24px 10px}
+  .carte{background:var(--card);border:1.4px solid var(--edge);border-radius:10px;padding:10px}
+  .carte h3{margin:0 0 2px;font:700 21px "Barlow Condensed","Arial Narrow",sans-serif}
+  .carte .id{color:var(--soft);font:12px ui-monospace,Consolas,monospace}
+  .ligne{display:flex;gap:8px;margin:3px 0;font-size:13px}
+  .ligne b{width:84px;flex:none;font-weight:600;color:var(--soft)}
+  .use{margin:6px 0 0;font-size:13px}
+  .vig{float:right;width:400px;height:400px;margin:0 0 6px 10px;border:1px solid #0004;border-radius:6px;background:#aab86a}
+  .badge{display:inline-block;margin:4px 4px 0 0;padding:1px 7px;border-radius:9px;background:#e4d8b8;font-size:12px}
+</style></head>
+<body>
+<header>
+  <h1>LISTE DES BÂTIMENTS</h1>
+  <p>Lue directement dans <code>js/batiments/catalogue.js</code> : toujours à jour. Classée comme le menu Construction du jeu.</p>
+  <p id="total"></p>
+</header>
+<div id="liste"></div>
+<script src="js/batiments/catalogue.js"></script>
+<script>
+const CAT = { res:'Récolte', agri:'Agriculture', ind:'Industrie', com:'Commerce et stockage', logi:'Logement', def:'Défense' };
+const COUT_NOM = { bois:'bois', planches:'planches', pierre:'pierre' };
+const NEED = { forest:'forêt', game:'gibier', fruit:'arbres fruitiers', water:'étang', rock:'rochers' };
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[c]));
+const ligne = (l, v) => v ? '<div class="ligne"><b>' + l + '</b><span>' + esc(v) + '</span></div>' : '';
+const carte = p => {
+  const badges = [p.unique && 'unique', p.turn === false && 'ne pivote pas', p.zone && 'zone de travail', p.sur && 'sur ' + p.sur, p.limit && p.limit + ' au plus'].filter(Boolean);
+  return '<div class="carte"><img class="vig" data-id="' + p.id + '" alt=""><h3>' + esc(p.name) + '</h3><div class="id">' + p.id + '</div>' +
+    ligne('Taille', p.f + ' × ' + p.d + ' cases (' + p.f * 8 + ' × ' + p.d * 8 + ' m)') + ligne('Habitants', p.cap) + ligne('Rayon', p.radius && p.radius + ' m') +
+    ligne('Exige', p.need && NEED[p.need]) + ligne('Coût', coutTexte(p.cout)) + ligne('Production', p.job && p.job.product) +
+    badges.map(b => '<span class="badge">' + esc(b) + '</span>').join('') + '<p class="use">' + esc(p.use || '') + '</p></div>';
+};
+const liste = document.getElementById('liste'), vus = new Set();
+const bloc = (titre, sous, ps) => { if (!ps.length) return; liste.insertAdjacentHTML('beforeend', '<h2 class="cat">' + esc(titre) + '<small>' + sous + '</small></h2><main>' + ps.map(carte).join('') + '</main>'); ps.forEach(p => vus.add(p.id)); };
+for (const m of BUILD_MENUS) { const ps = (m.ids || []).map(id => PRESETS.find(p => p.id === id)).filter(Boolean); bloc(m.name, ps.length + ' bâtiment' + (ps.length > 1 ? 's' : '') + (m.tools ? ' · outils : ' + m.tools.map(t => t[1]).join(', ') : ''), ps); if (!ps.length && m.tools) liste.insertAdjacentHTML('beforeend', '<h2 class="cat">' + esc(m.name) + '<small>outils : ' + m.tools.map(t => esc(t[1])).join(', ') + '</small></h2>'); }
+bloc('Hors menu', 'pas proposés au joueur', PRESETS.filter(p => !vus.has(p.id)));
+document.getElementById('total').textContent = PRESETS.length + ' bâtiments au catalogue, dont ' + vus.size + ' dans le menu Construction.';
+// images : chaque bâtiment est peint par le moteur du jeu, dans un cadre caché (région 123, sans interface), comme les vignettes du menu Construction
+const cadre = document.createElement('iframe'); cadre.style.cssText = 'position:fixed;left:-3000px;top:0;width:900px;height:600px;border:0';
+cadre.src = 'region.html?region=123&seed=974138&river=auto&lon=-0.31&lat=48.16&tm=12&hum=.7&essai=1&biome=tempere'; document.body.appendChild(cadre);
+const pret = setInterval(() => {
+  try {
+    const w = cadre.contentWindow;
+    if (!w.eval('typeof drawHouse === "function" && typeof paintWith === "function" && typeof S !== "undefined" && !!S && typeof alignPatterns === "function"')) return;
+    clearInterval(pret);
+    w.eval('window.__vig = (id, n) => { const b = PRESETS.find(p => p.id === id); const h = { id:-1, x:0, y:0, a:0, w:b.f * CELL, l:b.d * CELL, f:b.f, d:b.d, kind:b.id, type:b.name, front:1, ...(b.yard ? { yard:"potager" } : {}) }; const c = document.createElement("canvas"); c.width = c.height = n; const g = c.getContext("2d"); g.fillStyle = biomeLook().ground; g.fillRect(0, 0, n, n); try { paintWith(g, n, n, n / (Math.max(h.w, h.l) + 4), n / 2, n / 2, () => { alignPatterns(); drawHouse(h, "normal"); }); } catch (e) { console.warn(id, e); } return c.toDataURL(); }');
+    const imgs = [...document.querySelectorAll('img.vig')]; let i = 0;
+    const suite = () => { for (let k = 0; k < 4 && i < imgs.length; k++, i++) imgs[i].src = w.__vig(imgs[i].dataset.id, 800); if (i < imgs.length) setTimeout(suite, 30); else cadre.remove(); };
+    suite();
+  } catch (e) {}
+}, 400);
+</script>
+</body></html>

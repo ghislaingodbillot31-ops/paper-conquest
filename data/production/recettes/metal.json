@@ -4,7 +4,7 @@
  "recettes": [
   {
    "id": "loupe_de_fer",
-   "atelier": "bas_fourneau",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "minerai de fer",
@@ -35,7 +35,7 @@
   },
   {
    "id": "fer_forge",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "loupe de fer",
@@ -62,7 +62,7 @@
   },
   {
    "id": "acier_cementation",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -89,7 +89,7 @@
   },
   {
    "id": "clous",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -112,7 +112,7 @@
   },
   {
    "id": "ferrures",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -135,7 +135,7 @@
   },
   {
    "id": "cercles_de_fer",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -158,7 +158,7 @@
   },
   {
    "id": "fers_a_cheval",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -181,7 +181,7 @@
   },
   {
    "id": "hamecons",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -204,7 +204,7 @@
   },
   {
    "id": "tete_en_fer",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -227,7 +227,7 @@
   },
   {
    "id": "tete_en_acier",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "acier",
@@ -250,7 +250,7 @@
   },
   {
    "id": "hache",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -277,7 +277,7 @@
   },
   {
    "id": "pioche",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -304,7 +304,7 @@
   },
   {
    "id": "houe",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -331,7 +331,7 @@
   },
   {
    "id": "pelle",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -358,7 +358,7 @@
   },
   {
    "id": "faucille",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -385,7 +385,7 @@
   },
   {
    "id": "faux",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -412,7 +412,7 @@
   },
   {
    "id": "serpe",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -439,7 +439,7 @@
   },
   {
    "id": "marteau",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -466,7 +466,7 @@
   },
   {
    "id": "couteau",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -493,7 +493,7 @@
   },
   {
    "id": "dague",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -524,7 +524,7 @@
   },
   {
    "id": "épée",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -555,7 +555,7 @@
   },
   {
    "id": "masse",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -586,7 +586,7 @@
   },
   {
    "id": "lance",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -617,7 +617,7 @@
   },
   {
    "id": "pique",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -648,7 +648,7 @@
   },
   {
    "id": "javelot",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "tete",
@@ -979,7 +979,7 @@
   },
   {
    "id": "monnaie",
-   "atelier": "atelier_monetaire",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "argent",
@@ -1001,7 +1001,7 @@
   },
   {
    "id": "tenailles",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",
@@ -1154,7 +1154,7 @@
   },
   {
    "id": "scie",
-   "atelier": "forge",
+   "atelier": "fonderie",
    "entrees": [
     {
      "ressource": "fer",

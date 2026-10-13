@@ -14,7 +14,7 @@ function renderLineChart(svg, legendEl, tipEl, tab){
     svg.appendChild(svgEl('line', { x1:padL, x2:W-padR, y1:gy, y2:gy, stroke:'var(--line)', 'stroke-width':1 }));
   }
   YEARS.forEach((yr,i) => {
-    const t = svgEl('text', { x:x(i), y:H-6, 'text-anchor':'middle', 'font-size':9, fill:'var(--ink-soft)', 'font-family':'Nunito' });
+    const t = svgEl('text', { x:x(i), y:H-6, 'text-anchor':'middle', 'font-size':9, fill:'var(--ink-soft)', 'font-family':'MedievalSharp' });
     t.textContent = yr; svg.appendChild(t);
   });
 

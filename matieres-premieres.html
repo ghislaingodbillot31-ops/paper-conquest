@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Matières premières</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px 0 0;color:var(--soft)}
+  h2{margin:18px 24px 0;font:700 28px "Barlow Condensed","Arial Narrow",sans-serif;border-bottom:2px solid var(--edge);letter-spacing:.03em}
+  h2 small{font:500 14px system-ui;color:var(--soft);margin-left:8px}
+  main{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:12px 24px 6px}
+  .carte{background:var(--card);border:1.4px solid var(--edge);border-radius:10px;padding:8px;text-align:center}
+  .carte canvas{width:96px;height:96px;display:block;margin:0 auto 4px}
+  .carte b{display:block;font:700 17px "Barlow Condensed","Arial Narrow",sans-serif}
+  .carte small{display:block;color:var(--soft);font-size:11.5px;margin-top:2px}
+</style></head>
+<body>
+<header>
+  <h1>MATIÈRES PREMIÈRES</h1>
+  <p>Toutes les ressources brutes du jeu, lues dans <code>data/production/ressources.json</code> (catégories Naturel, Chasse, Élevage, Pêche, Importé), chacune avec son icône.</p>
+  <p id="total"></p>
+</header>
+<div id="liste"></div>
+<script src="js/batiments/catalogue.js"></script>
+<script>
+const INK = '#2f2a24';
+const C = (g, x, y, r, f, st = true) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = f; g.fill(); if (st) g.stroke(); };
+const E = (g, x, y, rx, ry, f, rot = 0, st = true) => { g.beginPath(); g.ellipse(x, y, rx, ry, rot, 0, 7); g.fillStyle = f; g.fill(); if (st) g.stroke(); };
+const P = (g, pts, f, st = true) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fillStyle = f; g.fill(); if (st) g.stroke(); };
+const L = (g, pts, col, w) => { g.beginPath(); pts.forEach((p, i) => i ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.strokeStyle = col; g.lineWidth = w; g.stroke(); g.strokeStyle = INK; g.lineWidth = 1.6; };
+const clair = (g, x, y, r) => { g.beginPath(); g.arc(x, y, r, 0, 7); g.fillStyle = 'rgba(255,255,255,.4)'; g.fill(); };
+
+const ICONES = {
+  /* céréales : silhouettes pleines d'une seule couleur, sans contour, comme les pictogrammes de référence (13/10) */
+  epi1: (g, a) => {                                                         // épi à grains en feuilles, par paires alternées (blé, avoine)
+    const feuille = (x, y, an, len, w) => { g.save(); g.translate(x, y); g.rotate(an); g.beginPath(); g.moveTo(0, 0); g.quadraticCurveTo(len * .5, -w, len, 0); g.quadraticCurveTo(len * .5, w, 0, 0); g.fillStyle = a; g.fill(); g.restore(); };
+    g.fillStyle = a; g.fillRect(30.4, 26, 3.2, 34);
+    for (let k = 0; k < 5; k++) { const y = 24 + k * 7; feuille(32, y + 4, -Math.PI / 2 - .75, 15, 4.6); feuille(32, y + 4, -Math.PI / 2 + .75, 15, 4.6); }
+    feuille(32, 22, -Math.PI / 2, 14, 4.2);
+  },
+  epi2: (g, a) => {                                                         // épi en fuseau, contour plein et grains intérieurs, longue tige (seigle)
+    g.fillStyle = a; g.fillRect(30.6, 40, 2.8, 22);
+    g.beginPath(); g.moveTo(32, 4); g.bezierCurveTo(46, 14, 46, 36, 32, 46); g.bezierCurveTo(18, 36, 18, 14, 32, 4); g.strokeStyle = a; g.lineWidth = 3.4; g.stroke();
+    g.fillStyle = a; for (let k = 0; k < 5; k++) { const y = 14 + k * 6.4; g.beginPath(); g.moveTo(32, y + 5); g.lineTo(25.5, y); g.lineTo(32, y + 2.2); g.lineTo(38.5, y); g.closePath(); g.fill(); }
+    g.strokeStyle = INK; g.lineWidth = 1.6;
+  },
+  epi3: (g, a) => {                                                         // épi à feuilles recourbées vers le bas, en éventail (orge)
+    const arc = (x, y, sens, len) => { g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + sens * len * .9, y - 5, x + sens * len, y + 12); g.quadraticCurveTo(x + sens * len * .45, y + 1, x, y + 5); g.closePath(); g.fillStyle = a; g.fill(); };
+    g.fillStyle = a; g.fillRect(30.4, 24, 3.2, 38);
+    for (let k = 0; k < 4; k++) { const y = 26 + k * 8, l = 22 - k * 1.5; arc(32, y, -1, l); arc(32, y, 1, l); }
+    g.beginPath(); g.moveTo(32, 6); g.quadraticCurveTo(39, 14, 32, 24); g.quadraticCurveTo(25, 14, 32, 6); g.fill();
+  },
+  rondin: (g, a, b) => { C(g, 32, 32, 22, a); C(g, 32, 32, 16, b, false); for (const r of [4, 9, 13]) { g.beginPath(); g.arc(32, 32, r, 0, 7); g.strokeStyle = 'rgba(80,50,20,.5)'; g.lineWidth = 1; g.stroke(); } g.strokeStyle = INK; g.lineWidth = 1.6; },
+  ecorce: (g, a, b) => { P(g, [[10, 40], [24, 18], [54, 14], [46, 40], [28, 52]], a); L(g, [[18, 34], [30, 24], [44, 22]], b, 2); L(g, [[24, 44], [34, 34], [44, 30]], b, 2); },
+  batons: (g, a) => { for (const [x1, y1, x2, y2] of [[10, 46, 54, 16], [8, 32, 56, 30], [14, 14, 50, 52]]) L(g, [[x1, y1], [x2, y2]], a, 5); },
+  brindilles: (g, a) => { for (const [x1, y1, x2, y2] of [[8, 50, 56, 18], [10, 26, 54, 44], [16, 12, 44, 56], [6, 36, 58, 34]]) L(g, [[x1, y1], [x2, y2]], a, 2.4); },
+  fagot: (g, a, b) => { for (const k of [-10, -4, 2, 8, 14]) L(g, [[8, 28 + k], [56, 28 + k + 2]], a, 5); L(g, [[22, 14], [22, 50]], b, 4); L(g, [[42, 14], [42, 50]], b, 4); },
+  graines: (g, a) => { for (const [x, y, r] of [[22, 24, .4], [36, 20, 1.1], [44, 34, .2], [28, 40, 1.6], [16, 38, 2.2], [40, 46, .9]]) E(g, x, y, 6, 3.6, a, r); },
+  pousse: (g, a, b) => { L(g, [[32, 54], [32, 26]], b, 3); E(g, 22, 24, 12, 6, a, -.5); E(g, 42, 20, 12, 6, a, .5); E(g, 32, 12, 5, 8, a, 0); },
+  pierre: (g, a, b) => { P(g, [[10, 42], [18, 20], [38, 12], [56, 28], [50, 48], [24, 52]], a); P(g, [[18, 20], [38, 12], [34, 30], [22, 34]], b, false); },
+  minerai: (g, a, b) => { P(g, [[8, 42], [16, 20], [36, 10], [56, 24], [54, 48], [26, 54]], a); for (const [x, y, r] of [[24, 28, 4], [40, 22, 3.4], [36, 40, 4.4], [20, 42, 3], [48, 38, 3]]) C(g, x, y, r, b); },
+  tas: (g, a, b) => { P(g, [[8, 46], [14, 32], [26, 22], [40, 24], [54, 34], [58, 46], [34, 54]], a); P(g, [[18, 38], [28, 28], [40, 30], [34, 40]], b, false); },
+  eau: (g, a, b) => { P(g, [[32, 8], [46, 32], [48, 44], [40, 54], [24, 54], [16, 44], [18, 32]], a); E(g, 26, 38, 4, 7, b, .4, false); },
+  sel: (g, a) => { for (const [x, y, s] of [[14, 36, 12], [30, 28, 14], [34, 44, 12], [22, 16, 9]]) { P(g, [[x, y], [x + s, y], [x + s, y + s], [x, y + s]], a); } },
+  cristal: (g, a, b) => { P(g, [[32, 8], [44, 24], [40, 54], [24, 54], [20, 24]], a); P(g, [[32, 8], [32, 54], [24, 54], [20, 24]], b, false); },
+  gemme: (g, a, b) => { P(g, [[18, 14], [46, 14], [58, 30], [32, 56], [6, 30]], a); P(g, [[18, 14], [46, 14], [32, 30]], b, false); L(g, [[6, 30], [58, 30]], 'rgba(60,30,10,.4)', 1); },
+  epi: (g, a, b) => { L(g, [[32, 58], [32, 18]], b, 3); for (let k = 0; k < 5; k++) { E(g, 27, 20 + k * 7, 5, 3, a, -.9); E(g, 37, 20 + k * 7, 5, 3, a, .9); } E(g, 32, 12, 3, 5, a, 0); },
+  paille: (g, a, b) => {                                                    // gerbe liée : brins dressés en haut, lien de paille au col, jupe évasée aux brins effrangés (référence du 13/10)
+    P(g, [[22, 32], [42, 32], [60, 56], [56, 62], [52, 57], [48, 62], [43, 57], [38, 62], [33, 57], [28, 62], [23, 57], [18, 62], [13, 57], [8, 62], [4, 56]], a);
+    L(g, [[27, 33], [15, 58]], b, 1.2); L(g, [[32, 33], [28, 58]], b, 1.2); L(g, [[37, 33], [40, 58]], b, 1.2); L(g, [[42, 33], [52, 57]], b, 1.2);
+    for (const [x, hh, w] of [[24, 14, 2.6], [28, 8, 2.8], [32, 3, 3], [36, 9, 2.8], [40, 15, 2.6]]) P(g, [[x - w, 32], [x, hh], [x + w, 32]], a);
+    E(g, 32, 30, 11, 5.4, a); E(g, 32, 35, 11.4, 4.6, a); L(g, [[22, 31], [42, 31]], b, 1.2); L(g, [[21.6, 35], [42.4, 35]], b, 1.2);
+  },
+  foin: (g, a, b) => {                                                      // botte de foin vert, brins effilés en haut et en bas, liée de trois cordes rouges, penchée (référence du 13/10)
+    g.save(); g.translate(32, 32); g.rotate(.5); g.translate(-32, -32);
+    P(g, [[20, 22], [22, 10], [26, 18], [28, 4], [32, 16], [36, 7], [38, 18], [43, 9], [44, 22], [41, 32], [42, 38], [47, 57], [40, 47], [38, 61], [33, 49], [30, 62], [26, 49], [21, 58], [22, 46], [15, 55], [23, 38], [24, 32]], a);
+    L(g, [[28, 8], [30, 24]], b, 1.4); L(g, [[36, 12], [34, 26]], b, 1.4); L(g, [[27, 40], [24, 54]], b, 1.4); L(g, [[34, 40], [33, 56]], b, 1.4); L(g, [[40, 42], [43, 54]], b, 1.4);
+    for (const y of [29, 33, 37]) L(g, [[21, y - 1], [32, y + 2], [43, y - 1]], '#a02a2a', 2.6);
+    g.restore();
+  },
+  fleur: (g, a, b) => { L(g, [[32, 56], [32, 28]], '#4a7a3a', 3); E(g, 24, 44, 10, 4, '#5f8f46', -.6); for (let k = 0; k < 5; k++) { const an = k / 5 * 6.283; E(g, 32 + Math.cos(an) * 8, 20 + Math.sin(an) * 8, 6, 4, a, an); } C(g, 32, 20, 4, b); },
+  feuille: (g, a, b) => { L(g, [[32, 58], [32, 12]], b, 3); for (const [x, y, r] of [[22, 44, -.5], [42, 38, .5], [22, 28, -.5], [42, 22, .5]]) E(g, x, y, 12, 5, a, r); E(g, 32, 10, 4, 8, a, 0); },
+  racine: (g, a, b) => { P(g, [[22, 20], [42, 20], [34, 56]], a); L(g, [[26, 28], [36, 28]], 'rgba(60,30,10,.4)', 1); L(g, [[28, 38], [36, 38]], 'rgba(60,30,10,.4)', 1); E(g, 26, 14, 4, 9, b, -.4); E(g, 32, 12, 4, 10, b, 0); E(g, 38, 14, 4, 9, b, .4); },
+  bulbe: (g, a, b) => { P(g, [[32, 8], [38, 22], [50, 36], [44, 52], [20, 52], [14, 36], [26, 22]], a); L(g, [[26, 22], [24, 52]], b, 1.4); L(g, [[38, 22], [40, 52]], b, 1.4); },
+  rave: (g, a, b) => { C(g, 32, 34, 18, a); E(g, 32, 22, 18, 9, b, 0, false); L(g, [[32, 52], [32, 62]], '#c9b9a0', 2); E(g, 28, 12, 3, 8, '#5f8f46', -.3); E(g, 36, 12, 3, 8, '#5f8f46', .3); },
+  chou: (g, a, b) => { C(g, 32, 32, 22, a); for (const r of [16, 10, 5]) { g.beginPath(); g.arc(32, 32, r, 0, 7); g.strokeStyle = b; g.lineWidth = 1.6; g.stroke(); } g.strokeStyle = INK; },
+  poireau: (g, a, b) => { P(g, [[28, 8], [36, 8], [38, 44], [26, 44]], a); P(g, [[26, 44], [38, 44], [42, 58], [22, 58]], b); L(g, [[32, 10], [32, 44]], 'rgba(40,80,40,.5)', 1); },
+  gousse: (g, a, b) => { P(g, [[6, 40], [18, 22], [44, 14], [58, 20], [46, 40], [20, 50]], a); for (const [x, y] of [[20, 38], [30, 32], [40, 26]]) C(g, x, y, 4.6, b); },
+  gourde: (g, a) => { C(g, 32, 42, 16, a); C(g, 32, 20, 9, a); L(g, [[32, 12], [38, 6]], '#5f8f46', 3); clair(g, 26, 36, 5); },
+  pomme: (g, a, b) => { C(g, 24, 36, 16, a); C(g, 40, 36, 16, a); C(g, 32, 40, 17, a); L(g, [[32, 22], [34, 10]], '#5a4126', 3); E(g, 42, 14, 9, 4, b, -.5); clair(g, 24, 36, 4); },
+  poire: (g, a, b) => { P(g, [[32, 10], [40, 22], [48, 40], [42, 54], [22, 54], [16, 40], [24, 22]], a); L(g, [[32, 10], [34, 4]], '#5a4126', 3); E(g, 42, 10, 8, 3.6, b, -.4); clair(g, 24, 40, 4); },
+  cerises: (g, a, b) => { L(g, [[24, 40], [34, 12]], '#5a4126', 2); L(g, [[44, 38], [34, 12]], '#5a4126', 2); C(g, 24, 44, 10, a); C(g, 44, 42, 10, a); E(g, 40, 10, 9, 4, b, -.4); clair(g, 22, 42, 3); },
+  fruit: (g, a, b) => { C(g, 32, 36, 20, a); L(g, [[32, 16], [34, 8]], '#5a4126', 3); E(g, 42, 12, 8, 3.6, b, -.4); clair(g, 25, 30, 5); },
+  ovale: (g, a, b) => { E(g, 32, 34, 14, 20, a, .4); L(g, [[28, 14], [24, 8]], '#5a4126', 2.6); E(g, 22, 10, 7, 3.4, b, -.6); clair(g, 26, 28, 4); },
+  citron: (g, a) => { P(g, [[8, 32], [20, 20], [44, 20], [56, 32], [44, 44], [20, 44]], a); C(g, 8, 32, 2.6, a); C(g, 56, 32, 2.6, a); clair(g, 24, 28, 4); },
+  grenade: (g, a) => { C(g, 32, 38, 18, a); P(g, [[22, 22], [26, 12], [32, 18], [38, 12], [42, 22]], a); clair(g, 25, 34, 4); },
+  amande: (g, a, b) => { P(g, [[32, 6], [46, 24], [44, 48], [32, 58], [20, 48], [18, 24]], a); L(g, [[32, 14], [32, 52]], b, 1.4); },
+  noix: (g, a, b) => { C(g, 32, 34, 20, a); L(g, [[32, 14], [32, 54]], b, 2); L(g, [[14, 32], [50, 32]], b, 1.2); },
+  chataigne: (g, a, b) => { P(g, Array.from({ length: 24 }, (_, i) => { const an = i / 24 * 6.283, r = i % 2 ? 14 : 22; return [32 + Math.cos(an) * r, 34 + Math.sin(an) * r]; }), b); C(g, 32, 34, 13, a); },
+  grappe: (g, a, b) => { L(g, [[32, 6], [32, 20]], '#5a4126', 3); E(g, 44, 10, 9, 4, b, .4); for (const [x, y] of [[20, 24], [32, 22], [44, 24], [26, 34], [38, 34], [32, 44], [26, 22], [38, 44]]) C(g, x, y, 8, a); clair(g, 24, 22, 3); },
+  mures: (g, a) => { for (const [x, y] of [[22, 24], [38, 22], [14, 36], [30, 34], [46, 36], [22, 48], [38, 48]]) C(g, x, y, 8, a); clair(g, 20, 22, 2.4); },
+  champignon: (g, a, b) => { P(g, [[28, 34], [36, 34], [38, 54], [26, 54]], b); P(g, [[6, 34], [10, 22], [22, 12], [42, 12], [54, 22], [58, 34]], a); for (const [x, y] of [[20, 26], [34, 20], [44, 28]]) C(g, x, y, 3, '#f4ecd8', false); },
+  viande: (g, a, b) => { P(g, [[8, 38], [14, 18], [36, 10], [56, 22], [52, 46], [30, 54]], a); P(g, [[20, 24], [36, 18], [46, 28], [40, 42], [24, 44]], b, false); C(g, 44, 24, 4, '#f4ecd8'); },
+  peau: (g, a, b) => { P(g, [[8, 20], [24, 14], [40, 14], [56, 20], [50, 32], [58, 46], [40, 52], [32, 46], [24, 52], [8, 46], [14, 32]], a); L(g, [[32, 18], [32, 44]], b, 1.4); },
+  os: (g, a) => { P(g, [[16, 14], [22, 8], [28, 14], [26, 20], [40, 44], [46, 44], [52, 42], [56, 48], [50, 54], [44, 52], [40, 56], [36, 50], [22, 24], [14, 20]], a); },
+  cordes: (g, a) => { for (const k of [0, 9, 18]) L(g, [[8, 20 + k], [20, 14 + k], [34, 26 + k], [48, 16 + k], [58, 22 + k]], a, 3); },
+  graisse: (g, a, b) => { P(g, [[10, 38], [16, 22], [34, 14], [52, 22], [56, 38], [40, 52], [20, 50]], a); E(g, 28, 28, 8, 4, b, -.4, false); },
+  corne: (g, a) => { P(g, [[10, 52], [14, 28], [28, 12], [48, 10], [56, 14], [42, 22], [34, 34], [30, 52]], a); L(g, [[20, 44], [26, 30], [38, 20]], 'rgba(60,40,20,.4)', 1.2); },
+  bois_cerf: (g, a) => { L(g, [[32, 56], [32, 30]], a, 6); for (const [x1, y1, x2, y2] of [[32, 30, 14, 8], [32, 30, 50, 8], [24, 22, 10, 22], [40, 22, 54, 22], [23, 16, 22, 4], [41, 16, 42, 4]]) L(g, [[x1, y1], [x2, y2]], a, 4.4); },
+  poche: (g, a, b) => { P(g, [[12, 30], [20, 14], [42, 12], [54, 26], [50, 46], [30, 54], [14, 46]], a); E(g, 32, 32, 12, 8, b, .3, false); },
+  pot: (g, a, b) => { P(g, [[18, 20], [46, 20], [50, 54], [14, 54]], a); E(g, 32, 20, 14, 5, b); L(g, [[14, 30], [50, 30]], b, 1.4); },
+  cire: (g, a, b) => { P(g, [[8, 24], [44, 14], [58, 28], [58, 46], [22, 54], [8, 42]], a); P(g, [[8, 24], [44, 14], [58, 28], [22, 38]], b, false); },
+  oeufs: (g, a) => { for (const [x, y] of [[20, 38], [36, 34], [28, 20], [46, 46]]) E(g, x, y, 9, 12, a, .2); },
+  volaille: (g, a, b) => { E(g, 30, 36, 20, 14, a); C(g, 48, 22, 8, a); P(g, [[54, 20], [62, 24], [54, 26]], b); P(g, [[10, 30], [4, 20], [14, 28]], a); L(g, [[26, 48], [26, 58]], b, 2); L(g, [[36, 48], [36, 58]], b, 2); },
+  plume: (g, a, b) => { L(g, [[10, 56], [50, 8]], b, 3); P(g, [[50, 8], [58, 30], [40, 46], [24, 42], [22, 28], [36, 18]], a); L(g, [[24, 40], [48, 12]], 'rgba(60,40,20,.5)', 1.2); },
+  laine: (g, a) => { for (const [x, y, r] of [[22, 38, 11], [40, 38, 11], [32, 26, 12], [32, 44, 11]]) C(g, x, y, r, a); },
+  cruche: (g, a, b) => { P(g, [[22, 10], [42, 10], [48, 30], [46, 54], [18, 54], [16, 30]], a); E(g, 32, 10, 10, 4, b); L(g, [[48, 24], [58, 28], [56, 42], [46, 44]], INK, 2); },
+  animal: (g, a, b) => { E(g, 28, 34, 22, 14, a); E(g, 52, 28, 9, 7, b); L(g, [[16, 46], [16, 56]], b, 4); L(g, [[40, 46], [40, 56]], b, 4); },
+  fumier: (g, a, b) => { P(g, [[8, 48], [14, 34], [28, 24], [44, 28], [56, 38], [54, 50], [30, 56]], a); for (const [x, y] of [[22, 40], [34, 34], [44, 44], [28, 48]]) C(g, x, y, 2.6, b, false); },
+  poisson: (g, a, b) => { P(g, [[8, 32], [22, 18], [44, 20], [54, 32], [44, 44], [22, 46]], a); P(g, [[50, 32], [60, 20], [60, 44]], b); C(g, 18, 30, 2, INK, false); L(g, [[32, 22], [32, 42]], 'rgba(255,255,255,.4)', 1.4); },
+  sachets: (g, a, b) => { for (const [x, c] of [[14, a], [32, b], [48, a]]) { P(g, [[x - 8, 22], [x + 8, 22], [x + 10, 52], [x - 10, 52]], c); L(g, [[x - 8, 22], [x + 8, 22]], INK, 2); } },
+  cocon: (g, a, b) => { E(g, 32, 34, 14, 20, a, .3); L(g, [[20, 24], [44, 44]], b, 1.2); L(g, [[18, 32], [46, 36]], b, 1.2); L(g, [[48, 14], [60, 8]], b, 2); },
+  encrier: (g, a, b) => { P(g, [[16, 26], [42, 26], [46, 52], [12, 52]], a); E(g, 29, 26, 13, 4, '#1c1a24'); L(g, [[48, 8], [34, 38]], b, 4); },
+};
+
+// id → [icône, couleur 1, couleur 2] ; les ressources absentes de la table prennent une icône par défaut selon leur catégorie
+const M = {
+  'bois': ['rondin', '#a87a4a', '#d9b680'], 'écorce': ['ecorce', '#7a5a38', '#4a321c'], 'bois de chauffage': ['rondin', '#8a5f38', '#c49a62'], 'bâtons': ['batons', '#8a6a42'], 'brindilles': ['brindilles', '#7a5c38'], 'fagots': ['fagot', '#8a6a42', '#c9a76a'],
+  'graines': ['graines', '#c9a24a'], 'pousses': ['pousse', '#6f9a4a', '#4a7a3a'], 'pierre': ['pierre', '#a39d8e', '#c9c3b2'], 'silex': ['pierre', '#4a4640', '#7a746a'], 'calcaire': ['pierre', '#d8d2bf', '#efe9d4'], 'argile': ['tas', '#b0703e', '#c98a58'], 'sable': ['tas', '#e0d09a', '#eee0b0'], 'eau': ['eau', '#4a8ac0', '#a8d0ec'],
+  'minerai de fer': ['minerai', '#7a6a62', '#b8553a'], 'minerai de cuivre': ['minerai', '#7a7468', '#2f9a8a'], "minerai d'étain": ['minerai', '#8a8a90', '#cfd4d8'], 'minerai de plomb': ['minerai', '#6a6e78', '#3a3e4a'], "minerai d'argent": ['minerai', '#8a8a8e', '#e6e6ea'], "minerai d'or": ['minerai', '#8a7a58', '#e0b830'],
+  'sel': ['sel', '#f4f2ea'], 'alun': ['cristal', '#e8e4f0', '#bcb4d0'], 'ambre': ['gemme', '#e0902a', '#f4c060'],
+  'blé': ['epi1', '#eea616'], 'seigle': ['epi2', '#d9962a'], 'orge': ['epi3', '#f0b92c'], 'avoine': ['epi1', '#d8b45a'], 'paille': ['paille', '#f2d77a', '#9a7a2a'], 'foin': ['foin', '#9ccc4a', '#5f8a2a'],
+  'lin': ['fleur', '#6a8ad0', '#f0d860'], 'chanvre': ['feuille', '#5f8a3e', '#3a5a26'], 'guède': ['fleur', '#e8d040', '#4a3a8a'], 'garance': ['racine', '#b8453a', '#5f8a3e'],
+  'raisin': ['grappe', '#5a2f5a', '#5f8a3e'], 'champignons': ['champignon', '#b08a5a', '#e8dcc0'], 'baies': ['mures', '#7a2a4a'],
+  'panais': ['racine', '#e8dcc0', '#5f8a3e'], 'carottes': ['racine', '#e08a2a', '#5f8a3e'], 'choux': ['chou', '#7fae58', '#cfe0b0'], 'poireaux': ['poireau', '#e8f0d8', '#5f8a3e'], 'oignons': ['bulbe', '#d8a860', '#a8782e'], 'ail': ['bulbe', '#f0ece0', '#b8b098'], 'fèves': ['gousse', '#7fae58', '#cfe0a0'], 'petits pois': ['gousse', '#6f9a4a', '#a8d070'], 'navets': ['rave', '#f0ece0', '#8a4a8a'], 'salades': ['feuille', '#9ccc6a', '#5f8a3e'], 'gourdes': ['gourde', '#c8a84a'], 'raves': ['rave', '#f0e8e8', '#c04a6a'],
+  'pommes': ['pomme', '#c8402a', '#5f8a3e'], 'poires': ['poire', '#b8c04a', '#5f8a3e'], 'cerises': ['cerises', '#b01a2a', '#5f8a3e'], 'prunes': ['fruit', '#5a3a82', '#5f8a3e'], 'pêches': ['fruit', '#f0a068', '#5f8a3e'], 'abricots': ['fruit', '#f0a838', '#5f8a3e'], 'coings': ['poire', '#e0cc3a', '#5f8a3e'], 'figues': ['ovale', '#6a3a5a', '#5f8a3e'], 'olives': ['ovale', '#7a8a3a', '#5f8a3e'], 'oranges': ['fruit', '#f08a1c', '#5f8a3e'], 'citrons': ['citron', '#f0d83a'], 'grenades': ['grenade', '#b02a2a'],
+  'amandes': ['amande', '#c9a574', '#8a6a3a'], 'noix': ['noix', '#b08a5a', '#6a4a2a'], 'noisettes': ['noix', '#b87a3a', '#6a4a2a'], 'châtaignes': ['chataigne', '#7a4a28', '#a8784a'], 'mûres': ['mures', '#3a1f4a'], 'dattes': ['ovale', '#7a4a28', '#5f8a3e'], 'nèfles': ['fruit', '#b8742c', '#5f8a3e'], 'sorbes': ['grappe', '#d8401e', '#5f8a3e'],
+  'viande': ['viande', '#b8453a', '#d9706a'], 'peaux': ['peau', '#c49a6a', '#8a6a3e'], 'os': ['os', '#efe6d0'], 'tendons': ['cordes', '#d8c8a8'], 'graisse': ['graisse', '#f0e8d0', '#fff8e4'], 'suif': ['graisse', '#e8dcc0', '#fff4d8'], 'corne': ['corne', '#d8c8a0'], 'bois de cerf': ['bois_cerf', '#cbbd9a'], 'caillette': ['poche', '#e0b8a0', '#c89a82'], 'présure': ['pot', '#d8c8a0', '#b8a478'],
+  'miel': ['pot', '#e6a82a', '#f4cc60'], 'cire': ['cire', '#e8c850', '#f4e090'], 'œufs': ['oeufs', '#f4eedc'], 'volaille': ['volaille', '#e8dcc0', '#d9a050'], 'plumes': ['plume', '#f2efe6', '#8a7a5a'], 'lait': ['cruche', '#f6f2e6', '#d8d0b8'], 'laine': ['laine', '#f4efe2'], 'animaux vivants': ['animal', '#c8a074', '#6a4a30'], 'fumier': ['fumier', '#6a4a30', '#4a321c'],
+  'poisson': ['poisson', '#8aa6b8', '#5f7a8a'],
+  'épices': ['sachets', '#c8462a', '#d9a02a'], 'soie': ['cocon', '#f4f0e0', '#c8c0a0'], 'encre': ['encrier', '#3a3a50', '#2a2a2a'],
+};
+const DEFAUT = { Naturel: ['pierre', '#a39d8e', '#c9c3b2'], Chasse: ['viande', '#b8453a', '#d9706a'], 'Élevage': ['pot', '#d8c8a0', '#b8a478'], 'Pêche': ['poisson', '#8aa6b8', '#5f7a8a'], 'Importé': ['sachets', '#c8462a', '#d9a02a'] };
+const GROUPES = [
+  ['Bois et forêt', 'les arbres et ce qu’ils donnent', ['bois', 'écorce', 'bois de chauffage', 'bâtons', 'brindilles', 'fagots', 'graines', 'pousses']],
+  ['Pierre, terre et minerais', 'le sol et le sous-sol', ['pierre', 'silex', 'calcaire', 'argile', 'sable', 'eau', 'sel', 'alun', 'ambre', 'minerai de fer', 'minerai de cuivre', "minerai d'étain", 'minerai de plomb', "minerai d'argent", "minerai d'or"]],
+  ['Céréales, fibres et teintures', 'les champs', ['blé', 'seigle', 'orge', 'avoine', 'paille', 'foin', 'lin', 'chanvre', 'guède', 'garance']],
+  ['Légumes', 'le potager', ['panais', 'carottes', 'choux', 'poireaux', 'oignons', 'ail', 'fèves', 'petits pois', 'navets', 'salades', 'gourdes', 'raves']],
+  ['Fruits, baies et champignons', 'vergers et cueillette', ['raisin', 'champignons', 'baies', 'pommes', 'poires', 'cerises', 'prunes', 'pêches', 'abricots', 'coings', 'figues', 'olives', 'oranges', 'citrons', 'grenades', 'amandes', 'noix', 'noisettes', 'châtaignes', 'mûres', 'dattes', 'nèfles', 'sorbes']],
+  ['Chasse', 'les animaux sauvages', ['viande', 'peaux', 'os', 'tendons', 'graisse', 'suif', 'corne', 'bois de cerf', 'caillette', 'présure']],
+  ['Élevage et pêche', 'la ferme et l’eau', ['miel', 'cire', 'œufs', 'volaille', 'plumes', 'lait', 'laine', 'animaux vivants', 'fumier', 'poisson']],
+  ['Importé', 'venu de loin', ['épices', 'soie', 'encre']],
+];
+const FIL = { bois: 'Bois', cuir_textile: 'Cuir et textile', construction: 'Construction', alimentation: 'Alimentation', metal: 'Métal', elevage: 'Élevage', armes: 'Armes', commerce: 'Commerce' };
+const nomFichier = id => id.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '');   // « minerai d'étain » → minerai_d_etain, « œufs » → oeufs
+function icone(id, categorie) {
+  const cv = document.createElement('canvas'), d = window.devicePixelRatio || 1; cv.width = cv.height = Math.round(96 * d);
+  const g = cv.getContext('2d'); g.scale(96 * d / 64, 96 * d / 64); g.lineJoin = g.lineCap = 'round'; g.lineWidth = 1.6; g.strokeStyle = INK;
+  const [t, a, b] = M[id] || DEFAUT[categorie] || DEFAUT.Naturel; ICONES[t](g, a, b);
+  // vos propres icônes : un PNG 256 × 256 par ressource dans icones/matieres/<nom>.png (voir nomFichier) remplace le dessin ci-dessus ; sans fichier, le dessin reste
+  const im = new Image(); im.onload = () => { const c2 = cv.getContext('2d'); c2.setTransform(1, 0, 0, 1, 0, 0); c2.clearRect(0, 0, cv.width, cv.height); c2.drawImage(im, 0, 0, cv.width, cv.height); };
+  im.src = 'icones/matieres/' + nomFichier(id) + '.png';
+  return cv;
+}
+fetch('data/production/ressources.json').then(r => r.json()).then(R => {
+  const par = new Map(R.map(x => [x.id, x])), liste = document.getElementById('liste'); let n = 0;
+  const vus = new Set();
+  for (const [titre, sous, ids] of GROUPES) {
+    const rs = ids.map(i => par.get(i)).filter(Boolean); if (!rs.length) continue;
+    const h = document.createElement('h2'); h.innerHTML = titre + '<small>' + sous + ' · ' + rs.length + '</small>'; liste.appendChild(h);
+    const m = document.createElement('main'); liste.appendChild(m);
+    for (const x of rs) { vus.add(x.id); n++; const c = document.createElement('div'); c.className = 'carte'; c.appendChild(icone(x.id, x.categorie));
+      const b = document.createElement('b'); b.textContent = x.nom || x.id; c.appendChild(b);
+      const s = document.createElement('small'); s.textContent = [FIL[x.filiere] || x.filiere, x.perissable ? 'se périme en ' + x.perissable.jours + ' j' : '', (x.attendu || []).length ? 'fait par : ' + x.attendu.map(a => (PRESETS.find(p => p.id === a) || {}).name || a).join(', ') : ''].filter(Boolean).join(' · '); c.appendChild(s); m.appendChild(c); }
+  }
+  const reste = R.filter(x => ['Naturel', 'Chasse', 'Élevage', 'Pêche', 'Importé'].includes(x.categorie) && !vus.has(x.id));
+  if (reste.length) { const h = document.createElement('h2'); h.innerHTML = 'Autres<small>' + reste.length + '</small>'; liste.appendChild(h); const m = document.createElement('main'); liste.appendChild(m);
+    for (const x of reste) { n++; const c = document.createElement('div'); c.className = 'carte'; c.appendChild(icone(x.id, x.categorie)); const b = document.createElement('b'); b.textContent = x.nom || x.id; c.appendChild(b); m.appendChild(c); } }
+  document.getElementById('total').textContent = n + ' matières premières.';
+});
+</script>
+</body></html>

@@ -6,7 +6,7 @@
    Historique par bâtiment (JR.hist : tout ce qui entre, sort, est pris pour lui ou déposé par lui, sans limite pratique) : en sélectionnant un bâtiment, le panneau n'affiche que le sien.
    quel que soit le code qui l'a causée (rien à instrumenter). Les changements hors des ouvriers (clic du joueur : construction payée, amélioration…) sont attribués à « Joueur / système ». */
 const DEV_CLE = 'dominiumDev';
-/* BASE DE DONNÉES DÉVELOPPEUR : tout réglage fait ici (stocks maximum, heure, actions) est inscrit sur le serveur de logs (tools/serveur-logs.js, fichier ~/.dominium-dev/base.json) en plus du navigateur ;
+/* BASE DE DONNÉES DÉVELOPPEUR : tout réglage fait ici (stocks maximum, heure, actions) est inscrit sur le serveur de logs (outils/serveur-logs.js, fichier ~/.dominium-dev/base.json) en plus du navigateur ;
    au chargement, le navigateur reprend ce que contient la base. Sans serveur, rien ne casse : le navigateur garde ses valeurs. */
 const BASE_URL = 'http://localhost:8001/base'; let baseHorsLigne = 0;
 function baseEnvoyer(chemin, corps) {
@@ -128,7 +128,7 @@ function stocksMontrer() {
   if (!dsBox) {
     const st = document.createElement('style');
     st.textContent = '#ds{position:fixed;left:310px;top:90px;width:min(560px,calc(100vw - 340px));max-height:calc(100% - 140px);z-index:42;display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:var(--hud,#17140f);color:var(--hud-ink,#eadfc8);border:1.5px solid var(--hud-edge,#7a6a4a);border-radius:6px;box-shadow:0 6px 24px rgba(0,0,0,.5);font:13px "IBM Plex Mono",monospace}'
-      + '#ds h3{margin:0;font:600 18px "Barlow Condensed",sans-serif;letter-spacing:.08em}#ds header{display:flex;gap:8px;align-items:center}#ds header h3{flex:1}#ds #ds-liste{overflow:auto;flex:1;min-height:120px}#ds table{width:100%;border-collapse:collapse}#ds td,#ds th{padding:3px 6px;text-align:left;border-bottom:1px solid #2a2418}'
+      + '#ds h3{margin:0;font:600 18px "MedievalSharp", serif;letter-spacing:.08em}#ds header{display:flex;gap:8px;align-items:center}#ds header h3{flex:1}#ds #ds-liste{overflow:auto;flex:1;min-height:120px}#ds table{width:100%;border-collapse:collapse}#ds td,#ds th{padding:3px 6px;text-align:left;border-bottom:1px solid #2a2418}'
       + '#ds input[type=number]{width:80px;background:#0d0b08;color:inherit;border:1px solid #4a3f2c;border-radius:3px;padding:2px 4px;font:inherit}#ds select,#ds textarea{background:#0d0b08;color:inherit;border:1px solid #4a3f2c;border-radius:3px;font:inherit}#ds textarea{height:90px;width:100%;resize:vertical}#ds .ds-b{display:flex;gap:8px;flex-wrap:wrap}';
     document.head.appendChild(st);
     dsBox = document.createElement('aside'); dsBox.id = 'ds'; dsBox.setAttribute('aria-label', 'Définir les stocks');
@@ -174,9 +174,9 @@ function devMontrer() {
   if (!JR.actif) { if (devTab) devTab.hidden = true; if (devPan) devPan.hidden = true; if (dsBox) dsBox.hidden = true; return; }
   if (!devTab) {
     const st = document.createElement('style');
-    st.textContent = '#dev-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:41;writing-mode:vertical-rl;padding:14px 7px;background:var(--hud,#17140f);color:var(--hud-ink,#eadfc8);border:1.5px solid var(--hud-edge,#7a6a4a);border-left:0;border-radius:0 8px 8px 0;font:600 16px "Barlow Condensed",sans-serif;letter-spacing:.14em;cursor:pointer}'
+    st.textContent = '#dev-tab{position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:41;writing-mode:vertical-rl;padding:14px 7px;background:var(--hud,#17140f);color:var(--hud-ink,#eadfc8);border:1.5px solid var(--hud-edge,#7a6a4a);border-left:0;border-radius:0 8px 8px 0;font:600 16px "MedievalSharp", serif;letter-spacing:.14em;cursor:pointer}'
       + '#dev-pan{position:fixed;left:40px;top:90px;width:260px;z-index:41;display:flex;flex-direction:column;gap:8px;padding:12px 14px;background:var(--hud,#17140f);color:var(--hud-ink,#eadfc8);border:1.5px solid var(--hud-edge,#7a6a4a);border-radius:6px;box-shadow:var(--hud-shadow,0 6px 24px rgba(0,0,0,.5))}'
-      + '#dev-pan h3{margin:0 0 2px;font:600 18px "Barlow Condensed",sans-serif;letter-spacing:.08em}#dev-pan small{opacity:.7}#dev-pan button{width:100%;text-align:left}';
+      + '#dev-pan h3{margin:0 0 2px;font:600 18px "MedievalSharp", serif;letter-spacing:.08em}#dev-pan small{opacity:.7}#dev-pan button{width:100%;text-align:left}';
     document.head.appendChild(st);
     devTab = document.createElement('button'); devTab.id = 'dev-tab'; devTab.textContent = 'DÉVELOPPEUR'; devTab.setAttribute('aria-expanded', 'false');
     devPan = document.createElement('aside'); devPan.id = 'dev-pan'; devPan.hidden = true; devPan.setAttribute('aria-label', 'Développeur');

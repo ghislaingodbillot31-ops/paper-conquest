@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>Arbustes à baies</title>
+<style>
+  :root{--bg:#efe6d0; --card:#f6efdc; --edge:#b9a98a; --ink:#2f2a24; --soft:#6b5f4a; --ok:#3f7a3a}
+  *{box-sizing:border-box}
+  html,body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.35 system-ui,sans-serif}
+  header{padding:18px 24px 8px;text-align:center}
+  h1{margin:0;font:700 40px "Barlow Condensed","Arial Narrow",sans-serif;letter-spacing:.04em}
+  header p{margin:4px 0 0;color:var(--soft)}
+  #etat{font-weight:600;color:var(--ok)}
+  main{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px;padding:14px 24px 30px}
+  .carte{background:var(--card);border:1.4px solid var(--edge);border-radius:10px;padding:10px;display:flex;flex-direction:column;align-items:center;gap:6px}
+  .carte.on{border-color:var(--ok);box-shadow:0 0 0 2px #3f7a3a44}
+  canvas{display:block}
+  .carte h2{margin:0;font:700 22px "Barlow Condensed","Arial Narrow",sans-serif;text-align:center}
+  .carte dl{margin:0;width:100%;font-size:12px;color:var(--soft);display:grid;grid-template-columns:auto 1fr;gap:1px 8px}
+  .carte dt{font-weight:600}.carte dd{margin:0}
+  button{margin-top:4px;padding:6px 14px;border:1.4px solid var(--edge);border-radius:6px;background:#fff8e8;color:var(--ink);font:inherit;font-weight:600;cursor:pointer}
+  button[aria-pressed="true"]{background:var(--ok);border-color:var(--ok);color:#fff}
+  .barre{display:flex;gap:8px;justify-content:center;margin-top:10px}
+</style></head>
+<body>
+<header>
+  <h1>ARBUSTES À BAIES</h1>
+  <p>Vue de dessus · <span id="n"></span> espèces · cliquez <b>Valider</b> sur chaque espèce que vous acceptez : seules les espèces validées entrent dans le jeu, là où le climat de la région leur convient.</p>
+  <p id="etat"></p>
+  <div class="barre"><button id="aucune" type="button">Tout retirer du jeu</button></div>
+</header>
+<main id="liste"></main>
+<script src="js/carte/arbres.js"></script>
+<script src="js/carte/baies.js"></script>
+<script>
+/* Planche des arbres et arbustes à baies : les espèces et leur dessin viennent de js/carte/baies.js (BAIES, peintBaie), les mêmes que sur la carte.
+   Le bouton Valider d'une espèce l'ajoute (ou la retire) du jeu : la liste est enregistrée dans le navigateur (baies.valides.v1) et lue par la carte. */
+const seeded = s => () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296;
+const noms = { humide:'au bord de l\'eau', lisiere:'à la lisière des bois', clairiere:'en clairière', sec:'à découvert, loin de l\'eau' };
+const types = { arbuste:'arbuste', rampant:'plante basse', liane:'liane' };
+let valides = new Set(baiesValides()), ctx;
+const liste = document.getElementById('liste'), cles = Object.keys(BAIES);
+document.getElementById('n').textContent = cles.length;
+function maj() { document.getElementById('etat').textContent = valides.size + ' espèce' + (valides.size > 1 ? 's' : '') + ' validée' + (valides.size > 1 ? 's' : '') + ' sur ' + cles.length; }
+function enregistre() {
+  baiesEnregistre([...valides]); maj();
+  try { if (parent !== window) parent.postMessage({ studio:'baies' }, location.origin); } catch (e) {}
+}
+cles.forEach((k, i) => {
+  const a = BAIES[k], carte = document.createElement('section'), cv = document.createElement('canvas'), dpr = 2, W = 220, H = 200;
+  cv.width = W * dpr; cv.height = H * dpr; cv.style.width = W + 'px'; cv.style.height = H + 'px';
+  carte.className = 'carte' + (valides.has(k) ? ' on' : '');
+  carte.innerHTML = `<h2>${a.nom}</h2>`;
+  carte.appendChild(cv);
+  const dl = document.createElement('dl');
+  dl.innerHTML = `<dt>Type</dt><dd>${types[a.type]}</dd><dt>Biomes</dt><dd>${a.biomes.join(', ')}</dd><dt>Température</dt><dd>${a.tm[0]} à ${a.tm[1]} °C</dd><dt>Humidité</dt><dd>${Math.round(a.hum[0] * 100)} à ${Math.round(a.hum[1] * 100)} %</dd><dt>Terrain</dt><dd>${noms[a.terrain]}</dd>`;
+  carte.appendChild(dl);
+  const b = document.createElement('button'); b.type = 'button';
+  const etat = () => { b.setAttribute('aria-pressed', valides.has(k)); b.textContent = valides.has(k) ? 'Validé ✓ (cliquer pour retirer)' : 'Valider'; carte.classList.toggle('on', valides.has(k)); };
+  b.addEventListener('click', () => { valides.has(k) ? valides.delete(k) : valides.add(k); etat(); enregistre(); });
+  etat(); carte.appendChild(b); liste.appendChild(carte);
+  ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
+  peintBaie(a, W / 2, H / 2 + 4, 76 * (.8 + a.r * .12), i + 1);
+});
+document.getElementById('aucune').addEventListener('click', () => { valides = new Set(); document.querySelectorAll('.carte').forEach(c => c.classList.remove('on')); document.querySelectorAll('button[aria-pressed]').forEach(b => { b.setAttribute('aria-pressed', 'false'); b.textContent = 'Valider'; }); enregistre(); });
+maj();
+</script></body></html>
